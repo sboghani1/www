@@ -186,7 +186,11 @@ Deliver a continuously running VPS system with:
       one-user allowlist. Backup at
       `/home/receptionist-agent/.config/wnba-poller/pre-wnba-backup-20260805T170038Z.json`.
       See Current progress for full detail.
-- [ ] Install/enable schedule, poller, and WNBA bot systemd units.
+- [x] Install/enable schedule, poller, and WNBA bot systemd units.
+      Done 2026-08-05 via two approved deploy requests (install+enable
+      timers, then enable the bot once its env was staged). All three
+      confirmed running/scheduled via direct `systemctl` inspection — see
+      Current progress.
 - [ ] Deploy receptionist changes only through the approval broker.
 - [ ] Run the guided production acceptance sequence.
 
@@ -500,24 +504,41 @@ manually, once each, from this session.
   `GOOGLE_CREDENTIALS`. Same never-print pattern as before (`printf`/`cat`
   piped directly to file, confirmed non-empty only via
   `sed 's/=.*/=<redacted>/'`).
-- **Step 3 (enable `wnba-guesser-bot.service`) not yet requested** — see
-  Next proposed live/production steps below.
+- **Step 3 done and CONFIRMED SUCCESSFUL (2026-08-05).** Deploy request
+  `9fcedfdd-8441-43d2-b5a5-038bc74f2b19` (command
+  `systemctl enable --now wnba-guesser-bot.service`, HEAD `1389a80`) was
+  approved and executed. Verified directly via `systemctl status`/`show`:
+  `active (running)`, `enabled`, `NRestarts=0`, `ExecMainStatus=0` — the
+  BotFather-token/expected-username identity check in
+  `GuesserConfig`/`main()` passed on first startup (a bad token or wrong
+  `@username` would have made it exit immediately and start
+  crash-looping under `Restart=on-failure`; zero restarts after 1.5+
+  minutes rules that out). Memory well within limits (27.3M used vs 128M/
+  192M high/max).
+- **All three WNBA systemd units are now live in production:**
+  `wnba-poller.timer` (15-min due-check), `wnba-schedule-sync.timer`
+  (daily 05:20 ET), `wnba-guesser-bot.service` (`@wnbaguesser_bot`, running).
+  This closes checklist items "Install/enable schedule, poller, and WNBA bot
+  systemd units."
+- **Not yet done:** the receptionist deployment (WNBA handlers, skill,
+  `lean_cli`/`receptionist_helper` binaries in its own venv) — see below.
+  The standalone poller/bot are fully independent of this and do not need
+  it to keep working.
 
 ### Next proposed live/production steps (NOT yet executed — still need explicit confirmation each)
 
-1. Configure and install the `wnba-guesser-bot`/`wnba-poller` systemd
-   services (`apps/wnba-poller/deploy/`). This needs root
-   (`apps/wnba-poller/deploy/install-wnba-poller`) — check whether that goes
-   through the same Telegram approval broker as the receptionist, or needs a
-   different authorized path; do not assume.
-2. Deploy the receptionist changes (WNBA handlers, skill, `lean_cli`/
+1. Deploy the receptionist changes (WNBA handlers, skill, `lean_cli`/
    `receptionist_helper` binaries in its venv) through the existing
-   `request-receptionist-deploy` approval broker per `CLAUDE.md`.
-3. Optional: ask the user whether to also remove the orphaned
+   `request-receptionist-deploy` approval broker per `CLAUDE.md`. This is
+   the last piece needed before the guided user test sequence (game
+   picker, Generate now/Copy template, edit/delete/undo) can run against
+   production.
+2. Optional: ask the user whether to also remove the orphaned
    `team_emojis`/`suggestions`/`allowed_users` tabs noted above.
-4. Without an installed systemd timer, nothing will re-poll automatically —
-   the 41-game schedule and 6 priced games will go stale until either the
-   timer is installed or another manual poll is run.
+3. Once the receptionist is deployed, walk through the guided user test
+   sequence (see that section above) end-to-end in production: `/start`
+   to `@wnbaguesser_bot`, a structured thought, a receptionist-generated
+   lean, shared history in both bots, edit/delete/undo.
 
 Prior "Current progress" history (session 1-2, retained for continuity):
 
