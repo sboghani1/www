@@ -15,7 +15,7 @@ next turn.
 - `/new [name]`, `/sessions`, `/switch <session-id-prefix>`, `/reset`
 - `/provider`, `/verbose [on|off]`
 - `/stop`
-- `/approve <request-id>`, `/deny <request-id>`, `/deployments`
+- `/approve`, `/deny`, `/deployments`
 
 Plain text is queued as the exact next agent message. V1 accepts text only.
 
@@ -60,10 +60,11 @@ It does not load the forwarder's general environment.
 
 ## Deployment approvals
 
-Agents submit deployment proposals with `request-receptionist-deploy`. The bot
-shows the exact repository revision and root command in Telegram. A request:
+Agents submit deployment proposals with `request-receptionist-deploy`. The bot shows the exact repository revision and root command in Telegram with
+Approve and Deny buttons. `/approve` or `/deny` also works when exactly one
+request is pending. A request:
 
-- executes only after `/approve <request-id>`
+- executes only after an Approve button or `/approve`
 - can execute once
 - cannot be edited after display
 - expires after 15 minutes

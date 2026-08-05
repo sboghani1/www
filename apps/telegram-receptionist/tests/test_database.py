@@ -85,6 +85,7 @@ def test_deployment_request_is_one_shot(tmp_path: Path) -> None:
         created_at=now.isoformat(),
         expires_at=(now + timedelta(minutes=15)).isoformat(),
     )
+    assert database.find_deployment_request(123, "", ("pending",))["id"] == request_id
     assert database.approve_deployment_request(request_id)
     assert not database.approve_deployment_request(request_id)
     assert database.start_deployment_request(request_id)

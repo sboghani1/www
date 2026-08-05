@@ -274,10 +274,13 @@ Commands:
 - /reset        archive the current conversation and create a fresh one
 - /provider     show or change the provider for a new conversation
 - /verbose      toggle detailed tool/progress messages
-- /approve      execute one immutable deployment request
-- /deny         permanently reject one deployment request
+- /approve      execute the only pending immutable deployment request
+- /deny         permanently reject the only pending deployment request
 - /deployments  list recent deployment requests and statuses
 - /help         explain commands and exact-message behavior
+
+Each deployment notification also contains Approve and Deny inline buttons tied
+to that exact immutable request, so normal use never requires typing an ID.
 
 Output relay:
 
@@ -778,6 +781,10 @@ proposal.
   deployment failed and never replays it.
 - Secret boundary: the agent can write only to a group-controlled incoming
   spool. Only the bot user can approve and invoke the fixed root executor.
+- Approval UX: each Telegram request has Approve and Deny buttons whose callback
+  contains the immutable UUID. Bare `/approve` and `/deny` are accepted only
+  when exactly one request is pending. This avoids typing IDs without guessing
+  which request the user intended when several proposals exist.
 
 2026-08-05 — Telegram output is compact and flood-aware
 

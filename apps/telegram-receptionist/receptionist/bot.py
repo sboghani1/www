@@ -9,10 +9,11 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Awaitable, Callable
 
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ChatType
 from telegram.ext import (
     Application,
+    CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
     MessageHandler,
@@ -122,9 +123,10 @@ class Receptionist:
             "/stop — stop the active run\n"
             "/verbose [on|off] — toggle detailed resource updates\n"
             "/provider — show provider\n\n"
-            "/approve <id> — execute one exact deployment request\n"
-            "/deny <id> — reject one deployment request\n"
+            "/approve — execute the only pending deployment request\n"
+            "/deny — reject the only pending deployment request\n"
             "/deployments — show recent deployment requests\n\n"
+            "Deployment messages also include Approve and Deny buttons.\n\n"
             "Any other text is passed unchanged as the next agent prompt."
         )
 
@@ -242,54 +244,101 @@ class Receptionist:
     async def approve(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
-        if not context.args:
-            await update.message.reply_text("Usage: /approve <request-id>")
+        _, message = await self._approve_deployment(
+            update.effective_user.id,
+            update.effective_chat.id,
+            context.args[0] if context.args else "",
+            context.application,
+        )
+        await update.message.reply_text(message)
+
+    async def deny(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        _, message = self._deny_deployment(
+            update.effective_user.id,
+            context.args[0] if context.args else "",
+        )
+        await update.message.reply_text(message)
+
+    async def deployment_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        query = update.callback_query
+        await query.answer()
+        try:
+            _, action, request_id = query.data.split(":", 2)
+        except (AttributeError, ValueError):
+            await query.message.reply_text("Invalid deployment action.")
             return
+        if action == "approve":
+            succeeded, message = await self._approve_deployment(
+                update.effective_user.id,
+                update.effective_chat.id,
+                request_id,
+                context.application,
+            )
+        elif action == "deny":
+            succeeded, message = self._deny_deployment(
+                update.effective_user.id, request_id
+            )
+        else:
+            succeeded, message = False, "Invalid deployment action."
+        if succeeded:
+            await query.edit_message_reply_markup(reply_markup=None)
+        await query.message.reply_text(message)
+
+    async def _approve_deployment(
+        self,
+        user_id: int,
+        chat_id: int,
+        request_prefix: str,
+        application: Application,
+    ) -> tuple[bool, str]:
         self.database.expire_deployment_requests()
         try:
             request = self.database.find_deployment_request(
-                update.effective_user.id, context.args[0], ("pending",)
+                user_id, request_prefix, ("pending",)
             )
-        except LookupError as error:
-            await update.message.reply_text(str(error))
-            return
+        except LookupError:
+            return (
+                False,
+                "Approval requires exactly one pending request. "
+                "Use the Approve button on the request you want.",
+            )
         if not self.database.approve_deployment_request(request["id"]):
-            await update.message.reply_text(
-                "That request expired or is no longer pending."
-            )
-            return
+            return False, "That request expired or is no longer pending."
         request = self.database.find_deployment_request(
-            update.effective_user.id, request["id"], ("approved",)
-        )
-        await update.message.reply_text(
-            f"Approved deployment {request['id'][:8]}; execution is starting."
+            user_id, request["id"], ("approved",)
         )
         task = asyncio.create_task(
-            self._execute_approved_deployment(
-                request, update.effective_chat.id, context.application
-            )
+            self._execute_approved_deployment(request, chat_id, application)
         )
         self._deployment_tasks.add(task)
         task.add_done_callback(self._deployment_tasks.discard)
+        return (
+            True,
+            f"Approved deployment {request['id'][:8]}; execution is starting.",
+        )
 
-    async def deny(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not context.args:
-            await update.message.reply_text("Usage: /deny <request-id>")
-            return
+    def _deny_deployment(
+        self, user_id: int, request_prefix: str
+    ) -> tuple[bool, str]:
         self.database.expire_deployment_requests()
         try:
             request = self.database.find_deployment_request(
-                update.effective_user.id, context.args[0], ("pending",)
+                user_id, request_prefix, ("pending",)
             )
-        except LookupError as error:
-            await update.message.reply_text(str(error))
-            return
+        except LookupError:
+            return (
+                False,
+                "Denial requires exactly one pending request. "
+                "Use the Deny button on the request you want.",
+            )
         if self.database.deny_deployment_request(request["id"]):
-            await update.message.reply_text(
-                f"Denied deployment {request['id'][:8]}. It cannot be reused."
+            return (
+                True,
+                f"Denied deployment {request['id'][:8]}. It cannot be reused.",
             )
-        else:
-            await update.message.reply_text("That request is no longer pending.")
+        return False, "That request is no longer pending."
 
     async def deployments(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -369,10 +418,26 @@ class Receptionist:
                 f"Revision: {request['revision']}\n"
                 f"Expires: {request['expires_at']}\n\n"
                 f"Exact root command:\n{request['command']}\n\n"
-                f"Approve once: /approve {request['id'][:8]}\n"
-                f"Deny: /deny {request['id'][:8]}"
+                "Use the buttons below, or send /approve or /deny when this is "
+                "the only pending request."
             )
-            await context.application.bot.send_message(chat_id, text)
+            keyboard = InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "Approve",
+                            callback_data=f"deploy:approve:{request['id']}",
+                        ),
+                        InlineKeyboardButton(
+                            "Deny",
+                            callback_data=f"deploy:deny:{request['id']}",
+                        ),
+                    ]
+                ]
+            )
+            await context.application.bot.send_message(
+                chat_id, text, reply_markup=keyboard
+            )
             self.database.mark_deployment_request_notified(request["id"])
 
     async def _ingest_deployment_requests(self) -> None:
@@ -568,6 +633,12 @@ def build_application(config: Config) -> Application:
         application.add_handler(
             CommandHandler(name, receptionist.authorized(handler))
         )
+    application.add_handler(
+        CallbackQueryHandler(
+            receptionist.authorized(receptionist.deployment_button),
+            pattern=r"^deploy:(approve|deny):[0-9a-f-]{36}$",
+        )
+    )
     application.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
