@@ -942,6 +942,43 @@ Next actions (in order):
   - Combined suite: 177 passed. Committed and pushed (`7588524`).
 - **This fix only affects the receptionist's `wnba-lean-workflow` binary**
   (the standalone poller/`@wnbaguesser_bot` never generate leans, so
-  `/opt/wnba-poller/current` doesn't need updating for this). Submitted
-  deploy request `3d9fa169-ec94-4e9d-9fed-37d53dcc721b` at HEAD `7588524`
-  — awaiting approval as of this note.
+  `/opt/wnba-poller/current` doesn't need updating for this).
+- **CONFIRMED DEPLOYED (2026-08-05).** Two intermediate deploy requests
+  (`3d9fa169...`, then a fresh one after fast-forwarding `main` to pick up
+  concurrent unrelated commits, `109c9c8a-7ff9-4260-94cf-f552f1582510` at
+  HEAD `2e3be76`) were approved and executed. Verified directly, not just
+  trusted: `readlink -f /opt/telegram-receptionist/current` matches HEAD
+  `2e3be76` (`7588524` confirmed an ancestor via
+  `git merge-base --is-ancestor`), `telegram-receptionist.service` is
+  `active (running)`, and the deployed venv's
+  `wnba_poller/lean_context.py` contains `_find_precedent_entries` (i.e.
+  this is not just "the commit landed on main", the fix is live in the
+  actual binary the skill invokes).
+
+## Pending work as of this checkpoint (2026-08-05)
+
+Everything through the path210 extraction fix is implemented, tested, and
+deployed. What's left, in rough priority order:
+
+1. **Consider revising the Aces @ Fever lean** (event
+   `58beff9061f15ff3f416542cb51f4751`, revision
+   `48fd18e2-8524-4935-b732-25332f23a243`) — it was generated before the
+   extraction fix, so it had no real Past Events precedent and a garbled
+   model cache. Not done automatically; ask the user first, then use the
+   skill's `revise` path if they want it.
+2. **Guided user test sequence** (see that section above) — only partially
+   exercised so far organically: two structured thoughts submitted via
+   `@wnbaguesser_bot`, one Generate-now-equivalent lean published via the
+   skill. Not yet verified: **Copy template** (paste path routes through
+   the same normalized request), **edit** and **delete** via natural
+   language, **undo-latest**, comparing history views side-by-side in both
+   bots, and restart persistence.
+3. **Optional:** ask the user whether to remove the orphaned
+   `team_emojis`/`suggestions`/`allowed_users` tabs (copied from the
+   original NFL Guesser workbook, outside the tested `LEGACY_NFL_TABS`
+   removal mechanism, currently harmless but unused).
+4. **Nothing currently re-polls automatically beyond the installed
+   timers** — `wnba-poller.timer` (15 min) and `wnba-schedule-sync.timer`
+   (daily 05:20 ET) are both active and were verified scheduled, so this
+   is expected to keep working unattended; no action needed unless a
+   future session finds otherwise.
