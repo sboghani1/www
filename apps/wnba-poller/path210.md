@@ -881,3 +881,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Closing-number lean for a game that has already tipped off. Side leans small toward New York Liberty -8: a very recent head-to-head precedent has Liberty beating Seattle by 12 and covering a smaller number days earlier, but the spread's continued gradual ease toward Seattle across tonight's window (a caution a prior draft for this exact matchup already flagged) keeps this at minimum-plus rather than higher confidence. Total leans small Over 183.5: the number barely moved, so this leans on the broader recent base rate rather than any real movement signal. No first-half lean: a closing first-half number exists (Liberty -4.5 / 95) but there is no tracked movement history or precedent to support a specific first-half read.
 <!-- WNBA_LEAN_EVENT_END event_id=55583b8c075dd483b408ce1ba4c24244 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=80bb6c471358f70e96b4571c4470ac0a -->
+## WNBA Lean: Dallas Wings @ Washington Mystics
+- Event ID: `80bb6c471358f70e96b4571c4470ac0a`
+- Revision: `9226c2d1-78fc-41e1-95eb-162cb399703b`
+- Status: `active`
+
+### Full game
+- **Side:** Washington Mystics (moderate)
+  - Evidence: A prior recent-form audit already logged for Washington shows their last three home-underdog side leans went 3/3, all with the Mystics winning outright as dogs (entries 66, 70, 83); The spread was completely flat at Wings -2.5 across the entire tracked window (three captures, ~75 minutes), settling right at a modest, competitive number rather than a blowout price
+  - Watch: The number closed at Wings -2.5 rather than the slightly larger -3 a prior draft for this matchup was originally responding to -- a small half-point move toward Dallas since then, which is a mild caution against this lean, not a reason to abandon it; This is a closing-number read on a game that has already started -- there is no further line movement to watch
+- **Total:** Under (small)
+  - Evidence: The total declined meaningfully across the tracked window, from 168.5 down to 166.5 -- a real 2-point move, not noise, and this log treats line direction as its strongest signal; This total was already the lowest of tonight's four games, consistent with a lower-scoring expectation for this specific matchup
+  - Watch: This runs against the log's general current season-wide lean toward overs, which is why it stays at small rather than a higher strength -- the specific downward movement here is the deciding factor, not the seasonal base rate
+
+**Summary:** Closing-number lean for a game that has already tipped off. Side leans moderate toward Washington Mystics +2.5: a specific recent-form audit shows Washington winning outright as a home underdog in each of its last three relevant spots, and the market settled at a competitive, unmoving number all window (Wings -2.5) rather than pushing toward a blowout -- tempered slightly since a prior draft for this matchup expected -3, a touch more favorable to the underdog than tonight's closing number. Total leans small Under 166.5: this was the one game tonight where the total genuinely moved, declining 2 points (168.5 to 166.5), which is treated as a real signal against this log's broader seasonal over-lean. No first-half lean: a closing first-half number exists (Wings -1 / 81) but there is no tracked movement history or precedent to support a specific first-half read.
+<!-- WNBA_LEAN_EVENT_END event_id=80bb6c471358f70e96b4571c4470ac0a -->
