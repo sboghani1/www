@@ -898,3 +898,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Closing-number lean for a game that has already tipped off. Side leans moderate toward Washington Mystics +2.5: a specific recent-form audit shows Washington winning outright as a home underdog in each of its last three relevant spots, and the market settled at a competitive, unmoving number all window (Wings -2.5) rather than pushing toward a blowout -- tempered slightly since a prior draft for this matchup expected -3, a touch more favorable to the underdog than tonight's closing number. Total leans small Under 166.5: this was the one game tonight where the total genuinely moved, declining 2 points (168.5 to 166.5), which is treated as a real signal against this log's broader seasonal over-lean. No first-half lean: a closing first-half number exists (Wings -1 / 81) but there is no tracked movement history or precedent to support a specific first-half read.
 <!-- WNBA_LEAN_EVENT_END event_id=80bb6c471358f70e96b4571c4470ac0a -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=03dfbda8989e58cb5886ea6e37b348d3 -->
+## WNBA Lean: Los Angeles Sparks @ Chicago Sky
+- Event ID: `03dfbda8989e58cb5886ea6e37b348d3`
+- Revision: `2a740094-3e85-4e61-8ace-a921247075ee`
+- Status: `active`
+
+### Full game
+- **Side:** Chicago Sky (watch)
+  - Evidence: The spread has been completely flat at Sky -3 across the entire tracked window so far (three captures spanning 17:04 to 19:15 ET), matching a prior draft's own number for this matchup with no further movement to confirm either direction; A prior recent-form audit already logged for both teams is genuinely mixed: Los Angeles has one hit as a favorite backer and one hit covering as an underdog but also a miss, and Chicago has split results both covering as an underdog and failing to cover as a favorite -- no clean directional signal from recent form
+  - Watch: This is a preliminary read with real time left before tip (~72 minutes) -- unlike tonight's other three games, there is still room for genuine line movement here, so this should be revisited closer to tip rather than treated as final; If the spread moves off -3 in either direction before tip, that would be the first real signal in this matchup and should drive the next revision
+- **Total:** Over (small)
+  - Evidence: The log's current WNBA-scoring guidance: total_over is 8/8 recently, with an active time-bounded tilt toward the over around the WNBA all-star break; The total has been flat within the currently tracked window (186.5 across all three captures), providing no fade signal against the over
+  - Watch: A prior draft for this same matchup was built around a higher total (189.5) that has since settled lower (186.5) -- that decline is a real caution against leaning harder into the over here, which is why this stays at small rather than the prior draft's moderate framing; Revisit if the total moves further before tip; there is still meaningful time left in the pregame window
+
+**Summary:** Preliminary pregame lean -- this game has not started yet (~72 minutes to tip), unlike tonight's other three, so revisit closer to tip if the line moves. Side stays at minimum (watch) strength on Chicago Sky -3: the spread has been flat all window with no confirming movement, and recent form for both teams is genuinely mixed with no clean signal. Total leans small Over 186.5: the currently tracked window shows no downward pressure, but the total has already settled noticeably below the higher number a prior draft for this matchup was built around, which caps this below that draft's more confident framing. No first-half lean: a first-half number exists (Sky -1.5 / 91.5) but there is no tracked movement history or precedent to support a specific first-half read.
+<!-- WNBA_LEAN_EVENT_END event_id=03dfbda8989e58cb5886ea6e37b348d3 -->
