@@ -967,6 +967,14 @@ QUICK DECISION AND GUARDRAIL INDEX
 - Fix: immediately reload the run from SQLite after `start_run` persists its
   PID and start timestamp. All later recovery comparisons use that durable
   record rather than the stale queued snapshot.
+- Deployment sandbox incident: approved WNBA request `54789f3d` attempted to
+  install under `/opt` directly and failed without partial changes because the
+  root executor inherited the receptionist service's `ProtectSystem=strict`
+  mount namespace.
+- Rule: approved commands that modify `/opt`, `/etc`, `/usr/local`, or systemd
+  state must launch a transient unit with `systemd-run`. Use a unique unit name,
+  `--collect`, and `--wait` when the approval record should reflect the
+  installer's final exit status.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD

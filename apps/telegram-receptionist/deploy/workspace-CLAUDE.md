@@ -31,6 +31,11 @@ This directory is the root of a private coding workspace.
 - The approved command executes as root on the `pickbot` VPS, so commands should
   target local production paths directly rather than SSHing back into the same
   server.
-- For the receptionist itself, request a detached deployment command because
-  restarting the bot would otherwise kill the executor:
+- The approval executor inherits the receptionist service's
+  `ProtectSystem=strict` mount namespace. Any command that writes to `/opt`,
+  `/etc`, `/usr/local`, or otherwise changes system services must launch a
+  detached transient systemd unit so it runs outside that read-only namespace.
+- For the receptionist itself, the detached command is:
   `systemd-run --unit=telegram-receptionist-deploy-$(date +%s) --collect /usr/local/libexec/deploy-telegram-receptionist-worker`
+- Use the same pattern for other root installers, with a unique unit name and
+  `--wait` when the approval result must reflect installer success or failure.

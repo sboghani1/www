@@ -23,3 +23,9 @@ request-receptionist-deploy \
 The bot displays the exact revision and command. Deployment occurs only after
 the authorized user approves that immutable request in Telegram. The agent has
 no direct sudo permission.
+
+The approval executor runs inside the receptionist service's read-only system
+mount namespace. Root commands that write under `/opt`, `/etc`, `/usr/local`,
+or manage systemd units must use `systemd-run` to launch a transient unit
+outside that namespace. Add `--wait` when approval should report the detached
+installer's final result.
