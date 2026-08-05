@@ -29,6 +29,7 @@ def main() -> None:
         raise SystemExit("Only the configured Claude command is allowed.")
 
     os.chdir(repository)
+    os.environ["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1"
     os.execv(CLAUDE_BINARY, command)
 
 

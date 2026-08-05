@@ -637,6 +637,18 @@ proposal.
 - Consequence: `/reset` archives the receptionist session and creates a new row
   with no provider session ID, guaranteeing a fresh Claude context.
 
+2026-08-05 — Background agent tasks are disabled
+
+- Decision: the root-owned Claude launcher sets
+  `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`.
+- Reason: `claude -p` terminates lingering background Bash tasks shortly after
+  returning its final result. Without this setting, Claude can say it will reply
+  when a background command finishes even though the process is about to be
+  killed and no later reply is possible.
+- Consequence: commands run sequentially inside the current Telegram turn. Long
+  work remains observable through the edited status message and is bounded by
+  the receptionist's 60-minute timeout.
+
 2026-08-05 — SQLite is the durable queue and audit log
 
 - Decision: persist repositories, user state, sessions, exact prompts, runs,
