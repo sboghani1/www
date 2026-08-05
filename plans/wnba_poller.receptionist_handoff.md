@@ -762,3 +762,46 @@ Next actions (in order):
   without requiring unique module basenames, so no `__init__.py` is needed.
 - Validation: the exact command in the entry above now collects and passes
   all 73 tests with zero collection errors.
+
+### 2026-08-05 — Production `/wnba` in the receptionist failed: "Could not load WNBA games"
+
+- Symptom: after full deployment (Sheet initialized, WNBA systemd services
+  running, receptionist deployed), the user sent `/wnba` in the live
+  receptionist chat and got `❌ Could not load WNBA games. Try again.`
+- Diagnosis: could not read `telegram-receptionist.service`'s own journal
+  (`receptionist-agent` is not in the `adm`/`systemd-journal` group, so
+  `journalctl -u telegram-receptionist.service` shows nothing useful).
+  Reproduced directly instead: `echo '{"action":"list_games"}' |
+  /usr/local/libexec/receptionist-wnba-helper` (running as
+  `receptionist-agent`, the same identity the receptionist's own
+  `sudo -n -u receptionist-agent` call uses) returned exit code 1 with
+  `WNBA_SHEET_ID is required.`
+- Root cause: **a third, previously-unnoticed credentials file.**
+  `receptionist-wnba-helper` (the fixed root-owned wrapper at
+  `/usr/local/libexec/receptionist-wnba-helper`, installed by the
+  receptionist's own deploy worker — see `apps/telegram-receptionist/deploy/receptionist-wnba-helper`)
+  reads `GOOGLE_CREDENTIALS`, `GOOGLE_SERVICE_ACCOUNT_JSON`, and
+  `WNBA_SHEET_ID` from **`/home/receptionist-agent/.config/receptionist-agent/google.env`**
+  — a file this session never touched, because it's neither of the two
+  files staged for the *standalone* WNBA poller/bot
+  (`/home/receptionist-agent/.config/wnba-poller/env`,
+  `/home/receptionist-agent/.config/wnba-guesser/env`, both populated
+  earlier this session and working correctly). This third file already
+  existed (pre-dating this WNBA work, used for the receptionist's other
+  Google Sheets access) with `GOOGLE_CREDENTIALS`,
+  `GOOGLE_SERVICE_ACCOUNT_JSON`, and `NFL_INTAKE_SHEET_ID` — but no
+  `WNBA_SHEET_ID` line, since nothing had ever needed to add one before.
+  **Lesson: the receptionist's privileged WNBA path uses its own
+  credentials file, separate from the standalone poller/bot's — all three
+  env files need `WNBA_SHEET_ID` (or Google credentials), not just two.**
+- Fix: appended `WNBA_SHEET_ID=1toTFz0zmeMQI5WnuWr-jhg0HwVkMPEF5nLBIe0R3wyk`
+  as a new line to the existing file (`receptionist-agent` owns this
+  directory at mode 0700, so no root was needed; did not touch the
+  existing `GOOGLE_CREDENTIALS`/`GOOGLE_SERVICE_ACCOUNT_JSON`/
+  `NFL_INTAKE_SHEET_ID` lines). No service restart required —
+  `receptionist-wnba-helper` is invoked fresh as a subprocess per request,
+  not a long-running daemon, so the fix took effect on the very next
+  `/wnba`.
+- Validation: re-ran the exact reproduction command directly —
+  `{"ok": true, "result": {"games": [...41 games...]}}`. Told the user to
+  retry `/wnba` in Telegram.
