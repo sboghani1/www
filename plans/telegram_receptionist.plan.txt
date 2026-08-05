@@ -14,7 +14,8 @@ running on the existing VPS.
 The bot must:
 
 - Accept messages only from my numeric Telegram user ID in a private chat.
-- Let me select and switch among repositories cloned on the VPS.
+- Work across every repository under `/home/receptionist/repos`, including
+  cloning new repositories, without requiring Telegram-side selection.
 - Start, resume, inspect, stop, and reset agent conversations.
 - Pass ordinary Telegram text to the selected agent as the exact next user
   message, without paraphrasing or adding an application-level prompt.
@@ -262,8 +263,8 @@ Plain-text behavior:
 Commands:
 
 - /start        show current provider, repository, and session
-- /repos        list registered repositories
-- /repo         select a repository
+- /repos        list repositories currently cloned in the workspace
+- /repo         compatibility message explaining that switching is unnecessary
 - /new          create a new conversation in the selected repository
 - /sessions     list recent conversations for the selected repository
 - /switch       switch the active conversation
@@ -524,8 +525,10 @@ Phase 6: additional providers
 
 - A message from any unauthorized Telegram user cannot start a process, select a
   repository, or reveal state.
-- I can select at least two VPS repositories and maintain separate conversations
-  in each.
+- One conversation can inspect and change at least two repositories under the
+  workspace root without registration or switching.
+- The agent can clone a new repository beneath the workspace root and use it in
+  the same conversation.
 - Sending "yes", a multiline answer, code, or quoted text results in those exact
   characters being used as the next user prompt, subject only to Telegram's own
   text representation.
@@ -560,7 +563,7 @@ Approved on 2026-08-04:
 - Language: implement v1 in Python.
 - Telegram library: use `python-telegram-bot` with Bot API long polling. Do not
   create or maintain a Telethon/MTProto session for this bot.
-- Initial repositories: approve `www` and create a private
+- Initial repositories (superseded by workspace mode below): approve `www` and create a private
   `sboghani1/agent-sandbox` repository. Add other production repositories only
   after isolation, cancellation, and recovery tests pass.
 - Git authority: the agent may push branches and perform production deployments.
@@ -702,6 +705,35 @@ proposal.
   inconsistent backup. SQLite's backup API produces a coherent snapshot while
   the bot remains online.
 
+2026-08-05 — Replace repository selection with one workspace
+
+- Decision: remove the explicit repository allowlist and make
+  `/home/receptionist/repos` the working directory for every new conversation.
+- Reason: real tasks commonly span several repositories. Telegram-side
+  repository registration and switching add friction without providing a
+  meaningful security boundary, because the dedicated agent user already owns
+  the workspace and can safely access its children.
+- Behavior: `/repos` discovers Git repositories dynamically for information
+  only. The agent may inspect existing repositories, clone new ones beneath the
+  workspace root, and coordinate cross-repository changes without requesting
+  permission to switch.
+- Preserved guardrail: path validation still confines the privileged launcher to
+  `/home/receptionist/repos`; the agent still cannot read the Telegram bot
+  account, forwarder account, or unrelated VPS secrets.
+
+2026-08-05 — Expose only Google Sheets credentials
+
+- Decision: copy only the Google Sheets credential variables and required
+  service-account material into an agent-owned secret file, then load those
+  allowlisted values in the root-owned Claude launcher.
+- Reason: cross-repository work includes updating authorized Google Sheets, but
+  exposing the forwarder's complete environment would also disclose unrelated
+  Telegram sessions, bot tokens, API credentials, and production secrets.
+- Allowed credential scope: `GOOGLE_CREDENTIALS`,
+  `GOOGLE_SERVICE_ACCOUNT_JSON`, and `NFL_INTAKE_SHEET_ID`.
+- Preserved guardrail: the agent still cannot read the forwarder's `.env`,
+  `.env.local`, home directory, or any non-Google credential stored there.
+
 2026-08-05 — Telegram output is compact and flood-aware
 
 - Decision: acknowledge receipt immediately, edit one status message while
@@ -780,8 +812,8 @@ Acceptance evidence:
   exact response.
 - A direct sandbox test created a Claude session, resumed the same session ID,
   and changed a file based on the second turn.
-- Telegram repository selection and new-session creation worked for both `www`
-  and `agent-sandbox`.
+- The workspace exposed both `www` and `agent-sandbox` without registration;
+  new sessions started at their common parent directory.
 - The bot service restarted and resumed the existing Claude conversation.
 - `/reset` returned a new receptionist session with no prior provider context.
 - Verbose mode edited one status message after 30 seconds with agent/VPS CPU,

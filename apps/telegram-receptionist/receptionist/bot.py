@@ -85,7 +85,7 @@ class Receptionist:
         state = self.database.get_user_state(update.effective_user.id)
         await update.message.reply_text(
             "🤖 Telegram Receptionist\n"
-            f"Repository: {state['repository_name']}\n"
+            "Workspace: /home/receptionist/repos\n"
             f"Session: {state['session_name'] or 'none'}\n"
             f"Provider: {state['session_provider'] or 'claude'}\n\n"
             "Send plain text to run an exact agent turn. Use /help for commands."
@@ -93,8 +93,7 @@ class Receptionist:
 
     async def help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text(
-            "/repos — list repositories\n"
-            "/repo <name> — select repository\n"
+            "/repos — list repositories currently in the workspace\n"
             "/new [name] — start a new conversation\n"
             "/sessions — list conversations\n"
             "/switch <id-prefix> — switch conversation\n"
@@ -107,28 +106,21 @@ class Receptionist:
         )
 
     async def repos(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        state = self.database.get_user_state(update.effective_user.id)
-        lines = ["Repositories:"]
-        for repository in self.database.list_repositories():
-            marker = "●" if repository["id"] == state["active_repository_id"] else "○"
-            availability = "ready" if Path(repository["absolute_path"]).is_dir() else "missing"
-            lines.append(f"{marker} {repository['name']} ({availability})")
+        repositories = sorted(
+            child.name
+            for child in self.config.repo_root.iterdir()
+            if child.is_dir() and not child.name.startswith(".")
+        )
+        lines = ["Workspace repositories:"]
+        lines.extend(f"• {name}" for name in repositories)
+        if not repositories:
+            lines.append("(none yet)")
         await update.message.reply_text("\n".join(lines))
 
     async def repo(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        if not context.args:
-            await self.repos(update, context)
-            return
-        try:
-            repository = self.database.select_repository(
-                update.effective_user.id, context.args[0]
-            )
-        except LookupError as error:
-            await update.message.reply_text(str(error))
-            return
         await update.message.reply_text(
-            f"Selected {repository['name']}. "
-            "Use /new to start a fresh conversation."
+            "Repository switching is no longer required. Every session runs at "
+            "/home/receptionist/repos and can work across all child repositories."
         )
 
     async def new(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -207,7 +199,7 @@ class Receptionist:
         active = self.database.active_run()
         last = self.database.last_run_for_user(update.effective_user.id)
         lines = [
-            f"Repository: {state['repository_name']}",
+            "Workspace: /home/receptionist/repos",
             f"Session: {state['session_name'] or 'none'}",
             f"Queued: {self.database.queued_count()}",
             f"Verbose: {'on' if state['verbose'] else 'off'}",

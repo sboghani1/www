@@ -4,7 +4,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-TRUSTED_REPO_ROOT = Path("/home/receptionist/repos")
+TRUSTED_REPO_ROOT = Path("/home/receptionist/repos").resolve()
 TRUSTED_CLAUDE_BINARY = "/usr/bin/claude"
 
 
@@ -48,9 +48,7 @@ class Config:
                 f"RECEPTIONIST_REPO_ROOT must match the privileged launcher: "
                 f"{TRUSTED_REPO_ROOT}"
             )
-        repositories = parse_repositories(
-            _required("RECEPTIONIST_REPOSITORIES"), repo_root
-        )
+        repositories = (RepositoryConfig(name="workspace", path=repo_root),)
         state_dir = Path(
             os.getenv("RECEPTIONIST_STATE_DIR", "/var/lib/telegram-receptionist")
         ).expanduser().resolve()
@@ -79,32 +77,6 @@ class Config:
             max_queued_messages=queue_limit,
             model=os.getenv("CLAUDE_MODEL") or None,
         )
-
-
-def parse_repositories(value: str, repo_root: Path) -> tuple[RepositoryConfig, ...]:
-    root = repo_root.resolve()
-    repositories: list[RepositoryConfig] = []
-    names: set[str] = set()
-    for entry in value.split(","):
-        entry = entry.strip()
-        if not entry:
-            continue
-        name, separator, raw_path = entry.partition(":")
-        if not separator or not name.strip() or not raw_path.strip():
-            raise ValueError(
-                "RECEPTIONIST_REPOSITORIES entries must use name:/absolute/path"
-            )
-        name = name.strip()
-        if name in names:
-            raise ValueError(f"duplicate repository name: {name}")
-        path = Path(raw_path.strip()).expanduser().resolve()
-        if not path.is_relative_to(root):
-            raise ValueError(f"repository {name} is outside {root}")
-        names.add(name)
-        repositories.append(RepositoryConfig(name=name, path=path))
-    if not repositories:
-        raise ValueError("RECEPTIONIST_REPOSITORIES is empty")
-    return tuple(repositories)
 
 
 def _required(name: str) -> str:

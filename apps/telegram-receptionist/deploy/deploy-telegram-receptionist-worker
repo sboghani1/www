@@ -64,6 +64,7 @@ wait_healthy() {
 }
 
 mkdir -p "$releases" "$state_dir"
+chmod 0755 /home/receptionist/repos
 
 if [[ "$(as_agent git -C "$repo" branch --show-current)" != "main" ]]; then
     echo "Workspace must be on main." >&2
@@ -103,6 +104,10 @@ if [[ ! -d "$release" ]]; then
     chmod -R go-w "$release"
     trap - ERR
 fi
+
+install -m 0644 -o receptionist-agent -g receptionist-agent \
+    "$release/$app_rel/deploy/workspace-CLAUDE.md" \
+    /home/receptionist/repos/CLAUDE.md
 
 ln -sfn "$release" "$install_root/current.new"
 mv -Tf "$install_root/current.new" "$install_root/current"

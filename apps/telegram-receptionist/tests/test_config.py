@@ -1,20 +1,14 @@
-from pathlib import Path
-
-import pytest
-
-from receptionist.config import parse_repositories
+from receptionist.config import Config, TRUSTED_REPO_ROOT
 
 
-def test_parse_repositories_stays_under_root(tmp_path: Path) -> None:
-    root = tmp_path / "repos"
-    repositories = parse_repositories(
-        f"www:{root / 'www'},sandbox:{root / 'sandbox'}", root
-    )
-    assert [repository.name for repository in repositories] == ["www", "sandbox"]
+def test_config_uses_single_workspace(monkeypatch) -> None:
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "token")
+    monkeypatch.setenv("TELEGRAM_ALLOWED_USER_ID", "123")
+    monkeypatch.setenv("RECEPTIONIST_REPO_ROOT", "/home/receptionist/repos")
+    monkeypatch.setenv("RECEPTIONIST_STATE_DIR", "/tmp/receptionist-test-state")
 
+    config = Config.from_env()
 
-def test_parse_repositories_rejects_escape(tmp_path: Path) -> None:
-    root = tmp_path / "repos"
-    with pytest.raises(ValueError, match="outside"):
-        parse_repositories(f"bad:{tmp_path / 'outside'}", root)
-
+    assert len(config.repositories) == 1
+    assert config.repositories[0].name == "workspace"
+    assert config.repositories[0].path == TRUSTED_REPO_ROOT

@@ -11,7 +11,7 @@ next turn.
 ## Commands
 
 - `/start`, `/help`, `/status`
-- `/repos`, `/repo <name>`
+- `/repos`
 - `/new [name]`, `/sessions`, `/switch <session-id-prefix>`, `/reset`
 - `/provider`, `/verbose [on|off]`
 - `/stop`
@@ -30,7 +30,6 @@ python -m venv .venv && .venv/bin/pip install -e '.[test]' && .venv/bin/pytest
 TELEGRAM_BOT_TOKEN=...
 TELEGRAM_ALLOWED_USER_ID=123456789
 RECEPTIONIST_REPO_ROOT=/home/receptionist/repos
-RECEPTIONIST_REPOSITORIES=www:/home/receptionist/repos/www,agent-sandbox:/home/receptionist/repos/agent-sandbox
 RECEPTIONIST_STATE_DIR=/var/lib/telegram-receptionist
 CLAUDE_BINARY=/usr/bin/claude
 AGENT_LAUNCHER=/usr/local/libexec/receptionist-agent-runner
@@ -41,6 +40,19 @@ MAX_QUEUED_MESSAGES=10
 
 Secrets belong only in the VPS environment file. Do not commit them.
 
+All sessions start at `/home/receptionist/repos` and may work across any
+repository beneath it. `/repos` is informational; no repository registration or
+switching is required.
+
 The bot runs as `receptionist`; Claude and Git run as `receptionist-agent`
 through a fixed root-owned launcher. This separation keeps the Telegram token
 and bot state outside the coding agent's Unix permissions.
+
+The launcher may load only these Google Sheets values from the agent-owned
+`~/.config/receptionist-agent/google.env`:
+
+- `GOOGLE_CREDENTIALS`
+- `GOOGLE_SERVICE_ACCOUNT_JSON`
+- `NFL_INTAKE_SHEET_ID`
+
+It does not load the forwarder's general environment.

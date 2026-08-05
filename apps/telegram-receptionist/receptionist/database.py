@@ -22,6 +22,7 @@ class Database:
 
     def initialize(self, repositories: Iterable[RepositoryConfig]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        configured = tuple(repositories)
         with self._connect() as connection:
             connection.executescript(
                 """
@@ -98,7 +99,8 @@ class Database:
                 );
                 """
             )
-            for repository in repositories:
+            connection.execute("UPDATE repositories SET enabled=0")
+            for repository in configured:
                 connection.execute(
                     """
                     INSERT INTO repositories(name, absolute_path, created_at)
@@ -108,6 +110,24 @@ class Database:
                         enabled=1
                     """,
                     (repository.name, str(repository.path), utc_now()),
+                )
+            workspace = connection.execute(
+                """
+                SELECT id FROM repositories
+                WHERE name='workspace' AND enabled=1
+                """
+            ).fetchone()
+            if workspace:
+                connection.execute(
+                    """
+                    UPDATE bot_state
+                    SET active_repository_id=?, active_session_id=NULL,
+                        updated_at=?
+                    WHERE active_repository_id IS NULL OR active_repository_id IN (
+                        SELECT id FROM repositories WHERE enabled=0
+                    )
+                    """,
+                    (workspace["id"], utc_now()),
                 )
             connection.commit()
 
@@ -176,45 +196,6 @@ class Database:
             if row is None:
                 raise RuntimeError("user state is not initialized")
             return dict(row)
-
-    def list_repositories(self) -> list[dict[str, Any]]:
-        with self._connect() as connection:
-            return [
-                dict(row)
-                for row in connection.execute(
-                    "SELECT * FROM repositories WHERE enabled=1 ORDER BY name"
-                )
-            ]
-
-    def select_repository(self, user_id: int, name: str) -> dict[str, Any]:
-        with self._connect() as connection:
-            repository = connection.execute(
-                "SELECT * FROM repositories WHERE name=? AND enabled=1", (name,)
-            ).fetchone()
-            if repository is None:
-                raise LookupError(f"unknown repository: {name}")
-            session = connection.execute(
-                """
-                SELECT id FROM sessions
-                WHERE telegram_user_id=? AND repository_id=? AND status='active'
-                ORDER BY last_used_at DESC LIMIT 1
-                """,
-                (user_id, repository["id"]),
-            ).fetchone()
-            connection.execute(
-                """
-                UPDATE bot_state SET active_repository_id=?, active_session_id=?,
-                    updated_at=? WHERE telegram_user_id=?
-                """,
-                (
-                    repository["id"],
-                    session["id"] if session else None,
-                    utc_now(),
-                    user_id,
-                ),
-            )
-            connection.commit()
-            return dict(repository)
 
     def create_session(
         self, user_id: int, display_name: str | None = None, provider: str = "claude"

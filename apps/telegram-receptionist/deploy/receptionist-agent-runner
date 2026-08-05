@@ -8,6 +8,25 @@ from pathlib import Path
 
 REPO_ROOT = Path("/home/receptionist/repos").resolve()
 CLAUDE_BINARY = "/usr/bin/claude"
+GOOGLE_ENV = Path(
+    "/home/receptionist-agent/.config/receptionist-agent/google.env"
+)
+ALLOWED_GOOGLE_KEYS = {
+    "GOOGLE_CREDENTIALS",
+    "GOOGLE_SERVICE_ACCOUNT_JSON",
+    "NFL_INTAKE_SHEET_ID",
+}
+
+
+def load_google_environment() -> None:
+    if not GOOGLE_ENV.is_file():
+        return
+    for line in GOOGLE_ENV.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key in ALLOWED_GOOGLE_KEYS:
+            os.environ[key] = value
 
 
 def main() -> None:
@@ -29,6 +48,7 @@ def main() -> None:
         raise SystemExit("Only the configured Claude command is allowed.")
 
     os.chdir(repository)
+    load_google_environment()
     os.environ["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1"
     os.execv(CLAUDE_BINARY, command)
 

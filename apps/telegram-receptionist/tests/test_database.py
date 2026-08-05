@@ -37,3 +37,21 @@ def test_deployment_seen_is_recorded_after_notification(tmp_path: Path) -> None:
     assert not database.deployment_is_seen("deploy-1")
     database.mark_deployment_seen("deploy-1")
     assert database.deployment_is_seen("deploy-1")
+
+
+def test_workspace_migration_resets_disabled_repository_selection(
+    tmp_path: Path,
+) -> None:
+    old_repository = tmp_path / "repos" / "old"
+    workspace = tmp_path / "repos"
+    old_repository.mkdir(parents=True)
+    database = Database(tmp_path / "state" / "receptionist.db")
+    database.initialize((RepositoryConfig("old", old_repository),))
+    database.ensure_user_state(123, 456)
+    database.create_session(123)
+
+    database.initialize((RepositoryConfig("workspace", workspace),))
+
+    state = database.get_user_state(123)
+    assert state["repository_name"] == "workspace"
+    assert state["active_session_id"] is None
