@@ -559,14 +559,17 @@ class AgentRunner:
             await self._safe_edit(run["telegram_chat_id"], message_id, text)
 
     async def _deliver_run(self, run: dict[str, Any]) -> bool:
+        claimed = self.database.claim_delivery(run["id"])
+        if claimed is None:
+            return False
         try:
-            await self._finish_telegram(run)
+            await self._finish_telegram(claimed)
         except TelegramError as error:
             self.database.mark_delivery_failed(
-                run["id"], f"{type(error).__name__}: {error}"
+                claimed["id"], f"{type(error).__name__}: {error}"
             )
             return False
-        self.database.mark_delivery_succeeded(run["id"])
+        self.database.mark_delivery_succeeded(claimed["id"])
         return True
 
     async def _finish_telegram(self, run: dict[str, Any]) -> None:

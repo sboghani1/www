@@ -940,6 +940,11 @@ QUICK DECISION AND GUARDRAIL INDEX
   and retried every minute after transient Telegram failures. Multi-message
   responses resume at the first unsent chunk instead of duplicating chunks that
   Telegram already accepted.
+- Delivery concurrency: a sender must atomically change the run from pending or
+  failed to sending before contacting Telegram. This prevents the run-completion
+  path and the one-minute retry poll from delivering the same response
+  concurrently. A service restart changes an interrupted sending claim back to
+  failed so it can be retried.
 - Operator UX: `/recover` and the **Recover worker** button reconcile dead runs,
   retry pending delivery, and restart only a dead queue worker. A live agent is
   not killed or blindly restarted. `/status` shows process and delivery state.

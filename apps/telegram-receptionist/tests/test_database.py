@@ -186,6 +186,7 @@ def test_run_delivery_state_and_event_heartbeat(tmp_path: Path) -> None:
     assert finished["delivery_cursor"] == 0
     assert database.pending_delivery_runs()[0]["id"] == run["id"]
 
+    assert database.claim_delivery(run["id"]) is not None
     database.set_delivery_cursor(run["id"], 1)
     database.mark_delivery_failed(run["id"], "network")
     failed = database.get_run(run["id"])
@@ -193,8 +194,34 @@ def test_run_delivery_state_and_event_heartbeat(tmp_path: Path) -> None:
     assert failed["delivery_attempts"] == 1
     assert failed["delivery_cursor"] == 1
 
+    assert database.claim_delivery(run["id"]) is not None
     database.mark_delivery_succeeded(run["id"])
     delivered = database.get_run(run["id"])
     assert delivered["delivery_status"] == "delivered"
     assert delivered["delivery_attempts"] == 2
     assert delivered["delivered_at"]
+
+
+def test_interrupted_delivery_is_retryable_after_restart(tmp_path: Path) -> None:
+    repository = tmp_path / "repos"
+    repository.mkdir()
+    database = Database(tmp_path / "state" / "receptionist.db")
+    database.initialize((RepositoryConfig("workspace", repository),))
+    database.ensure_user_state(123, 456)
+    session = database.create_session(123)
+    run = database.enqueue_run(session["id"], 456, "prompt")
+    database.start_run(run["id"], 789)
+    database.finish_run(
+        run["id"],
+        status="succeeded",
+        exit_code=0,
+        final_response="done",
+        error=None,
+    )
+
+    assert database.claim_delivery(run["id"]) is not None
+    assert database.claim_delivery(run["id"]) is None
+    assert database.recover_interrupted_deliveries() == 1
+    recovered = database.get_run(run["id"])
+    assert recovered["delivery_status"] == "failed"
+    assert database.claim_delivery(run["id"]) is not None

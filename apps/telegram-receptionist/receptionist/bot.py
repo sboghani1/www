@@ -189,6 +189,7 @@ class Receptionist:
     async def post_init(self, application: Application) -> None:
         self.config.state_dir.mkdir(parents=True, exist_ok=True)
         self.database.initialize(self.config.repositories)
+        recovered_deliveries = self.database.recover_interrupted_deliveries()
         recovered_deployments = self.database.recover_interrupted_deployments()
         self.database.prune_events()
         self.runner = AgentRunner(self.config, self.database, application.bot)
@@ -209,8 +210,10 @@ class Receptionist:
         await self._notify_deployment(application)
         systemd_notify("READY=1\nSTATUS=Telegram polling and agent worker ready")
         log.info(
-            "Receptionist started; recovered_runs=%d recovered_deployments=%d",
+            "Receptionist started; recovered_runs=%d "
+            "recovered_deliveries=%d recovered_deployments=%d",
             len(recovery_messages),
+            recovered_deliveries,
             recovered_deployments,
         )
 

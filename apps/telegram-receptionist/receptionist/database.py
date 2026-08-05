@@ -667,12 +667,36 @@ class Database:
             ).fetchall()
         return [self.get_run(row["id"]) for row in rows]
 
+    def claim_delivery(self, run_id: str) -> dict[str, Any] | None:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE runs SET delivery_status='sending'
+                WHERE id=? AND delivery_status IN ('pending','failed')
+                """,
+                (run_id,),
+            )
+            connection.commit()
+        return self.get_run(run_id) if cursor.rowcount == 1 else None
+
+    def recover_interrupted_deliveries(self) -> int:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE runs SET delivery_status='failed',
+                    delivery_error='Receptionist restarted during delivery.'
+                WHERE delivery_status='sending'
+                """
+            )
+            connection.commit()
+            return cursor.rowcount
+
     def set_delivery_cursor(self, run_id: str, cursor: int) -> None:
         with self._connect() as connection:
             connection.execute(
                 """
                 UPDATE runs SET delivery_cursor=?
-                WHERE id=? AND delivery_status IN ('pending','failed')
+                WHERE id=? AND delivery_status='sending'
                 """,
                 (cursor, run_id),
             )
@@ -685,7 +709,7 @@ class Database:
                 UPDATE runs SET delivery_status='delivered',
                     delivery_attempts=delivery_attempts+1,
                     delivered_at=?, delivery_error=NULL
-                WHERE id=?
+                WHERE id=? AND delivery_status='sending'
                 """,
                 (utc_now(), run_id),
             )
@@ -698,7 +722,7 @@ class Database:
                 UPDATE runs SET delivery_status='failed',
                     delivery_attempts=delivery_attempts+1,
                     delivery_error=?
-                WHERE id=?
+                WHERE id=? AND delivery_status='sending'
                 """,
                 (error[:500], run_id),
             )

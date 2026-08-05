@@ -31,6 +31,20 @@ class FakeBot:
         raise AssertionError("test response should use text chunks")
 
 
+class BlockingBot(FakeBot):
+    def __init__(self) -> None:
+        super().__init__()
+        self.fail_on_call = None
+        self.started = asyncio.Event()
+        self.release = asyncio.Event()
+
+    async def send_message(self, chat_id: int, text: str) -> None:
+        self.calls += 1
+        self.started.set()
+        await self.release.wait()
+        self.sent.append(text)
+
+
 class MissingProcess:
     pid = 999_999_999
     returncode = None
@@ -78,6 +92,30 @@ def test_delivery_retry_resumes_after_last_successful_chunk(
     assert delivered["delivery_status"] == "delivered"
     assert delivered["delivery_cursor"] == 2
     assert len(bot.sent) == 2
+
+
+def test_concurrent_delivery_attempts_send_response_once(
+    tmp_path: Path,
+) -> None:
+    database, run = _finished_run(tmp_path)
+    bot = BlockingBot()
+    runner = AgentRunner(SimpleNamespace(), database, bot)
+
+    async def exercise() -> tuple[bool, bool]:
+        first = asyncio.create_task(runner._deliver_run(run))
+        await bot.started.wait()
+        second = asyncio.create_task(runner._deliver_run(run))
+        await asyncio.sleep(0)
+        bot.release.set()
+        return await first, await second
+
+    first, second = asyncio.run(exercise())
+    assert first
+    assert not second
+    assert len(bot.sent) == 2
+    delivered = database.get_run(run["id"])
+    assert delivered["delivery_status"] == "delivered"
+    assert delivered["delivery_attempts"] == 1
 
 
 def test_missing_process_is_detected_without_waiting_for_timeout(
