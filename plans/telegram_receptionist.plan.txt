@@ -943,6 +943,10 @@ QUICK DECISION AND GUARDRAIL INDEX
   not gain access to that account's home directory. A receptionist-owned
   append-only output/exit spool remains the preferred future hardening if
   Claude's internal session format changes.
+- Deployment requirement: every immutable deployment refreshes the root-owned
+  agent launcher from the selected release before restarting the service.
+  Updating only the Python package would leave recovery logic split across
+  mismatched versions.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD

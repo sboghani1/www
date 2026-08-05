@@ -127,6 +127,9 @@ install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/receptionist-deploy-executor" \
     /usr/local/libexec/receptionist-deploy-executor
 install -m 0755 -o root -g root \
+    "$release/$app_rel/deploy/receptionist-agent-runner" \
+    /usr/local/libexec/receptionist-agent-runner
+install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/receptionist-wnba-helper" \
     /usr/local/libexec/receptionist-wnba-helper
 install -d -m 0755 -o receptionist-agent -g receptionist-agent \
