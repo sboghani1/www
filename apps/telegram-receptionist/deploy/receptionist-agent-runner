@@ -47,6 +47,8 @@ def recover_session(session_id: str) -> None:
     final_response_timestamp = ""
     last_timestamp = ""
     last_conversation_type = ""
+    last_conversation_timestamp = ""
+    last_assistant_has_tool_use = False
     with matches[0].open(encoding="utf-8") as handle:
         for line in handle:
             try:
@@ -59,6 +61,9 @@ def recover_session(session_id: str) -> None:
             row_type = row.get("type")
             if row_type in {"assistant", "user"}:
                 last_conversation_type = row_type
+                last_conversation_timestamp = (
+                    timestamp if isinstance(timestamp, str) else ""
+                )
             if row_type != "assistant":
                 continue
             message = row.get("message")
@@ -67,6 +72,10 @@ def recover_session(session_id: str) -> None:
             content = message.get("content")
             if not isinstance(content, list):
                 continue
+            last_assistant_has_tool_use = any(
+                isinstance(block, dict) and block.get("type") == "tool_use"
+                for block in content
+            )
             text = "\n".join(
                 str(block.get("text", ""))
                 for block in content
@@ -95,6 +104,8 @@ def recover_session(session_id: str) -> None:
                 "final_response_timestamp": final_response_timestamp,
                 "last_timestamp": last_timestamp,
                 "last_conversation_type": last_conversation_type,
+                "last_conversation_timestamp": last_conversation_timestamp,
+                "last_assistant_has_tool_use": last_assistant_has_tool_use,
                 "task_statuses": task_statuses,
             },
             ensure_ascii=False,

@@ -466,12 +466,11 @@ class AgentRunner:
 
     @staticmethod
     def _recovery_is_complete(recovery: dict[str, Any]) -> bool:
-        statuses = recovery.get("task_statuses")
-        if not isinstance(statuses, list):
-            return False
-        return all(
-            status in {"completed", "failed", "cancelled"}
-            for status in statuses
+        return (
+            recovery.get("last_conversation_type") == "assistant"
+            and not recovery.get("last_assistant_has_tool_use", True)
+            and recovery.get("final_response_timestamp")
+            == recovery.get("last_conversation_timestamp")
         )
 
     @classmethod
@@ -481,8 +480,6 @@ class AgentRunner:
         run: dict[str, Any],
     ) -> bool:
         if not cls._recovery_is_complete(recovery):
-            return False
-        if recovery.get("last_conversation_type") != "assistant":
             return False
         response_timestamp = recovery.get("final_response_timestamp")
         started_at = run.get("started_at")

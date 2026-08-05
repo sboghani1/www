@@ -923,8 +923,11 @@ QUICK DECISION AND GUARDRAIL INDEX
 - Dead-process behavior: the worker checks the full process group rather than
   only the original sudo PID. If a recorded process group disappears, it
   reconciles the run from the restricted Claude session reader. A response is
-  accepted only when any recorded Claude tasks are terminal. Recovery never
-  replays the prompt.
+  accepted only when the latest conversation record is a text-only assistant
+  response produced after the run began, with no attached tool call. Claude
+  task files are retained as diagnostics but are not authoritative because
+  completed runs can leave stale pending task records. Recovery never replays
+  the prompt.
 - Queue safety: a restarted worker will not execute queued prompts while an
   orphaned agent process group is still alive. It waits and reconciles that run
   before returning to the queue.

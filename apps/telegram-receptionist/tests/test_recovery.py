@@ -96,13 +96,23 @@ def test_missing_process_is_detected_without_waiting_for_timeout(
     assert disappeared
 
 
-def test_recovery_requires_terminal_claude_tasks() -> None:
-    assert AgentRunner._recovery_is_complete({"task_statuses": []})
+def test_recovery_requires_final_text_only_assistant_record() -> None:
     assert AgentRunner._recovery_is_complete(
-        {"task_statuses": ["completed", "failed", "cancelled"]}
+        {
+            "last_conversation_type": "assistant",
+            "last_assistant_has_tool_use": False,
+            "final_response_timestamp": "2026-08-05T20:00:00+00:00",
+            "last_conversation_timestamp": "2026-08-05T20:00:00+00:00",
+            "task_statuses": ["completed", "pending"],
+        }
     )
     assert not AgentRunner._recovery_is_complete(
-        {"task_statuses": ["completed", "pending"]}
+        {
+            "last_conversation_type": "assistant",
+            "last_assistant_has_tool_use": True,
+            "final_response_timestamp": "2026-08-05T20:00:00+00:00",
+            "last_conversation_timestamp": "2026-08-05T20:00:00+00:00",
+        }
     )
 
 
@@ -110,14 +120,17 @@ def test_recovery_response_must_belong_to_current_run() -> None:
     started = datetime.now(UTC)
     run = {"started_at": started.isoformat()}
     complete = {
-        "task_statuses": ["completed"],
         "last_conversation_type": "assistant",
+        "last_assistant_has_tool_use": False,
     }
 
     assert not AgentRunner._recovery_matches_run(
         {
             **complete,
             "final_response_timestamp": (
+                started - timedelta(seconds=1)
+            ).isoformat(),
+            "last_conversation_timestamp": (
                 started - timedelta(seconds=1)
             ).isoformat(),
         },
@@ -130,6 +143,9 @@ def test_recovery_response_must_belong_to_current_run() -> None:
             "final_response_timestamp": (
                 started + timedelta(seconds=1)
             ).isoformat(),
+            "last_conversation_timestamp": (
+                started + timedelta(seconds=1)
+            ).isoformat(),
         },
         run,
     )
@@ -137,6 +153,9 @@ def test_recovery_response_must_belong_to_current_run() -> None:
         {
             **complete,
             "final_response_timestamp": (
+                started + timedelta(seconds=1)
+            ).isoformat(),
+            "last_conversation_timestamp": (
                 started + timedelta(seconds=1)
             ).isoformat(),
         },
