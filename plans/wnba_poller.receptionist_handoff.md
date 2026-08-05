@@ -805,3 +805,37 @@ Next actions (in order):
 - Validation: re-ran the exact reproduction command directly —
   `{"ok": true, "result": {"games": [...41 games...]}}`. Told the user to
   retry `/wnba` in Telegram.
+
+### 2026-08-05 — `/wnba` game list was not paginated (user feedback)
+
+- Symptom: after the fix above, `/wnba` worked but listed up to 30 games
+  in one message with no pagination; the user asked for 5 at a time.
+- Fix: added `wnba_page_games`/`wnba_games_header`/updated
+  `wnba_games_markup` (`WNBA_GAMES_PAGE_SIZE = 5`) with Prev/Next buttons
+  driving a new `wnba:page:<n>` callback action, wired into both the
+  `/wnba` command handler and a new branch in `wnba_button`.
+- **Self-caught bug during this fix, before shipping:** the
+  `CallbackQueryHandler` that routes all `wnba:*` button presses uses an
+  allowlist regex (`^wnba:(?:game:...|generate|copy|history|revisions|undo)$`)
+  — adding the `page` action to the handler code alone would have been a
+  silent no-op in production: Telegram sends the callback, no handler
+  pattern matches it, `wnba_button` never runs, `query.answer()` never
+  fires, and the button just shows a permanent loading spinner with no
+  error anywhere. Caught by re-reading the handler registration in
+  `main()` after writing the new branch, not by a test (there wasn't one
+  for this pattern before). Fixed by adding `page:[0-9]{1,4}` to the
+  regex and extracting it to a module-level `WNBA_CALLBACK_PATTERN`
+  constant specifically so a test can import and exercise it directly —
+  this exact bug class (forgetting to extend the allowlist) is why the
+  new test suite asserts on the pattern object itself, not just the
+  handler functions.
+- Added `apps/telegram-receptionist/tests/test_wnba_bot.py` (new —
+  zero coverage for `bot.py`'s WNBA code before this; closes the gap
+  flagged repeatedly in earlier "Current progress" notes). 15 tests:
+  page-splitting/clamping/empty-list, header text at page boundaries,
+  Prev/Next button presence at first/middle/last/single page, game button
+  callback data, and the callback pattern matching every real action
+  (including `page`) and rejecting unknown ones.
+- Validation: combined suite 171 passed. Committed (`b87faac`), pushed,
+  and submitted deploy request `ed4ac085-3aed-43f8-8941-831a4ef14ad5` —
+  awaiting approval as of this note.
