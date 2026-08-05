@@ -820,6 +820,13 @@ Acceptance evidence:
   and changed a file based on the second turn.
 - The workspace exposed both `www` and `agent-sandbox` without registration;
   new sessions started at their common parent directory.
+- A Telegram turn dynamically listed both repositories from the workspace.
+- A Telegram turn cloned `pluribuspoker/telegram-channel-forwarder` beneath the
+  workspace without registration or a service restart.
+- Claude confirmed that all three allowlisted Google variables were present
+  without revealing their values.
+- A read-only service-account check opened the configured intake spreadsheet,
+  accessed its `team_emojis` worksheet, and found the Miami Dolphins row.
 - The bot service restarted and resumed the existing Claude conversation.
 - `/reset` returned a new receptionist session with no prior provider context.
 - Verbose mode edited one status message after 30 seconds with agent/VPS CPU,
