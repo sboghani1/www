@@ -690,6 +690,9 @@ proposal.
   operations. Numeric IDs are stable; usernames and display names are not.
 - Bootstrap: discover the initial ID only after the user sends a private
   `/claim <random-one-time-code>` message to the new bot.
+- Bot API HTTP-client logging is forced to WARNING. At INFO, the client logs the
+  full Telegram request URL, whose path contains the bot token; normal
+  operational logs must never persist credential-bearing URLs.
 
 2026-08-05 — Immutable release deployment with detached execution
 
