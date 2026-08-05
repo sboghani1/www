@@ -144,3 +144,59 @@ def test_deployment_drain_survives_until_explicitly_cleared(
     assert receptionist._deployment_drain_path.exists()
     receptionist._clear_deployment_drain()
     assert not receptionist._deployment_drain_path.exists()
+
+
+def test_head_changed_deployment_can_be_cloned_once(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repos"
+    repository = repo_root / "www"
+    repository.mkdir(parents=True)
+    database = Database(tmp_path / "state" / "receptionist.db")
+    database.initialize((RepositoryConfig("workspace", repo_root),))
+    now = datetime.now(UTC)
+    old_id = "55555555-5555-4555-8555-555555555555"
+    database.import_deployment_request(
+        request_id=old_id,
+        user_id=123,
+        repository_path=str(repository),
+        revision="a" * 40,
+        command="deploy exact command",
+        summary="Deploy tested change",
+        created_at=now.isoformat(),
+        expires_at=(now + timedelta(minutes=15)).isoformat(),
+    )
+    assert database.approve_deployment_request(old_id)
+    assert database.start_deployment_request(old_id)
+    database.finish_deployment_request(
+        old_id,
+        status="failed",
+        exit_code=2,
+        output="Repository HEAD changed after the deployment request was displayed.",
+        error="Executor exited with status 2.",
+    )
+
+    failed = database.latest_head_changed_deployment(123)
+    assert failed is not None
+    new_id = "66666666-6666-4666-8666-666666666666"
+    revision = "b" * 40
+    assert database.import_deployment_request(
+        request_id=new_id,
+        user_id=123,
+        repository_path=str(repository),
+        revision=revision,
+        command=failed["command"],
+        summary=failed["summary"],
+        created_at=now.isoformat(),
+        expires_at=(now + timedelta(minutes=15)).isoformat(),
+        recovered_from_id=old_id,
+    )
+    equivalent = database.equivalent_pending_deployment(
+        user_id=123,
+        repository_path=str(repository),
+        revision=revision,
+        command=failed["command"],
+    )
+    assert equivalent is not None
+    assert equivalent["id"] == new_id
+    assert database.latest_head_changed_deployment(123) is None

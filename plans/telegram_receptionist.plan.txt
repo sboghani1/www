@@ -985,6 +985,12 @@ QUICK DECISION AND GUARDRAIL INDEX
   runs until the new service sends the final 🚀 deployment notification. The
   launcher acknowledgement now says deployment is still completing instead of
   claiming the deployment itself succeeded.
+- Deterministic stale-approval recovery: `/recover` recognizes the exact
+  immutable-executor failure caused by repository HEAD changing after display.
+  It performs read-only Git checks as the bot user, requires a clean working
+  tree whose HEAD equals its configured upstream, then copies the failed
+  request's exact summary and command into one new pending request at that
+  revision. It never approves or executes the replacement automatically.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD

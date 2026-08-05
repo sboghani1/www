@@ -123,7 +123,8 @@ class Database:
                     finished_at TEXT,
                     exit_code INTEGER,
                     output TEXT,
-                    error TEXT
+                    error TEXT,
+                    recovered_from_id TEXT
                 );
 
                 CREATE TABLE IF NOT EXISTS wnba_selections (
@@ -136,6 +137,7 @@ class Database:
                 """
             )
             self._ensure_run_columns(connection)
+            self._ensure_deployment_columns(connection)
             connection.execute("UPDATE repositories SET enabled=0")
             for repository in configured:
                 connection.execute(
@@ -187,6 +189,20 @@ class Database:
                 connection.execute(
                     f"ALTER TABLE runs ADD COLUMN {name} {definition}"
                 )
+
+    @staticmethod
+    def _ensure_deployment_columns(connection: sqlite3.Connection) -> None:
+        existing = {
+            row["name"]
+            for row in connection.execute(
+                "PRAGMA table_info(deployment_requests)"
+            )
+        }
+        if "recovered_from_id" not in existing:
+            connection.execute(
+                "ALTER TABLE deployment_requests "
+                "ADD COLUMN recovered_from_id TEXT"
+            )
 
     def set_wnba_selection(
         self,
@@ -771,14 +787,16 @@ class Database:
         summary: str,
         created_at: str,
         expires_at: str,
+        recovered_from_id: str | None = None,
     ) -> bool:
         with self._connect() as connection:
             cursor = connection.execute(
                 """
                 INSERT OR IGNORE INTO deployment_requests(
                     id, telegram_user_id, repository_path, revision,
-                    command, summary, status, created_at, expires_at
-                ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+                    command, summary, status, created_at, expires_at,
+                    recovered_from_id
+                ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
                 """,
                 (
                     request_id,
@@ -789,6 +807,7 @@ class Database:
                     summary,
                     created_at,
                     expires_at,
+                    recovered_from_id,
                 ),
             )
             connection.commit()
@@ -932,6 +951,52 @@ class Database:
                     (user_id, limit),
                 )
             ]
+
+    def latest_head_changed_deployment(
+        self, user_id: int
+    ) -> dict[str, Any] | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT failed.* FROM deployment_requests AS failed
+                WHERE failed.telegram_user_id=? AND failed.status='failed'
+                  AND failed.output LIKE '%Repository HEAD changed after the deployment request%'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM deployment_requests AS replacement
+                      WHERE replacement.recovered_from_id=failed.id
+                  )
+                ORDER BY failed.finished_at DESC LIMIT 1
+                """,
+                (user_id,),
+            ).fetchone()
+            return dict(row) if row else None
+
+    def equivalent_pending_deployment(
+        self,
+        *,
+        user_id: int,
+        repository_path: str,
+        revision: str,
+        command: str,
+    ) -> dict[str, Any] | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT * FROM deployment_requests
+                WHERE telegram_user_id=? AND repository_path=?
+                  AND revision=? AND command=? AND status='pending'
+                  AND expires_at > ?
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                (
+                    user_id,
+                    repository_path,
+                    revision,
+                    command,
+                    utc_now(),
+                ),
+            ).fetchone()
+            return dict(row) if row else None
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.path, timeout=30)

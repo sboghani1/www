@@ -470,8 +470,13 @@ class Receptionist:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         assert self.runner is not None
-        message = await self.runner.recover()
-        await update.message.reply_text(message)
+        run_message = await self.runner.recover()
+        deploy_message = await self._recover_stale_deployment(
+            update.effective_user.id
+        )
+        await update.message.reply_text(
+            "\n\n".join(filter(None, (run_message, deploy_message)))
+        )
 
     async def recover_button(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -479,8 +484,81 @@ class Receptionist:
         query = update.callback_query
         await query.answer("Checking the worker…")
         assert self.runner is not None
-        message = await self.runner.recover()
-        await query.message.reply_text(message)
+        run_message = await self.runner.recover()
+        deploy_message = await self._recover_stale_deployment(
+            update.effective_user.id
+        )
+        await query.message.reply_text(
+            "\n\n".join(filter(None, (run_message, deploy_message)))
+        )
+
+    async def _recover_stale_deployment(self, user_id: int) -> str:
+        failed = self.database.latest_head_changed_deployment(user_id)
+        if failed is None:
+            return ""
+        repository = Path(failed["repository_path"]).resolve()
+        if not repository.is_relative_to(self.config.repo_root):
+            return "Deployment recovery refused: repository is outside the workspace."
+        try:
+            revision = await self._verified_git_revision(repository)
+        except RuntimeError as error:
+            return f"Deployment recovery refused: {error}"
+        existing = self.database.equivalent_pending_deployment(
+            user_id=user_id,
+            repository_path=str(repository),
+            revision=revision,
+            command=failed["command"],
+        )
+        if existing:
+            return (
+                f"Recovered deployment request already pending: "
+                f"{existing['id'][:8]} at {revision[:8]}."
+            )
+        now = datetime.now(UTC)
+        request_id = str(uuid.uuid4())
+        created = self.database.import_deployment_request(
+            request_id=request_id,
+            user_id=user_id,
+            repository_path=str(repository),
+            revision=revision,
+            command=failed["command"],
+            summary=failed["summary"],
+            created_at=now.isoformat(),
+            expires_at=(now + timedelta(minutes=15)).isoformat(),
+            recovered_from_id=failed["id"],
+        )
+        if not created:
+            return "Deployment recovery could not create a replacement request."
+        return (
+            f"Created replacement deployment request {request_id[:8]} at "
+            f"verified current revision {revision[:8]}. Fresh approval is required."
+        )
+
+    async def _verified_git_revision(self, repository: Path) -> str:
+        async def git(*arguments: str) -> str:
+            process = await asyncio.create_subprocess_exec(
+                "/usr/bin/git",
+                "-c",
+                f"safe.directory={repository}",
+                "-C",
+                str(repository),
+                *arguments,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await process.communicate()
+            if process.returncode != 0:
+                detail = stderr.decode("utf-8", errors="replace").strip()
+                raise RuntimeError(detail or "read-only Git verification failed")
+            return stdout.decode("utf-8", errors="replace").strip()
+
+        if await git("status", "--porcelain"):
+            raise RuntimeError("working tree is not clean")
+        revision = await git("rev-parse", "HEAD")
+        upstream = await git("rev-parse", "@{upstream}")
+        if revision != upstream:
+            raise RuntimeError("HEAD does not match its configured upstream")
+        return revision
 
     async def approve(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
