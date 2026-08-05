@@ -1,3 +1,4 @@
 receptionist ALL=(receptionist-agent) NOPASSWD: /usr/local/libexec/receptionist-agent-runner
 receptionist ALL=(receptionist-agent) NOPASSWD: /usr/local/libexec/receptionist-agent-killer
+receptionist ALL=(receptionist-agent) NOPASSWD: /usr/local/libexec/receptionist-wnba-helper
 receptionist ALL=(root) NOPASSWD: /usr/local/libexec/receptionist-deploy-executor

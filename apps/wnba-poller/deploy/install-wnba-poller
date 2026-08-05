@@ -1,0 +1,112 @@
+#!/bin/bash
+set -euo pipefail
+umask 022
+
+if [[ "$EUID" -ne 0 ]]; then
+    echo "install-wnba-poller must run as root." >&2
+    exit 1
+fi
+
+enable_timers=0
+enable_guesser_bot=0
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        --enable-timers)
+            enable_timers=1
+            ;;
+        --enable-guesser-bot)
+            enable_guesser_bot=1
+            ;;
+        *)
+            echo "Usage: $0 [--enable-timers] [--enable-guesser-bot]" >&2
+            exit 2
+            ;;
+    esac
+    shift
+done
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+app_dir="$(cd "$script_dir/.." && pwd)"
+install_root="/opt/wnba-poller"
+releases="$install_root/releases"
+release="$releases/$(date -u +%Y%m%dT%H%M%SZ)-$$"
+config_dir="/home/receptionist-agent/.config/wnba-poller"
+env_file="$config_dir/env"
+guesser_config_dir="/home/receptionist-agent/.config/wnba-guesser"
+guesser_env_file="$guesser_config_dir/env"
+
+command -v python3.12 >/dev/null
+command -v flock >/dev/null
+id receptionist-agent >/dev/null
+
+install -d -m 0755 -o root -g root "$install_root" "$releases"
+install -d -m 0700 -o receptionist-agent -g receptionist-agent "$config_dir"
+install -d -m 0700 -o receptionist-agent -g receptionist-agent \
+    "$guesser_config_dir"
+if [[ ! -e "$env_file" ]]; then
+    install -m 0600 -o receptionist-agent -g receptionist-agent \
+        /dev/null "$env_file"
+fi
+if [[ ! -e "$guesser_env_file" ]]; then
+    install -m 0600 -o receptionist-agent -g receptionist-agent \
+        /dev/null "$guesser_env_file"
+fi
+if [[ "$enable_timers" == "1" && ! -s "$env_file" ]]; then
+    echo "Refusing to enable timers: $env_file is empty." >&2
+    exit 1
+fi
+if [[ "$enable_guesser_bot" == "1" && ! -s "$guesser_env_file" ]]; then
+    echo "Refusing to enable bot: $guesser_env_file is empty." >&2
+    exit 1
+fi
+
+cleanup() {
+    rm -rf "$release"
+}
+trap cleanup ERR
+
+python3.12 -m venv "$release"
+"$release/bin/pip" install --quiet "${app_dir}[test]"
+(
+    cd "$app_dir"
+    PYTHONDONTWRITEBYTECODE=1 \
+        "$release/bin/pytest" -p no:cacheprovider
+)
+chown -R root:root "$release"
+chmod -R go-w "$release"
+trap - ERR
+
+ln -sfn "$release" "$install_root/current.new"
+mv -Tf "$install_root/current.new" "$install_root/current"
+
+for unit in \
+    wnba-poller.service \
+    wnba-poller.timer \
+    wnba-schedule-sync.service \
+    wnba-schedule-sync.timer \
+    wnba-guesser-bot.service
+do
+    install -m 0644 -o root -g root \
+        "$script_dir/$unit" "/etc/systemd/system/$unit"
+done
+install -m 0755 -o root -g root \
+    "$script_dir/install-wnba-poller" \
+    /usr/local/sbin/install-wnba-poller
+
+systemctl daemon-reload
+if [[ "$enable_timers" == "1" ]]; then
+    systemctl enable --now wnba-poller.timer wnba-schedule-sync.timer
+fi
+if [[ "$enable_guesser_bot" == "1" ]]; then
+    systemctl enable --now wnba-guesser-bot.service
+elif systemctl is-active --quiet wnba-guesser-bot.service; then
+    systemctl restart wnba-guesser-bot.service
+fi
+
+current_release="$(readlink -f "$install_root/current")"
+find "$releases" -mindepth 1 -maxdepth 1 -type d -mtime +30 \
+    ! -path "$current_release" -exec rm -rf -- {} +
+
+echo "Installed WNBA poller at $current_release."
+echo "Configure $env_file before initializing the Sheet or enabling timers."
+echo "Configure $guesser_env_file before enabling @wnbaguesser_bot."

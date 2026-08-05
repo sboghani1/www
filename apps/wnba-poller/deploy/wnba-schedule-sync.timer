@@ -1,0 +1,12 @@
+[Unit]
+Description=Refresh the ESPN WNBA schedule daily
+
+[Timer]
+OnCalendar=*-*-* 05:20:00 America/New_York
+Persistent=true
+AccuracySec=1min
+RandomizedDelaySec=10min
+Unit=wnba-schedule-sync.service
+
+[Install]
+WantedBy=timers.target

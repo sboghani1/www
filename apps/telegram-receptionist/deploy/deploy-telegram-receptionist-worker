@@ -96,9 +96,15 @@ if [[ ! -d "$release" ]]; then
     trap 'write_status "failed" "$revision" "Build or tests failed."; rm -rf "$release"' ERR
     python3 -m venv "$release/.venv"
     "$release/.venv/bin/pip" install --quiet --upgrade pip
-    "$release/.venv/bin/pip" install --quiet "$release/$app_rel[test]"
+    "$release/.venv/bin/pip" install --quiet \
+        "$release/$app_rel[test]" \
+        "$release/apps/wnba-poller[test]"
     (
         cd "$release/$app_rel"
+        PYTHONDONTWRITEBYTECODE=1 "$release/.venv/bin/pytest" -p no:cacheprovider
+    )
+    (
+        cd "$release/apps/wnba-poller"
         PYTHONDONTWRITEBYTECODE=1 "$release/.venv/bin/pytest" -p no:cacheprovider
     )
     chown -R root:root "$release"
@@ -120,6 +126,14 @@ install -m 0755 -o root -g root \
 install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/receptionist-deploy-executor" \
     /usr/local/libexec/receptionist-deploy-executor
+install -m 0755 -o root -g root \
+    "$release/$app_rel/deploy/receptionist-wnba-helper" \
+    /usr/local/libexec/receptionist-wnba-helper
+install -d -m 0755 -o receptionist-agent -g receptionist-agent \
+    /home/receptionist/repos/.claude/skills/wnba-lean
+install -m 0644 -o receptionist-agent -g receptionist-agent \
+    "$release/.claude/skills/wnba-lean/SKILL.md" \
+    /home/receptionist/repos/.claude/skills/wnba-lean/SKILL.md
 visudo -cf "$release/$app_rel/deploy/telegram-receptionist.sudoers"
 install -m 0440 -o root -g root \
     "$release/$app_rel/deploy/telegram-receptionist.sudoers" \

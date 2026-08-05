@@ -24,6 +24,7 @@ from .config import Config
 from .database import Database
 from .notifier import systemd_notify
 from .runner import AgentRunner
+from .wnba import WNBA_TEMPLATE_HEADER, WnbaHelperClient
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
@@ -33,6 +34,146 @@ logging.getLogger("httpcore").setLevel(logging.WARNING)
 log = logging.getLogger("receptionist")
 
 Handler = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
+MAX_CALLBACK_BYTES = 64
+
+
+def wnba_callback(action: str, event_id: str = "") -> str:
+    data = f"wnba:{action}" + (f":{event_id}" if event_id else "")
+    if len(data.encode("utf-8")) > MAX_CALLBACK_BYTES:
+        raise ValueError("WNBA callback data exceeds Telegram limit")
+    return data
+
+
+def _wnba_matchup(game: dict) -> str:
+    return f"{game.get('away_team', '')} @ {game.get('home_team', '')}"
+
+
+def wnba_games_markup(games: list[dict]) -> InlineKeyboardMarkup:
+    rows = []
+    for game in games[:30]:
+        label = (
+            f"{game.get('commence_time_et', '')} · {_wnba_matchup(game)}"
+        )[:90]
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    label,
+                    callback_data=wnba_callback(
+                        "game", str(game.get("event_id") or "")
+                    ),
+                )
+            ]
+        )
+    return InlineKeyboardMarkup(rows)
+
+
+def wnba_game_text(game: dict) -> str:
+    def value(key: str) -> str:
+        raw = game.get(key)
+        return "nodata" if raw in ("", None) else str(raw)
+
+    return "\n".join(
+        [
+            f"🏀 {_wnba_matchup(game)}",
+            str(game.get("commence_time_et") or ""),
+            "",
+            "Full game",
+            (
+                f"Spread: {game.get('away_team', '')} "
+                f"{value('latest_away_spread')} "
+                f"({value('latest_away_spread_price')}) · "
+                f"{game.get('home_team', '')} "
+                f"{value('latest_home_spread')} "
+                f"({value('latest_home_spread_price')})"
+            ),
+            (
+                f"Moneyline: {game.get('away_team', '')} "
+                f"{value('latest_away_moneyline')} · "
+                f"{game.get('home_team', '')} "
+                f"{value('latest_home_moneyline')}"
+            ),
+            (
+                f"Total: {value('latest_total')} "
+                f"(O {value('latest_over_price')} / "
+                f"U {value('latest_under_price')})"
+            ),
+            "",
+            "First half",
+            (
+                f"Spread: {game.get('away_team', '')} "
+                f"{value('latest_first_half_away_spread')} "
+                f"({value('latest_first_half_away_spread_price')}) · "
+                f"{game.get('home_team', '')} "
+                f"{value('latest_first_half_home_spread')} "
+                f"({value('latest_first_half_home_spread_price')})"
+            ),
+            (
+                f"Total: {value('latest_first_half_total')} "
+                f"(O {value('latest_first_half_over_price')} / "
+                f"U {value('latest_first_half_under_price')})"
+            ),
+        ]
+    )
+
+
+def wnba_history_text(
+    result: dict,
+    *,
+    include_revisions: bool,
+) -> str:
+    game = result["game"]
+    lines = [f"🏀 {_wnba_matchup(game)}"]
+    active = result.get("active_revision")
+    if active:
+        lines.extend(
+            [
+                "",
+                "Latest active Claude lean",
+                (
+                    "Full game: "
+                    f"{active.get('full_game_side_selection', '')} "
+                    f"({active.get('full_game_side_strength', '')}); "
+                    f"{active.get('full_game_total_selection', '')} "
+                    f"({active.get('full_game_total_strength', '')})"
+                ),
+                str(active.get("summary") or ""),
+            ]
+        )
+    else:
+        lines.extend(["", "No published active Claude lean."])
+    lines.extend(["", "User thought / lean history"])
+    thoughts = result.get("thoughts") or []
+    if not thoughts:
+        lines.append("No user thoughts.")
+    for thought in thoughts[-20:]:
+        lines.append(
+            (
+                f"{thought.get('submitted_at_et', '')} · "
+                f"{thought.get('period', '')} "
+                f"{thought.get('market', '')} "
+                f"{thought.get('side', '')}\n"
+                f"{str(thought.get('thought_text') or '')[:500]}"
+            )
+        )
+    if include_revisions:
+        lines.extend(["", "Superseded / deleted revisions"])
+        revisions = [
+            revision
+            for revision in result.get("revision_history") or []
+            if revision.get("effective_status") != "active"
+        ]
+        if not revisions:
+            lines.append("No superseded or deleted revisions.")
+        for revision in revisions[-20:]:
+            lines.append(
+                (
+                    f"{revision.get('requested_at_et', '')} · "
+                    f"{revision.get('operation', '')} · "
+                    f"{revision.get('effective_status', '')}\n"
+                    f"{str(revision.get('summary') or '')[:500]}"
+                )
+            )
+    return "\n".join(lines)[:3900]
 
 
 class Receptionist:
@@ -40,6 +181,7 @@ class Receptionist:
         self.config = config
         self.database = database
         self.runner: AgentRunner | None = None
+        self.wnba = WnbaHelperClient(config)
         self._deployment_lock = asyncio.Lock()
         self._deployment_tasks: set[asyncio.Task[None]] = set()
         self._deployment_process: asyncio.subprocess.Process | None = None
@@ -126,8 +268,15 @@ class Receptionist:
             "/approve — execute the only pending deployment request\n"
             "/deny — reject the only pending deployment request\n"
             "/deployments — show recent deployment requests\n\n"
+            "/wnba — choose a game for Claude lean analysis\n"
+            "/wnba_history — latest active lean and user history\n"
+            "/wnba_revisions — superseded/deleted lean revisions\n"
+            "/wnba_undo — undo the latest published lean\n"
+            "/wnba_cancel — clear the selected WNBA game\n\n"
             "Deployment messages also include Approve and Deny buttons.\n\n"
-            "Any other text is passed unchanged as the next agent prompt."
+            "A WNBA_LEAN_REQUEST_V1 template is validated and routed through "
+            "the same WNBA generation path as Generate now. Any other text "
+            "is passed unchanged as the next agent prompt."
         )
 
     async def repos(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -357,30 +506,316 @@ class Receptionist:
             )
         await update.message.reply_text("\n".join(lines))
 
+    async def wnba_games(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        try:
+            result = await self.wnba.request({"action": "list_games"})
+        except Exception as error:
+            log.warning("WNBA game lookup failed: %s", error)
+            await update.message.reply_text(
+                "❌ Could not load WNBA games. Try again."
+            )
+            return
+        games = result.get("games") or []
+        text = (
+            "🏀 WNBA games in the next 14 days"
+            if games
+            else "No upcoming WNBA games are available."
+        )
+        await update.message.reply_text(
+            text,
+            reply_markup=wnba_games_markup(games),
+        )
+
+    async def wnba_cancel(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        cancelled = self.database.cancel_wnba_selection(
+            update.effective_user.id
+        )
+        await update.message.reply_text(
+            "WNBA selection cancelled."
+            if cancelled
+            else "No active WNBA selection."
+        )
+
+    async def _wnba_history(
+        self,
+        message,
+        *,
+        user_id: int,
+        include_revisions: bool,
+    ) -> None:
+        selection = self.database.get_wnba_selection(user_id)
+        if selection is None:
+            await message.reply_text(
+                "Select a current game with /wnba first."
+            )
+            return
+        try:
+            result = await self.wnba.request(
+                {
+                    "action": "history",
+                    "event_id": selection["event_id"],
+                }
+            )
+        except Exception as error:
+            log.warning("WNBA history lookup failed: %s", error)
+            await message.reply_text(
+                "❌ Could not load WNBA history. Try again."
+            )
+            return
+        rows = []
+        if not include_revisions:
+            rows.append(
+                [
+                    InlineKeyboardButton(
+                        "Superseded / deleted",
+                        callback_data=wnba_callback("revisions"),
+                    )
+                ]
+            )
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    "Undo latest",
+                    callback_data=wnba_callback("undo"),
+                )
+            ]
+        )
+        await message.reply_text(
+            wnba_history_text(
+                result, include_revisions=include_revisions
+            ),
+            reply_markup=InlineKeyboardMarkup(rows),
+        )
+
+    async def wnba_history(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        await self._wnba_history(
+            update.message,
+            user_id=update.effective_user.id,
+            include_revisions=False,
+        )
+
+    async def wnba_revisions(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        await self._wnba_history(
+            update.message,
+            user_id=update.effective_user.id,
+            include_revisions=True,
+        )
+
+    async def _enqueue_prompt(
+        self,
+        message,
+        *,
+        user_id: int,
+        chat_id: int,
+        prompt: str,
+        acknowledgement: str,
+    ) -> None:
+        if self.database.queued_count() >= self.config.max_queued_messages:
+            await message.reply_text(
+                f"Queue is full ({self.config.max_queued_messages} messages)."
+            )
+            return
+        session = self.database.get_or_create_active_session(user_id)
+        run = self.database.enqueue_run(session["id"], chat_id, prompt)
+        position = self.database.queued_count()
+        await message.reply_text(
+            f"{acknowledgement} as run {run['id'][:8]} "
+            f"({session['repository_name']}, queue position {position})."
+        )
+        assert self.runner is not None
+        self.runner.notify()
+
+    async def _queue_wnba_action(
+        self,
+        message,
+        *,
+        user_id: int,
+        chat_id: int,
+        action: str,
+    ) -> None:
+        selection = self.database.get_wnba_selection(user_id)
+        if selection is None:
+            await message.reply_text(
+                "Select a current game with /wnba first."
+            )
+            return
+        try:
+            result = await self.wnba.request(
+                {
+                    "action": action,
+                    "event_id": selection["event_id"],
+                    "matchup": selection["matchup"],
+                }
+            )
+        except Exception as error:
+            log.warning("WNBA generation request failed: %s", error)
+            await message.reply_text(
+                "❌ WNBA game validation failed. Nothing was queued."
+            )
+            return
+        await self._enqueue_prompt(
+            message,
+            user_id=user_id,
+            chat_id=chat_id,
+            prompt=result["skill_prompt"],
+            acknowledgement=(
+                "↩️ WNBA undo queued"
+                if action == "build_undo"
+                else "🏀 WNBA lean generation queued"
+            ),
+        )
+
+    async def wnba_undo(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        await self._queue_wnba_action(
+            update.message,
+            user_id=update.effective_user.id,
+            chat_id=update.effective_chat.id,
+            action="build_undo",
+        )
+
+    async def wnba_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        query = update.callback_query
+        data = str(query.data or "")
+        parts = data.split(":", 2)
+        if len(parts) < 2:
+            await query.answer("Invalid WNBA action.", alert=True)
+            return
+        action = parts[1]
+        user_id = update.effective_user.id
+        try:
+            if action == "game" and len(parts) == 3:
+                result = await self.wnba.request(
+                    {"action": "game", "event_id": parts[2]}
+                )
+                game = result["game"]
+                self.database.set_wnba_selection(
+                    user_id=user_id,
+                    event_id=str(game["event_id"]),
+                    matchup=_wnba_matchup(game),
+                )
+                keyboard = InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "Generate now",
+                                callback_data=wnba_callback("generate"),
+                            ),
+                            InlineKeyboardButton(
+                                "Copy template text",
+                                callback_data=wnba_callback("copy"),
+                            ),
+                        ],
+                        [
+                            InlineKeyboardButton(
+                                "View lean history",
+                                callback_data=wnba_callback("history"),
+                            )
+                        ],
+                    ]
+                )
+                await query.edit_message_text(
+                    wnba_game_text(game),
+                    reply_markup=keyboard,
+                )
+                await query.answer()
+                return
+            if action == "generate":
+                await query.answer("Queuing WNBA generation…")
+                await self._queue_wnba_action(
+                    query.message,
+                    user_id=user_id,
+                    chat_id=update.effective_chat.id,
+                    action="build_generation",
+                )
+                return
+            if action == "copy":
+                selection = self.database.get_wnba_selection(user_id)
+                if selection is None:
+                    await query.answer(
+                        "Selection expired. Run /wnba again.",
+                        alert=True,
+                    )
+                    return
+                result = await self.wnba.request(
+                    {
+                        "action": "build_generation",
+                        "event_id": selection["event_id"],
+                        "matchup": selection["matchup"],
+                    }
+                )
+                await query.answer()
+                await query.message.reply_text(result["template"])
+                return
+            if action in {"history", "revisions"}:
+                await query.answer()
+                await self._wnba_history(
+                    query.message,
+                    user_id=user_id,
+                    include_revisions=action == "revisions",
+                )
+                return
+            if action == "undo":
+                await query.answer("Queuing WNBA undo…")
+                await self._queue_wnba_action(
+                    query.message,
+                    user_id=user_id,
+                    chat_id=update.effective_chat.id,
+                    action="build_undo",
+                )
+                return
+            await query.answer("Invalid WNBA action.", alert=True)
+        except Exception as error:
+            log.warning("WNBA callback failed: %s", error)
+            await query.answer(
+                "WNBA action failed. Try again.", alert=True
+            )
+
     async def exact_text(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         message = update.message
         if message is None or message.text is None:
             return
-        if self.database.queued_count() >= self.config.max_queued_messages:
-            await message.reply_text(
-                f"Queue is full ({self.config.max_queued_messages} messages)."
+        prompt = message.text
+        acknowledgement = "👀 Received exactly"
+        if prompt.startswith(f"{WNBA_TEMPLATE_HEADER}\n"):
+            try:
+                result = await self.wnba.request(
+                    {"action": "validate_template", "template": prompt}
+                )
+            except Exception as error:
+                log.warning("WNBA template validation failed: %s", error)
+                await message.reply_text(
+                    "❌ WNBA template validation failed. Nothing was queued."
+                )
+                return
+            game = result["game"]
+            self.database.set_wnba_selection(
+                user_id=update.effective_user.id,
+                event_id=str(game["event_id"]),
+                matchup=_wnba_matchup(game),
             )
-            return
-        session = self.database.get_or_create_active_session(
-            update.effective_user.id
+            prompt = result["skill_prompt"]
+            acknowledgement = "🏀 WNBA lean generation queued"
+        await self._enqueue_prompt(
+            message,
+            user_id=update.effective_user.id,
+            chat_id=update.effective_chat.id,
+            prompt=prompt,
+            acknowledgement=acknowledgement,
         )
-        run = self.database.enqueue_run(
-            session["id"], update.effective_chat.id, message.text
-        )
-        position = self.database.queued_count()
-        await message.reply_text(
-            f"👀 Received exactly as run {run['id'][:8]} "
-            f"({session['repository_name']}, queue position {position})."
-        )
-        assert self.runner is not None
-        self.runner.notify()
 
     async def unsupported(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -628,6 +1063,11 @@ def build_application(config: Config) -> Application:
         ("approve", receptionist.approve),
         ("deny", receptionist.deny),
         ("deployments", receptionist.deployments),
+        ("wnba", receptionist.wnba_games),
+        ("wnba_history", receptionist.wnba_history),
+        ("wnba_revisions", receptionist.wnba_revisions),
+        ("wnba_undo", receptionist.wnba_undo),
+        ("wnba_cancel", receptionist.wnba_cancel),
     ]
     for name, handler in commands:
         application.add_handler(
@@ -637,6 +1077,15 @@ def build_application(config: Config) -> Application:
         CallbackQueryHandler(
             receptionist.authorized(receptionist.deployment_button),
             pattern=r"^deploy:(approve|deny):[0-9a-f-]{36}$",
+        )
+    )
+    application.add_handler(
+        CallbackQueryHandler(
+            receptionist.authorized(receptionist.wnba_button),
+            pattern=(
+                r"^wnba:(?:game:[A-Za-z0-9_.-]{1,48}|"
+                r"generate|copy|history|revisions|undo)$"
+            ),
         )
     )
     application.add_handler(

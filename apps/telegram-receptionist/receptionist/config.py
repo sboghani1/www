@@ -6,6 +6,7 @@ from pathlib import Path
 
 TRUSTED_REPO_ROOT = Path("/home/receptionist/repos").resolve()
 TRUSTED_CLAUDE_BINARY = "/usr/bin/claude"
+TRUSTED_WNBA_HELPER = "/usr/local/libexec/receptionist-wnba-helper"
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,8 @@ class Config:
     deploy_request_dir: Path
     deploy_executor: str
     deploy_timeout_seconds: int
+    wnba_helper: str
+    wnba_helper_timeout_seconds: int
     agent_timeout_seconds: int
     max_queued_messages: int
     model: str | None
@@ -63,6 +66,20 @@ class Config:
                 f"CLAUDE_BINARY must match the privileged launcher: "
                 f"{TRUSTED_CLAUDE_BINARY}"
             )
+        wnba_helper = os.getenv(
+            "WNBA_HELPER", TRUSTED_WNBA_HELPER
+        )
+        if wnba_helper != TRUSTED_WNBA_HELPER:
+            raise ValueError(
+                "WNBA_HELPER must match the fixed privileged launcher"
+            )
+        wnba_timeout = _positive_int(
+            "WNBA_HELPER_TIMEOUT_SECONDS", 45
+        )
+        if wnba_timeout > 120:
+            raise ValueError(
+                "WNBA_HELPER_TIMEOUT_SECONDS must not exceed 120"
+            )
         return cls(
             telegram_token=token,
             allowed_user_id=allowed_user_id,
@@ -87,6 +104,8 @@ class Config:
                 "/usr/local/libexec/receptionist-deploy-executor",
             ),
             deploy_timeout_seconds=_positive_int("DEPLOY_TIMEOUT_SECONDS", 900),
+            wnba_helper=wnba_helper,
+            wnba_helper_timeout_seconds=wnba_timeout,
             agent_timeout_seconds=timeout,
             max_queued_messages=queue_limit,
             model=os.getenv("CLAUDE_MODEL") or None,

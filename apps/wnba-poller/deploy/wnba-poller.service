@@ -1,0 +1,44 @@
+[Unit]
+Description=WNBA BetOnline polling and direct-Sheet thought reconciliation
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=receptionist-agent
+Group=receptionist-agent
+WorkingDirectory=/opt/wnba-poller
+Environment=HOME=/home/receptionist-agent
+Environment=PATH=/opt/wnba-poller/current/bin:/usr/bin:/bin
+EnvironmentFile=/home/receptionist-agent/.config/wnba-poller/env
+RuntimeDirectory=wnba-poller
+RuntimeDirectoryMode=0750
+RuntimeDirectoryPreserve=yes
+ExecStart=/usr/bin/flock -n -E 0 /run/wnba-poller/job.lock /bin/sh -c '/opt/wnba-poller/current/bin/wnba-poller poll-odds && /opt/wnba-poller/current/bin/wnba-poller reconcile-thoughts'
+TimeoutStartSec=5min
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadOnlyPaths=/home/receptionist-agent/.config/wnba-poller
+NoNewPrivileges=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+MemoryAccounting=true
+MemoryHigh=96M
+MemoryMax=160M
+TasksMax=64
+UMask=0077
+StandardOutput=journal
+StandardError=journal

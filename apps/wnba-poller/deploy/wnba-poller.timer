@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the WNBA due-game check every 15 minutes
+
+[Timer]
+OnCalendar=*-*-* *:00/15:00
+Persistent=true
+AccuracySec=30s
+RandomizedDelaySec=60s
+Unit=wnba-poller.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,965 @@
+WNBA POLLER MIGRATION PLAN
+==========================
+
+Status: core poller and standalone Guesser implemented; clarified cross-app
+Claude lean workflow approved in plan only and not yet implemented
+Date: 2026-08-05
+
+
+1. GOAL
+-------
+
+Move the MacBook WNBA line-movement workflow into the `www` monorepo and run it
+continuously on the `pickbot` VPS.
+
+The deployed system must:
+
+- maintain a rolling 14-day WNBA schedule in the existing Google spreadsheet
+  named `asce Guesser`
+- collect BetOnline full-game moneyline/spread/total and first-half
+  spread/total
+- poll hourly until six hours before tip, then every 15 minutes until tip
+- preserve opening/latest lines and append historical snapshots
+- accept timestamped pregame thoughts from Telegram and direct Sheet edits
+- generate path210-guided Claude leans on demand through the receptionist
+- preserve append-only Sheet revision history for Claude leans and expose
+  combined game history in both Telegram bots
+- keep `apps/wnba-poller/path210.md` as the curated Git decision log
+- let Claude update `path210.md` when explicitly asked, rather than generating
+  it automatically from raw thoughts
+- remove dependence on a running MacBook
+
+
+2. SOURCE ANALYSIS
+------------------
+
+Source worktree:
+
+`/Users/boghani/repos/line-movement-wt-2026-07-02-path-to-10-1783060088855`
+
+Current poller behavior:
+
+- `wnba_odds_fetch.py` calls The Odds API for `basketball_wnba`.
+- It filters to BetOnline (`betonlineag`).
+- It currently requests full-game `h2h,spreads,totals`.
+- It skips games after commence time.
+- It overwrites `wnba_lines.txt` with the latest upcoming slate.
+- It appends changed lines immediately to `wnba_lines_log.txt`.
+- If lines are unchanged, it appends an hourly snapshot.
+- It can generate matchup and date-specific CSV histories.
+- Existing tests cover changed/unchanged deduplication, repeated fixtures,
+  missing markets, latest snapshots, and dated exports.
+
+Historical/working material:
+
+- `wnba_lines_log.txt` contains approximately 1,930 historical snapshots.
+- `path210.md` is a roughly 190KB curated decision log containing instructions,
+  past outcomes, normalized tags, a WNBA-only model cache, upcoming events, line
+  histories, and evolving model leans.
+- `scratch2` and `scratch3` contain working prediction notes.
+- The source worktree has intentional uncommitted and untracked state. Migration
+  must copy files without modifying or cleaning that worktree.
+- No active Copilot schedule, launch agent, cron entry, or running
+  `wnba_odds_fetch.py` process was found on the Mac at investigation time.
+
+Proven reusable code:
+
+- The same line-movement worktree already contains `espn_schedule_fetcher.py`.
+  Its existing WNBA path uses ESPN's scoreboard JSON endpoint, converts times
+  to America/New_York, upserts Google Sheet rows, and backfills completed scores.
+  Adapt this code rather than creating a new ESPN parser.
+- `telegram-channel-forwarder/nfl_lines.py` already implements opening/latest
+  game rows, append-only snapshots, Google authentication, period-market
+  parsing, scheduled polling decisions, and Sheet writes.
+- `telegram-channel-forwarder/intake_bot.py` already implements game-selection
+  buttons and idempotent timestamped lean submissions.
+
+Live validation:
+
+- ESPN's unauthenticated WNBA scoreboard endpoint supports date/range requests:
+  `https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard`.
+  It is useful but undocumented, so parsing must fail visibly and retain the
+  prior Sheet schedule when its response changes.
+- A live BetOnline WNBA event request returned all five required markets:
+  `h2h`, `spreads`, `totals`, `spreads_h1`, and `totals_h1`.
+- First-half markets require event-specific Odds API requests; they are not
+  assumed to be present in the bulk sport endpoint.
+
+
+3. APPROVED PRODUCT DECISIONS
+-----------------------------
+
+Source of truth:
+
+- Google Sheets is the structured operational store for schedule, lines,
+  snapshots, and timestamped thoughts.
+- `path210.md` remains the curated decision log in Git.
+- Capturing a Sheet thought does not rewrite `path210.md`. An explicit
+  receptionist generation/edit/delete/undo request invokes the validated skill
+  and automatically publishes the resulting path210 revision.
+
+Thought entry:
+
+- Support both Telegram and direct Sheet entry.
+- Preserve each thought as a new append-only row with UTC and Eastern
+  timestamps.
+- Never overwrite an earlier thought merely because a later opinion changes.
+
+Schedule:
+
+- Maintain a rolling next-14-days view.
+- Refresh it once daily from the proven ESPN WNBA schedule code.
+- Preserve user-editable Sheet fields during machine upserts.
+- Store UTC internally and display Eastern time.
+
+Odds:
+
+- BetOnline only for the first version.
+- Full-game moneyline, spread, and total.
+- First-half spread and total.
+- Poll hourly while a game is more than six hours from tip.
+- Poll every 15 minutes from six hours before tip until commence time.
+- Do not poll started games.
+
+Migration:
+
+- Create `apps/wnba-poller`.
+- Put untouched copies of every listed non-secret source file under
+  `apps/wnba-poller/source_artifacts/`.
+- Put the actively maintained copy at `apps/wnba-poller/path210.md`.
+- Keep the Odds API key out of Git. Install it in a restricted VPS environment
+  file and retain the existing private Mac key file as emergency fallback.
+
+Telegram:
+
+- Use a separate private bot, `@wnbaguesser_bot`, with its own token,
+  environment file, process state, and systemd service.
+- Model the interaction on the proven NFL Guesser flow: game -> period ->
+  market -> side -> exact reasoning.
+- Full game supports spread, moneyline, and total. First half supports spread
+  and total.
+- Allow repeated append-only updates for the same structured selection without
+  overwriting prior reasoning.
+- Keep analytical `path210.md` curation outside the Guesser. New user-thought
+  rows never trigger Git; only an explicit receptionist generation/edit/delete/
+  undo request may publish a validated path210 revision.
+- The standalone Guesser owns only structured user thought capture and history
+  display. Its WNBA-only Sheet allowlist is seeded with the user and contains
+  no additional users by default.
+- The receptionist owns a separate WNBA role: selecting games, preparing or
+  accepting generation templates, invoking Claude's reusable WNBA lean skill,
+  and displaying shared lean history.
+- The older decision that the receptionist has no WNBA role is superseded.
+  Structured thought capture remains isolated in `@wnbaguesser_bot`; the
+  receptionist does not duplicate that flow.
+
+Separation rationale:
+
+- A dedicated bot token prevents Bot API polling conflicts and independent
+  token rotation cannot interrupt coding-agent access.
+- WNBA thought-capture callbacks, in-flight selections, Sheet failures, and
+  restarts remain isolated from receptionist generation and NFL workflows.
+- The bot and poller intentionally share the tested WNBA Sheet package, one
+  root-owned venv, and the non-root `receptionist-agent` Unix identity; a second
+  Unix account would add deployment and credential duplication without a
+  stronger boundary between these two WNBA-only processes.
+- Receptionist generation remains coding work in the `www` repository. It uses
+  the existing coding-agent/deployment-approval boundary rather than granting
+  the Guesser bot Git or Claude responsibilities.
+
+Spreadsheet:
+
+- Keep the spreadsheet title `asce Guesser`.
+- Delete/replace the copied NFL worksheets with WNBA-specific worksheets after
+  exporting a local JSON backup of the copied workbook structure and values.
+
+
+4. TARGET MONOREPO LAYOUT
+-------------------------
+
+apps/wnba-poller/
+
+- README.md
+- pyproject.toml
+- path210.md
+- source_artifacts/
+  - wnba_odds_fetch.py
+  - test_wnba_odds_fetch.py
+  - requirements.txt
+  - wnba_lines.txt
+  - wnba_lines_log.txt
+  - wnba_odds.json
+  - path210.md
+  - scratch2
+  - scratch3
+  - 001-managing-wnba-odds-polling.md
+- wnba_poller/
+  - config.py
+  - models.py
+  - espn.py
+  - odds.py
+  - sheets.py
+  - scheduler.py
+  - cli.py
+  - guesser_bot.py
+  - lean_context.py (planned deterministic context/history extraction)
+  - lean_revisions.py (planned append-only Sheet revision/event helpers)
+  - path210_ops.py (planned deterministic event-block operations/validation)
+  - lean_workflow.py (planned request parsing, orchestration, Git publication)
+- tests/
+- deploy/
+  - wnba-poller.service
+  - wnba-poller.timer
+  - wnba-schedule-sync.service
+  - wnba-schedule-sync.timer
+  - wnba-guesser-bot.service
+  - install-wnba-poller
+
+The source artifacts are migration evidence, not imported runtime code.
+
+Planned cross-app additions:
+
+- `.claude/skills/wnba-lean/SKILL.md`
+- focused fixture tests for context, path operations, revisions, Git workflow,
+  and skill contract under `apps/wnba-poller/tests/`
+- receptionist game-picker/template/history handlers that call only the fixed
+  WNBA helper contracts and route both generation actions into one agent/skill
+  path
+
+
+5. GOOGLE SHEET SCHEMA
+----------------------
+
+`wnba_games`
+
+- event_id
+- espn_event_id
+- status
+- commence_time_utc
+- commence_time_et
+- away_team
+- home_team
+- venue
+- broadcast
+- bookmaker
+- opening_captured_at
+- latest_captured_at
+- opening full-game away/home spread, price, and moneyline
+- opening full-game total, over price, and under price
+- opening first-half away/home spread and price
+- opening first-half total, over price, and under price
+- latest equivalents of every opening line field
+- last_updated_at
+- next_poll_at
+- user notes/status columns reserved for direct manual edits
+
+`wnba_line_snapshots`
+
+- captured_at UTC/ET
+- event_id
+- commence time UTC/ET
+- away/home
+- bookmaker
+- normalized full-game fields
+- normalized first-half fields
+- API credits used/remaining
+- one row only when values changed or one hour elapsed since the last identical
+  snapshot, preserving compatibility with the historical poller behavior
+
+`wnba_thoughts`
+
+- thought_id
+- submitted_at_utc
+- submitted_at_et
+- source (`telegram` or `sheet`)
+- Telegram identity/message metadata when applicable
+- event_id and frozen game metadata
+- latest line snapshot captured with the thought
+- selected period, market, and side
+- selected opening/latest line and price
+- thought_text
+- processed_into_path210_at (manual/Claude bookkeeping only)
+
+For direct Sheet entry, the user fills the game/event and thought text. A
+reconciliation pass fills missing immutable IDs, timestamps, source, and frozen
+line metadata without altering the text.
+
+`wnba_allowed_users`
+
+- positive numeric Telegram user ID
+- username and display name for operator reference
+- enabled flag
+- added timestamp and notes
+- initialized idempotently with the approved user's numeric ID before bot start
+- WNBA-only; it is not shared with the receptionist or NFL bot
+
+`wnba_lean_revisions`
+
+- revision_id (immutable)
+- record_type (`revision`, `publication_receipt`, or `abort_receipt`)
+- event_id and frozen matchup/commence metadata
+- operation (`create`, `revise`, `delete`, or `undo`)
+- resulting_status (`active`, `superseded`, or `deleted`)
+- target_revision_id and supersedes_revision_id when applicable
+- requested_at/submitted_at UTC and Eastern timestamps
+- receptionist request identity and normalized generation-template metadata
+- full-game side and total lean, strength, evidence, and watch/change conditions
+- optional first-half side/total lean fields when evidence supports them
+- path210 event-block identifier and deterministic content hash
+- Git base SHA, resulting commit SHA, and pushed branch
+- publication/abort linkage and receipt timestamp
+- validation result/version and helper/skill version
+- failure/recovery linkage when a later append records that a prior attempt did
+  not complete
+
+This tab is an append-only revision/event log. Existing rows are never updated
+or deleted. A new revision points at the revision it supersedes; a delete is a
+tombstone revision; undo appends a new revision restoring the prior effective
+state. Readers derive active/superseded/deleted state from the chain. The
+default history view shows the latest active Claude revision plus chronological
+`wnba_thoughts`; a separate history action exposes superseded/deleted
+revisions.
+
+`wnba_settings`
+
+- schema version
+- schedule horizon
+- timezone
+- polling thresholds
+- last successful schedule sync
+- last successful odds poll
+- last API quota values
+- service/version diagnostics
+
+
+6. POLLING AND QUOTA DESIGN
+---------------------------
+
+Run a lightweight systemd timer every 15 minutes. The scheduled command reads
+`wnba_games` and exits without an Odds API call unless at least one game is due.
+
+For each upcoming game:
+
+- more than six hours to tip: due if no successful poll in the last hour
+- six hours or less to tip: due if no successful poll in the last 15 minutes
+- at or after tip: not due
+
+When any game is due:
+
+1. Use one bulk WNBA odds request for full-game `h2h,spreads,totals`.
+2. Use event-specific requests only for due event IDs and request
+   `spreads_h1,totals_h1`.
+3. Merge full-game and first-half results by Odds API event ID.
+4. Upsert opening/latest game state.
+5. Append deduplicated/hourly snapshots.
+6. Record request quota headers and surface low quota as a service warning.
+
+This is cheaper than requesting all five markets separately for every event.
+Missing first-half markets are stored as `nodata`, not treated as a failed poll.
+
+
+7. TELEGRAM EXPERIENCE
+----------------------
+
+Run a separate private Bot API process as `@wnbaguesser_bot`:
+
+- `/wnba` - browse the next 14 days of WNBA games in Eastern time
+- `/wnba_thoughts` - show recent append-only thought/lean submissions
+- `/wnba_cancel` - cancel the active selection/reasoning flow
+
+Flow:
+
+1. User taps a game.
+2. Bot shows opening/latest full-game and first-half BetOnline lines.
+3. User selects full game or first half.
+4. User selects a valid market (full: spread/moneyline/total; H1:
+   spread/total).
+5. User selects a team side or over/under.
+6. Bot uses ForceReply to request exact reasoning and any line/price where the
+   preference changes.
+7. The reply is appended exactly to `wnba_thoughts` with structured selection
+   fields and frozen current lines.
+8. Confirmation includes matchup, selection, and Eastern timestamp, with an
+   `Add another update` button that refreshes lines and appends another row for
+   the same selection.
+
+Guardrails:
+
+- Every command, callback, and text handler requires a private chat and checks
+  the numeric user ID against the WNBA-only Sheet allowlist before game/thought
+  access. The bot refuses to start with an empty allowlist.
+- The allowlist is seeded idempotently with the approved user during workbook
+  initialization and is cached for no more than 60 seconds at runtime.
+- Callback data contains only short action tokens and bounded immutable event
+  identifiers and stays below Telegram's 64-byte limit.
+- In-flight state belongs to the authorized user, expires after 15 minutes, can
+  be cancelled, and is intentionally in memory like the NFL v1 flow. A process
+  restart drops the transient selection; the user reruns `/wnba`.
+- Telegram message identity makes retries idempotent.
+- Thought text is written as raw cell text and never interpreted as a formula.
+- Sheet failures are visible and retain the original exact text/submission ID
+  in the active flow so the same reply retries safely.
+- User thought capture never grants root/Git access or changes `path210.md`
+  automatically.
+
+Both Telegram surfaces expose `View game leans` after game selection. The
+default view is:
+
+1. latest active Claude lean revision, if any
+2. chronological user thought/lean history from `wnba_thoughts`
+
+A separate `Revision history` action shows superseded and deleted Claude
+revisions with revision IDs, timestamps, and commit links/SHAs. Both views use
+the same deterministic Sheet history reader so the bots cannot disagree about
+which revision is active.
+
+Receptionist Claude-generation flow:
+
+1. Existing private-chat/numeric-user authorization runs before WNBA state,
+   Sheet, template, skill, or Git access.
+2. User invokes the WNBA lean command/flow and selects an upcoming game with
+   buttons.
+3. Receptionist reloads the selected immutable event ID from current
+   `wnba_games`, displays the current matchup/lines/history summary, and shows
+   exactly two generation actions:
+   - `Generate now using standard template`
+   - `Copy template text`
+4. Generate now constructs the standard normalized request and invokes the
+   common generation entry point directly.
+5. Copy template sends copyable plain text in this shape:
+
+       WNBA_LEAN_REQUEST_V1
+       event_id: <immutable event ID>
+       matchup: <away team> @ <home team>
+       request: generate using standard template
+       additional_thoughts:
+
+6. The user may paste that text into the normal receptionist message box,
+   append or edit `additional_thoughts`, and send it like an ordinary message.
+   A deterministic parser recognizes the marker before generic Claude prompt
+   queuing and routes it to exactly the same normalized generation entry point
+   as Generate now.
+7. The parser treats event ID as authoritative but still reloads current Sheet
+   state. The supplied matchup must equal the current event matchup after
+   normalization; stale, missing, ambiguous, started, or mismatched games fail
+   visibly before Claude or Git runs. User-authored extra thoughts remain
+   request context, not authoritative state.
+8. The skill generates and persists one revision, then returns the active lean,
+   revision ID, validation result, and Git commit SHA to the receptionist.
+
+Claude output defaults:
+
+- full-game side lean
+- full-game total lean
+- first-half side and/or total only when current/history evidence supports a
+  meaningful lean
+- strength/confidence for each emitted lean
+- explicit watch/change conditions tied to lines, prices, injuries, timing, or
+  missing data
+- no forced first-half opinion and no invented market/state when evidence is
+  weak
+
+Natural-language follow-ups in the receptionist may edit or delete a prior
+Claude lean. The receptionist resolves the requested event/revision
+deterministically, shows the intended operation when ambiguous, and invokes the
+same skill with `revise` or `delete`. `Undo latest` appends a restoration
+revision and a new Git commit; it never rewrites Git or Sheet history.
+
+
+8. SECURITY AND RELIABILITY
+---------------------------
+
+Secrets:
+
+- Store the Odds API key in a mode-0600 VPS environment file.
+- Reuse only the existing allowlisted Google service-account credentials.
+- Add the new Sheet ID as a separate WNBA-specific environment variable.
+- Store `WNBA_GUESSER_BOT_TOKEN` only in the dedicated mode-0600
+  `/home/receptionist-agent/.config/wnba-guesser/env`.
+- Require the token to identify exactly as `@wnbaguesser_bot`.
+- Never commit or print credentials.
+
+Runtime:
+
+- Run pollers as `receptionist-agent`, not root.
+- Run `wnba-guesser-bot.service` as the same non-root identity, from the same
+  immutable WNBA venv, but with its own environment file and systemd lifecycle.
+- Keep the receptionist bot Unix process separated from Google credentials and
+  Git write credentials. Its WNBA handlers call a fixed, structured helper
+  contract running as `receptionist-agent`; no arbitrary command, path, module,
+  repository, or argument execution is accepted.
+- The planned cross-app helper is not the removed Guesser thought-capture
+  bridge. Its allowlisted actions are limited to current game lookup, history
+  display, template construction/validation, and normalized skill operations.
+- Generate now and pasted templates enter the existing supervised coding-agent
+  execution path as the same normalized skill request. Claude and deterministic
+  Git/Sheet helpers run as `receptionist-agent`; the bot user receives only
+  bounded, redacted display results.
+- Use fixed systemd units and a root-owned installer.
+- Apply `MemoryMax`/`MemoryHigh` appropriate to the shared roughly 1GB VPS.
+- Use short HTTP timeouts and bounded retries.
+- Use systemd locking so schedule and odds jobs cannot overlap themselves.
+- Keep the last valid Sheet data when ESPN or The Odds API fails.
+- Log clear failures and quota values to journald.
+
+The poller is lightweight, but the VPS also runs other services and Claude.
+Kernel OOM kills, unexplained process loss, or sustained RAM/swap exhaustion are
+capacity signals to resize the VPS rather than weaken identity or concurrency
+guardrails.
+
+
+8A. CLAUDE LEAN SKILL AND DETERMINISTIC WORKFLOW
+------------------------------------------------
+
+Add a reusable Claude Code skill at
+`.claude/skills/wnba-lean/SKILL.md`. Both Generate now and recognized pasted
+templates invoke this same skill entry point; natural-language edit/delete/undo
+requests resolve to the same operation model.
+
+Skill responsibilities:
+
+1. Receive a normalized operation (`create`, `revise`, `delete`, or `undo`) and
+   immutable event/revision identifiers from the receptionist.
+2. Load the selected current game, normalized opening/latest snapshots,
+   historical snapshots, every Sheet user thought, and effective Claude
+   revision history.
+3. Read `path210.md` rules, the matching event block, model cache,
+   precedents/continuations, and only the relevant historical sections selected
+   by deterministic extractors.
+4. Produce structured JSON for full-game side/total and optional first-half
+   side/total, including strength, evidence, watch/change conditions, and cited
+   source revision/snapshot IDs.
+5. Hand structured output back to deterministic helpers; Claude does not edit
+   Markdown, Sheets, or Git directly.
+6. Return the published revision ID and commit SHA, or a specific failure with
+   no success-shaped fallback.
+
+Deterministic-first helper design:
+
+- `game resolve`: validate event ID, matchup, status, timing, and unique current
+  Sheet row.
+- `context build`: fetch/normalize opening/latest/history and all thoughts;
+  extract relevant `path210.md` rules/cache/precedent/continuation sections.
+- `request parse`: normalize both button generation and
+  `WNBA_LEAN_REQUEST_V1` pasted text into one request schema.
+- `output validate`: enforce emitted market/side schema, supported periods,
+  required strength/watch fields, source IDs, and no invented lines.
+- `path apply`: deterministically append/revise/delete/undo only the correct
+  immutable event block; no free-form search-and-replace by Claude.
+- `path validate`: parse the resulting document, enforce one active block per
+  event/revision chain, required markers, stable ordering, and unchanged
+  unrelated blocks.
+- `revision append`: write immutable Sheet revision/publication events with
+  `RAW` input and idempotency keys.
+- `git publish`: acquire a workflow lock; require clean `www/main`, HEAD equal
+  to `origin/main`, expected base SHA, no unrelated diff, and one-event scope;
+  create exactly one auditable commit and push `main`.
+- `undo/edit/delete`: resolve exact revision chains and produce append-only
+  Sheet events plus deterministic path changes; never rewrite Sheet rows or Git
+  history.
+
+Claude reasoning chooses and words the lean. Python owns lookup, IDs, state,
+text placement, validation, Sheet writes, Git preconditions, commit creation,
+push, and recovery.
+
+Successful create/revise/delete/undo sequence:
+
+1. Acquire the per-repository/per-event lock and verify Git/Sheet preconditions.
+2. Build deterministic context and ask Claude for structured output.
+3. Validate the structured output.
+4. Deterministically apply the event-block change to `path210.md`.
+5. Append an idempotent Sheet revision event with content hash, intended
+   active/superseded/deleted result, and expected Git base.
+6. Run full path/document/diff validation.
+7. Create exactly one commit with event ID and revision ID in the message.
+8. Push that commit to `www/main`.
+9. Append a publication receipt event containing the resulting commit SHA.
+10. Return success only after the pushed SHA and receipt are confirmed.
+
+`wnba_lean_revisions` therefore stores append-only records of type
+`revision`, `publication_receipt`, or `abort_receipt`. Readers consider a
+revision effective only when it has a matching successful publication receipt.
+If validation, commit, or push fails after the initial revision event, helpers
+restore the working tree when safe, append an abort receipt linked to the
+revision, preserve the prior active revision, and report failure. This avoids
+updating history in place or displaying an unpublished lean as active.
+
+Git and deployment boundaries:
+
+- Generating, revising, deleting, undoing, committing, and pushing
+  `path210.md` is approved coding work, not a production service deployment.
+- The skill may push one validated lean commit without a deployment approval.
+- It may not deploy/restart/install the poller, Guesser, receptionist, systemd
+  units, or environments.
+- Any production service deployment still requires the existing immutable
+  Telegram deployment request and explicit approval.
+
+
+9. MIGRATION AND CUTOVER
+------------------------
+
+1. Copy all non-secret listed files into `source_artifacts/` without changing
+   the source worktree.
+2. Copy `path210.md` to its active app-root location.
+3. Build the new tested package using adapted ESPN and NFL Sheet patterns.
+4. Export the copied workbook to a local session artifact for rollback.
+5. Replace copied NFL tabs with the WNBA schema.
+6. Import current games and historical text snapshots into structured rows.
+7. Install the Odds API key and Sheet ID on the VPS.
+8. Install systemd services/timers.
+9. Run schedule sync and an odds poll manually.
+10. Verify full-game and first-half values against a live API response.
+11. Verify opening/latest behavior and unchanged-hourly deduplication.
+12. Seed `wnba_allowed_users` with the approved user's numeric Telegram ID.
+13. Configure the dedicated `@wnbaguesser_bot` token/environment.
+14. Verify game -> period -> market -> side -> reasoning, a repeated update,
+    recent thoughts, cancel, and unauthorized-user rejection.
+15. Verify direct Sheet thoughts receive timestamps/metadata.
+16. Confirm no Mac scheduler/process is polling.
+17. Add local fixtures for WNBA game/history/thought/revision/path210 context,
+    template parsing, deterministic block operations, and Git preconditions.
+18. Export a staging workbook backup, add the revision-history schema there,
+    and validate active/superseded/deleted derivation without touching
+    production.
+19. Validate schedule sync and odds polling against staging/fixtures before any
+    bot or skill cutover.
+20. Validate standalone Guesser allowlist, structured capture, repeat update,
+    game history view, cancel, and restart behavior against staging.
+21. Validate receptionist game buttons, both generation actions, copied
+    template text, edited-template routing, matchup/event revalidation, and
+    default/revision-history views against staging.
+22. Run the skill deterministically in dry-run mode: context and proposed
+    structured output are produced, but no Sheet, path, commit, or push occurs.
+23. Exercise append + Sheet revision + validate + one commit + push with a
+    disposable test event and branch or a controlled repository fixture.
+    Confirm abort receipts and prior-active preservation on injected failures.
+24. Exercise undo-latest, natural-language edit, and natural-language delete;
+    verify append-only Sheet chains and one auditable Git commit per successful
+    operation.
+25. Compare the same game history in the Guesser and receptionist, including
+    latest active, chronological user thoughts, and superseded/deleted views.
+26. Restart both bots/agent processes. Confirm durable Sheet/Git history
+    persists, transient Guesser selection expires safely, and a copied template
+    still routes through the common generation path.
+27. Only after all checks pass: back up production, initialize the production
+    revision schema/allowlists, configure environments, enable timers and the
+    standalone bot, then separately deploy receptionist/skill changes through
+    the existing approval process where deployment is required.
+
+The private Mac key file remains as an emergency fallback, but no Mac scheduler
+will be left active.
+
+
+10. TEST AND ACCEPTANCE CRITERIA
+--------------------------------
+
+Automated tests:
+
+- ESPN WNBA event parsing and Eastern conversion
+- 14-day date-range generation
+- schedule upsert preserving manual fields
+- full-game and first-half Odds API parsing
+- missing BetOnline and missing first-half markets
+- opening/latest preservation
+- changed-line immediate snapshot
+- unchanged-line hourly snapshot
+- due-time calculation at the six-hour boundary
+- no post-tip polling
+- Sheet row normalization/formula escaping
+- direct-Sheet thought reconciliation
+- WNBA-only Sheet allowlist parsing/seeding and authorization-before-game access
+- game/period/market/side navigation and first-half market restrictions
+- callback data below 64 bytes
+- exact reasoning preservation and structured selected line metadata
+- repeatable append-only updates and idempotent retry identity
+- selection expiry/cancel and visible Sheet failure behavior
+- Generate now and parsed `WNBA_LEAN_REQUEST_V1` requests normalize to identical
+  skill input
+- copied-template additional thoughts are preserved while event/matchup are
+  revalidated against current Sheet state
+- stale/mismatched/ambiguous/started event requests fail before Claude/Git
+- shared history derivation returns latest published active Claude revision,
+  chronological user thoughts, and separate superseded/deleted revisions
+- deterministic context extraction selects required path210 rules/cache/event
+  block/precedents without mutating the document
+- skill output validation enforces full-game defaults and optional evidence-
+  supported first-half leans
+- deterministic create/revise/delete/undo operations change only the target
+  event block and preserve unrelated path210 bytes
+- append-only revision/publication/abort event idempotency and effective-state
+  derivation
+- Git dirty/wrong-branch/stale-base/unrelated-diff precondition failures
+- successful workflow creates exactly one expected commit; push and Sheet
+  receipts are mocked in unit tests
+- injected validation/commit/push failures restore safely, append abort
+  receipts, and leave the prior active revision visible
+- source artifact checksums
+
+Production acceptance:
+
+- schedule contains the next 14 days in Eastern time
+- live BetOnline full-game and first-half lines appear
+- API calls follow hourly/15-minute cadence
+- historical snapshots remain available
+- one Telegram thought and one direct Sheet thought are preserved with
+  timestamps and frozen lines
+- a second Telegram update for the same selection appends rather than overwrites
+- non-allowlisted users cannot browse games, thoughts, or callbacks
+- `@wnbaguesser_bot` restarts independently of other Telegram bots
+- receptionist Generate now and copied/edited templates invoke the same
+  validated skill path
+- generated default output contains full-game side and total; first-half
+  side/total appear only when supported
+- every successful generation/edit/delete/undo produces an append-only Sheet
+  revision chain, validated path210 event-block change, one auditable commit,
+  and confirmed push to `www/main`
+- failed workflows do not replace the prior active lean or claim success
+- default history in both bots agrees on latest active Claude lean plus
+  chronological user thoughts; revision history exposes superseded/deleted rows
+- undo-latest restores the prior effective lean through a new revision/commit
+- natural-language edit/delete resolves explicit event/revision state and never
+  performs in-place Sheet history mutation
+- timers survive reboot and do not overlap
+- secrets are absent from Git and service logs
+- poller memory remains small relative to the shared VPS
+
+
+11. ROLLBACK
+------------
+
+- Disable the WNBA timers.
+- Disable `wnba-guesser-bot.service` and any newly deployed receptionist WNBA
+  handlers if the cross-app cutover fails.
+- Restore the workbook from the pre-migration JSON export if schema setup fails.
+- Revert the `www` deployment to the previous immutable revision.
+- For an individual bad lean, use deterministic undo-latest to append a
+  restoration revision and commit. Do not force-push or delete Sheet history.
+- If a revision was prepared but not published, append/verify its abort receipt
+  and keep the prior published revision active.
+- The original source worktree and private Mac key remain untouched, so manual
+  polling can be resumed temporarily without reconstructing historical files.
+
+
+12. IMPLEMENTATION RECORD
+-------------------------
+
+Implementation date: 2026-08-05
+
+Implemented in `apps/wnba-poller`:
+
+- Python 3.12 package, CLI, README, offline tests, root-only installer, and
+  hardened systemd service/timer artifacts.
+- Byte-exact copies of every approved non-secret source artifact, plus an
+  active byte-exact `path210.md` copy. No environment/key file was copied.
+- One ESPN range request for the Eastern-date rolling 14-day window. Parsing
+  stores UTC plus Eastern timestamps, and schedule writes are upsert-only. A
+  request or response-shape failure occurs before any Sheet write.
+- Clear normalized columns rather than the NFL packed strings. Opening fields
+  retain their first available value; latest fields update on each successful
+  poll. A missing first-half market is represented as `nodata`.
+- Due decisions use `last_odds_polled_at`: hourly when more than six hours from
+  tip, every 15 minutes at or inside six hours, and never at/after tip. The
+  scheduled code returns before constructing an Odds API client when no game is
+  due.
+- One bulk BetOnline `h2h,spreads,totals` request followed by
+  `spreads_h1,totals_h1` event requests only for matched due games.
+- Immediate changed snapshots and 60-minute identical snapshots, including the
+  latest Odds API used/remaining headers.
+- Direct-Sheet reconciliation reads formula text and rewrites the completed row
+  with `RAW` input, preserving exact thought text while neutralizing formula
+  execution. Rows with an existing thought ID are immutable/idempotent.
+- `SheetsStore.append_thought_record(...)` freezes Telegram identity,
+  structured period/market/side, selected opening/latest price, and all current
+  normalized lines. It deduplicates on immutable thought ID or Telegram
+  chat/message identity and writes with `RAW` input.
+- Added `wnba_allowed_users`, a WNBA-only numeric Sheet allowlist. Workbook
+  initialization can idempotently seed the approved user, and the bot refuses
+  startup when the allowlist is empty.
+- Workbook initialization is non-destructive by default. Replacing WNBA tabs or
+  removing the copied NFL tabs requires `--confirm-replace-tabs` and a new JSON
+  backup path.
+- The odds/thought cycle and daily schedule sync share one nonblocking systemd
+  lock and run as `receptionist-agent`, with 96 MB `MemoryHigh` and 160 MB
+  `MemoryMax`.
+
+Implementation boundaries:
+
+- Automated legacy text-history import was not added. The preserved log has no
+  immutable event IDs or absolute capture timestamps, so an unreviewed import
+  could attach repeated fixtures to the wrong event.
+
+Dedicated Telegram intake implementation:
+
+- The previously considered receptionist commands and JSON/sudo bridge are
+  superseded and were removed. No receptionist source, database, sudoers, or
+  deployment artifact is changed by this WNBA scope.
+- Added standalone `wnba-guesser-bot` for `@wnbaguesser_bot`, using the Telegram
+  Bot API with only its dedicated token. Runtime verifies the token username.
+- Added the NFL-style game -> period -> market -> side -> ForceReply reasoning
+  flow. Full game exposes spread/moneyline/total; first half exposes
+  spread/total. Opening and latest values are shown at each relevant step.
+- Every command/callback/text update is private-chat only and checks the
+  WNBA-only numeric Sheet allowlist before game or thought access. The allowlist
+  cache lasts at most 60 seconds.
+- Exact reasoning is never stripped before `RAW` append. The deterministic
+  `telegram:<chat_id>:<message_id>` identity makes Telegram retries
+  idempotent. An unconfirmed write retains the original text/identity in the
+  active flow for a safe same-text retry.
+- Successful submissions keep the structured selection available through
+  `Add another update`; the bot refreshes current lines and appends a new row.
+  Earlier rows are immutable. `/wnba_thoughts` lists recent rows and
+  `/wnba_cancel` clears the active flow.
+- Selection state is deliberately in memory, matching the proven NFL v1
+  trade-off: it expires after 15 minutes and a service restart requires
+  `/wnba` again. Durable opinions live in Sheets, not process state.
+- Added a dedicated mode-0600 env path and hardened
+  `wnba-guesser-bot.service`. It runs as `receptionist-agent` from the same
+  root-owned WNBA venv, with independent restart and 128 MB/192 MB memory
+  limits. The root installer can explicitly enable timers and/or the bot.
+
+Validation evidence:
+
+```text
+cd /Users/boghani/repos/www/apps/wnba-poller &&
+PYTHONDONTWRITEBYTECODE=1 ../../.test-venv/bin/python -m pytest -p no:cacheprovider
+
+35 passed in 3.11s
+
+cd /Users/boghani/repos/www &&
+PYTHONDONTWRITEBYTECODE=1 .test-venv/bin/python -m py_compile \
+  apps/wnba-poller/wnba_poller/*.py
+```
+
+The WNBA suite is offline and covers ESPN parsing/range/error retention, full
+and first-half BetOnline parsing, missing markets/bookmaker, bulk/event request
+shape, opening/latest preservation, snapshot cadence, the six-hour boundary,
+post-tip suppression, zero-call not-due behavior, raw/formula-safe Sheet rows,
+direct-Sheet thought reconciliation/idempotency, configuration validation, and
+WNBA-only allowlist parsing/seeding, the complete standalone bot flow, exact
+and repeatable reasoning, idempotent failure retry, callback constraints,
+Eastern display/horizon, and source artifact checksums.
+
+Clarified cross-app lean workflow status (2026-08-05):
+
+- The standalone Guesser decisions above remain implemented.
+- The receptionist game picker/template actions, shared cross-bot lean-history
+  view, `wnba_lean_revisions` schema, deterministic helpers, Claude Code skill,
+  automatic path210 revision/validation/commit/push, and undo/edit/delete flows
+  are approved architecture in this plan only.
+- No code or test validation is claimed for that newly clarified workflow.
+- The old "receptionist has no WNBA role" boundary is superseded only at the
+  architecture level; implementation must follow the testing/cutover gates
+  before production deployment.
+
+No deployment, Google Sheet access/mutation, secret access, commit, push, or
+live ESPN/Odds API call was performed during implementation.
+
+
+13. POST-IMPLEMENTATION USER TEST SEQUENCE
+------------------------------------------
+
+Run this sequence after the cross-app workflow is implemented. Use local
+fixtures and staging first; do not point a development run at production.
+
+1. Local package and fixture suite:
+
+       cd /Users/boghani/repos/www/apps/wnba-poller &&
+       PYENV_VERSION=3.12.11 python -m venv <session-venv> &&
+       <session-venv>/bin/pip install -e '.[test]' &&
+       PYTHONDONTWRITEBYTECODE=1 <session-venv>/bin/python -m pytest \
+         -p no:cacheprovider
+
+   Confirm tests cover template equivalence, context extraction, path
+   operations, append-only revision state, Git preconditions/failures, both bot
+   history views, and the existing poller/Guesser behavior.
+
+2. Deterministic fixture dry run:
+
+   - choose one future fixture event with full-game and first-half history
+   - run the future lean helper/skill in `--dry-run` mode
+   - inspect normalized game/history/thought context, extracted path210
+     sections, structured Claude output, proposed event block, and validation
+   - confirm no Sheet write, working-tree change, commit, or push occurred
+
+3. Staging Sheet preparation:
+
+   - export the entire staging workbook with formulas to a new backup file
+   - initialize/validate `wnba_games`, snapshots, thoughts, WNBA-only allowlist,
+     and append-only lean revision schema
+   - seed only the user's numeric ID in `wnba_allowed_users`
+   - verify a disabled or different ID is rejected
+
+4. Staging schedule/odds validation:
+
+   - sync the 14-day ESPN schedule
+   - run a due odds poll
+   - compare full-game and first-half BetOnline values with fixture/API evidence
+   - confirm started games are excluded and missing H1 markets remain `nodata`
+
+5. Standalone `@wnbaguesser_bot` staging flow:
+
+   - browse a game
+   - select full game -> side/total and submit exact reasoning
+   - select first half -> supported market and submit exact reasoning
+   - use `Add another update` and confirm a second immutable row
+   - test recent thoughts, game history, cancel, expiry, restart, idempotent
+     retry, and unauthorized-user rejection
+
+6. Receptionist template equivalence:
+
+   - select the same game with buttons
+   - capture the normalized request produced by Generate now
+   - choose Copy template, paste it into the normal message box unchanged, and
+     confirm the normalized request is identical
+   - repeat with appended `additional_thoughts`; confirm only that context
+     differs
+   - change matchup/event text and confirm validation rejects it before Claude
+
+7. Shared history views:
+
+   - before generation, confirm both bots show the same chronological user
+     thoughts and no active Claude lean
+   - after generation, confirm both default views show the same latest active
+     Claude lean followed by user history
+   - confirm Revision history separately shows superseded/deleted revisions
+
+8. Disposable Git publication test:
+
+   - use a disposable event and branch or controlled repository/remote fixture
+   - require clean expected base and run create end-to-end
+   - confirm one deterministic event-block diff, one Sheet revision event, full
+     validation, exactly one commit, one push, and one publication receipt
+   - confirm commit message and Sheet row contain event/revision IDs
+
+9. Failure injection:
+
+   - inject path validation, commit, push, and publication-receipt failures one
+     at a time
+   - confirm no success is reported, unrelated files remain unchanged, an abort
+     receipt is appended where needed, and the prior published lean remains
+     active in both bots
+
+10. Edit/delete/undo:
+
+    - ask the receptionist naturally to edit a specific prior lean
+    - ask it to delete that revision
+    - run Undo latest
+    - verify each operation appends Sheet history, changes only the correct
+      path210 event block, creates one new commit, and never rewrites Git/Sheet
+      history
+
+11. Restart persistence:
+
+    - restart the standalone bot and receptionist/agent processes in staging
+    - confirm Sheet/Git lean history and copied-template routing persist
+    - confirm only transient Guesser selection state is lost/expired safely
+
+12. Production enablement:
+
+    - take a fresh production workbook backup
+    - apply/verify schemas and seed only the user allowlist
+    - configure dedicated bot/skill environments without printing secrets
+    - submit any required immutable service-deployment request in Telegram
+    - approve and deploy services only after reviewing revision and command
+    - run one controlled production generation, compare both history views,
+      test undo-latest, and retain the rollback backup

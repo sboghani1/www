@@ -1,0 +1,299 @@
+{
+  "fetched_at": "2026-07-15T06:42:25.406757+00:00",
+  "sport": "basketball_wnba",
+  "regions": "us2",
+  "markets": "h2h,spreads,totals",
+  "bookmakers": "betonlineag",
+  "game_count": 5,
+  "requests_remaining": "491",
+  "requests_used": "9",
+  "games": [
+    {
+      "id": "dd23179c4373849ae1da8476ec21def3",
+      "sport_key": "basketball_wnba",
+      "sport_title": "WNBA",
+      "commence_time": "2026-07-15T16:10:00Z",
+      "home_team": "Chicago Sky",
+      "away_team": "Seattle Storm",
+      "bookmakers": [
+        {
+          "key": "betonlineag",
+          "title": "BetOnline.ag",
+          "last_update": "2026-07-15T06:41:58Z",
+          "markets": [
+            {
+              "key": "h2h",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Chicago Sky",
+                  "price": -135
+                },
+                {
+                  "name": "Seattle Storm",
+                  "price": 115
+                }
+              ]
+            },
+            {
+              "key": "spreads",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Chicago Sky",
+                  "price": -115,
+                  "point": -2.5
+                },
+                {
+                  "name": "Seattle Storm",
+                  "price": -105,
+                  "point": 2.5
+                }
+              ]
+            },
+            {
+              "key": "totals",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Over",
+                  "price": -110,
+                  "point": 171.0
+                },
+                {
+                  "name": "Under",
+                  "price": -110,
+                  "point": 171.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "4db11d33553fba68fc607aaf009071aa",
+      "sport_key": "basketball_wnba",
+      "sport_title": "WNBA",
+      "commence_time": "2026-07-15T17:10:00Z",
+      "home_team": "Minnesota Lynx",
+      "away_team": "Los Angeles Sparks",
+      "bookmakers": [
+        {
+          "key": "betonlineag",
+          "title": "BetOnline.ag",
+          "last_update": "2026-07-15T06:41:58Z",
+          "markets": [
+            {
+              "key": "h2h",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Los Angeles Sparks",
+                  "price": 491
+                },
+                {
+                  "name": "Minnesota Lynx",
+                  "price": -675
+                }
+              ]
+            },
+            {
+              "key": "spreads",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Los Angeles Sparks",
+                  "price": -105,
+                  "point": 12.0
+                },
+                {
+                  "name": "Minnesota Lynx",
+                  "price": -115,
+                  "point": -12.0
+                }
+              ]
+            },
+            {
+              "key": "totals",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Over",
+                  "price": -105,
+                  "point": 182.0
+                },
+                {
+                  "name": "Under",
+                  "price": -115,
+                  "point": 182.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "8eace0d4309db9d618e7ba857166324b",
+      "sport_key": "basketball_wnba",
+      "sport_title": "WNBA",
+      "commence_time": "2026-07-16T00:10:00Z",
+      "home_team": "Indiana Fever",
+      "away_team": "Golden State Valkyries",
+      "bookmakers": [
+        {
+          "key": "betonlineag",
+          "title": "BetOnline.ag",
+          "last_update": "2026-07-15T06:41:58Z",
+          "markets": [
+            {
+              "key": "h2h",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Golden State Valkyries",
+                  "price": 130
+                },
+                {
+                  "name": "Indiana Fever",
+                  "price": -150
+                }
+              ]
+            },
+            {
+              "key": "spreads",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Golden State Valkyries",
+                  "price": -110,
+                  "point": 3.0
+                },
+                {
+                  "name": "Indiana Fever",
+                  "price": -110,
+                  "point": -3.0
+                }
+              ]
+            },
+            {
+              "key": "totals",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Over",
+                  "price": -110,
+                  "point": 168.0
+                },
+                {
+                  "name": "Under",
+                  "price": -110,
+                  "point": 168.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "00a997433337939ebda3beb882a1e2db",
+      "sport_key": "basketball_wnba",
+      "sport_title": "WNBA",
+      "commence_time": "2026-07-16T23:10:00Z",
+      "home_team": "Washington Mystics",
+      "away_team": "Portland Fire",
+      "bookmakers": [
+        {
+          "key": "betonlineag",
+          "title": "BetOnline.ag",
+          "last_update": "2026-07-15T06:41:58Z",
+          "markets": [
+            {
+              "key": "spreads",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Portland Fire",
+                  "price": -110,
+                  "point": 5.5
+                },
+                {
+                  "name": "Washington Mystics",
+                  "price": -110,
+                  "point": -5.5
+                }
+              ]
+            },
+            {
+              "key": "totals",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Over",
+                  "price": -110,
+                  "point": 166.0
+                },
+                {
+                  "name": "Under",
+                  "price": -110,
+                  "point": 166.0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "51f9e00bb8d7debd5a922a21f0736e36",
+      "sport_key": "basketball_wnba",
+      "sport_title": "WNBA",
+      "commence_time": "2026-07-17T01:00:00Z",
+      "home_team": "Dallas Wings",
+      "away_team": "New York Liberty",
+      "bookmakers": [
+        {
+          "key": "betonlineag",
+          "title": "BetOnline.ag",
+          "last_update": "2026-07-15T06:41:58Z",
+          "markets": [
+            {
+              "key": "spreads",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Dallas Wings",
+                  "price": -110,
+                  "point": -1.5
+                },
+                {
+                  "name": "New York Liberty",
+                  "price": -110,
+                  "point": 1.5
+                }
+              ]
+            },
+            {
+              "key": "totals",
+              "last_update": "2026-07-15T06:41:58Z",
+              "outcomes": [
+                {
+                  "name": "Over",
+                  "price": -110,
+                  "point": 175.5
+                },
+                {
+                  "name": "Under",
+                  "price": -110,
+                  "point": 175.5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

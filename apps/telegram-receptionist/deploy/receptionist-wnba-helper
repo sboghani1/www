@@ -1,0 +1,39 @@
+#!/usr/bin/python3
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+GOOGLE_ENV = Path(
+    "/home/receptionist-agent/.config/receptionist-agent/google.env"
+)
+HELPER_BINARY = (
+    "/opt/telegram-receptionist/current/.venv/bin/"
+    "wnba-receptionist-helper"
+)
+ALLOWED_KEYS = {
+    "GOOGLE_CREDENTIALS",
+    "GOOGLE_SERVICE_ACCOUNT_JSON",
+    "WNBA_SHEET_ID",
+}
+
+
+def main() -> None:
+    if len(sys.argv) != 1:
+        raise SystemExit("WNBA helper does not accept arguments.")
+    if not GOOGLE_ENV.is_file():
+        raise SystemExit("WNBA helper environment is unavailable.")
+    for line in GOOGLE_ENV.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key in ALLOWED_KEYS:
+            os.environ[key] = value
+    if not os.getenv("WNBA_SHEET_ID"):
+        raise SystemExit("WNBA_SHEET_ID is required.")
+    os.execv(HELPER_BINARY, [HELPER_BINARY])
+
+
+if __name__ == "__main__":
+    main()

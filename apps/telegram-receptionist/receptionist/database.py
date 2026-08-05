@@ -119,6 +119,14 @@ class Database:
                     output TEXT,
                     error TEXT
                 );
+
+                CREATE TABLE IF NOT EXISTS wnba_selections (
+                    telegram_user_id INTEGER PRIMARY KEY,
+                    event_id TEXT NOT NULL,
+                    matchup TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    expires_at TEXT NOT NULL
+                );
                 """
             )
             connection.execute("UPDATE repositories SET enabled=0")
@@ -152,6 +160,93 @@ class Database:
                     (workspace["id"], utc_now()),
                 )
             connection.commit()
+
+    def set_wnba_selection(
+        self,
+        *,
+        user_id: int,
+        event_id: str,
+        matchup: str,
+        now: datetime | None = None,
+        ttl: timedelta = timedelta(minutes=15),
+    ) -> dict[str, Any]:
+        timestamp = now or datetime.now(UTC)
+        if (
+            user_id <= 0
+            or not event_id
+            or len(event_id) > 128
+            or not matchup
+            or len(matchup) > 200
+            or ttl <= timedelta(0)
+            or ttl > timedelta(hours=1)
+        ):
+            raise ValueError("invalid WNBA selection")
+        record = {
+            "telegram_user_id": user_id,
+            "event_id": event_id,
+            "matchup": matchup,
+            "created_at": timestamp.isoformat(),
+            "expires_at": (timestamp + ttl).isoformat(),
+        }
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO wnba_selections(
+                    telegram_user_id, event_id, matchup, created_at, expires_at
+                ) VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(telegram_user_id) DO UPDATE SET
+                    event_id=excluded.event_id,
+                    matchup=excluded.matchup,
+                    created_at=excluded.created_at,
+                    expires_at=excluded.expires_at
+                """,
+                tuple(record.values()),
+            )
+            connection.commit()
+        return record
+
+    def get_wnba_selection(
+        self,
+        user_id: int,
+        *,
+        now: datetime | None = None,
+    ) -> dict[str, Any] | None:
+        timestamp = now or datetime.now(UTC)
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT * FROM wnba_selections
+                WHERE telegram_user_id=?
+                """,
+                (user_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            record = dict(row)
+            expires_at = datetime.fromisoformat(record["expires_at"])
+            if expires_at <= timestamp:
+                connection.execute(
+                    """
+                    DELETE FROM wnba_selections
+                    WHERE telegram_user_id=?
+                    """,
+                    (user_id,),
+                )
+                connection.commit()
+                return None
+            return record
+
+    def cancel_wnba_selection(self, user_id: int) -> bool:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                DELETE FROM wnba_selections
+                WHERE telegram_user_id=?
+                """,
+                (user_id,),
+            )
+            connection.commit()
+            return cursor.rowcount == 1
 
     def recover_interrupted_runs(self) -> int:
         with self._connect() as connection:
