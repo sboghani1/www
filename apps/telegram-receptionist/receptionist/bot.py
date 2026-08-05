@@ -37,6 +37,10 @@ SELF_DEPLOY_WORKER = "/usr/local/libexec/deploy-telegram-receptionist-worker"
 
 Handler = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
 MAX_CALLBACK_BYTES = 64
+WNBA_CALLBACK_PATTERN = re.compile(
+    r"^wnba:(?:game:[A-Za-z0-9_.-]{1,48}|page:[0-9]{1,4}|"
+    r"generate|copy|history|revisions|undo)$"
+)
 
 
 def wnba_callback(action: str, event_id: str = "") -> str:
@@ -50,9 +54,38 @@ def _wnba_matchup(game: dict) -> str:
     return f"{game.get('away_team', '')} @ {game.get('home_team', '')}"
 
 
-def wnba_games_markup(games: list[dict]) -> InlineKeyboardMarkup:
+WNBA_GAMES_PAGE_SIZE = 5
+
+
+def wnba_page_games(
+    games: list[dict], page: int
+) -> tuple[list[dict], int, int]:
+    page_count = max(
+        1, (len(games) + WNBA_GAMES_PAGE_SIZE - 1) // WNBA_GAMES_PAGE_SIZE
+    )
+    normalized = min(max(page, 0), page_count - 1)
+    start = normalized * WNBA_GAMES_PAGE_SIZE
+    return (
+        games[start : start + WNBA_GAMES_PAGE_SIZE],
+        normalized,
+        page_count,
+    )
+
+
+def wnba_games_header(games: list[dict], page: int) -> str:
+    if not games:
+        return "No upcoming WNBA games are available."
+    _, normalized, page_count = wnba_page_games(games, page)
+    return (
+        "🏀 WNBA games in the next 14 days\n"
+        f"Page {normalized + 1} of {page_count}"
+    )
+
+
+def wnba_games_markup(games: list[dict], page: int = 0) -> InlineKeyboardMarkup:
+    current, normalized, page_count = wnba_page_games(games, page)
     rows = []
-    for game in games[:30]:
+    for game in current:
         label = (
             f"{game.get('commence_time_et', '')} · {_wnba_matchup(game)}"
         )[:90]
@@ -66,6 +99,23 @@ def wnba_games_markup(games: list[dict]) -> InlineKeyboardMarkup:
                 )
             ]
         )
+    navigation = []
+    if normalized > 0:
+        navigation.append(
+            InlineKeyboardButton(
+                "◀ Prev",
+                callback_data=wnba_callback("page", str(normalized - 1)),
+            )
+        )
+    if normalized + 1 < page_count:
+        navigation.append(
+            InlineKeyboardButton(
+                "Next ▶",
+                callback_data=wnba_callback("page", str(normalized + 1)),
+            )
+        )
+    if navigation:
+        rows.append(navigation)
     return InlineKeyboardMarkup(rows)
 
 
@@ -572,14 +622,9 @@ class Receptionist:
             )
             return
         games = result.get("games") or []
-        text = (
-            "🏀 WNBA games in the next 14 days"
-            if games
-            else "No upcoming WNBA games are available."
-        )
         await update.message.reply_text(
-            text,
-            reply_markup=wnba_games_markup(games),
+            wnba_games_header(games, 0),
+            reply_markup=wnba_games_markup(games, 0),
         )
 
     async def wnba_cancel(
@@ -755,6 +800,20 @@ class Receptionist:
         action = parts[1]
         user_id = update.effective_user.id
         try:
+            if action == "page" and len(parts) == 3:
+                try:
+                    target_page = int(parts[2])
+                except ValueError:
+                    await query.answer("Invalid WNBA action.", alert=True)
+                    return
+                result = await self.wnba.request({"action": "list_games"})
+                games = result.get("games") or []
+                await query.edit_message_text(
+                    wnba_games_header(games, target_page),
+                    reply_markup=wnba_games_markup(games, target_page),
+                )
+                await query.answer()
+                return
             if action == "game" and len(parts) == 3:
                 result = await self.wnba.request(
                     {"action": "game", "event_id": parts[2]}
@@ -1187,10 +1246,7 @@ def build_application(config: Config) -> Application:
     application.add_handler(
         CallbackQueryHandler(
             receptionist.authorized(receptionist.wnba_button),
-            pattern=(
-                r"^wnba:(?:game:[A-Za-z0-9_.-]{1,48}|"
-                r"generate|copy|history|revisions|undo)$"
-            ),
+            pattern=WNBA_CALLBACK_PATTERN,
         )
     )
     application.add_handler(
