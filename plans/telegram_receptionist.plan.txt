@@ -666,7 +666,12 @@ QUICK DECISION AND GUARDRAIL INDEX
 - Resource protection:
   one global agent run, a queue limit of 10, serialized deployment execution,
   bounded command output, subprocess timeouts, and visible CPU/RAM/swap status
-  reduce memory pressure and command races on the roughly 1GB VPS.
+  reduce memory pressure and command races on the roughly 1GB shared VPS. The
+  receptionist is single-user, but other services also consume this machine's
+  memory. If conversations or services crash with kernel OOM kills, repeated
+  unexplained process exits, or sustained RAM/swap exhaustion, treat that as a
+  capacity limit and move to a larger VPS rather than weakening isolation or
+  adding brittle process workarounds.
 - Reliability and recovery:
   SQLite WAL persists exact prompts and state; interrupted agent runs and
   deployments are marked failed rather than replayed. systemd watchdog,
@@ -740,6 +745,14 @@ QUICK DECISION AND GUARDRAIL INDEX
 - Reason: the VPS has roughly 1GB RAM and already runs production services.
   Serial execution prevents concurrent agents from exhausting memory or racing
   in the same repositories.
+- Capacity assumption: this is a single-user bot on a VPS shared with other
+  services. A long Claude turn, dependency installation, test suite, or build
+  can still exceed available memory even with serialized agent work.
+- Resize trigger: if the kernel reports OOM kills, agent/service processes
+  repeatedly disappear without application errors, or RAM and swap remain
+  exhausted during normal conversations, upgrade the VPS memory. Do not respond
+  by allowing uncontrolled background work, removing the one-run limit, or
+  merging the bot and agent identities.
 - Cancellation: every agent invocation receives its own process group. `/stop`
   sends SIGTERM through sudo's signal relay, waits 10 seconds, and invokes a
   separate fixed `receptionist-agent` kill helper for SIGKILL if needed.
