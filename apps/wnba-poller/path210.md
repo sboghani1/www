@@ -830,3 +830,20 @@ recent-team audit: LOS ANGELES — entry 89, i backed fire at pick'em and MISSED
 <ins>total (o189.5): moderate OVER</ins> — the book is 14.5 points above your primary score and the total rose 187.5 -> 189.5 with over juice -115. the latest games involving these teams reached 207 (both), 222/168 for los angeles, and 207/167/182 for chicago. follow the high-scoring market; over is much cleaner than the side.
 net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 24h watch: SPREAD — sky -4.5 or higher confirms your side projection and upgrades chicago; a return to -2/pick'em shifts value toward sparks. TOTAL — holding 189.5 or rising through 191 confirms the over but creates chase risk; a drop to 186 or lower invalidates the rise and downgrades to PASS.
+
+<!-- WNBA_LEAN_EVENT_START event_id=58beff9061f15ff3f416542cb51f4751 -->
+## WNBA Lean: Las Vegas Aces @ Indiana Fever
+- Event ID: `58beff9061f15ff3f416542cb51f4751`
+- Revision: `48fd18e2-8524-4935-b732-25332f23a243`
+- Status: `active`
+
+### Full game
+- **Side:** Las Vegas Aces (watch)
+  - Evidence: BetOnline currently prices this as a true pick'em (0 spread, -110/-110) with zero net movement across the two captures so far (opening and latest both 0 / total 195.5); No moneyline is posted yet, so there is no secondary market signal to corroborate either side
+  - Watch: Reassess once the spread shows real net movement toward either side -- line direction is the single most reliable signal in this log, and there is currently none to read; A submitted thought called the Aces heavy favorites before any market confirmation; per this log's own caution, strong pregame conviction with no line movement to back it up is a fade signal, not a green light, so this lean is kept at minimum strength until the market itself moves
+- **Total:** Over (small)
+  - Evidence: The log's current WNBA-scoring guidance: total_over is 8/8 recently, with an active time-bounded tilt toward the over around the WNBA all-star break because defensive effort drops and scoring rises; The total is flat at 195.5 across both captures with no downward movement, so there is no fade signal against the over
+  - Watch: If the total starts drifting down before tip, that would remove the 'no fade signal against the over' support and this lean should be revisited; This context does not confirm whether the all-star-break scoring window the log describes is still active for this date -- if defensive intensity has normalized, weight the total_over pattern less
+
+**Summary:** Aces @ Fever is priced as a true pick'em with zero line movement yet and no moneyline posted, so the side lean stays at minimum (watch) strength on Las Vegas Aces rather than following the confident pregame thought that called them heavy favorites -- this log explicitly treats strong conviction with no market confirmation as a caution, not a signal. The total gets a small Over lean instead, following the log's current WNBA scoring-environment guidance (total_over 8/8, active all-star-break tilt toward the over) over the submitted Under thought, since the log warns against fading a total on narrative alone without a concrete reason. No first-half lean: BetOnline has not posted a first-half market for this game yet.
+<!-- WNBA_LEAN_EVENT_END event_id=58beff9061f15ff3f416542cb51f4751 -->
