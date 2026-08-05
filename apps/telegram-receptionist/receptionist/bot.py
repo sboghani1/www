@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import re
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -32,6 +33,7 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 log = logging.getLogger("receptionist")
+SELF_DEPLOY_WORKER = "/usr/local/libexec/deploy-telegram-receptionist-worker"
 
 Handler = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
 MAX_CALLBACK_BYTES = 64
@@ -493,7 +495,19 @@ class Receptionist:
                 "Approval requires exactly one pending request. "
                 "Use the Approve button on the request you want.",
             )
+        self_deployment = SELF_DEPLOY_WORKER in request["command"]
+        if self_deployment:
+            self._set_deployment_drain(request["id"])
+            if self.database.active_run() or self.database.queued_count():
+                self._clear_deployment_drain()
+                return (
+                    False,
+                    "Receptionist deployment requires an idle queue. "
+                    "Wait for active and queued runs to finish, then approve again.",
+                )
         if not self.database.approve_deployment_request(request["id"]):
+            if self_deployment:
+                self._clear_deployment_drain()
             return False, "That request expired or is no longer pending."
         request = self.database.find_deployment_request(
             user_id, request["id"], ("approved",)
@@ -658,6 +672,12 @@ class Receptionist:
         prompt: str,
         acknowledgement: str,
     ) -> None:
+        if self._deployment_drain_path.exists():
+            await message.reply_text(
+                "⏸️ Receptionist deployment is still completing. "
+                "Wait for the final 🚀 deployment notification, then resend."
+            )
+            return
         if self.database.queued_count() >= self.config.max_queued_messages:
             await message.reply_text(
                 f"Queue is full ({self.config.max_queued_messages} messages)."
@@ -1047,10 +1067,20 @@ class Receptionist:
                 output=output[-8000:] if output else None,
                 error=error,
             )
-            message = (
-                f"{'✅' if status == 'succeeded' else '❌'} Deployment "
-                f"{request['id'][:8]} {status}."
-            )
+            self_deployment = SELF_DEPLOY_WORKER in request["command"]
+            if status == "failed" and self_deployment:
+                self._clear_deployment_drain()
+            if status == "succeeded" and self_deployment:
+                message = (
+                    f"⏳ Receptionist deployment {request['id'][:8]} launched. "
+                    "New prompts are paused until the final 🚀 deployment "
+                    "notification."
+                )
+            else:
+                message = (
+                    f"{'✅' if status == 'succeeded' else '❌'} Deployment "
+                    f"{request['id'][:8]} {status}."
+                )
             if error:
                 message += f"\n{error}"
             if output:
@@ -1081,6 +1111,28 @@ class Receptionist:
             f"{deployment.get('message', '')}".strip(),
         )
         self.database.mark_deployment_seen(deployment_id)
+        self._clear_deployment_drain()
+
+    @property
+    def _deployment_drain_path(self) -> Path:
+        return self.config.state_dir / "deployment-drain.json"
+
+    def _set_deployment_drain(self, request_id: str) -> None:
+        path = self._deployment_drain_path
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(
+            json.dumps(
+                {
+                    "request_id": request_id,
+                    "started_at": datetime.now(UTC).isoformat(),
+                }
+            ),
+            encoding="utf-8",
+        )
+        os.replace(temporary, path)
+
+    def _clear_deployment_drain(self) -> None:
+        self._deployment_drain_path.unlink(missing_ok=True)
 
 
 def build_application(config: Config) -> Application:

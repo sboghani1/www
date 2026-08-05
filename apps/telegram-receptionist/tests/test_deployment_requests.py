@@ -8,6 +8,14 @@ from receptionist.config import Config, RepositoryConfig
 from receptionist.database import Database
 
 
+class FakeMessage:
+    def __init__(self) -> None:
+        self.replies: list[str] = []
+
+    async def reply_text(self, text: str) -> None:
+        self.replies.append(text)
+
+
 def test_request_file_is_copied_into_database_and_removed(tmp_path: Path) -> None:
     repo_root = tmp_path / "repos"
     repository = repo_root / "www"
@@ -60,3 +68,79 @@ def test_request_file_is_copied_into_database_and_removed(tmp_path: Path) -> Non
     request = database.find_deployment_request(123, request_id, ("pending",))
     assert request["command"] == "echo exact-command"
     assert request["revision"] == "d" * 40
+
+
+def test_deployment_drain_blocks_new_prompts(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repos"
+    repo_root.mkdir()
+    config = Config(
+        telegram_token="test-token",
+        allowed_user_id=123,
+        repo_root=repo_root,
+        repositories=(RepositoryConfig("workspace", repo_root),),
+        state_dir=tmp_path / "state",
+        claude_binary="/usr/bin/claude",
+        agent_launcher="/launcher",
+        agent_killer="/killer",
+        deploy_request_dir=repo_root / ".receptionist" / "deploy-requests",
+        deploy_executor="/executor",
+        deploy_timeout_seconds=900,
+        wnba_helper="/wnba-helper",
+        wnba_helper_timeout_seconds=45,
+        agent_timeout_seconds=3600,
+        max_queued_messages=10,
+        model=None,
+    )
+    config.state_dir.mkdir()
+    database = Database(config.database_path)
+    database.initialize(config.repositories)
+    receptionist = Receptionist(config, database)
+    receptionist._set_deployment_drain("request-1")
+    message = FakeMessage()
+
+    asyncio.run(
+        receptionist._enqueue_prompt(
+            message,
+            user_id=123,
+            chat_id=456,
+            prompt="must not queue",
+            acknowledgement="received",
+        )
+    )
+
+    assert database.queued_count() == 0
+    assert "deployment is still completing" in message.replies[0]
+
+
+def test_deployment_drain_survives_until_explicitly_cleared(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repos"
+    repo_root.mkdir()
+    config = Config(
+        telegram_token="test-token",
+        allowed_user_id=123,
+        repo_root=repo_root,
+        repositories=(RepositoryConfig("workspace", repo_root),),
+        state_dir=tmp_path / "state",
+        claude_binary="/usr/bin/claude",
+        agent_launcher="/launcher",
+        agent_killer="/killer",
+        deploy_request_dir=repo_root / ".receptionist" / "deploy-requests",
+        deploy_executor="/executor",
+        deploy_timeout_seconds=900,
+        wnba_helper="/wnba-helper",
+        wnba_helper_timeout_seconds=45,
+        agent_timeout_seconds=3600,
+        max_queued_messages=10,
+        model=None,
+    )
+    config.state_dir.mkdir()
+    database = Database(config.database_path)
+    database.initialize(config.repositories)
+    receptionist = Receptionist(config, database)
+
+    receptionist._set_deployment_drain("request-1")
+    assert receptionist._deployment_drain_path.exists()
+    receptionist._clear_deployment_drain()
+    assert not receptionist._deployment_drain_path.exists()

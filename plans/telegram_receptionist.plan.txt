@@ -975,6 +975,16 @@ QUICK DECISION AND GUARDRAIL INDEX
   state must launch a transient unit with `systemd-run`. Use a unique unit name,
   `--collect`, and `--wait` when the approval record should reflect the
   installer's final exit status.
+- Self-deployment drain incident: after deployment request `1df8d768` launched
+  the detached receptionist worker, the broker reported the launcher as
+  succeeded before release `192c2bf` had finished health checks and restarted
+  the service. A new prompt became run `3c551ffc` during that window and was
+  interrupted by the expected restart.
+- Fix: approving a receptionist self-deployment creates a persistent drain
+  marker only when the run queue is idle. All prompt-producing paths refuse new
+  runs until the new service sends the final 🚀 deployment notification. The
+  launcher acknowledgement now says deployment is still completing instead of
+  claiming the deployment itself succeeded.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD
