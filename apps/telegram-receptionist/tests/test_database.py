@@ -155,3 +155,46 @@ def test_deployment_request_denial_and_ambiguous_prefix(tmp_path: Path) -> None:
     assert database.deny_deployment_request(request_id)
     assert not database.deny_deployment_request(request_id)
     assert not database.approve_deployment_request(request_id)
+
+
+def test_run_delivery_state_and_event_heartbeat(tmp_path: Path) -> None:
+    repository = tmp_path / "repos"
+    repository.mkdir()
+    database = Database(tmp_path / "state" / "receptionist.db")
+    database.initialize((RepositoryConfig("workspace", repository),))
+    database.ensure_user_state(123, 456)
+    session = database.create_session(123)
+    run = database.enqueue_run(session["id"], 456, "prompt")
+
+    database.start_run(run["id"], 789)
+    started = database.get_run(run["id"])
+    assert started["last_event_at"]
+
+    database.add_event(run["id"], 0, "assistant", "assistant", {"type": "assistant"})
+    event_run = database.get_run(run["id"])
+    assert event_run["last_event_at"] >= started["last_event_at"]
+
+    database.finish_run(
+        run["id"],
+        status="succeeded",
+        exit_code=0,
+        final_response="done",
+        error=None,
+    )
+    finished = database.get_run(run["id"])
+    assert finished["delivery_status"] == "pending"
+    assert finished["delivery_cursor"] == 0
+    assert database.pending_delivery_runs()[0]["id"] == run["id"]
+
+    database.set_delivery_cursor(run["id"], 1)
+    database.mark_delivery_failed(run["id"], "network")
+    failed = database.get_run(run["id"])
+    assert failed["delivery_status"] == "failed"
+    assert failed["delivery_attempts"] == 1
+    assert failed["delivery_cursor"] == 1
+
+    database.mark_delivery_succeeded(run["id"])
+    delivered = database.get_run(run["id"])
+    assert delivered["delivery_status"] == "delivered"
+    assert delivered["delivery_attempts"] == 2
+    assert delivered["delivered_at"]

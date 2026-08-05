@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -17,6 +18,11 @@ ALLOWED_GOOGLE_KEYS = {
     "NFL_INTAKE_SHEET_ID",
     "WNBA_SHEET_ID",
 }
+SESSION_ID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-"
+    r"[0-9a-f]{4}-[0-9a-f]{12}$"
+)
+CLAUDE_PROJECTS = Path("/home/receptionist-agent/.claude/projects")
 
 
 def load_google_environment() -> None:
@@ -30,9 +36,81 @@ def load_google_environment() -> None:
             os.environ[key] = value
 
 
+def recover_session(session_id: str) -> None:
+    if not SESSION_ID_RE.fullmatch(session_id):
+        raise SystemExit("Invalid Claude session ID.")
+    matches = list(CLAUDE_PROJECTS.glob(f"*/{session_id}.jsonl"))
+    if len(matches) != 1 or matches[0].is_symlink():
+        raise SystemExit("Claude session log was not found.")
+
+    final_response = ""
+    final_response_timestamp = ""
+    last_timestamp = ""
+    last_conversation_type = ""
+    with matches[0].open(encoding="utf-8") as handle:
+        for line in handle:
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            timestamp = row.get("timestamp")
+            if isinstance(timestamp, str):
+                last_timestamp = timestamp
+            row_type = row.get("type")
+            if row_type in {"assistant", "user"}:
+                last_conversation_type = row_type
+            if row_type != "assistant":
+                continue
+            message = row.get("message")
+            if not isinstance(message, dict):
+                continue
+            content = message.get("content")
+            if not isinstance(content, list):
+                continue
+            text = "\n".join(
+                str(block.get("text", ""))
+                for block in content
+                if isinstance(block, dict) and block.get("type") == "text"
+            ).strip()
+            if text:
+                final_response = text
+                final_response_timestamp = (
+                    timestamp if isinstance(timestamp, str) else ""
+                )
+
+    tasks_dir = Path("/home/receptionist-agent/.claude/tasks") / session_id
+    task_statuses = []
+    if tasks_dir.is_dir():
+        for task_path in sorted(tasks_dir.glob("*.json")):
+            try:
+                task = json.loads(task_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            task_statuses.append(str(task.get("status", "unknown")))
+
+    print(
+        json.dumps(
+            {
+                "final_response": final_response,
+                "final_response_timestamp": final_response_timestamp,
+                "last_timestamp": last_timestamp,
+                "last_conversation_type": last_conversation_type,
+                "task_statuses": task_statuses,
+            },
+            ensure_ascii=False,
+        )
+    )
+
+
 def main() -> None:
     try:
         request = json.loads(sys.stdin.read())
+        action = request.get("action", "run")
+        if action == "recover_session":
+            recover_session(str(request["session_id"]))
+            return
+        if action != "run":
+            raise SystemExit("Unsupported agent action.")
         repository = Path(request["repository"]).resolve()
         command = request["command"]
     except (json.JSONDecodeError, KeyError, TypeError, OSError) as error:

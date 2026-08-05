@@ -909,6 +909,41 @@ QUICK DECISION AND GUARDRAIL INDEX
   Creating a venv in a temporary directory and moving it would leave broken
   shebangs.
 
+2026-08-05 — Reconcile agent completion separately from Telegram delivery
+
+- Incident: run `8a755e12` completed successfully in Claude and pushed its
+  commits, but the receptionist lost the subprocess completion signal after its
+  event stream stopped. SQLite continued to show the run as `running`, its
+  queued diagnostic message could not proceed, and Telegram never received the
+  final response. The Claude process was no longer present and there was no OOM
+  evidence.
+- Decision: persist agent terminal state and Telegram delivery state
+  independently. Runs now retain the last event time, delivery status, attempt
+  count, successful chunk cursor, delivery error, and delivered timestamp.
+- Dead-process behavior: the worker checks the full process group rather than
+  only the original sudo PID. If a recorded process group disappears, it
+  reconciles the run from the restricted Claude session reader. A response is
+  accepted only when any recorded Claude tasks are terminal. Recovery never
+  replays the prompt.
+- Queue safety: a restarted worker will not execute queued prompts while an
+  orphaned agent process group is still alive. It waits and reconciles that run
+  before returning to the queue.
+- Delivery behavior: a completed response is marked pending, sent separately,
+  and retried every minute after transient Telegram failures. Multi-message
+  responses resume at the first unsent chunk instead of duplicating chunks that
+  Telegram already accepted.
+- Operator UX: `/recover` and the **Recover worker** button reconcile dead runs,
+  retry pending delivery, and restart only a dead queue worker. A live agent is
+  not killed or blindly restarted. `/status` shows process and delivery state.
+- Startup behavior: the service performs the same reconciliation before
+  starting its queue worker, so a bot or VPS restart does not automatically
+  label all interrupted runs failed or rerun completed work.
+- Fallback boundary: Claude's session JSONL is parsed only by the fixed
+  root-owned launcher running as `receptionist-agent`; the Telegram service does
+  not gain access to that account's home directory. A receptionist-owned
+  append-only output/exit spool remains the preferred future hardening if
+  Claude's internal session format changes.
+
 
 14. DEPLOYMENT AND VALIDATION RECORD
 ------------------------------------

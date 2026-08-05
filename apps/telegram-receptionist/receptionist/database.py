@@ -67,6 +67,12 @@ class Database:
                     final_response TEXT,
                     error TEXT,
                     provider_usage_json TEXT,
+                    last_event_at TEXT,
+                    delivery_status TEXT NOT NULL DEFAULT 'none',
+                    delivery_attempts INTEGER NOT NULL DEFAULT 0,
+                    delivery_cursor INTEGER NOT NULL DEFAULT 0,
+                    delivered_at TEXT,
+                    delivery_error TEXT,
                     created_at TEXT NOT NULL
                 );
 
@@ -129,6 +135,7 @@ class Database:
                 );
                 """
             )
+            self._ensure_run_columns(connection)
             connection.execute("UPDATE repositories SET enabled=0")
             for repository in configured:
                 connection.execute(
@@ -160,6 +167,26 @@ class Database:
                     (workspace["id"], utc_now()),
                 )
             connection.commit()
+
+    @staticmethod
+    def _ensure_run_columns(connection: sqlite3.Connection) -> None:
+        existing = {
+            row["name"]
+            for row in connection.execute("PRAGMA table_info(runs)")
+        }
+        columns = {
+            "last_event_at": "TEXT",
+            "delivery_status": "TEXT NOT NULL DEFAULT 'none'",
+            "delivery_attempts": "INTEGER NOT NULL DEFAULT 0",
+            "delivery_cursor": "INTEGER NOT NULL DEFAULT 0",
+            "delivered_at": "TEXT",
+            "delivery_error": "TEXT",
+        }
+        for name, definition in columns.items():
+            if name not in existing:
+                connection.execute(
+                    f"ALTER TABLE runs ADD COLUMN {name} {definition}"
+                )
 
     def set_wnba_selection(
         self,
@@ -254,7 +281,8 @@ class Database:
                 """
                 UPDATE runs
                 SET status='failed', finished_at=?, process_id=NULL,
-                    error='Receptionist restarted while this run was active.'
+                    error='Receptionist restarted while this run was active.',
+                    delivery_status='pending', delivery_cursor=0
                 WHERE status='running'
                 """,
                 (utc_now(),),
@@ -501,6 +529,16 @@ class Database:
             ).fetchone()
             return dict(row) if row else None
 
+    def running_runs(self) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT id FROM runs WHERE status='running'
+                ORDER BY started_at
+                """
+            ).fetchall()
+        return [self.get_run(row["id"]) for row in rows]
+
     def next_queued_run(self) -> dict[str, Any] | None:
         with self._connect() as connection:
             row = connection.execute(
@@ -512,13 +550,15 @@ class Database:
             return self.get_run(row["id"]) if row else None
 
     def start_run(self, run_id: str, process_id: int) -> None:
+        now = utc_now()
         with self._connect() as connection:
             connection.execute(
                 """
-                UPDATE runs SET status='running', process_id=?, started_at=?
+                UPDATE runs SET status='running', process_id=?, started_at=?,
+                    last_event_at=?
                 WHERE id=? AND status='queued'
                 """,
-                (process_id, utc_now(), run_id),
+                (process_id, now, now, run_id),
             )
             connection.commit()
 
@@ -538,6 +578,7 @@ class Database:
         normalized_type: str,
         payload: dict[str, Any],
     ) -> None:
+        now = utc_now()
         with self._connect() as connection:
             connection.execute(
                 """
@@ -552,8 +593,12 @@ class Database:
                     provider_type,
                     normalized_type,
                     json.dumps(payload, ensure_ascii=False),
-                    utc_now(),
+                    now,
                 ),
+            )
+            connection.execute(
+                "UPDATE runs SET last_event_at=? WHERE id=?",
+                (now, run_id),
             )
             connection.commit()
 
@@ -586,7 +631,8 @@ class Database:
                 """
                 UPDATE runs SET status=?, process_id=NULL, finished_at=?,
                     exit_code=?, final_response=?, error=?,
-                    provider_usage_json=?
+                    provider_usage_json=?, delivery_status='pending',
+                    delivery_cursor=0, delivered_at=NULL, delivery_error=NULL
                 WHERE id=?
                 """,
                 (
@@ -607,6 +653,55 @@ class Database:
                     """,
                     (utc_now(), utc_now(), run["session_id"]),
                 )
+            connection.commit()
+
+    def pending_delivery_runs(self) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT id FROM runs
+                WHERE status IN ('succeeded','failed','cancelled','timed_out')
+                  AND delivery_status IN ('pending','failed')
+                ORDER BY finished_at, created_at
+                """
+            ).fetchall()
+        return [self.get_run(row["id"]) for row in rows]
+
+    def set_delivery_cursor(self, run_id: str, cursor: int) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                UPDATE runs SET delivery_cursor=?
+                WHERE id=? AND delivery_status IN ('pending','failed')
+                """,
+                (cursor, run_id),
+            )
+            connection.commit()
+
+    def mark_delivery_succeeded(self, run_id: str) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                UPDATE runs SET delivery_status='delivered',
+                    delivery_attempts=delivery_attempts+1,
+                    delivered_at=?, delivery_error=NULL
+                WHERE id=?
+                """,
+                (utc_now(), run_id),
+            )
+            connection.commit()
+
+    def mark_delivery_failed(self, run_id: str, error: str) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                UPDATE runs SET delivery_status='failed',
+                    delivery_attempts=delivery_attempts+1,
+                    delivery_error=?
+                WHERE id=?
+                """,
+                (error[:500], run_id),
+            )
             connection.commit()
 
     def last_run_for_user(self, user_id: int) -> dict[str, Any] | None:

@@ -23,7 +23,7 @@ from telegram.ext import (
 from .config import Config
 from .database import Database
 from .notifier import systemd_notify
-from .runner import AgentRunner
+from .runner import AgentRunner, process_group_alive
 from .wnba import WNBA_TEMPLATE_HEADER, WnbaHelperClient
 
 logging.basicConfig(
@@ -189,10 +189,10 @@ class Receptionist:
     async def post_init(self, application: Application) -> None:
         self.config.state_dir.mkdir(parents=True, exist_ok=True)
         self.database.initialize(self.config.repositories)
-        recovered = self.database.recover_interrupted_runs()
         recovered_deployments = self.database.recover_interrupted_deployments()
         self.database.prune_events()
         self.runner = AgentRunner(self.config, self.database, application.bot)
+        recovery_messages = await self.runner.recover_startup()
         self.runner.start()
         application.job_queue.run_repeating(
             self._heartbeat, interval=15, first=0
@@ -203,11 +203,14 @@ class Receptionist:
         application.job_queue.run_repeating(
             self._approval_request_poll, interval=5, first=1, data=application
         )
+        application.job_queue.run_repeating(
+            self._delivery_retry_poll, interval=60, first=30
+        )
         await self._notify_deployment(application)
         systemd_notify("READY=1\nSTATUS=Telegram polling and agent worker ready")
         log.info(
             "Receptionist started; recovered_runs=%d recovered_deployments=%d",
-            recovered,
+            len(recovery_messages),
             recovered_deployments,
         )
 
@@ -263,6 +266,7 @@ class Receptionist:
             "/reset — archive this conversation and start fresh\n"
             "/status — show queue and last run\n"
             "/stop — stop the active run\n"
+            "/recover — reconcile a stuck run and retry Telegram delivery\n"
             "/verbose [on|off] — toggle detailed resource updates\n"
             "/provider — show provider\n\n"
             "/approve — execute the only pending deployment request\n"
@@ -379,16 +383,49 @@ class Receptionist:
             f"Verbose: {'on' if state['verbose'] else 'off'}",
         ]
         if active:
-            lines.append(f"Active run: {active['id'][:8]}")
+            process_id = active.get("process_id")
+            process_state = (
+                "alive"
+                if process_id and process_group_alive(int(process_id))
+                else "missing"
+            )
+            lines.append(
+                f"Active run: {active['id'][:8]} · PID {process_state}"
+            )
         if last:
-            lines.append(f"Last run: {last['id'][:8]} · {last['status']}")
-        await update.message.reply_text("\n".join(lines))
+            delivery = last.get("delivery_status") or "none"
+            lines.append(
+                f"Last run: {last['id'][:8]} · {last['status']} "
+                f"· delivery {delivery}"
+            )
+        keyboard = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Recover worker", callback_data="run:recover")]]
+        )
+        await update.message.reply_text(
+            "\n".join(lines), reply_markup=keyboard
+        )
 
     async def stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         stopped = bool(self.runner and await self.runner.cancel_active())
         await update.message.reply_text(
             "Stopping the active run." if stopped else "No active run."
         )
+
+    async def recover(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        assert self.runner is not None
+        message = await self.runner.recover()
+        await update.message.reply_text(message)
+
+    async def recover_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        query = update.callback_query
+        await query.answer("Checking the worker…")
+        assert self.runner is not None
+        message = await self.runner.recover()
+        await query.message.reply_text(message)
 
     async def approve(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -875,6 +912,12 @@ class Receptionist:
             )
             self.database.mark_deployment_request_notified(request["id"])
 
+    async def _delivery_retry_poll(
+        self, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        if self.runner:
+            await self.runner.retry_pending_deliveries()
+
     async def _ingest_deployment_requests(self) -> None:
         request_dir = self.config.deploy_request_dir
         if not request_dir.is_dir():
@@ -1060,6 +1103,7 @@ def build_application(config: Config) -> Application:
         ("verbose", receptionist.verbose),
         ("status", receptionist.status),
         ("stop", receptionist.stop),
+        ("recover", receptionist.recover),
         ("approve", receptionist.approve),
         ("deny", receptionist.deny),
         ("deployments", receptionist.deployments),
@@ -1073,6 +1117,12 @@ def build_application(config: Config) -> Application:
         application.add_handler(
             CommandHandler(name, receptionist.authorized(handler))
         )
+    application.add_handler(
+        CallbackQueryHandler(
+            receptionist.authorized(receptionist.recover_button),
+            pattern=r"^run:recover$",
+        )
+    )
     application.add_handler(
         CallbackQueryHandler(
             receptionist.authorized(receptionist.deployment_button),

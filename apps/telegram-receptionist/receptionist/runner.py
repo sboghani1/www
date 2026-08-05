@@ -6,6 +6,7 @@ import logging
 import os
 import signal
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -49,7 +50,50 @@ class AgentRunner:
 
     @property
     def healthy(self) -> bool:
-        return self._worker is not None and not self._worker.done()
+        worker_healthy = self._worker is not None and not self._worker.done()
+        process = self._active_process
+        process_healthy = (
+            process is None
+            or process.returncode is not None
+            or process_group_alive(process.pid)
+        )
+        return worker_healthy and process_healthy
+
+    async def recover_startup(self) -> list[str]:
+        messages = []
+        for run in self.database.running_runs():
+            messages.append(await self._recover_run(run))
+        await self.retry_pending_deliveries()
+        return messages
+
+    async def recover(self) -> str:
+        active = self.database.active_run()
+        if active and active.get("process_id"):
+            process_id = int(active["process_id"])
+            if process_group_alive(process_id):
+                return (
+                    f"Run {active['id'][:8]} is still running as PID "
+                    f"{process_id}; no restart was performed."
+                )
+        if active:
+            await self._stop_stale_worker()
+            message = await self._recover_run(self.database.get_run(active["id"]))
+        else:
+            message = "No stale active run was found."
+        delivered = await self.retry_pending_deliveries()
+        if self._worker is None or self._worker.done():
+            self._worker = asyncio.create_task(self._work_loop())
+        self._wake.set()
+        if delivered:
+            message += f" Retried {delivered} pending Telegram delivery item(s)."
+        return message
+
+    async def retry_pending_deliveries(self) -> int:
+        delivered = 0
+        for run in self.database.pending_delivery_runs():
+            if await self._deliver_run(run):
+                delivered += 1
+        return delivered
 
     async def cancel_active(self) -> bool:
         process = self._active_process
@@ -66,8 +110,27 @@ class AgentRunner:
             await self._force_kill_process_group(process.pid)
         return True
 
+    async def _stop_stale_worker(self) -> None:
+        if self._worker and not self._worker.done():
+            self._worker.cancel()
+            await asyncio.gather(self._worker, return_exceptions=True)
+        self._worker = None
+        self._active_process = None
+        self._active_run_id = None
+        self._cancel_requested = False
+
     async def _work_loop(self) -> None:
         while True:
+            active = self.database.active_run()
+            if active:
+                await self._recover_run(active)
+                if self.database.active_run():
+                    self._wake.clear()
+                    try:
+                        await asyncio.wait_for(self._wake.wait(), timeout=5)
+                    except TimeoutError:
+                        pass
+                    continue
             run = self.database.next_queued_run()
             if run is None:
                 self._wake.clear()
@@ -185,9 +248,10 @@ class AgentRunner:
         )
 
         timed_out = False
+        process_disappeared = False
         try:
-            await asyncio.wait_for(
-                process.wait(), timeout=self.config.agent_timeout_seconds
+            process_disappeared = await self._wait_for_process(
+                process, self.config.agent_timeout_seconds
             )
         except TimeoutError:
             timed_out = True
@@ -201,7 +265,9 @@ class AgentRunner:
                 await self._force_kill_process_group(process.pid)
                 await process.wait()
         finally:
-            await asyncio.gather(stdout_task, stderr_task, return_exceptions=True)
+            await self._finish_stream_tasks(
+                stdout_task, stderr_task, cancel=process_disappeared
+            )
             status_task.cancel()
             await asyncio.gather(status_task, return_exceptions=True)
 
@@ -209,6 +275,18 @@ class AgentRunner:
             self.database.update_provider_session(
                 run["session_id"], result.session_id
             )
+
+        recovered = False
+        if process_disappeared and result.session_id and not result.final_response:
+            recovery = await self._recover_provider_session(result.session_id)
+            recovered_response = recovery.get("final_response")
+            if (
+                self._recovery_matches_run(recovery, run)
+                and isinstance(recovered_response, str)
+                and recovered_response.strip()
+            ):
+                result.final_response = recovered_response.strip()
+                recovered = True
 
         stderr = "\n".join(stderr_lines[-30:]).strip()
         if self._cancel_requested:
@@ -219,27 +297,207 @@ class AgentRunner:
             error = (
                 f"Run exceeded {self.config.agent_timeout_seconds // 60} minutes."
             )
-        elif process.returncode == 0 and result.final_response and not result.is_error:
+        elif (
+            (process.returncode == 0 or recovered)
+            and result.final_response
+            and not result.is_error
+        ):
             status = "succeeded"
             error = None
         else:
             status = "failed"
-            error = stderr or "Claude exited without a final response."
+            error = stderr or (
+                "Claude's process disappeared without a recoverable final response."
+                if process_disappeared
+                else "Claude exited without a final response."
+            )
 
         self.database.finish_run(
             run["id"],
             status=status,
-            exit_code=process.returncode,
+            exit_code=0 if recovered else process.returncode,
             final_response=result.final_response or None,
             error=error,
             usage=result.usage,
         )
-        await self._finish_telegram(
-            run, status_message.message_id, status, result.final_response, error
-        )
+        await self._deliver_run(self.database.get_run(run["id"]))
         self._active_process = None
         self._active_run_id = None
         self._cancel_requested = False
+
+    async def _wait_for_process(
+        self,
+        process: asyncio.subprocess.Process,
+        timeout: int,
+        poll_interval: float = 5,
+    ) -> bool:
+        wait_task = asyncio.create_task(process.wait())
+        deadline = time.monotonic() + timeout
+        missing_checks = 0
+        try:
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError
+                done, _ = await asyncio.wait(
+                    {wait_task}, timeout=min(poll_interval, remaining)
+                )
+                if done:
+                    await wait_task
+                    return False
+                if process_group_alive(process.pid):
+                    missing_checks = 0
+                    continue
+                missing_checks += 1
+                if missing_checks >= 2:
+                    wait_task.cancel()
+                    await asyncio.gather(wait_task, return_exceptions=True)
+                    return True
+        except asyncio.CancelledError:
+            wait_task.cancel()
+            await asyncio.gather(wait_task, return_exceptions=True)
+            raise
+
+    @staticmethod
+    async def _finish_stream_tasks(
+        stdout_task: asyncio.Task[None],
+        stderr_task: asyncio.Task[None],
+        *,
+        cancel: bool,
+    ) -> None:
+        tasks = (stdout_task, stderr_task)
+        if not cancel:
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(*tasks, return_exceptions=True), timeout=10
+                )
+                return
+            except TimeoutError:
+                pass
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+    async def _recover_provider_session(
+        self, session_id: str
+    ) -> dict[str, Any]:
+        process = await asyncio.create_subprocess_exec(
+            "/usr/bin/sudo",
+            "-n",
+            "-H",
+            "-u",
+            "receptionist-agent",
+            self.config.agent_launcher,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        payload = json.dumps(
+            {"action": "recover_session", "session_id": session_id}
+        ).encode("utf-8")
+        try:
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(payload), timeout=30
+            )
+        except TimeoutError:
+            process.terminate()
+            await process.wait()
+            return {}
+        if process.returncode != 0:
+            log.warning(
+                "Claude session recovery failed for %s: %s",
+                session_id,
+                stderr.decode("utf-8", errors="replace")[-500:],
+            )
+            return {}
+        try:
+            recovered = json.loads(stdout.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return {}
+        return recovered if isinstance(recovered, dict) else {}
+
+    async def _recover_run(self, run: dict[str, Any]) -> str:
+        process_id = run.get("process_id")
+        if process_id and process_group_alive(int(process_id)):
+            return (
+                f"Run {run['id'][:8]} still has a live agent process group; "
+                "left it running."
+            )
+        session_id = run.get("provider_session_id")
+        recovery = (
+            await self._recover_provider_session(session_id)
+            if isinstance(session_id, str) and session_id
+            else {}
+        )
+        response = recovery.get("final_response")
+        if (
+            self._recovery_matches_run(recovery, run)
+            and isinstance(response, str)
+            and response.strip()
+        ):
+            self.database.finish_run(
+                run["id"],
+                status="succeeded",
+                exit_code=0,
+                final_response=response.strip(),
+                error=None,
+            )
+            message = (
+                f"Recovered completed run {run['id'][:8]} from Claude's "
+                "durable session log."
+            )
+        else:
+            self.database.finish_run(
+                run["id"],
+                status="failed",
+                exit_code=None,
+                final_response=None,
+                error=(
+                    "Claude stopped without a recoverable final response; "
+                    "the run was not replayed."
+                ),
+            )
+            message = (
+                f"Run {run['id'][:8]} had no live process or recoverable "
+                "final response and was marked failed without replay."
+            )
+        await self._deliver_run(self.database.get_run(run["id"]))
+        return message
+
+    @staticmethod
+    def _recovery_is_complete(recovery: dict[str, Any]) -> bool:
+        statuses = recovery.get("task_statuses")
+        if not isinstance(statuses, list):
+            return False
+        return all(
+            status in {"completed", "failed", "cancelled"}
+            for status in statuses
+        )
+
+    @classmethod
+    def _recovery_matches_run(
+        cls,
+        recovery: dict[str, Any],
+        run: dict[str, Any],
+    ) -> bool:
+        if not cls._recovery_is_complete(recovery):
+            return False
+        if recovery.get("last_conversation_type") != "assistant":
+            return False
+        response_timestamp = recovery.get("final_response_timestamp")
+        started_at = run.get("started_at")
+        if not isinstance(response_timestamp, str) or not response_timestamp:
+            return False
+        if not isinstance(started_at, str) or not started_at:
+            return False
+        try:
+            response_time = datetime.fromisoformat(
+                response_timestamp.replace("Z", "+00:00")
+            )
+            run_start = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+        except ValueError:
+            return False
+        return response_time >= run_start
 
     async def _read_stdout(
         self,
@@ -298,39 +556,59 @@ class AgentRunner:
                 text += "\n" + resource_summary(process.pid)
             await self._safe_edit(run["telegram_chat_id"], message_id, text)
 
-    async def _finish_telegram(
-        self,
-        run: dict[str, Any],
-        message_id: int,
-        status: str,
-        response: str,
-        error: str | None,
-    ) -> None:
+    async def _deliver_run(self, run: dict[str, Any]) -> bool:
+        try:
+            await self._finish_telegram(run)
+        except TelegramError as error:
+            self.database.mark_delivery_failed(
+                run["id"], f"{type(error).__name__}: {error}"
+            )
+            return False
+        self.database.mark_delivery_succeeded(run["id"])
+        return True
+
+    async def _finish_telegram(self, run: dict[str, Any]) -> None:
+        status = str(run["status"])
+        response = str(run.get("final_response") or "")
+        error = str(run.get("error") or "")
+        message_id = run.get("status_message_id")
         icons = {
             "succeeded": "✅",
             "failed": "❌",
             "cancelled": "🛑",
             "timed_out": "⌛",
         }
-        await self._safe_edit(
-            run["telegram_chat_id"],
-            message_id,
-            f"{icons.get(status, '•')} Run {run['id'][:8]} {status}.",
-        )
-        if status != "succeeded":
-            await self.bot.send_message(
-                run["telegram_chat_id"], error or "The run did not complete."
-            )
-            return
-        if len(response) > ATTACHMENT_THRESHOLD:
-            await self.bot.send_document(
+        if message_id:
+            await self._safe_edit(
                 run["telegram_chat_id"],
-                text_attachment(response, f"run-{run['id'][:8]}.txt"),
-                caption="The complete agent response is attached.",
+                int(message_id),
+                f"{icons.get(status, '•')} Run {run['id'][:8]} {status}.",
             )
-            return
-        for chunk in split_message(response):
-            await self.bot.send_message(run["telegram_chat_id"], chunk)
+        if status != "succeeded":
+            messages: list[tuple[str, Any]] = [
+                ("text", error or "The run did not complete.")
+            ]
+        elif len(response) > ATTACHMENT_THRESHOLD:
+            messages = [
+                (
+                    "document",
+                    text_attachment(response, f"run-{run['id'][:8]}.txt"),
+                )
+            ]
+        else:
+            messages = [("text", chunk) for chunk in split_message(response)]
+
+        cursor = int(run.get("delivery_cursor") or 0)
+        for index, (kind, payload) in enumerate(messages[cursor:], start=cursor):
+            if kind == "document":
+                await self.bot.send_document(
+                    run["telegram_chat_id"],
+                    payload,
+                    caption="The complete agent response is attached.",
+                )
+            else:
+                await self.bot.send_message(run["telegram_chat_id"], payload)
+            self.database.set_delivery_cursor(run["id"], index + 1)
 
     async def _fail_before_start(self, run: dict[str, Any], error: str) -> None:
         self.database.finish_run(
@@ -393,3 +671,13 @@ def resource_summary(process_id: int) -> str:
         f"VPS: {virtual.percent:.0f}% RAM · {swap.percent:.0f}% swap · "
         f"{cpu:.0f}% CPU"
     )
+
+
+def process_group_alive(process_group_id: int) -> bool:
+    try:
+        os.killpg(process_group_id, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
