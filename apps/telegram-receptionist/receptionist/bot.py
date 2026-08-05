@@ -12,6 +12,7 @@ from typing import Awaitable, Callable
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ChatType
+from telegram.error import TelegramError
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -297,6 +298,11 @@ class Receptionist:
                     chat.type if chat else None,
                 )
                 return
+            if update.message is not None:
+                try:
+                    await update.message.set_reaction("👀")
+                except TelegramError as error:
+                    log.warning("Could not add Telegram receipt reaction: %s", error)
             self.database.ensure_user_state(user.id, chat.id)
             await handler(update, context)
 

@@ -218,6 +218,7 @@ class AgentRunner:
                 {
                     "repository": str(repository),
                     "command": claude_command,
+                    "run_id": run["id"],
                 },
                 ensure_ascii=False,
             ).encode("utf-8")
@@ -282,6 +283,19 @@ class AgentRunner:
             )
 
         recovered = False
+        if not result.final_response:
+            receipt = await self._recover_run_receipt(run["id"])
+            receipt_session = receipt.get("session_id")
+            if (
+                not result.session_id
+                and isinstance(receipt_session, str)
+                and receipt_session
+            ):
+                result.session_id = receipt_session
+            receipt_response = receipt.get("final_response")
+            if isinstance(receipt_response, str) and receipt_response.strip():
+                result.final_response = receipt_response.strip()
+                recovered = True
         if result.session_id and not result.final_response:
             recovery = await self._recover_provider_session(result.session_id)
             recovered_response = recovery.get("final_response")
@@ -329,6 +343,37 @@ class AgentRunner:
         self._active_process = None
         self._active_run_id = None
         self._cancel_requested = False
+
+    async def _recover_run_receipt(self, run_id: str) -> dict[str, Any]:
+        process = await asyncio.create_subprocess_exec(
+            "/usr/bin/sudo",
+            "-n",
+            "-H",
+            "-u",
+            "receptionist-agent",
+            self.config.agent_launcher,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        payload = json.dumps(
+            {"action": "recover_run_receipt", "run_id": run_id}
+        ).encode("utf-8")
+        try:
+            stdout, _ = await asyncio.wait_for(
+                process.communicate(payload), timeout=10
+            )
+        except TimeoutError:
+            process.terminate()
+            await process.wait()
+            return {}
+        if process.returncode != 0:
+            return {}
+        try:
+            receipt = json.loads(stdout.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return {}
+        return receipt if isinstance(receipt, dict) else {}
 
     async def _wait_for_process(
         self,
@@ -428,7 +473,22 @@ class AgentRunner:
                 f"Run {run['id'][:8]} still has a live agent process group; "
                 "left it running."
             )
-        session_id = run.get("provider_session_id")
+        receipt = await self._recover_run_receipt(run["id"])
+        receipt_response = receipt.get("final_response")
+        if isinstance(receipt_response, str) and receipt_response.strip():
+            self.database.finish_run(
+                run["id"],
+                status="succeeded",
+                exit_code=receipt.get("exit_code"),
+                final_response=receipt_response.strip(),
+                error=None,
+            )
+            await self._deliver_run(self.database.get_run(run["id"]))
+            return (
+                f"Recovered completed run {run['id'][:8]} from its durable "
+                "launcher receipt."
+            )
+        session_id = run.get("provider_session_id") or receipt.get("session_id")
         recovery = (
             await self._recover_provider_session(session_id)
             if isinstance(session_id, str) and session_id
@@ -470,7 +530,22 @@ class AgentRunner:
         return message
 
     async def _recover_failed_run(self, run: dict[str, Any]) -> str:
-        session_id = run.get("provider_session_id")
+        receipt = await self._recover_run_receipt(run["id"])
+        receipt_response = receipt.get("final_response")
+        if isinstance(receipt_response, str) and receipt_response.strip():
+            self.database.finish_run(
+                run["id"],
+                status="succeeded",
+                exit_code=receipt.get("exit_code"),
+                final_response=receipt_response.strip(),
+                error=None,
+            )
+            await self._deliver_run(self.database.get_run(run["id"]))
+            return (
+                f"Recovered completed run {run['id'][:8]} from its durable "
+                "launcher receipt; the prompt was not replayed."
+            )
+        session_id = run.get("provider_session_id") or receipt.get("session_id")
         if not isinstance(session_id, str) or not session_id:
             return f"Run {run['id'][:8]} has no provider session to recover."
         recovery = await self._recover_provider_session(session_id)

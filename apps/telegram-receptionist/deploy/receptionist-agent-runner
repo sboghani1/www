@@ -6,6 +6,9 @@ import os
 import re
 import subprocess
 import sys
+import threading
+import uuid
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 REPO_ROOT = Path("/home/receptionist/repos").resolve()
@@ -25,6 +28,9 @@ SESSION_ID_RE = re.compile(
 )
 CLAUDE_PROJECTS = Path("/home/receptionist-agent/.claude/projects")
 GIT_BINARY = "/usr/bin/git"
+RUN_STATE_DIR = Path(
+    "/home/receptionist-agent/.local/state/telegram-receptionist/runs"
+)
 
 
 def load_google_environment() -> None:
@@ -145,6 +151,131 @@ def inspect_repository(repository_value: str) -> None:
     )
 
 
+def recover_run_receipt(run_id_value: str) -> None:
+    run_id = str(uuid.UUID(run_id_value))
+    receipt_path = RUN_STATE_DIR / f"{run_id}.receipt.json"
+    stdout_path = RUN_STATE_DIR / f"{run_id}.stdout.jsonl"
+    if not receipt_path.is_file() or receipt_path.is_symlink():
+        raise SystemExit("Run receipt was not found.")
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    final_response = ""
+    session_id = ""
+    if stdout_path.is_file() and not stdout_path.is_symlink():
+        with stdout_path.open(encoding="utf-8", errors="replace") as handle:
+            for line in handle:
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                candidate_session = event.get("session_id")
+                if isinstance(candidate_session, str) and candidate_session:
+                    session_id = candidate_session
+                if event.get("type") == "result":
+                    response = event.get("result")
+                    if isinstance(response, str) and response.strip():
+                        final_response = response.strip()
+    print(
+        json.dumps(
+            {
+                **receipt,
+                "session_id": session_id,
+                "final_response": final_response,
+            },
+            ensure_ascii=False,
+        )
+    )
+
+
+def run_claude(
+    repository: Path,
+    command: list[str],
+    run_id_value: str,
+) -> None:
+    run_id = str(uuid.UUID(run_id_value))
+    RUN_STATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
+    os.chmod(RUN_STATE_DIR, 0o700)
+    cutoff = datetime.now(UTC) - timedelta(days=30)
+    for path in RUN_STATE_DIR.glob("*"):
+        try:
+            if datetime.fromtimestamp(path.stat().st_mtime, UTC) < cutoff:
+                path.unlink()
+        except OSError:
+            pass
+
+    stdout_path = RUN_STATE_DIR / f"{run_id}.stdout.jsonl"
+    stderr_path = RUN_STATE_DIR / f"{run_id}.stderr.log"
+    receipt_path = RUN_STATE_DIR / f"{run_id}.receipt.json"
+    temporary_receipt = receipt_path.with_suffix(".tmp")
+    for path in (stdout_path, stderr_path, receipt_path, temporary_receipt):
+        path.unlink(missing_ok=True)
+    started_at = datetime.now(UTC).isoformat()
+
+    stdout_spool = stdout_path.open("xb", buffering=0)
+    stderr_spool = stderr_path.open("xb", buffering=0)
+    os.chmod(stdout_path, 0o600)
+    os.chmod(stderr_path, 0o600)
+
+    def copy_stream(source, destination, output) -> None:
+        spool_available = True
+        output_available = True
+        try:
+            while chunk := source.read(65536):
+                if spool_available:
+                    try:
+                        destination.write(chunk)
+                    except OSError:
+                        spool_available = False
+                if output_available:
+                    try:
+                        output.write(chunk)
+                        output.flush()
+                    except (BrokenPipeError, OSError):
+                        output_available = False
+        finally:
+            destination.close()
+
+    process = subprocess.Popen(
+        command,
+        cwd=repository,
+        env=os.environ.copy(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        bufsize=0,
+    )
+    assert process.stdout is not None
+    assert process.stderr is not None
+
+    stdout_thread = threading.Thread(
+        target=copy_stream,
+        args=(process.stdout, stdout_spool, sys.stdout.buffer),
+        daemon=True,
+    )
+    stderr_thread = threading.Thread(
+        target=copy_stream,
+        args=(process.stderr, stderr_spool, sys.stderr.buffer),
+        daemon=True,
+    )
+    stdout_thread.start()
+    stderr_thread.start()
+    return_code = process.wait()
+    stdout_thread.join()
+    stderr_thread.join()
+    temporary_receipt.write_text(
+        json.dumps(
+            {
+                "run_id": run_id,
+                "started_at": started_at,
+                "finished_at": datetime.now(UTC).isoformat(),
+                "exit_code": return_code,
+            }
+        ),
+        encoding="utf-8",
+    )
+    os.chmod(temporary_receipt, 0o600)
+    os.replace(temporary_receipt, receipt_path)
+    raise SystemExit(return_code)
+
+
 def main() -> None:
     try:
         request = json.loads(sys.stdin.read())
@@ -155,11 +286,21 @@ def main() -> None:
         if action == "inspect_repository":
             inspect_repository(str(request["repository"]))
             return
+        if action == "recover_run_receipt":
+            recover_run_receipt(str(request["run_id"]))
+            return
         if action != "run":
             raise SystemExit("Unsupported agent action.")
         repository = Path(request["repository"]).resolve()
         command = request["command"]
-    except (json.JSONDecodeError, KeyError, TypeError, OSError) as error:
+        run_id = str(uuid.UUID(str(request["run_id"])))
+    except (
+        json.JSONDecodeError,
+        KeyError,
+        TypeError,
+        ValueError,
+        OSError,
+    ) as error:
         raise SystemExit(f"Invalid agent request: {error}") from error
 
     if not repository.is_relative_to(REPO_ROOT) or not repository.is_dir():
@@ -175,7 +316,7 @@ def main() -> None:
     os.chdir(repository)
     load_google_environment()
     os.environ["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1"
-    os.execv(CLAUDE_BINARY, command)
+    run_claude(repository, command, run_id)
 
 
 if __name__ == "__main__":

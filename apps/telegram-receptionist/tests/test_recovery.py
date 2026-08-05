@@ -257,6 +257,7 @@ def test_failed_run_can_recover_missing_result_event(tmp_path: Path) -> None:
     bot = FakeBot()
     bot.fail_on_call = None
     runner = AgentRunner(SimpleNamespace(), database, bot)
+    runner._recover_run_receipt = AsyncMock(return_value={})
     runner._recover_provider_session = AsyncMock(
         return_value={
             "final_response": "recovered response",
@@ -274,3 +275,34 @@ def test_failed_run_can_recover_missing_result_event(tmp_path: Path) -> None:
     assert recovered["delivery_status"] == "delivered"
     assert bot.sent == ["recovered response"]
     assert "prompt was not replayed" in message
+
+
+def test_failed_run_prefers_durable_launcher_receipt(tmp_path: Path) -> None:
+    database, run = _finished_run(tmp_path)
+    database.finish_run(
+        run["id"],
+        status="failed",
+        exit_code=None,
+        final_response=None,
+        error="Claude exited without a final response.",
+    )
+    failed = database.get_run(run["id"])
+    bot = FakeBot()
+    bot.fail_on_call = None
+    runner = AgentRunner(SimpleNamespace(), database, bot)
+    runner._recover_run_receipt = AsyncMock(
+        return_value={
+            "exit_code": 0,
+            "final_response": "receipt response",
+        }
+    )
+    runner._recover_provider_session = AsyncMock(return_value={})
+
+    message = asyncio.run(runner._recover_failed_run(failed))
+
+    recovered = database.get_run(run["id"])
+    assert recovered["status"] == "succeeded"
+    assert recovered["delivery_status"] == "delivered"
+    assert bot.sent == ["receipt response"]
+    assert "launcher receipt" in message
+    runner._recover_provider_session.assert_not_awaited()

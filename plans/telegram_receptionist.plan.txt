@@ -1004,6 +1004,16 @@ QUICK DECISION AND GUARDRAIL INDEX
 - Pending stale request recovery: if a pending request already points at an old
   revision, `/recover` expires it and creates one replacement at the verified
   clean upstream HEAD. A pending request already at current HEAD is left intact.
+- Harness-level receipt adaptation: the forwarder's 👀 `UserPromptSubmit` hook
+  is implemented natively at the receptionist authorization boundary. Every
+  accepted private message receives an immediate best-effort 👀 reaction, while
+  the existing text acknowledgment still proves durable queue insertion.
+- Durable delivery-guard adaptation: the fixed agent launcher spools each run's
+  raw stdout and stderr under the isolated agent account and atomically writes
+  an exit receipt. It continues spooling if the Telegram service loses its pipe.
+  Receptionist can retrieve only the structured receipt/final result through a
+  restricted launcher action, then deliver through its normal deduplicated
+  database path. Claude hooks never receive the Telegram token or send directly.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD

@@ -2,6 +2,10 @@ import asyncio
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+from telegram.error import TelegramError
 
 from receptionist.bot import Receptionist
 from receptionist.config import Config, RepositoryConfig
@@ -228,3 +232,80 @@ def test_pending_deployment_can_be_superseded_for_new_revision(
     assert pending["id"] == request_id
     assert database.supersede_pending_deployment(request_id)
     assert database.latest_pending_deployment(123) is None
+
+
+def test_authorized_message_gets_seen_reaction(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repos"
+    repo_root.mkdir()
+    config = Config(
+        telegram_token="test-token",
+        allowed_user_id=123,
+        repo_root=repo_root,
+        repositories=(RepositoryConfig("workspace", repo_root),),
+        state_dir=tmp_path / "state",
+        claude_binary="/usr/bin/claude",
+        agent_launcher="/launcher",
+        agent_killer="/killer",
+        deploy_request_dir=repo_root / ".receptionist" / "deploy-requests",
+        deploy_executor="/executor",
+        deploy_timeout_seconds=900,
+        wnba_helper="/wnba-helper",
+        wnba_helper_timeout_seconds=45,
+        agent_timeout_seconds=3600,
+        max_queued_messages=10,
+        model=None,
+    )
+    database = Database(config.database_path)
+    database.initialize(config.repositories)
+    receptionist = Receptionist(config, database)
+    handler = AsyncMock()
+    message = SimpleNamespace(set_reaction=AsyncMock())
+    update = SimpleNamespace(
+        effective_user=SimpleNamespace(id=123),
+        effective_chat=SimpleNamespace(id=456, type="private"),
+        message=message,
+    )
+
+    asyncio.run(receptionist.authorized(handler)(update, SimpleNamespace()))
+
+    message.set_reaction.assert_awaited_once_with("👀")
+    handler.assert_awaited_once()
+
+
+def test_seen_reaction_failure_does_not_block_message(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repos"
+    repo_root.mkdir()
+    config = Config(
+        telegram_token="test-token",
+        allowed_user_id=123,
+        repo_root=repo_root,
+        repositories=(RepositoryConfig("workspace", repo_root),),
+        state_dir=tmp_path / "state",
+        claude_binary="/usr/bin/claude",
+        agent_launcher="/launcher",
+        agent_killer="/killer",
+        deploy_request_dir=repo_root / ".receptionist" / "deploy-requests",
+        deploy_executor="/executor",
+        deploy_timeout_seconds=900,
+        wnba_helper="/wnba-helper",
+        wnba_helper_timeout_seconds=45,
+        agent_timeout_seconds=3600,
+        max_queued_messages=10,
+        model=None,
+    )
+    database = Database(config.database_path)
+    database.initialize(config.repositories)
+    receptionist = Receptionist(config, database)
+    handler = AsyncMock()
+    message = SimpleNamespace(
+        set_reaction=AsyncMock(side_effect=TelegramError("unavailable"))
+    )
+    update = SimpleNamespace(
+        effective_user=SimpleNamespace(id=123),
+        effective_chat=SimpleNamespace(id=456, type="private"),
+        message=message,
+    )
+
+    asyncio.run(receptionist.authorized(handler)(update, SimpleNamespace()))
+
+    handler.assert_awaited_once()
