@@ -777,6 +777,12 @@ proposal.
 - Build/test failures also write a failed deployment status before cleanup.
 - Release pruning explicitly excludes the active `current` target so reusing an
   older revision cannot delete the live release.
+- The worker sets its own `umask` and reapplies read/execute permissions to the
+  immutable release, so a restrictive caller environment cannot make the
+  service's working directory unreadable.
+- A failed `systemctl restart` follows the same rollback path as a failed health
+  check; shell `set -e` must not bypass rollback before it can restore the prior
+  release.
 
 2026-08-05 — Release virtual environments are created at final paths
 

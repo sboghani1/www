@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+umask 022
 
 repo="/home/receptionist/repos/www"
 app_rel="apps/telegram-receptionist"
@@ -108,14 +109,14 @@ fi
 install -m 0644 -o receptionist-agent -g receptionist-agent \
     "$release/$app_rel/deploy/workspace-CLAUDE.md" \
     /home/receptionist/repos/CLAUDE.md
+chmod -R a+rX "$release"
 
 ln -sfn "$release" "$install_root/current.new"
 mv -Tf "$install_root/current.new" "$install_root/current"
 systemctl daemon-reload
-systemctl restart "$service"
 
 healthy=0
-if wait_healthy "$release"; then
+if systemctl restart "$service" && wait_healthy "$release"; then
     healthy=1
 fi
 
@@ -130,10 +131,10 @@ fi
 if [[ -n "$previous" && -d "$previous" ]]; then
     ln -sfn "$previous" "$install_root/current.new"
     mv -Tf "$install_root/current.new" "$install_root/current"
-    systemctl restart "$service"
-    if wait_healthy "$previous"; then
+    if systemctl restart "$service" && wait_healthy "$previous"; then
         write_status "rolled back" "$revision" "Health check failed; restored the previous healthy release."
     else
+        systemctl stop "$service" || true
         write_status "failed" "$revision" "The new release and automatic rollback both failed health checks."
     fi
 else
