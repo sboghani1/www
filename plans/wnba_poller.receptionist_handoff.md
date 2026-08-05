@@ -468,12 +468,40 @@ manually, once each, from this session.
      `systemctl enable --now wnba-guesser-bot.service` — to start the bot
      using the now-populated env. No need to re-run the full installer a
      second time; the unit file is already installed from step 1.
-- **Submitted deploy request 1** via `request-receptionist-deploy`:
-  request ID `76671274-b79c-4ae5-b608-ab3e343a59fe`, command
-  `/home/receptionist/repos/www/apps/wnba-poller/deploy/install-wnba-poller --enable-timers`.
-  **Not yet approved as of this note** — expires 15 minutes after creation
-  per the broker's design. If it expired before approval, resubmit with the
-  same command (idempotent: `install-wnba-poller` is safe to re-run).
+- **Deploy request 1 history:** the first two submissions (request IDs
+  `76671274-b79c-4ae5-b608-ab3e343a59fe`, then `54789f3d-e451-46b7-8f05-7403f64a256e`)
+  were superseded before approval — the user asked for fresh requests at
+  current HEAD each time (this repo has other concurrent work landing on
+  `main`; HEAD moved between submissions) and, for the final one, wrapped
+  the command in `systemd-run --unit=wnba-poller-install-$(date +%s)
+  --collect --wait ...` per the workspace's detached-root-installer
+  convention. **Request `af7c98a7-99ca-45f5-b433-85540b2bad6f`
+  (HEAD `c0824ae`) was approved and executed successfully.**
+- **Systemd install CONFIRMED SUCCESSFUL (2026-08-05).** Verified by direct
+  inspection (not just trusting the request), since journal access for
+  other users' units is not permitted for `receptionist-agent`:
+  - `/opt/wnba-poller/current` symlinks to
+    `/opt/wnba-poller/releases/20260805T214541Z-4192277`.
+  - `wnba-poller.timer` and `wnba-schedule-sync.timer`: both
+    `Loaded: ... enabled; preset: enabled` and `Active: active (waiting)`,
+    correctly scheduled (poller next at the top of the next :00/:15 mark;
+    schedule-sync next at 05:20 America/New_York). Neither underlying
+    `.service` has fired yet (`inactive (dead)`, expected — just enabled).
+  - `wnba-guesser-bot.service`: `inactive` — correctly NOT started yet
+    (env intentionally not staged before this run, per the two-step plan).
+  - Confirmed the installer's side effect: `/home/receptionist-agent/.config/wnba-guesser/`
+    now exists (created by root during install), owned by
+    `receptionist-agent`, with an empty `env` file inside — exactly as
+    designed, unblocking step 2 below.
+- **Step 2 done: populated `/home/receptionist-agent/.config/wnba-guesser/env`**
+  directly (no root needed — I now own that directory), from the pre-staged
+  `/home/receptionist-agent/.config/wnba-poller/telegram-token`
+  (`WNBA_GUESSER_BOT_TOKEN`) plus `WNBA_SHEET_ID` and the shared
+  `GOOGLE_CREDENTIALS`. Same never-print pattern as before (`printf`/`cat`
+  piped directly to file, confirmed non-empty only via
+  `sed 's/=.*/=<redacted>/'`).
+- **Step 3 (enable `wnba-guesser-bot.service`) not yet requested** — see
+  Next proposed live/production steps below.
 
 ### Next proposed live/production steps (NOT yet executed — still need explicit confirmation each)
 
