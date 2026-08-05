@@ -837,5 +837,111 @@ Next actions (in order):
   callback data, and the callback pattern matching every real action
   (including `page`) and rejecting unknown ones.
 - Validation: combined suite 171 passed. Committed (`b87faac`), pushed,
-  and submitted deploy request `ed4ac085-3aed-43f8-8941-831a4ef14ad5` —
-  awaiting approval as of this note.
+  and submitted deploy request `ed4ac085-3aed-43f8-8941-831a4ef14ad5`.
+  **Confirmed deployed** — `readlink -f /opt/telegram-receptionist/current`
+  points at a release whose commit has `b87faac` as an ancestor.
+
+### 2026-08-05 — First live lean generation succeeded, but with a broken context extractor
+
+- Used the `wnba-lean` skill for real for the first time: a validated
+  `WNBA_LEAN_REQUEST_V1` for event `58beff9061f15ff3f416542cb51f4751`
+  (Las Vegas Aces @ Indiana Fever). Followed the skill exactly — loaded
+  context via `{"action": "context", ...}`, reasoned about the structured
+  output, applied via `{"action": "apply", "operation": "create", ...}` —
+  and it worked end to end: **commit `d3029a02`** on `www/main` (verified:
+  exactly one file changed, only the new event block appended, nothing
+  else in `path210.md` disturbed), Sheet `wnba_lean_revisions` chain
+  confirmed with exactly one active revision matching that commit SHA
+  (`revision_id` `48fd18e2-8524-4935-b732-25332f23a243`). This is
+  production evidence the entire deterministic pipeline (context load →
+  Claude reasoning → validate → path210 apply → Sheet revision → Git
+  commit/push → publication receipt) works for real, not just in tests.
+- **While reviewing the returned context for that generation, found the
+  `model_cache` field was an obviously-wrong, garbled, oversized blob**
+  (contained duplicated rules prose and stray Past Events entries instead
+  of the real ~700-byte structured table). Diagnosed and fixed immediately
+  after — see the next entry. **This means the Aces @ Fever lean above was
+  generated using the broken context extractor**: it had the full rules
+  prose (which alone contains most of the same guidance in narrative form)
+  but no real Past Events precedent and a garbled model_cache. The lean
+  itself was still reasoned soundly from what was available and is
+  correctly published, but the user may want to ask for a fresh `revise`
+  now that extraction is fixed and real precedent (e.g. entry `75fadefever`
+  and others) is available — not done automatically this session, since
+  that's a new mutating action that should be asked for explicitly like
+  any other revise.
+
+### 2026-08-05 — `extract_path210_context` never actually surfaced Model Cache or Past Events precedent
+
+- Symptom: found while reviewing the above generation's returned context —
+  `model_cache` was a multi-KB garbled blob instead of the real ~700-byte
+  table, and `selected_game_path_context` was empty.
+- Root cause (two compounding bugs in `wnba_poller/lean_context.py`):
+  1. `cache_start`/`upcoming_start` used **unanchored**
+     `document.find("# Model Cache")` / `document.find("# Upcoming Events")`.
+     Both strings are quoted inline inside the "Notes For Model" rules
+     prose itself (e.g. "Rebuild the `'# Model Cache'` section..."), which
+     sits before every real heading — the real document order is
+     `Notes(1-50) → Past Events(51-693) → Model Cache(694-714) →
+     Upcoming Events(715+)`, verified via `grep -n "^# "` on the live file
+     and exact character-offset comparison (unanchored `cache_start`=3949
+     vs anchored=176932; unanchored `upcoming_start`=2625 vs
+     anchored=177645). Because the buggy `upcoming_start` (2625) ended up
+     *less than* the buggy `cache_start` (3949), the code's own
+     `cache_end = upcoming_start if upcoming_start > cache_start else None`
+     fell into the `None` branch, slicing `model_cache` to the end of the
+     entire 191KB document.
+  2. Independent of the anchoring bug: `selected_game_path_context` only
+     ever searched for the literal `"Away @ Home"` string. Real path210.md
+     entries reference teams by mascot name in prose ("the aces moved from
+     -1 to +3") and by entry-name prefix ("95fadevalkyries"), never as a
+     literal matchup string — so the ~157KB "# Past Events" section (the
+     actual bulk of historical precedent) was **never surfaced to Claude at
+     all**, independent of and in addition to bug 1. This is the deeper
+     issue behind the user's "fix it so all parts of path210.md are
+     followed/used as expected" — not just a wrong slice boundary but a
+     genuine missing feature.
+  3. Also fixed a related silent-empty-slice hazard in the continuation
+     window: `start = max(upcoming_start, matchup_position - 1000)` — if a
+     matchup match happened to fall earlier in the document than
+     `upcoming_start` (plausible once `upcoming_start` was correctly
+     anchored to its real, late position), `start > end` and Python
+     silently returns an empty string with no error.
+- Fix (`apps/wnba-poller/wnba_poller/lean_context.py`):
+  - Anchor all three heading searches to `\n# ...`, matching the pattern
+    already correctly used for `\n# Past Events`.
+  - Added real precedent search: split the (now correctly bounded) Past
+    Events section into entries (blank-line separated, per the rules'
+    own documented format), match entries mentioning either team's mascot
+    (last whitespace-separated token of the team name — exact for every
+    current WNBA team name), keep the most recent `max_precedent_entries`
+    (default 8, new optional kwarg), and combine with any existing
+    Upcoming Events continuation entry for the same matchup.
+  - Fixed the continuation-window clamp to never produce `start > end`.
+- Validation:
+  - Rewrote `test_lean_context.py`'s `TestExtractPath210Context` fixtures
+    to match the real document order *and* include the same inline quoted
+    heading mentions the real Notes prose has, so the exact bug is
+    regression-tested (not just a differently-shaped bug). Added coverage
+    for mascot-based precedent selection, recency capping, and
+    continuation-entry combination. 17 tests, all passing.
+  - **Ran the fixed function against the real live
+    `apps/wnba-poller/path210.md`** (not just fixtures): `model_cache` is
+    now exactly the correct 713-char structured table (verified content:
+    "Signal right/wrong record (based on tags)..."); `selected_game_path_context`
+    is now 14786 chars starting with real precedent entry `75fadefever`,
+    instead of empty.
+  - Also had to remove `test_active_path210_matches_migration_copy` in
+    `test_source_artifacts.py`: it asserted the *active* path210.md stays
+    byte-identical to the frozen pre-launch migration checksum, which only
+    ever held before the first live lean was published (now permanently
+    false by design — this is not a regression, it's confirmation the
+    system is genuinely live). The sibling test guarding the *untouched*
+    `source_artifacts/path210.md` copy is unaffected and still enforces
+    that migration evidence is never touched.
+  - Combined suite: 177 passed. Committed and pushed (`7588524`).
+- **This fix only affects the receptionist's `wnba-lean-workflow` binary**
+  (the standalone poller/`@wnbaguesser_bot` never generate leans, so
+  `/opt/wnba-poller/current` doesn't need updating for this). Submitted
+  deploy request `3d9fa169-ec94-4e9d-9fed-37d53dcc721b` at HEAD `7588524`
+  — awaiting approval as of this note.
