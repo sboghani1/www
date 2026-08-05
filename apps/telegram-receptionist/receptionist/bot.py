@@ -18,6 +18,7 @@ from telegram.ext import (
 
 from .config import Config
 from .database import Database
+from .notifier import systemd_notify
 from .runner import AgentRunner
 
 logging.basicConfig(
@@ -50,6 +51,7 @@ class Receptionist:
             self._deployment_poll, interval=15, first=5, data=application
         )
         await self._notify_deployment(application)
+        systemd_notify("READY=1\nSTATUS=Telegram polling and agent worker ready")
         log.info("Receptionist started; recovered_runs=%d", recovered)
 
     async def post_shutdown(self, application: Application) -> None:
@@ -259,6 +261,7 @@ class Receptionist:
         self.config.heartbeat_path.write_text(
             datetime.now(UTC).isoformat(), encoding="utf-8"
         )
+        systemd_notify("WATCHDOG=1\nSTATUS=Telegram and agent worker healthy")
 
     async def _deployment_poll(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         await self._notify_deployment(context.job.data)

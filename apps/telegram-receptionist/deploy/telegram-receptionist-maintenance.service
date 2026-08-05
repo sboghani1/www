@@ -1,0 +1,24 @@
+[Unit]
+Description=Telegram receptionist database maintenance
+After=telegram-receptionist.service
+
+[Service]
+Type=oneshot
+User=receptionist
+Group=receptionist
+WorkingDirectory=/opt/telegram-receptionist/current/apps/telegram-receptionist
+Environment=HOME=/home/receptionist
+Environment=PATH=/opt/telegram-receptionist/current/.venv/bin:/usr/bin:/bin
+ExecStart=/opt/telegram-receptionist/current/.venv/bin/telegram-receptionist-maintenance
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/telegram-receptionist
+NoNewPrivileges=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+UMask=0077
+StandardOutput=journal
+StandardError=journal
+

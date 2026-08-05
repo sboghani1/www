@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-Type=simple
+Type=notify
 User=receptionist
 Group=receptionist
 WorkingDirectory=/opt/telegram-receptionist/current/apps/telegram-receptionist
@@ -14,6 +14,8 @@ EnvironmentFile=/home/receptionist/.config/telegram-receptionist/env
 ExecStart=/opt/telegram-receptionist/current/.venv/bin/telegram-receptionist
 Restart=on-failure
 RestartSec=5
+WatchdogSec=60
+NotifyAccess=main
 KillMode=control-group
 TimeoutStopSec=20
 PrivateTmp=true

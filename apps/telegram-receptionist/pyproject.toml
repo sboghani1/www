@@ -19,6 +19,7 @@ test = ["pytest>=8.3,<9"]
 telegram-receptionist = "receptionist.bot:main"
 telegram-receptionist-bootstrap = "receptionist.bootstrap:main"
 telegram-receptionist-health = "receptionist.health:main"
+telegram-receptionist-maintenance = "receptionist.maintenance:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

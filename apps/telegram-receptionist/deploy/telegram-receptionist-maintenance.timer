@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily Telegram receptionist database maintenance
+
+[Timer]
+OnCalendar=*-*-* 04:35:00
+Persistent=true
+RandomizedDelaySec=10m
+Unit=telegram-receptionist-maintenance.service
+
+[Install]
+WantedBy=timers.target
+

@@ -684,6 +684,24 @@ proposal.
   deployment health checks fail instead of declaring a bot with a dead queue
   worker healthy.
 
+2026-08-05 — systemd watchdog follows application health
+
+- Decision: run the main service as `Type=notify`, send `READY=1` only after
+  Telegram and the worker start, and send `WATCHDOG=1` with each healthy
+  heartbeat.
+- Reason: `Restart=on-failure` only detects a dead process. It does not detect a
+  live event loop whose queue worker has died. Withholding watchdog heartbeats
+  makes systemd restart that degraded process automatically.
+
+2026-08-05 — Daily database backups and retention
+
+- Decision: a daily systemd timer uses SQLite's online backup API, keeps
+  restricted backups for 14 days, and prunes detailed run events older than 30
+  days.
+- Reason: copying a live WAL database as ordinary files can produce an
+  inconsistent backup. SQLite's backup API produces a coherent snapshot while
+  the bot remains online.
+
 2026-08-05 — Telegram output is compact and flood-aware
 
 - Decision: acknowledge receipt immediately, edit one status message while
