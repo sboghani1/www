@@ -44,6 +44,8 @@ def test_request_file_is_copied_into_database_and_removed(tmp_path: Path) -> Non
         deploy_request_dir=request_dir,
         deploy_executor="/executor",
         deploy_timeout_seconds=900,
+        wnba_helper="/wnba-helper",
+        wnba_helper_timeout_seconds=45,
         agent_timeout_seconds=3600,
         max_queued_messages=10,
         model=None,

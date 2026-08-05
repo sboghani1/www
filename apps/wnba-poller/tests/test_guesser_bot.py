@@ -296,7 +296,7 @@ def test_exact_reasoning_is_appended_and_repeat_button_is_offered() -> None:
         for row in message.replies[0][1].inline_keyboard
         for button in row
     ]
-    assert callbacks == ["repeat", "games:0"]
+    assert callbacks == ["repeat", "games:0", "hist"]
     assert bot.states[123]["period"] == "first_half"
     assert "prompt_message_id" not in bot.states[123]
 

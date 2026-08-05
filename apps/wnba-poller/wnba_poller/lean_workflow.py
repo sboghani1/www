@@ -265,7 +265,22 @@ class GitPublisher:
     def _git(self, *args: str) -> str:
         return self.runner(("git", *args), self.repository).stdout.strip()
 
+    def _status_lines(self) -> list[str]:
+        # Porcelain status lines are fixed-column (`XY<space>path`), so a
+        # global .strip() on the whole blob (as `_git` does) would eat the
+        # leading status column of the first line whenever it's a space.
+        # Only trailing whitespace/newlines are safe to trim here.
+        stdout = self.runner(
+            ("git", "status", "--porcelain"), self.repository
+        ).stdout
+        return [line for line in stdout.rstrip("\n").splitlines() if line]
+
     def precondition(self, *, expected_base_sha: str = "") -> str:
+        """Full preconditions for the *unwritten* starting state.
+
+        Must run before any file on disk is modified: it requires a fully
+        clean working tree, not just one limited to path210.md.
+        """
         if self._git("status", "--porcelain"):
             raise ValueError("repository is not clean")
         if self._git("branch", "--show-current") != self.branch:
@@ -278,6 +293,27 @@ class GitPublisher:
             raise ValueError("HEAD does not match expected base")
         return head
 
+    def _publish_precondition(
+        self, *, expected_base_sha: str, relative: str
+    ) -> None:
+        """Preconditions checked once path210.md has been intentionally
+        written to disk. Cleanliness is scoped to exclude that one expected
+        change instead of requiring a fully clean tree.
+        """
+        if self._git("branch", "--show-current") != self.branch:
+            raise ValueError(f"repository branch must be {self.branch}")
+        head = self._git("rev-parse", "HEAD")
+        if head != expected_base_sha:
+            raise ValueError("HEAD does not match expected base")
+        origin = self._git("rev-parse", f"origin/{self.branch}")
+        if head != origin:
+            raise ValueError("HEAD does not match origin branch")
+        unexpected = [
+            line for line in self._status_lines() if line[3:] != relative
+        ]
+        if unexpected:
+            raise ValueError("unrelated working tree changes present")
+
     def publish(
         self,
         *,
@@ -288,7 +324,9 @@ class GitPublisher:
         relative = path.resolve().relative_to(self.repository)
         if relative.as_posix() != "apps/wnba-poller/path210.md":
             raise ValueError("publisher may only change path210.md")
-        self.precondition(expected_base_sha=expected_base_sha)
+        self._publish_precondition(
+            expected_base_sha=expected_base_sha, relative=relative.as_posix()
+        )
         self._git("add", "--", relative.as_posix())
         staged = self._git(
             "diff", "--cached", "--name-only", "--diff-filter=ACMRT"
