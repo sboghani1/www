@@ -626,6 +626,57 @@ This section records decisions made while implementing the approved design so
 the plan remains the source of truth rather than only describing the original
 proposal.
 
+QUICK DECISION AND GUARDRAIL INDEX
+
+- Python orchestration instead of Bun:
+  `python-telegram-bot`, `asyncio`, subprocess process groups, SQLite, and
+  systemd already provide the coordination we need. Bun's shell API would make
+  some command syntax shorter, but would not add a missing capability and would
+  introduce a second runtime and another dependency/security update surface.
+  Current controls enabled by this choice include typed application code, exact
+  argv/JSON prompt transport, explicit subprocess timeouts, process-group
+  cancellation, systemd watchdog integration, and one shared SQLite state
+  machine. Reconsider Bun only if a future JavaScript/TypeScript subsystem has a
+  concrete requirement that Python cannot meet cleanly.
+- Claude lifecycle:
+  one `claude -p` process runs per Telegram turn; provider session IDs preserve
+  conversation context between turns. `/stop` terminates the active process
+  tree, `/reset` creates a fresh Claude context, a 60-minute timeout bounds
+  stalled work, and background Claude tasks are disabled so work cannot outlive
+  the observable turn.
+- Unix identity separation:
+  `receptionist` owns Telegram secrets and bot state; `receptionist-agent` owns
+  Claude credentials, Git credentials, repositories, and allowlisted Google
+  Sheets credentials. This kernel-enforced boundary prevents agent shell access
+  to the Telegram token and unrelated production secrets.
+- Workspace freedom with a filesystem boundary:
+  the agent may work across or clone any repository beneath
+  `/home/receptionist/repos` without Telegram-side switching. Root-owned
+  launchers resolve paths and reject execution outside that workspace.
+- Exact input and command boundaries:
+  Telegram prompts travel as stored text through JSON into one argv element,
+  never through shell interpolation. Ordinary agent commands run as the
+  unprivileged agent identity.
+- Deployment approval:
+  the agent has no sudo permission. It writes an immutable request to a narrow
+  group-controlled spool; the bot copies it to SQLite and shows its repository,
+  revision, summary, and exact root command. Only the authorized user can press
+  Approve or use unambiguous `/approve`; requests expire after 15 minutes,
+  execute once, and fail if repository HEAD changed after display.
+- Resource protection:
+  one global agent run, a queue limit of 10, serialized deployment execution,
+  bounded command output, subprocess timeouts, and visible CPU/RAM/swap status
+  reduce memory pressure and command races on the roughly 1GB VPS.
+- Reliability and recovery:
+  SQLite WAL persists exact prompts and state; interrupted agent runs and
+  deployments are marked failed rather than replayed. systemd watchdog,
+  immutable releases, health checks, rollback, daily coherent backups, and
+  30-day event pruning keep failures visible and recoverable.
+- Telegram authorization and data minimization:
+  private-chat plus numeric-user-ID checks run before command handling or
+  database access. HTTP client logs are suppressed to avoid token-bearing URLs,
+  and only the three required Google Sheets values are exposed to the agent.
+
 2026-08-05 — Separate bot and agent Unix identities
 
 - Decision: run the Telegram service as `receptionist`, but run Claude, Git, and
@@ -759,7 +810,8 @@ proposal.
 - Decision: agents cannot run production deployment commands directly. They
   submit a request containing a repository path, immutable Git revision,
   summary, and exact root command. Telegram displays all four fields and
-  execution requires `/approve <request-id>`.
+  execution requires the request's Approve button or an unambiguous bare
+  `/approve`.
 - Reason: deployment procedures differ across repositories and may require root,
   but a broad reusable sudo grant would let an unattended or prompt-injected
   agent deploy without the user's knowledge. Showing and freezing the exact
@@ -863,7 +915,7 @@ Completed on 2026-08-05:
 
 Acceptance evidence:
 
-- Python 3.12 test suite: 10 passing tests.
+- Python 3.12 test suite: 14 passing tests.
 - Package builds as a Python wheel.
 - Unauthorized-update checks occur before command handling or database access.
 - Exact Telegram text completed a real Claude turn and returned the requested
@@ -888,6 +940,10 @@ Acceptance evidence:
 - The fixed hard-kill helper terminated a dedicated agent process group.
 - Restricted self-deployment ran in a detached transient systemd unit, selected
   the expected immutable revision, passed health checks, and notified Telegram.
+- The deployment approval broker is installed in production. The agent account
+  has no sudo permission; only the bot can invoke the fixed root executor.
+- A denied request remained unexecuted, and an approved stale request was
+  rejected because repository HEAD changed after its exact revision was shown.
 - The main service reports healthy with a 60-second systemd watchdog.
 - The daily maintenance timer is enabled and produced a coherent SQLite backup.
 - The disposable sandbox working tree was clean after smoke-test cleanup.
