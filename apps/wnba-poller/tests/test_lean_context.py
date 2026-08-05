@@ -121,8 +121,118 @@ class TestResolveCurrentGame:
             )
 
 
+def _real_shaped_document(current_block: str = "") -> str:
+    # Mirrors the real apps/wnba-poller/path210.md structure and ordering:
+    # Notes For Model -> Past Events -> Model Cache -> Upcoming Events.
+    # Critically, the Notes prose quotes these same heading strings inline
+    # (e.g. "the '# Model Cache' section") *before* any real heading, which
+    # is exactly what broke unanchored substring search in production.
+    return (
+        "# Notes For Model\n\n"
+        "Some curated intro rules.\n\n"
+        "1. Rebuild the '# Model Cache' section after any change, and read "
+        "'# Upcoming Events' before betting. Also see '# Past Events' for "
+        "history.\n"
+        "\n# Past Events\n\n"
+        "1fadesparks\n"
+        "wrong\n"
+        "some_tag\n"
+        "context: the sparks lost badly as home favorites.\n\n"
+        "2fadeaces\n"
+        "right\n"
+        "another_tag\n"
+        "context: the aces covered easily as home favorites.\n\n"
+        "3fadefever\n"
+        "wrong\n"
+        "third_tag\n"
+        "context: the fever blew a big lead late.\n\n"
+        "4fadesky\n"
+        "right\n"
+        "fourth_tag\n"
+        "context: the sky won outright as home dogs.\n\n"
+        "5fadeaces\n"
+        "right\n"
+        "fifth_tag\n"
+        "context: the aces closed as road favorites and covered.\n"
+        "\n# Model Cache\n\n"
+        "cache contents here\n"
+        "\n# Upcoming Events\n\n"
+        "Indiana Fever @ Las Vegas Aces preview text.\n\n"
+        f"{current_block}\n"
+    )
+
+
 class TestExtractPath210Context:
-    def test_extracts_rules_cache_and_event_block(self) -> None:
+    def test_extracts_rules_and_model_cache_with_real_document_order(
+        self,
+    ) -> None:
+        document = _real_shaped_document()
+        sections = extract_path210_context(
+            document, event_id="evt-1", game=GAME
+        )
+        assert "Some curated intro rules." in sections["rules"]
+        assert "1fadesparks" not in sections["rules"]
+        assert "# Model Cache" in sections["model_cache"]
+        assert "cache contents here" in sections["model_cache"]
+
+    def test_unanchored_inline_heading_mentions_do_not_confuse_extraction(
+        self,
+    ) -> None:
+        # Regression test for the exact production bug: the Notes prose
+        # quotes "# Model Cache" and "# Upcoming Events" inline, before the
+        # real headings. An unanchored `document.find(...)` would match
+        # those and (since the inline "# Upcoming Events" mention sits
+        # *before* the inline "# Model Cache" mention) fall into the
+        # `cache_end = None` branch, slicing model_cache all the way to the
+        # end of the document -- including every Past Events entry.
+        document = _real_shaped_document()
+        sections = extract_path210_context(
+            document, event_id="evt-1", game=GAME
+        )
+        assert "1fadesparks" not in sections["model_cache"]
+        assert "fadeaces" not in sections["model_cache"]
+        assert len(sections["model_cache"]) < 200
+
+    def test_precedent_entries_are_selected_by_team_mascot(self) -> None:
+        document = _real_shaped_document()
+        sections = extract_path210_context(
+            document, event_id="evt-1", game=GAME
+        )
+        context = sections["selected_game_path_context"]
+        assert "2fadeaces" in context
+        assert "3fadefever" in context
+        assert "5fadeaces" in context
+        # Neither mascot (Aces/Fever) is mentioned in these entries.
+        assert "1fadesparks" not in context
+        assert "4fadesky" not in context
+
+    def test_precedent_caps_to_max_entries_preferring_recent(self) -> None:
+        document = _real_shaped_document()
+        sections = extract_path210_context(
+            document,
+            event_id="evt-1",
+            game=GAME,
+            max_precedent_entries=1,
+        )
+        context = sections["selected_game_path_context"]
+        # Three entries mention Aces/Fever (2fadeaces, 3fadefever,
+        # 5fadeaces); capped to 1 keeps only the most recent.
+        assert "5fadeaces" in context
+        assert "2fadeaces" not in context
+        assert "3fadefever" not in context
+
+    def test_upcoming_events_continuation_is_combined_with_precedent(
+        self,
+    ) -> None:
+        document = _real_shaped_document()
+        sections = extract_path210_context(
+            document, event_id="evt-1", game=GAME
+        )
+        context = sections["selected_game_path_context"]
+        assert "Indiana Fever @ Las Vegas Aces preview text." in context
+        assert "5fadeaces" in context
+
+    def test_current_event_block_is_extracted_independently(self) -> None:
         output = {
             "full_game": {
                 "side": {
@@ -144,24 +254,23 @@ class TestExtractPath210Context:
         block = render_event_block(
             game=GAME, revision_id="rev-1", status="active", output=output
         )
-        document = (
-            "Curated intro rules.\n\n"
-            "# Model Cache\ncache contents here\n\n"
-            "# Upcoming Events\n"
-            "Indiana Fever @ Las Vegas Aces preview text.\n\n"
-            f"{block}\n\n"
-            "# Past Events\nhistorical stuff not needed for context\n"
-        )
+        document = _real_shaped_document(current_block=block)
         sections = extract_path210_context(
             document, event_id="evt-1", game=GAME
         )
-        assert "Curated intro rules." in sections["rules"]
-        assert "historical stuff" not in sections["rules"]
-        assert "cache contents here" in sections["model_cache"]
-        assert "Indiana Fever @ Las Vegas Aces preview text." in (
-            sections["selected_game_path_context"]
-        )
         assert sections["current_event_block"] == block
+
+    def test_no_precedent_when_no_team_mentioned(self) -> None:
+        document = _real_shaped_document().replace(
+            "Indiana Fever @ Las Vegas Aces preview text.\n\n", ""
+        )
+        other_game = {**GAME, "away_team": "Chicago Sky", "home_team": "Dallas Wings"}
+        sections = extract_path210_context(
+            document, event_id="evt-1", game=other_game
+        )
+        # Sky/Wings: "4fadesky" mentions the Sky mascot, should be picked up.
+        assert "4fadesky" in sections["selected_game_path_context"]
+        assert "2fadeaces" not in sections["selected_game_path_context"]
 
     def test_bounds_total_size_to_max_chars(self) -> None:
         document = "A" * 5000 + "\n# Past Events\n" + "B" * 5000

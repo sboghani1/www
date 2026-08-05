@@ -42,6 +42,13 @@ def _sha256(path: Path) -> str:
 
 
 def test_source_artifacts_are_byte_exact() -> None:
+    # Guards the untouched migration evidence under source_artifacts/ only.
+    # The *active* apps/wnba-poller/path210.md is intentionally mutated by
+    # every published lean (create/revise/delete/undo) -- there used to be
+    # a test asserting it stayed byte-identical to this same migration
+    # checksum, which only ever held before the first live lean was
+    # published. It now fails permanently by design once the system is
+    # live, so it was removed rather than asserting a stale invariant.
     artifact_dir = APP_ROOT / "source_artifacts"
 
     assert {
@@ -49,7 +56,3 @@ def test_source_artifacts_are_byte_exact() -> None:
     } == set(EXPECTED_SHA256)
     for name, expected in EXPECTED_SHA256.items():
         assert _sha256(artifact_dir / name) == expected
-
-
-def test_active_path210_matches_migration_copy() -> None:
-    assert _sha256(APP_ROOT / "path210.md") == EXPECTED_SHA256["path210.md"]
