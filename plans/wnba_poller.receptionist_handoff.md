@@ -976,6 +976,51 @@ are now done — see below. What's actually still open:
    expected to keep working unattended; no action needed unless a future
    session finds otherwise.
 
+### Batch: today's 4 games seeded with thoughts + leans generated (2026-08-05)
+
+- **Copied the user's raw pregame predictions from `path210.md`'s
+  `# Upcoming Events` section into `wnba_thoughts`** for today's 4 games
+  (`fademercury`/`fadeliberty`/`fademystics`/`fadesparks` entries — their
+  own short paragraphs, not the `<ins>`-tagged old model-lean blocks below
+  them). Each written with `source="sheet"`, `period="game"`,
+  `market="spread"`, side = the team implied by their projected
+  spread/margin, and **live current** spread/price frozen at write time
+  (not the stale numbers in the old embedded CSV snapshot table) — thought
+  IDs `path210:<event_id>` for idempotency. User asked to confirm this
+  meant closing lines vs. live in-play odds: clarified the system has no
+  in-play tracking at all (poller only ever fetches pregame markets and
+  explicitly never polls a started game), so "latest" always means the
+  last pregame snapshot, which becomes the closing number once a game
+  starts.
+- **Generated a lean for all 4** via the `wnba-lean` skill, each loading
+  fresh context (now including real Past Events precedent + the old
+  pre-migration draft analysis embedded in Upcoming Events, which turned
+  out to double as directly-relevant per-team recent-form audits). Per
+  timing at generation time, 3 games had already tipped off and were
+  treated as closing/final reads; the 4th (Sparks @ Sky, 9:00 PM tip) was
+  still pregame and explicitly generated as **preliminary, not final** —
+  worded to say so in its summary and watch_conditions, flagged for
+  revisit if the line moves before tip.
+  - Mercury @ Dream (`504231f`): small Phoenix Mercury +7, small Over
+    181.5. Tension flagged explicitly: continued spread firming toward
+    Atlanta (a real signal) vs. a specific recent-audit showing Atlanta
+    covering only 1/3 of its last relevant spots to Phoenix's 3/3.
+  - Storm @ Liberty (`c968fd3`): small New York Liberty -8, small Over
+    183.5. Leaned on a very recent, directly on-point head-to-head
+    precedent (Liberty beat Seattle by 12 days earlier) tempered by a
+    continued gradual ease toward Seattle.
+  - Wings @ Mystics (`0dbb904`): moderate Washington Mystics +2.5, small
+    Under 166.5. The one game with a real, measurable total move (168.5 to
+    166.5) — that decline is cited as the deciding factor against the
+    log's broader seasonal over-lean, not the seasonal base rate itself.
+  - Sparks @ Sky (`6a34b502`, preliminary): watch Chicago Sky -3, small
+    Over 186.5. Explicitly notes the prior draft's total reference (189.5)
+    has since settled lower (186.5) as a caution against that draft's more
+    confident framing.
+  - All 4 verified directly (not just trusted): 4 clean commits on
+    `www/main`, and each event's `wnba_lean_revisions` active revision
+    confirmed with a matching `git_commit_sha`.
+
 ### Done this checkpoint, per explicit user request
 
 1. **Revised the Aces @ Fever lean** (event
