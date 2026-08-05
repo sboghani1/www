@@ -423,6 +423,58 @@ This is real production data now live in `asce Guesser` — not a fixture or
 staging exercise. No systemd service is running yet; both commands were run
 manually, once each, from this session.
 
+### Systemd install requested (2026-08-05, user said "yes proceed")
+
+- Confirmed no sudo/root access exists for `receptionist-agent` (`sudo -n -l`
+  fails). `apps/wnba-poller/deploy/install-wnba-poller` requires
+  `EUID == 0`, so it can only run through the same Telegram approval broker
+  used for the receptionist, not directly.
+- Read `apps/wnba-poller/deploy/*.service`/`*.timer` to get the exact
+  `EnvironmentFile=` paths and required keys:
+  `/home/receptionist-agent/.config/wnba-poller/env` needs `WNBA_SHEET_ID`,
+  `GOOGLE_CREDENTIALS`, `ODDS_API_KEY` (`Config.from_env`);
+  `/home/receptionist-agent/.config/wnba-guesser/env` needs
+  `WNBA_GUESSER_BOT_TOKEN`, `WNBA_SHEET_ID`, `GOOGLE_CREDENTIALS`
+  (`GuesserConfig.from_env` + the shared `Config.from_env`).
+- `/home/receptionist-agent/.config/wnba-poller/` already existed and is
+  owned by `receptionist-agent` (mode 0700), so its `env` file was **written
+  directly this session** (no root needed) from: the already-present shared
+  `GOOGLE_CREDENTIALS` in this environment, the WNBA Sheet ID from this
+  handoff's "Important paths", and `ODDS_API_KEY` sourced from the
+  pre-staged `/home/receptionist-agent/.config/wnba-poller/odds.env`. Values
+  were never printed to output — file built with `printf`/`sed` piping
+  directly from env/file to file, and confirmed non-empty only via
+  key-name-only `sed 's/=.*/=<redacted>/'` afterward.
+- `/home/receptionist-agent/.config/wnba-guesser/` does **not** yet exist,
+  and its parent `/home/receptionist-agent/.config/` is root-owned mode
+  0755 — `receptionist-agent` cannot create a new directory there. This
+  directory can only be created by the root installer. **Therefore the
+  guesser-bot env file cannot be pre-staged before the first root install
+  run** — this forces a two-step rollout:
+  1. Request/approve `install-wnba-poller --enable-timers` (no
+     `--enable-guesser-bot` yet). This installs the systemd units,
+     enables/starts `wnba-poller.timer` + `wnba-schedule-sync.timer` (env
+     already staged, safe), and — as an unconditional side effect of the
+     installer's own directory/file-creation logic — creates
+     `/home/receptionist-agent/.config/wnba-guesser/` (now owned by
+     `receptionist-agent`) with an **empty** `env` file inside it. It does
+     NOT try to enable the guesser bot, so the installer's
+     "refuse to enable: env is empty" guard never triggers.
+  2. Once that directory exists, populate its `env` file the same
+     never-print way from the pre-staged
+     `/home/receptionist-agent/.config/wnba-poller/telegram-token` (the
+     `WNBA_GUESSER_BOT_TOKEN` value) plus `WNBA_SHEET_ID`/`GOOGLE_CREDENTIALS`.
+  3. Request/approve a second, smaller command —
+     `systemctl enable --now wnba-guesser-bot.service` — to start the bot
+     using the now-populated env. No need to re-run the full installer a
+     second time; the unit file is already installed from step 1.
+- **Submitted deploy request 1** via `request-receptionist-deploy`:
+  request ID `76671274-b79c-4ae5-b608-ab3e343a59fe`, command
+  `/home/receptionist/repos/www/apps/wnba-poller/deploy/install-wnba-poller --enable-timers`.
+  **Not yet approved as of this note** — expires 15 minutes after creation
+  per the broker's design. If it expired before approval, resubmit with the
+  same command (idempotent: `install-wnba-poller` is safe to re-run).
+
 ### Next proposed live/production steps (NOT yet executed — still need explicit confirmation each)
 
 1. Configure and install the `wnba-guesser-bot`/`wnba-poller` systemd
