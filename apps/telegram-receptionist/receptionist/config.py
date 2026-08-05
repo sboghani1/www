@@ -24,6 +24,9 @@ class Config:
     claude_binary: str
     agent_launcher: str
     agent_killer: str
+    deploy_request_dir: Path
+    deploy_executor: str
+    deploy_timeout_seconds: int
     agent_timeout_seconds: int
     max_queued_messages: int
     model: str | None
@@ -73,6 +76,17 @@ class Config:
             agent_killer=os.getenv(
                 "AGENT_KILLER", "/usr/local/libexec/receptionist-agent-killer"
             ),
+            deploy_request_dir=Path(
+                os.getenv(
+                    "DEPLOY_REQUEST_DIR",
+                    "/home/receptionist/repos/.receptionist/deploy-requests",
+                )
+            ).resolve(),
+            deploy_executor=os.getenv(
+                "DEPLOY_EXECUTOR",
+                "/usr/local/libexec/receptionist-deploy-executor",
+            ),
+            deploy_timeout_seconds=_positive_int("DEPLOY_TIMEOUT_SECONDS", 900),
             agent_timeout_seconds=timeout,
             max_queued_messages=queue_limit,
             model=os.getenv("CLAUDE_MODEL") or None,

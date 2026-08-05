@@ -25,7 +25,8 @@ The bot must:
   Codex, GitHub Copilot CLI/SDK, and other agents later.
 - Run unattended. Agent tool calls should not wait for approval, but broad
   permissions must be contained inside a dedicated Unix account and restricted
-  repository root rather than granting the bot root access.
+  repository root. Production deployment is the exception: an exact immutable
+  command requires one explicit Telegram approval before the bot invokes it.
 
 A VPS is a virtual private server: normally a virtual machine hosted by a cloud
 provider. It gives us a persistent Linux environment, but being a VM does not by
@@ -273,6 +274,9 @@ Commands:
 - /reset        archive the current conversation and create a fresh one
 - /provider     show or change the provider for a new conversation
 - /verbose      toggle detailed tool/progress messages
+- /approve      execute one immutable deployment request
+- /deny         permanently reject one deployment request
+- /deployments  list recent deployment requests and statuses
 - /help         explain commands and exact-message behavior
 
 Output relay:
@@ -338,6 +342,16 @@ runs
 - error
 - provider_usage_json
 
+deployment_requests
+
+- id
+- telegram_user_id
+- repository_path and immutable Git revision
+- exact root command and human-readable summary
+- status: pending, approved, executing, succeeded, failed, denied, expired
+- created, expiry, notification, approval, start, and finish timestamps
+- exit code, bounded output, and error
+
 events
 
 - id
@@ -381,7 +395,9 @@ VPS and agent:
 - Resolve and validate every selected path; it must remain under that root.
 - Give the user only the Git credentials it needs.
 - Do not copy unrelated forwarder secrets into the receptionist account.
-- Do not grant passwordless sudo.
+- Do not grant either account a general shell through passwordless sudo. Allow
+  only fixed root-owned launchers; the deployment executor additionally
+  requires one immutable Telegram-approved request.
 - Run Claude with broad permissions only inside this constrained account.
 - Redact configured secret environment variables from logs and Telegram output.
 
@@ -566,15 +582,16 @@ Approved on 2026-08-04:
 - Initial repositories (superseded by workspace mode below): approve `www` and create a private
   `sboghani1/agent-sandbox` repository. Add other production repositories only
   after isolation, cancellation, and recovery tests pass.
-- Git authority: the agent may push branches and perform production deployments.
-- Privileged deployment: expose only a root-owned, agent-non-writable deployment
-  wrapper. The wrapper must allowlist named repositories and services, validate
-  branch and working-tree conditions, and reject arbitrary commands. Grant
-  passwordless sudo only for that exact wrapper.
-- Initial deployment scope: the wrapper may deploy and restart only the Telegram
-  receptionist service from the `www` repository.
-- Deployment trigger: the agent may invoke deployment automatically when it
-  decides its work is complete; no separate Telegram confirmation is required.
+- Git authority: the agent may push branches. It may propose production
+  deployments, but execution requires the explicit one-shot approval described
+  in the 2026-08-05 decision log.
+- Privileged deployment (superseded on 2026-08-05): v1 initially exposed only a
+  root-owned receptionist-specific deployment wrapper. The current broker
+  permits the exact displayed root command for any workspace repository only
+  after Telegram approval.
+- Deployment trigger (superseded on 2026-08-05): the original implementation
+  allowed the agent to invoke the receptionist's own deployment automatically.
+  All deployments now require one explicit Telegram approval as recorded below.
 - Deployment safety: before restart, the wrapper must record the previous
   revision and require the configured tests to pass. After restart it must run a
   health check and automatically roll back to the previous revision if startup
@@ -733,6 +750,34 @@ proposal.
   `GOOGLE_SERVICE_ACCOUNT_JSON`, and `NFL_INTAKE_SHEET_ID`.
 - Preserved guardrail: the agent still cannot read the forwarder's `.env`,
   `.env.local`, home directory, or any non-Google credential stored there.
+
+2026-08-05 — One-shot explicit deployment approval broker
+
+- Decision: agents cannot run production deployment commands directly. They
+  submit a request containing a repository path, immutable Git revision,
+  summary, and exact root command. Telegram displays all four fields and
+  execution requires `/approve <request-id>`.
+- Reason: deployment procedures differ across repositories and may require root,
+  but a broad reusable sudo grant would let an unattended or prompt-injected
+  agent deploy without the user's knowledge. Showing and freezing the exact
+  command preserves speed while keeping the user in the authorization path.
+- Immutability: the bot copies the agent request into its SQLite database before
+  notification. Approval executes that database copy, not the agent-writable
+  spool file. The root executor rechecks that repository HEAD still equals the
+  displayed revision.
+- One-shot behavior: only `pending` requests can be approved; approval is an
+  atomic state transition and execution can start once. Denied, expired,
+  executing, completed, or failed requests cannot be replayed.
+- Expiry: requests expire after 15 minutes so an old Telegram message cannot
+  authorize a later, forgotten deployment.
+- Scope: any Git repository beneath `/home/receptionist/repos` may propose an
+  exact root command. The command itself may update the corresponding
+  production checkout and services elsewhere on the VPS.
+- Audit and recovery: request status, timestamps, command, exit code, bounded
+  output, and error are retained in SQLite. A bot restart marks an interrupted
+  deployment failed and never replays it.
+- Secret boundary: the agent can write only to a group-controlled incoming
+  spool. Only the bot user can approve and invoke the fixed root executor.
 
 2026-08-05 — Telegram output is compact and flood-aware
 

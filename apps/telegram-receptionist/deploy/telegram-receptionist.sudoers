@@ -1,3 +1,3 @@
 receptionist ALL=(receptionist-agent) NOPASSWD: /usr/local/libexec/receptionist-agent-runner
 receptionist ALL=(receptionist-agent) NOPASSWD: /usr/local/libexec/receptionist-agent-killer
-receptionist-agent ALL=(root) NOPASSWD: /usr/local/sbin/deploy-telegram-receptionist
+receptionist ALL=(root) NOPASSWD: /usr/local/libexec/receptionist-deploy-executor

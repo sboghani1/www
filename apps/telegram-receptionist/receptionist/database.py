@@ -97,6 +97,28 @@ class Database:
                     deployment_id TEXT PRIMARY KEY,
                     seen_at TEXT NOT NULL
                 );
+
+                CREATE TABLE IF NOT EXISTS deployment_requests (
+                    id TEXT PRIMARY KEY,
+                    telegram_user_id INTEGER NOT NULL,
+                    repository_path TEXT NOT NULL,
+                    revision TEXT NOT NULL,
+                    command TEXT NOT NULL,
+                    summary TEXT NOT NULL,
+                    status TEXT NOT NULL CHECK(status IN (
+                        'pending','approved','executing','succeeded','failed',
+                        'denied','expired'
+                    )),
+                    created_at TEXT NOT NULL,
+                    expires_at TEXT NOT NULL,
+                    notified_at TEXT,
+                    approved_at TEXT,
+                    started_at TEXT,
+                    finished_at TEXT,
+                    exit_code INTEGER,
+                    output TEXT,
+                    error TEXT
+                );
                 """
             )
             connection.execute("UPDATE repositories SET enabled=0")
@@ -139,6 +161,20 @@ class Database:
                 SET status='failed', finished_at=?, process_id=NULL,
                     error='Receptionist restarted while this run was active.'
                 WHERE status='running'
+                """,
+                (utc_now(),),
+            )
+            connection.commit()
+            return cursor.rowcount
+
+    def recover_interrupted_deployments(self) -> int:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE deployment_requests
+                SET status='failed', finished_at=?,
+                    error='Receptionist restarted during deployment execution.'
+                WHERE status IN ('approved','executing')
                 """,
                 (utc_now(),),
             )
@@ -509,6 +545,179 @@ class Database:
                 (deployment_id, utc_now()),
             )
             connection.commit()
+
+    def import_deployment_request(
+        self,
+        *,
+        request_id: str,
+        user_id: int,
+        repository_path: str,
+        revision: str,
+        command: str,
+        summary: str,
+        created_at: str,
+        expires_at: str,
+    ) -> bool:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                INSERT OR IGNORE INTO deployment_requests(
+                    id, telegram_user_id, repository_path, revision,
+                    command, summary, status, created_at, expires_at
+                ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+                """,
+                (
+                    request_id,
+                    user_id,
+                    repository_path,
+                    revision,
+                    command,
+                    summary,
+                    created_at,
+                    expires_at,
+                ),
+            )
+            connection.commit()
+            return cursor.rowcount == 1
+
+    def expire_deployment_requests(self) -> int:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE deployment_requests
+                SET status='expired', finished_at=?
+                WHERE status='pending' AND expires_at <= ?
+                """,
+                (utc_now(), utc_now()),
+            )
+            connection.commit()
+            return cursor.rowcount
+
+    def unnotified_deployment_requests(self) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            return [
+                dict(row)
+                for row in connection.execute(
+                    """
+                    SELECT * FROM deployment_requests
+                    WHERE status='pending' AND notified_at IS NULL
+                    ORDER BY created_at
+                    """
+                )
+            ]
+
+    def mark_deployment_request_notified(self, request_id: str) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                UPDATE deployment_requests SET notified_at=?
+                WHERE id=? AND notified_at IS NULL
+                """,
+                (utc_now(), request_id),
+            )
+            connection.commit()
+
+    def find_deployment_request(
+        self, user_id: int, prefix: str, statuses: tuple[str, ...]
+    ) -> dict[str, Any]:
+        placeholders = ",".join("?" for _ in statuses)
+        with self._connect() as connection:
+            rows = connection.execute(
+                f"""
+                SELECT * FROM deployment_requests
+                WHERE telegram_user_id=? AND id LIKE ?
+                    AND status IN ({placeholders})
+                """,
+                (user_id, f"{prefix}%", *statuses),
+            ).fetchall()
+            if len(rows) != 1:
+                raise LookupError(
+                    "deployment request prefix must match exactly one eligible request"
+                )
+            return dict(rows[0])
+
+    def approve_deployment_request(self, request_id: str) -> bool:
+        now = utc_now()
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE deployment_requests
+                SET status='approved', approved_at=?
+                WHERE id=? AND status='pending' AND expires_at > ?
+                """,
+                (now, request_id, now),
+            )
+            connection.commit()
+            return cursor.rowcount == 1
+
+    def deny_deployment_request(self, request_id: str) -> bool:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE deployment_requests
+                SET status='denied', finished_at=?
+                WHERE id=? AND status='pending'
+                """,
+                (utc_now(), request_id),
+            )
+            connection.commit()
+            return cursor.rowcount == 1
+
+    def start_deployment_request(self, request_id: str) -> bool:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE deployment_requests
+                SET status='executing', started_at=?
+                WHERE id=? AND status='approved'
+                """,
+                (utc_now(), request_id),
+            )
+            connection.commit()
+            return cursor.rowcount == 1
+
+    def finish_deployment_request(
+        self,
+        request_id: str,
+        *,
+        status: str,
+        exit_code: int | None,
+        output: str | None,
+        error: str | None,
+    ) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                UPDATE deployment_requests
+                SET status=?, finished_at=?, exit_code=?, output=?, error=?
+                WHERE id=? AND status='executing'
+                """,
+                (
+                    status,
+                    utc_now(),
+                    exit_code,
+                    output,
+                    error,
+                    request_id,
+                ),
+            )
+            connection.commit()
+
+    def recent_deployment_requests(
+        self, user_id: int, limit: int = 10
+    ) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            return [
+                dict(row)
+                for row in connection.execute(
+                    """
+                    SELECT * FROM deployment_requests
+                    WHERE telegram_user_id=?
+                    ORDER BY created_at DESC LIMIT ?
+                    """,
+                    (user_id, limit),
+                )
+            ]
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.path, timeout=30)

@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from receptionist.config import RepositoryConfig
@@ -55,3 +56,101 @@ def test_workspace_migration_resets_disabled_repository_selection(
     state = database.get_user_state(123)
     assert state["repository_name"] == "workspace"
     assert state["active_session_id"] is None
+
+
+def test_deployment_request_is_one_shot(tmp_path: Path) -> None:
+    repository = tmp_path / "repos" / "www"
+    repository.mkdir(parents=True)
+    database = Database(tmp_path / "state" / "receptionist.db")
+    database.initialize((RepositoryConfig("workspace", repository.parent),))
+    now = datetime.now(UTC)
+    request_id = "11111111-1111-4111-8111-111111111111"
+    assert database.import_deployment_request(
+        request_id=request_id,
+        user_id=123,
+        repository_path=str(repository),
+        revision="a" * 40,
+        command="echo deploy",
+        summary="Deploy test",
+        created_at=now.isoformat(),
+        expires_at=(now + timedelta(minutes=15)).isoformat(),
+    )
+    assert not database.import_deployment_request(
+        request_id=request_id,
+        user_id=123,
+        repository_path=str(repository),
+        revision="a" * 40,
+        command="echo changed",
+        summary="Changed",
+        created_at=now.isoformat(),
+        expires_at=(now + timedelta(minutes=15)).isoformat(),
+    )
+    assert database.approve_deployment_request(request_id)
+    assert not database.approve_deployment_request(request_id)
+    assert database.start_deployment_request(request_id)
+    assert not database.start_deployment_request(request_id)
+    database.finish_deployment_request(
+        request_id,
+        status="succeeded",
+        exit_code=0,
+        output="done",
+        error=None,
+    )
+    request = database.find_deployment_request(
+        123, request_id[:8], ("succeeded",)
+    )
+    assert request["command"] == "echo deploy"
+    assert request["output"] == "done"
+
+
+def test_deployment_request_expires_before_approval(tmp_path: Path) -> None:
+    repository = tmp_path / "repos" / "www"
+    repository.mkdir(parents=True)
+    database = Database(tmp_path / "state" / "receptionist.db")
+    database.initialize((RepositoryConfig("workspace", repository.parent),))
+    now = datetime.now(UTC)
+    request_id = "22222222-2222-4222-8222-222222222222"
+    database.import_deployment_request(
+        request_id=request_id,
+        user_id=123,
+        repository_path=str(repository),
+        revision="b" * 40,
+        command="echo deploy",
+        summary="Expired deploy",
+        created_at=(now - timedelta(minutes=20)).isoformat(),
+        expires_at=(now - timedelta(minutes=5)).isoformat(),
+    )
+    assert database.expire_deployment_requests() == 1
+    assert not database.approve_deployment_request(request_id)
+
+
+def test_deployment_request_denial_and_ambiguous_prefix(tmp_path: Path) -> None:
+    repository = tmp_path / "repos" / "www"
+    repository.mkdir(parents=True)
+    database = Database(tmp_path / "state" / "receptionist.db")
+    database.initialize((RepositoryConfig("workspace", repository.parent),))
+    now = datetime.now(UTC)
+    for request_id in (
+        "33333333-1111-4111-8111-111111111111",
+        "33333333-2222-4222-8222-222222222222",
+    ):
+        database.import_deployment_request(
+            request_id=request_id,
+            user_id=123,
+            repository_path=str(repository),
+            revision="c" * 40,
+            command="echo deploy",
+            summary="Deploy test",
+            created_at=now.isoformat(),
+            expires_at=(now + timedelta(minutes=15)).isoformat(),
+        )
+    try:
+        database.find_deployment_request(123, "33333333", ("pending",))
+    except LookupError:
+        pass
+    else:
+        raise AssertionError("ambiguous deployment prefix was accepted")
+    request_id = "33333333-1111-4111-8111-111111111111"
+    assert database.deny_deployment_request(request_id)
+    assert not database.deny_deployment_request(request_id)
+    assert not database.approve_deployment_request(request_id)

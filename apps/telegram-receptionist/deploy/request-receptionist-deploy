@@ -1,0 +1,66 @@
+#!/usr/bin/python3
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import uuid
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
+REPO_ROOT = Path("/home/receptionist/repos").resolve()
+REQUEST_DIR = REPO_ROOT / ".receptionist" / "deploy-requests"
+MAX_COMMAND_LENGTH = 2000
+MAX_SUMMARY_LENGTH = 500
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Request one Telegram-approved production deployment."
+    )
+    parser.add_argument("--repo", type=Path, default=Path.cwd())
+    parser.add_argument("--summary", required=True)
+    parser.add_argument("--command", required=True)
+    args = parser.parse_args()
+
+    repository = args.repo.resolve()
+    if not repository.is_relative_to(REPO_ROOT) or not (repository / ".git").is_dir():
+        raise SystemExit("Repository must be a Git checkout under the workspace.")
+    summary = args.summary.strip()
+    command = args.command.strip()
+    if not summary or len(summary) > MAX_SUMMARY_LENGTH:
+        raise SystemExit(f"Summary must be 1-{MAX_SUMMARY_LENGTH} characters.")
+    if not command or len(command) > MAX_COMMAND_LENGTH or "\0" in command:
+        raise SystemExit(f"Command must be 1-{MAX_COMMAND_LENGTH} characters.")
+
+    revision = subprocess.run(
+        ["git", "-C", str(repository), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    now = datetime.now(UTC)
+    request_id = str(uuid.uuid4())
+    payload = {
+        "id": request_id,
+        "repository_path": str(repository),
+        "revision": revision,
+        "command": command,
+        "summary": summary,
+        "created_at": now.isoformat(),
+        "expires_at": (now + timedelta(minutes=15)).isoformat(),
+    }
+
+    REQUEST_DIR.mkdir(parents=True, exist_ok=True)
+    temporary = REQUEST_DIR / f".{request_id}.tmp"
+    destination = REQUEST_DIR / f"{request_id}.json"
+    temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    temporary.chmod(0o640)
+    os.replace(temporary, destination)
+    print(request_id)
+
+
+if __name__ == "__main__":
+    main()
+

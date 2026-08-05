@@ -16,5 +16,21 @@ This directory is the root of a private coding workspace.
 - A small environment with `gspread` and `google-auth` is available at
   `/home/receptionist-agent/.cache/google-sheet-check`; repositories may create
   their own virtual environments when they need additional dependencies.
-- The only production deployment command currently authorized is:
-  `sudo -n /usr/local/sbin/deploy-telegram-receptionist`.
+- Never run a production deployment directly. Propose one immutable request:
+
+  ```bash
+  request-receptionist-deploy \
+    --repo /home/receptionist/repos/<repo> \
+    --summary "<what will be deployed>" \
+    --command "<exact root command to execute on pickbot>"
+  ```
+
+- The bot displays the repository, exact revision, summary, and full command.
+  Deployment runs only if the user sends `/approve <request-id>`. Each approval
+  is one-use and expires after 15 minutes.
+- The approved command executes as root on the `pickbot` VPS, so commands should
+  target local production paths directly rather than SSHing back into the same
+  server.
+- For the receptionist itself, request a detached deployment command because
+  restarting the bot would otherwise kill the executor:
+  `systemd-run --unit=telegram-receptionist-deploy-$(date +%s) --collect /usr/local/libexec/deploy-telegram-receptionist-worker`

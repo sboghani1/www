@@ -1,0 +1,102 @@
+#!/usr/bin/python3
+from __future__ import annotations
+
+import json
+import os
+import re
+import signal
+import subprocess
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+
+REPO_ROOT = Path("/home/receptionist/repos").resolve()
+REVISION_RE = re.compile(r"^[0-9a-f]{40}$")
+MAX_COMMAND_LENGTH = 2000
+COMMAND_TIMEOUT_SECONDS = 840
+child: subprocess.Popen[str] | None = None
+
+
+def fail(message: str) -> None:
+    print(message, file=sys.stderr)
+    raise SystemExit(2)
+
+
+def stop_child(signum: int, frame: object) -> None:
+    del frame
+    if child is None or child.poll() is not None:
+        return
+    try:
+        os.killpg(child.pid, signum)
+    except ProcessLookupError:
+        pass
+
+
+def main() -> None:
+    global child
+    try:
+        request = json.loads(sys.stdin.read())
+        repository = Path(request["repository_path"]).resolve()
+        revision = str(request["revision"])
+        command = str(request["command"])
+        status = str(request["status"])
+        expires_at = datetime.fromisoformat(str(request["expires_at"]))
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+        fail(f"Invalid approved deployment request: {error}")
+
+    if status != "approved":
+        fail("Request is not approved.")
+    if expires_at <= datetime.now(UTC):
+        fail("Request approval has expired.")
+    if not repository.is_relative_to(REPO_ROOT) or not (repository / ".git").is_dir():
+        fail("Repository is outside the workspace or is not a Git checkout.")
+    if not REVISION_RE.fullmatch(revision):
+        fail("Revision is invalid.")
+    if not command or len(command) > MAX_COMMAND_LENGTH or "\0" in command:
+        fail("Command is invalid.")
+
+    current_revision = subprocess.run(
+        [
+            "runuser",
+            "-u",
+            "receptionist-agent",
+            "--",
+            "git",
+            "-C",
+            str(repository),
+            "rev-parse",
+            "HEAD",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    if current_revision != revision:
+        fail("Repository HEAD changed after the deployment request was displayed.")
+
+    os.chdir(repository)
+    signal.signal(signal.SIGTERM, stop_child)
+    signal.signal(signal.SIGINT, stop_child)
+    child = subprocess.Popen(
+        ["/bin/bash", "-lc", command],
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+        text=True,
+        start_new_session=True,
+    )
+    try:
+        return_code = child.wait(timeout=COMMAND_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        stop_child(signal.SIGTERM, None)
+        try:
+            return_code = child.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            stop_child(signal.SIGKILL, None)
+            return_code = child.wait()
+        if return_code == 0:
+            return_code = 124
+    raise SystemExit(return_code)
+
+
+if __name__ == "__main__":
+    main()

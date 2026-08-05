@@ -15,6 +15,7 @@ next turn.
 - `/new [name]`, `/sessions`, `/switch <session-id-prefix>`, `/reset`
 - `/provider`, `/verbose [on|off]`
 - `/stop`
+- `/approve <request-id>`, `/deny <request-id>`, `/deployments`
 
 Plain text is queued as the exact next agent message. V1 accepts text only.
 
@@ -56,3 +57,16 @@ The launcher may load only these Google Sheets values from the agent-owned
 - `NFL_INTAKE_SHEET_ID`
 
 It does not load the forwarder's general environment.
+
+## Deployment approvals
+
+Agents submit deployment proposals with `request-receptionist-deploy`. The bot
+shows the exact repository revision and root command in Telegram. A request:
+
+- executes only after `/approve <request-id>`
+- can execute once
+- cannot be edited after display
+- expires after 15 minutes
+- is denied permanently with `/deny <request-id>`
+
+The agent user has no direct root deployment permission.

@@ -109,6 +109,21 @@ fi
 install -m 0644 -o receptionist-agent -g receptionist-agent \
     "$release/$app_rel/deploy/workspace-CLAUDE.md" \
     /home/receptionist/repos/CLAUDE.md
+getent group receptionist-ipc >/dev/null || groupadd --system receptionist-ipc
+usermod -a -G receptionist-ipc receptionist
+usermod -a -G receptionist-ipc receptionist-agent
+install -d -m 2770 -o receptionist-agent -g receptionist-ipc \
+    /home/receptionist/repos/.receptionist/deploy-requests
+install -m 0755 -o root -g root \
+    "$release/$app_rel/deploy/request-receptionist-deploy" \
+    /usr/local/bin/request-receptionist-deploy
+install -m 0755 -o root -g root \
+    "$release/$app_rel/deploy/receptionist-deploy-executor" \
+    /usr/local/libexec/receptionist-deploy-executor
+visudo -cf "$release/$app_rel/deploy/telegram-receptionist.sudoers"
+install -m 0440 -o root -g root \
+    "$release/$app_rel/deploy/telegram-receptionist.sudoers" \
+    /etc/sudoers.d/telegram-receptionist
 chmod -R a+rX "$release"
 
 ln -sfn "$release" "$install_root/current.new"

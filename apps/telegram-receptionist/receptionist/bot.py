@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
-from datetime import UTC, datetime
+import re
+import uuid
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Awaitable, Callable
 
@@ -36,11 +39,15 @@ class Receptionist:
         self.config = config
         self.database = database
         self.runner: AgentRunner | None = None
+        self._deployment_lock = asyncio.Lock()
+        self._deployment_tasks: set[asyncio.Task[None]] = set()
+        self._deployment_process: asyncio.subprocess.Process | None = None
 
     async def post_init(self, application: Application) -> None:
         self.config.state_dir.mkdir(parents=True, exist_ok=True)
         self.database.initialize(self.config.repositories)
         recovered = self.database.recover_interrupted_runs()
+        recovered_deployments = self.database.recover_interrupted_deployments()
         self.database.prune_events()
         self.runner = AgentRunner(self.config, self.database, application.bot)
         self.runner.start()
@@ -50,11 +57,24 @@ class Receptionist:
         application.job_queue.run_repeating(
             self._deployment_poll, interval=15, first=5, data=application
         )
+        application.job_queue.run_repeating(
+            self._approval_request_poll, interval=5, first=1, data=application
+        )
         await self._notify_deployment(application)
         systemd_notify("READY=1\nSTATUS=Telegram polling and agent worker ready")
-        log.info("Receptionist started; recovered_runs=%d", recovered)
+        log.info(
+            "Receptionist started; recovered_runs=%d recovered_deployments=%d",
+            recovered,
+            recovered_deployments,
+        )
 
     async def post_shutdown(self, application: Application) -> None:
+        if self._deployment_process and self._deployment_process.returncode is None:
+            self._deployment_process.terminate()
+            try:
+                await asyncio.wait_for(self._deployment_process.wait(), timeout=10)
+            except TimeoutError:
+                pass
         if self.runner:
             await self.runner.close()
 
@@ -102,6 +122,9 @@ class Receptionist:
             "/stop — stop the active run\n"
             "/verbose [on|off] — toggle detailed resource updates\n"
             "/provider — show provider\n\n"
+            "/approve <id> — execute one exact deployment request\n"
+            "/deny <id> — reject one deployment request\n"
+            "/deployments — show recent deployment requests\n\n"
             "Any other text is passed unchanged as the next agent prompt."
         )
 
@@ -216,6 +239,75 @@ class Receptionist:
             "Stopping the active run." if stopped else "No active run."
         )
 
+    async def approve(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        if not context.args:
+            await update.message.reply_text("Usage: /approve <request-id>")
+            return
+        self.database.expire_deployment_requests()
+        try:
+            request = self.database.find_deployment_request(
+                update.effective_user.id, context.args[0], ("pending",)
+            )
+        except LookupError as error:
+            await update.message.reply_text(str(error))
+            return
+        if not self.database.approve_deployment_request(request["id"]):
+            await update.message.reply_text(
+                "That request expired or is no longer pending."
+            )
+            return
+        request = self.database.find_deployment_request(
+            update.effective_user.id, request["id"], ("approved",)
+        )
+        await update.message.reply_text(
+            f"Approved deployment {request['id'][:8]}; execution is starting."
+        )
+        task = asyncio.create_task(
+            self._execute_approved_deployment(
+                request, update.effective_chat.id, context.application
+            )
+        )
+        self._deployment_tasks.add(task)
+        task.add_done_callback(self._deployment_tasks.discard)
+
+    async def deny(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not context.args:
+            await update.message.reply_text("Usage: /deny <request-id>")
+            return
+        self.database.expire_deployment_requests()
+        try:
+            request = self.database.find_deployment_request(
+                update.effective_user.id, context.args[0], ("pending",)
+            )
+        except LookupError as error:
+            await update.message.reply_text(str(error))
+            return
+        if self.database.deny_deployment_request(request["id"]):
+            await update.message.reply_text(
+                f"Denied deployment {request['id'][:8]}. It cannot be reused."
+            )
+        else:
+            await update.message.reply_text("That request is no longer pending.")
+
+    async def deployments(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        requests = self.database.recent_deployment_requests(
+            update.effective_user.id
+        )
+        if not requests:
+            await update.message.reply_text("No deployment requests.")
+            return
+        lines = ["Recent deployment requests:"]
+        for request in requests:
+            lines.append(
+                f"{request['id'][:8]} · {request['status']} · "
+                f"{Path(request['repository_path']).name} · {request['summary'][:80]}"
+            )
+        await update.message.reply_text("\n".join(lines))
+
     async def exact_text(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
@@ -257,6 +349,167 @@ class Receptionist:
 
     async def _deployment_poll(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         await self._notify_deployment(context.job.data)
+
+    async def _approval_request_poll(
+        self, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        await self._ingest_deployment_requests()
+        self.database.expire_deployment_requests()
+        state = self.database.ensure_user_state(
+            self.config.allowed_user_id, self.config.allowed_user_id
+        )
+        chat_id = state["telegram_chat_id"]
+        if not chat_id:
+            return
+        for request in self.database.unnotified_deployment_requests():
+            text = (
+                f"🚦 Deployment approval requested: {request['id'][:8]}\n\n"
+                f"Summary: {request['summary']}\n"
+                f"Repository: {request['repository_path']}\n"
+                f"Revision: {request['revision']}\n"
+                f"Expires: {request['expires_at']}\n\n"
+                f"Exact root command:\n{request['command']}\n\n"
+                f"Approve once: /approve {request['id'][:8]}\n"
+                f"Deny: /deny {request['id'][:8]}"
+            )
+            await context.application.bot.send_message(chat_id, text)
+            self.database.mark_deployment_request_notified(request["id"])
+
+    async def _ingest_deployment_requests(self) -> None:
+        request_dir = self.config.deploy_request_dir
+        if not request_dir.is_dir():
+            return
+        for path in sorted(request_dir.glob("*.json"))[:20]:
+            try:
+                if path.is_symlink() or path.stat().st_size > 8192:
+                    raise ValueError("request file is unsafe")
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                request_id = str(uuid.UUID(str(payload["id"])))
+                if path.stem != request_id:
+                    raise ValueError("request ID does not match filename")
+                repository = Path(payload["repository_path"]).resolve()
+                if not repository.is_relative_to(self.config.repo_root):
+                    raise ValueError("repository is outside workspace")
+                revision = str(payload["revision"])
+                if not re.fullmatch(r"[0-9a-f]{40}", revision):
+                    raise ValueError("invalid revision")
+                command = str(payload["command"])
+                summary = str(payload["summary"])
+                if not command or len(command) > 2000 or "\0" in command:
+                    raise ValueError("invalid command")
+                if not summary or len(summary) > 500:
+                    raise ValueError("invalid summary")
+                created_at = datetime.fromisoformat(str(payload["created_at"]))
+                expires_at = datetime.fromisoformat(str(payload["expires_at"]))
+                if (
+                    created_at.tzinfo is None
+                    or expires_at.tzinfo is None
+                    or expires_at <= created_at
+                    or expires_at - created_at > timedelta(minutes=15)
+                ):
+                    raise ValueError("invalid request lifetime")
+                created_at = created_at.astimezone(UTC)
+                expires_at = expires_at.astimezone(UTC)
+                self.database.import_deployment_request(
+                    request_id=request_id,
+                    user_id=self.config.allowed_user_id,
+                    repository_path=str(repository),
+                    revision=revision,
+                    command=command,
+                    summary=summary,
+                    created_at=created_at.isoformat(),
+                    expires_at=expires_at.isoformat(),
+                )
+            except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+                log.exception("Rejected deployment request file %s", path)
+            finally:
+                try:
+                    path.unlink()
+                except FileNotFoundError:
+                    pass
+
+    async def _execute_approved_deployment(
+        self,
+        request: dict,
+        chat_id: int,
+        application: Application,
+    ) -> None:
+        async with self._deployment_lock:
+            if not self.database.start_deployment_request(request["id"]):
+                await application.bot.send_message(
+                    chat_id, "Deployment request was already consumed."
+                )
+                return
+            payload = dict(request)
+            payload["status"] = "approved"
+            try:
+                process = await asyncio.create_subprocess_exec(
+                    "/usr/bin/sudo",
+                    "-n",
+                    self.config.deploy_executor,
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    start_new_session=True,
+                )
+            except OSError as error:
+                self.database.finish_deployment_request(
+                    request["id"],
+                    status="failed",
+                    exit_code=None,
+                    output=None,
+                    error=f"Could not start deployment executor: {error}",
+                )
+                await application.bot.send_message(
+                    chat_id,
+                    f"❌ Deployment {request['id'][:8]} failed to start.",
+                )
+                return
+            self._deployment_process = process
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(
+                        json.dumps(payload, ensure_ascii=False).encode("utf-8")
+                    ),
+                    timeout=self.config.deploy_timeout_seconds,
+                )
+                output = (
+                    stdout.decode("utf-8", errors="replace")
+                    + stderr.decode("utf-8", errors="replace")
+                ).strip()
+                output = output.replace(self.config.telegram_token, "[redacted]")
+                if process.returncode == 0:
+                    status = "succeeded"
+                    error = None
+                else:
+                    status = "failed"
+                    error = f"Executor exited with status {process.returncode}."
+            except TimeoutError:
+                process.terminate()
+                await process.wait()
+                output = ""
+                status = "failed"
+                error = (
+                    f"Deployment exceeded {self.config.deploy_timeout_seconds} seconds."
+                )
+            finally:
+                self._deployment_process = None
+            self.database.finish_deployment_request(
+                request["id"],
+                status=status,
+                exit_code=process.returncode,
+                output=output[-8000:] if output else None,
+                error=error,
+            )
+            message = (
+                f"{'✅' if status == 'succeeded' else '❌'} Deployment "
+                f"{request['id'][:8]} {status}."
+            )
+            if error:
+                message += f"\n{error}"
+            if output:
+                message += f"\n\nLast output:\n{output[-2500:]}"
+            await application.bot.send_message(chat_id, message)
 
     async def _notify_deployment(self, application: Application) -> None:
         path = self.config.state_dir / "deployment.json"
@@ -307,6 +560,9 @@ def build_application(config: Config) -> Application:
         ("verbose", receptionist.verbose),
         ("status", receptionist.status),
         ("stop", receptionist.stop),
+        ("approve", receptionist.approve),
+        ("deny", receptionist.deny),
+        ("deployments", receptionist.deployments),
     ]
     for name, handler in commands:
         application.add_handler(
