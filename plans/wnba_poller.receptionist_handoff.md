@@ -375,24 +375,69 @@ export WNBA_SHEET_ID="1toTFz0zmeMQI5WnuWr-jhg0HwVkMPEF5nLBIe0R3wyk"
 not supplied by the user; harmless, purely cosmetic Sheet columns for
 operator reference.)
 
+### Live changes: schedule sync + one odds poll (2026-08-05, user-confirmed "yes proceed with step 1")
+
+Ran, in order, against the now-live `asce Guesser`:
+
+```bash
+cd /home/receptionist/repos/www/apps/wnba-poller
+export WNBA_SHEET_ID="1toTFz0zmeMQI5WnuWr-jhg0HwVkMPEF5nLBIe0R3wyk"
+<venv>/bin/wnba-poller sync-schedule
+# then, with ODDS_API_KEY sourced from the staged
+# /home/receptionist-agent/.config/wnba-poller/odds.env :
+<venv>/bin/wnba-poller poll-odds
+```
+
+Results, verified by direct read-back (not just trusting the CLI's own
+printed summary):
+
+- `sync-schedule`: "41 game(s) added, 0 updated." Confirmed 41 real WNBA
+  games in `wnba_games` spanning 2026-08-05 through 2026-08-18, correct
+  team names, correct Eastern timestamps, real ESPN event IDs populated,
+  Odds-API `event_id` correctly still empty pre-poll.
+- `poll-odds`: "41 due, 41 updated, 6 snapshot(s) appended; quota
+  used=1196, remaining=18804." Confirmed by reading the actual rows:
+  - 6 of 41 games have live BetOnline full-game spread/moneyline/total
+    (e.g. Phoenix Mercury @ Atlanta Dream: away +7 (-111) ML +219, home -7
+    ML -265, total 183.5 O-105/U-115). The other 35 correctly show empty/
+    `nodata` — BetOnline simply hasn't posted lines that far out yet; this
+    is expected poller behavior (a missing market is not a failed poll),
+    not a bug.
+  - First-half spread/total populated for the 4 closest (same-day) games;
+    the 5th priced game (next day, Las Vegas Aces @ Indiana Fever) has a
+    full-game total but `nodata` first-half — also expected (book hasn't
+    posted H1 for it yet), and confirms first-half `nodata` is handled
+    distinctly from "no market at all."
+  - `opening_*` fields equal `latest_*` on this first capture for every
+    priced game, as designed.
+  - `next_poll_at` correctly reflects the due-time policy in production:
+    the 4 same-day (within-6-hours) games got `+15 min`; the next-day
+    (>6-hours-out) game got `+60 min`.
+  - `wnba_line_snapshots` has exactly 6 rows, one per priced game, matching
+    totals/teams.
+  - `wnba-poller status` afterward: `games: 41, upcoming_games: 41,
+    due_games: 0, last_successful_schedule_sync/odds_poll` both populated,
+    quota fields match the poll output.
+
+This is real production data now live in `asce Guesser` — not a fixture or
+staging exercise. No systemd service is running yet; both commands were run
+manually, once each, from this session.
+
 ### Next proposed live/production steps (NOT yet executed — still need explicit confirmation each)
 
-1. Run a schedule sync (`wnba-poller sync-schedule`) and one odds poll
-   (`wnba-poller poll-odds`) against the now-live Sheet to populate
-   `wnba_games` and validate real ESPN/Odds API data end-to-end, per plan
-   section 9 steps 9-11 / section 13 step 4. This calls external APIs and
-   writes real rows — should confirm with the user before running, even
-   though it's not a systemd/service deployment.
-2. Configure and install the `wnba-guesser-bot`/`wnba-poller` systemd
+1. Configure and install the `wnba-guesser-bot`/`wnba-poller` systemd
    services (`apps/wnba-poller/deploy/`). This needs root
    (`apps/wnba-poller/deploy/install-wnba-poller`) — check whether that goes
    through the same Telegram approval broker as the receptionist, or needs a
    different authorized path; do not assume.
-3. Deploy the receptionist changes (WNBA handlers, skill, `lean_cli`/
+2. Deploy the receptionist changes (WNBA handlers, skill, `lean_cli`/
    `receptionist_helper` binaries in its venv) through the existing
    `request-receptionist-deploy` approval broker per `CLAUDE.md`.
-4. Optional: ask the user whether to also remove the orphaned
+3. Optional: ask the user whether to also remove the orphaned
    `team_emojis`/`suggestions`/`allowed_users` tabs noted above.
+4. Without an installed systemd timer, nothing will re-poll automatically —
+   the 41-game schedule and 6 priced games will go stale until either the
+   timer is installed or another manual poll is run.
 
 Prior "Current progress" history (session 1-2, retained for continuity):
 
