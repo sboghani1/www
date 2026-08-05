@@ -958,27 +958,50 @@ Next actions (in order):
 ## Pending work as of this checkpoint (2026-08-05)
 
 Everything through the path210 extraction fix is implemented, tested, and
-deployed. What's left, in rough priority order:
+deployed. Three follow-ups the user asked for directly after that checkpoint
+are now done — see below. What's actually still open:
 
-1. **Consider revising the Aces @ Fever lean** (event
-   `58beff9061f15ff3f416542cb51f4751`, revision
-   `48fd18e2-8524-4935-b732-25332f23a243`) — it was generated before the
-   extraction fix, so it had no real Past Events precedent and a garbled
-   model cache. Not done automatically; ask the user first, then use the
-   skill's `revise` path if they want it.
-2. **Guided user test sequence** (see that section above) — only partially
-   exercised so far organically: two structured thoughts submitted via
-   `@wnbaguesser_bot`, one Generate-now-equivalent lean published via the
-   skill. Not yet verified: **Copy template** (paste path routes through
-   the same normalized request), **edit** and **delete** via natural
-   language, **undo-latest**, comparing history views side-by-side in both
-   bots, and restart persistence.
-3. **Optional:** ask the user whether to remove the orphaned
-   `team_emojis`/`suggestions`/`allowed_users` tabs (copied from the
-   original NFL Guesser workbook, outside the tested `LEGACY_NFL_TABS`
-   removal mechanism, currently harmless but unused).
-4. **Nothing currently re-polls automatically beyond the installed
-   timers** — `wnba-poller.timer` (15 min) and `wnba-schedule-sync.timer`
-   (daily 05:20 ET) are both active and were verified scheduled, so this
-   is expected to keep working unattended; no action needed unless a
-   future session finds otherwise.
+1. **Guided user test sequence remains largely UNTESTED beyond what's
+   happened organically.** Confirmed so far: two structured thoughts via
+   `@wnbaguesser_bot`, one `create` and one `revise` lean published via the
+   skill. **Explicitly not yet verified: Copy template** (paste path routes
+   through the same normalized request as Generate now), **edit** and
+   **delete** via natural language, **undo-latest**, comparing history
+   views side-by-side in both bots, and restart persistence. Do not assume
+   any of these work just because the underlying deterministic helpers are
+   unit-tested — they haven't been driven end-to-end live.
+2. Nothing currently re-polls automatically beyond the installed timers —
+   `wnba-poller.timer` (15 min) and `wnba-schedule-sync.timer` (daily
+   05:20 ET) are both active and were verified scheduled, so this is
+   expected to keep working unattended; no action needed unless a future
+   session finds otherwise.
+
+### Done this checkpoint, per explicit user request
+
+1. **Revised the Aces @ Fever lean** (event
+   `58beff9061f15ff3f416542cb51f4751`) now that the extraction fix is live.
+   Loaded fresh context (now 3 snapshots, still a dead-flat pick'em across
+   2.5 hours — even stronger evidence of "no signal to read yet" than at
+   `create` time) and 8 real Past Events precedent entries (75, 76, 77, 82,
+   85, 86, 88, 92). Notably, 7 of those 8 finished **over** their total,
+   several by wide margins — concrete, directly-relevant evidence that
+   wasn't available at `create` time. Kept the full-game side at `watch`
+   strength (still zero line movement to follow) but **upgraded the total
+   from `small` to `moderate` Over**, citing the 7/8 precedent hit rate
+   alongside the existing seasonal-guidance rationale.
+   - New commit `8a1db204271aa85bb850c5a6224ade4e3797ad2c` (verified: 7
+     lines changed in `path210.md`, same event block updated in place, one
+     clean commit).
+   - New revision `1ae8be58-8603-4177-b430-f30a0d1a3d7a`, operation
+     `revise`. Verified in the Sheet: original `create` revision
+     (`48fd18e2...`) now shows `effective_status: superseded`; the new
+     `revise` is `active` and its `git_commit_sha` matches the commit
+     above. This is production confirmation the append-only
+     supersession chain works correctly, not just create.
+2. **Verified the orphaned tabs are gone.** The user deleted
+   `team_emojis`/`suggestions`/`allowed_users` from `asce Guesser`
+   directly. Confirmed via a fresh read: the workbook now has exactly the
+   6 `wnba_*` tabs and nothing else.
+3. Noted above (item 1) that the guided test sequence remains untested
+   beyond what's happened organically — flagged per the user's request
+   rather than silently assumed complete.
