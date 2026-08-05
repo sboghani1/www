@@ -162,11 +162,23 @@ Deliver a continuously running VPS system with:
       and `_bounded_history` this session — both bots read through the same
       `derive_revision_history`-backed `read_game_history`, so they cannot
       disagree.
-- [x] Run complete local Python 3.12 tests and syntax checks. **108 passed**,
-      `py_compile` clean, `bash -n` clean on the installer, `git diff --check`
-      clean.
+- [x] Run complete local Python 3.12 tests and syntax checks. **149 passed**
+      (as of session 3), `py_compile` clean, `git diff --check` clean.
 - [x] Commit and push coherent implementation. Committed and pushed to
-      `www/main` this session (see git log when resuming for the exact SHA).
+      `www/main` after each session (see git log when resuming for the exact
+      SHA).
+- [x] Deterministic fixture dry-run mode (plan section 13 step 2).
+      `execute_revision(..., dry_run=True)` / `lean_cli.py`'s
+      `{"action": "apply", "dry_run": true}` implemented, unit-tested, and
+      manually exercised against a realistic fixture this session — see
+      Current progress.
+- [x] Offline staging Sheet schema validation (plan section 13 step 3, offline
+      portion). `SheetsStore.initialize()`/`backup_workbook()`/
+      `allowed_user_ids()` now have dedicated test coverage against a fake
+      spreadsheet double confirming exact headers, non-destructive defaults,
+      backup-required guardrails, and allowlist rejection — see Current
+      progress. The *live* Sheet initialization itself has not run; see
+      "Proposed live changes" above.
 - [ ] Verify/install VPS secret environment without printing values.
 - [ ] Initialize the Sheet only after asking the user for confirmation.
 - [ ] Install/enable schedule, poller, and WNBA bot systemd units.
@@ -210,7 +222,123 @@ Ask for the user only when ready for these steps:
 
 ## Current progress
 
-Updated 2026-08-05 (resumed from checkpoint `622b729`):
+Updated 2026-08-05 (session 3, resumed from `f83ad8a`):
+
+- Pulled `www/main`; picked up three unrelated commits from other work on
+  `telegram_receptionist.plan.txt` (receptionist recovery/launcher fixes:
+  `27b43ae`, `94c04af`, `ab86c25`). Confirmed none touch WNBA code paths
+  and the combined suite still passes after pulling (grew from 108 to 118
+  tests from those commits' own additions before this session's work).
+- **Implemented dry-run mode**, closing the gap from the prior session's
+  "Next actions" list. `execute_revision(..., dry_run=True)` in
+  `lean_workflow.py` now runs the full deterministic pipeline — game
+  resolve, context build, output validation, event-block render/apply/
+  validate, and revision-record construction — then returns a preview dict
+  (`dry_run`, `operation`, `revision_id`, `context`, `normalized_output`,
+  `proposed_block`, `proposed_revision_event`, `git_base_sha`) and returns
+  *before* the Sheet-append/write/publish/receipt block. `lean_cli.py`'s
+  `apply` action threads a `"dry_run": true` request field through to the
+  same parameter — no new CLI flag, since this CLI's whole interface is JSON
+  over stdin already.
+- Added `apps/wnba-poller/tests/test_lean_cli.py` (new — `lean_cli.py` had
+  zero test coverage before this session): `_repository_root` validation,
+  `handle_request`'s `context`/`apply` actions including dry-run-mutates-
+  nothing, a real end-to-end publish producing a commit, the file-lock
+  rejecting a concurrent `apply` (verified by holding the lock via a
+  separate `open()` on the same lock file — `flock` is per-open-file-
+  description, so this genuinely exercises the contention path even
+  single-process), and action/field validation errors.
+- Added 3 more tests to `test_lean_workflow.py`'s new `TestDryRun` class:
+  dry-run `create` mutates nothing (file, Sheet, git HEAD all unchanged),
+  dry-run `revise` correctly previews against an existing active lean
+  without disturbing it, and a dry run wired to a runner that raises if
+  `git commit`/`git push` is ever called (proving the dry-run code path
+  physically cannot reach those calls, not just that it happens not to).
+- **Manually exercised the dry-run flow against a realistic fixture**
+  (full-game side/total + a first-half total lean, two line snapshots
+  showing the spread/total moving, two prior user thoughts, and a
+  path210.md fixture with rules/model-cache/upcoming-events sections) via a
+  throwaway script, per plan section 13 step 2. Confirmed by inspection:
+  context correctly assembles snapshot IDs, thoughts, and sliced path210
+  sections (rules/model_cache/selected_game_path_context all populated
+  correctly; current_event_block correctly empty for a `create`); the
+  proposed event block renders full-game and first-half sections
+  correctly; and zero mutation occurred (`store.revision_events == []`,
+  `git status --porcelain` empty, path210.md byte-identical, target event
+  block absent from disk). Script and its throwaway git fixture were
+  deleted after use — nothing was committed from that exercise itself,
+  only the permanent unit tests above.
+- **Added `apps/wnba-poller/tests/test_sheets_initialize.py`** (new —
+  `SheetsStore.initialize()` and `backup_workbook()` had zero test coverage
+  before this session, despite being the exact code that will run against
+  the live Sheet). Built a `FakeSpreadsheet`/`FakeWorksheet` double
+  implementing the actual gspread call surface `sheets.py` uses
+  (`worksheets()`, `worksheet()`, `add_worksheet()`, `del_worksheet()`,
+  `get_all_values()`, `update()`, `append_rows()`, `batch_update()`) — no
+  network, no real Sheet touched. 18 tests confirm: all 6 tabs
+  (`wnba_games`, `wnba_line_snapshots`, `wnba_thoughts`,
+  `wnba_lean_revisions`, `wnba_allowed_users`, `wnba_settings`) are created
+  with byte-exact expected headers on an empty workbook; `initialize()` is
+  non-destructive by default (does not touch or recreate correctly-headed
+  existing tabs, preserves existing data rows); schema drift on an existing
+  tab raises instead of silently overwriting; `replace_tabs=True` and
+  `remove_legacy_nfl_tabs=True` both require a `backup_path` or raise;
+  `replace_tabs=True` backs up the pre-replacement state (including a
+  drifted tab) before deleting/recreating; legacy NFL tab removal deletes
+  only `nfl_games`/`nfl_line_snapshots`/`nfl_leans` and leaves WNBA tabs
+  alone; `backup_workbook()` refuses to overwrite an existing backup file
+  and captures every worksheet's title and values; and the allowlist
+  (`allowed_user_ids()`) correctly excludes disabled, non-numeric, and
+  non-positive entries, returns empty on a fresh workbook, and a seeded
+  user's ID is present while an arbitrary unseeded ID is absent — i.e.
+  "allowlist rejection of a non-seeded ID" is enforced at the data layer,
+  and (per the prior session's read-through) at the bot layer too via
+  already-passing `test_unauthorized_user_is_rejected_before_game_access`
+  / `test_bot_startup_requires_expected_identity_and_seeded_allowlist` in
+  `test_guesser_bot.py`.
+- Read `wnba_poller/cli.py`'s `initialize-sheet` subcommand to confirm the
+  exact live command shape (see "Proposed live changes" below): it enforces
+  `--remove-legacy-nfl-tabs` requires `--confirm-replace-tabs`, and any
+  destructive flag requires `--backup`, matching `SheetsStore.initialize()`'s
+  own guardrail — belt-and-suspenders at the CLI and library layers.
+- Full combined suite is green: **149 passed**, zero failures, zero
+  collection errors (wnba-poller test count grew from 73 to 104: +3
+  `TestDryRun` in `test_lean_workflow.py`, +6 `test_lean_cli.py`, +18
+  `test_sheets_initialize.py`; telegram-receptionist grew from 14 to 45 from
+  the unrelated recovery-work commits pulled at the start of this session).
+  `py_compile` clean on every touched module, `git diff --check` clean.
+- Still no live Sheet mutation and no WNBA service deployment. This session
+  did not go past plan section 13 steps 2-3 (dry-run + offline schema
+  validation) — no `wnba-poller initialize-sheet` command has been run
+  against `asce Guesser`, staging or production.
+- This chunk's work is committed and pushed to `www/main` (see git log for
+  the exact revision when resuming).
+
+### Proposed live changes (NOT yet executed — needs explicit confirmation)
+
+The exact command that would initialize the live `asce Guesser` workbook,
+replacing its copied NFL tabs with the validated WNBA schema above, is:
+
+```bash
+cd /home/receptionist/repos/www/apps/wnba-poller
+<venv>/bin/wnba-poller initialize-sheet \
+  --backup /home/receptionist-agent/.config/wnba-poller/pre-wnba-backup-<timestamp>.json \
+  --confirm-replace-tabs \
+  --remove-legacy-nfl-tabs \
+  --seed-allowed-user-id <owner's numeric Telegram user ID> \
+  --seed-allowed-username "<owner's Telegram username>" \
+  --seed-allowed-display-name "<owner's display name>"
+```
+
+This has NOT been run. Per the task instructions and this file's standing
+guardrail, it will only run after showing the user this exact command and
+receiving explicit confirmation. `WNBA_SHEET_ID`/`GOOGLE_CREDENTIALS` must
+already be set in the environment `wnba-poller` runs under (the connect step
+in `SheetsStore.connect()` also verifies the workbook title is exactly
+`asce Guesser` before allowing any write, so this cannot accidentally target
+the wrong spreadsheet).
+
+Prior "Current progress" history (session 1-2, retained for continuity):
 
 - Product architecture and acceptance flow are fully documented in the main
   plan.

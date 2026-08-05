@@ -311,6 +311,121 @@ class TestExecuteRevisionLifecycle:
             )
 
 
+class TestDryRun:
+    def test_dry_run_create_mutates_nothing(self, git_repo: Path) -> None:
+        store = FakeStore()
+        publisher = GitPublisher(repository=git_repo)
+        path210 = git_repo / "apps" / "wnba-poller" / "path210.md"
+        original_content = path210.read_text(encoding="utf-8")
+        head_before = _git(["rev-parse", "HEAD"], git_repo)
+
+        result = execute_revision(
+            store=store,
+            publisher=publisher,
+            path210_path=path210,
+            event_id="evt-1",
+            expected_matchup="Indiana Fever @ Las Vegas Aces",
+            operation="create",
+            request_text="generate using standard template",
+            source="receptionist",
+            now=_now(),
+            output=VALID_OUTPUT,
+            dry_run=True,
+        )
+
+        assert result["dry_run"] is True
+        assert result["operation"] == "create"
+        assert result["event_id"] == "evt-1"
+        assert "Las Vegas Aces" in result["proposed_block"]
+        assert (
+            result["normalized_output"]["full_game"]["side"]["selection"]
+            == "Las Vegas Aces"
+        )
+        assert result["context"]["game"]["event_id"] == "evt-1"
+        assert result["proposed_revision_event"]["operation"] == "create"
+
+        # No mutation of any kind occurred.
+        assert path210.read_text(encoding="utf-8") == original_content
+        assert store.revision_events == []
+        assert _git(["status", "--porcelain"], git_repo) == ""
+        assert _git(["rev-parse", "HEAD"], git_repo) == head_before
+
+    def test_dry_run_revise_previews_against_existing_active_lean(
+        self, git_repo: Path
+    ) -> None:
+        store = FakeStore()
+        publisher = GitPublisher(repository=git_repo)
+        path210 = git_repo / "apps" / "wnba-poller" / "path210.md"
+
+        create_result = execute_revision(
+            store=store,
+            publisher=publisher,
+            path210_path=path210,
+            event_id="evt-1",
+            expected_matchup="Indiana Fever @ Las Vegas Aces",
+            operation="create",
+            request_text="generate using standard template",
+            source="receptionist",
+            now=_now(),
+            output=VALID_OUTPUT,
+        )
+        content_after_create = path210.read_text(encoding="utf-8")
+        head_after_create = _git(["rev-parse", "HEAD"], git_repo)
+
+        dry_result = execute_revision(
+            store=store,
+            publisher=publisher,
+            path210_path=path210,
+            event_id="evt-1",
+            expected_matchup="Indiana Fever @ Las Vegas Aces",
+            operation="create",
+            request_text="generate using standard template",
+            source="receptionist",
+            now=_now(),
+            output={**VALID_OUTPUT, "summary": "Dry-run preview only."},
+            dry_run=True,
+        )
+
+        assert dry_result["operation"] == "revise"
+        assert "Dry-run preview only." in dry_result["proposed_block"]
+        history = store.read_game_history(event_id="evt-1")
+        assert history["active_revision"]["revision_id"] == (
+            create_result["revision_id"]
+        )
+        assert path210.read_text(encoding="utf-8") == content_after_create
+        assert "Dry-run preview only." not in path210.read_text(encoding="utf-8")
+        assert _git(["rev-parse", "HEAD"], git_repo) == head_after_create
+
+    def test_dry_run_never_acquires_publish_lock_state(
+        self, git_repo: Path
+    ) -> None:
+        store = FakeStore()
+
+        def exploding_runner(args: Any, cwd: Path) -> Any:
+            if tuple(args[:2]) in {("git", "commit"), ("git", "push")}:
+                raise AssertionError(
+                    "dry run must never commit or push"
+                )
+            return _run_command(args, cwd)
+
+        publisher = GitPublisher(repository=git_repo, runner=exploding_runner)
+        path210 = git_repo / "apps" / "wnba-poller" / "path210.md"
+
+        execute_revision(
+            store=store,
+            publisher=publisher,
+            path210_path=path210,
+            event_id="evt-1",
+            expected_matchup="Indiana Fever @ Las Vegas Aces",
+            operation="create",
+            request_text="generate using standard template",
+            source="receptionist",
+            now=_now(),
+            output=VALID_OUTPUT,
+            dry_run=True,
+        )
+
+
 class TestExecuteRevisionGuards:
     def test_mismatched_matchup_fails_before_any_mutation(self, git_repo: Path) -> None:
         store = FakeStore()

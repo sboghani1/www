@@ -63,6 +63,7 @@ def handle_request(
         output = request.get("output")
         if output is not None and not isinstance(output, Mapping):
             raise ValueError("output must be an object or null")
+        dry_run = bool(request.get("dry_run", False))
         lock_path = repository / ".git/wnba-lean.lock"
         with lock_path.open("w", encoding="utf-8") as lock:
             try:
@@ -85,6 +86,7 @@ def handle_request(
                 target_revision_id=str(
                     request.get("target_revision_id") or ""
                 ),
+                dry_run=dry_run,
             )
     raise ValueError("unsupported WNBA lean workflow action")
 

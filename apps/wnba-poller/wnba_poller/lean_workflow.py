@@ -365,6 +365,7 @@ def execute_revision(
     target_revision_id: str = "",
     telegram_metadata: Mapping[str, Any] | None = None,
     revision_id_factory: Callable[[], str] = lambda: str(uuid.uuid4()),
+    dry_run: bool = False,
 ) -> dict[str, Any]:
     before = path210_path.read_text(encoding="utf-8")
     context = build_lean_context(
@@ -450,6 +451,19 @@ def execute_revision(
         telegram_metadata=telegram_metadata,
         revision_id=revision_id,
     )
+    if dry_run:
+        return {
+            "dry_run": True,
+            "operation": operation,
+            "revision_id": revision_id,
+            "event_id": game["event_id"],
+            "git_base_sha": base_sha,
+            "context": context,
+            "normalized_output": normalized_output,
+            "proposed_block": block,
+            "proposed_revision_event": revision,
+        }
+
     if not store.append_lean_revision_event(revision):
         raise ValueError("duplicate lean revision record")
 
