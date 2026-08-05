@@ -864,3 +864,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Closing-number lean for a game that has already tipped off. Side leans small toward Phoenix Mercury +7: a prior recent-form audit for this exact matchup shows Atlanta covering only 1 of its last 3 spread reads while Phoenix went 3/3, but the spread's continued firming toward Atlanta all the way to close (-5.5 to -7) is a real countersignal from the log's strongest indicator, so this stays at minimum-plus rather than a confident fade. Total leans small Over 181.5: the number was only mildly easing (183.5 to 181.5), but the broader recent precedent involving these two teams individually has trended well over modest totals. No first-half lean: a closing first-half number exists (Dream -4 / 95.5) but there is no tracked movement history or precedent to support a specific first-half read.
 <!-- WNBA_LEAN_EVENT_END event_id=2977c51845a4f2621deca3d4a38a0ac2 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=55583b8c075dd483b408ce1ba4c24244 -->
+## WNBA Lean: Seattle Storm @ New York Liberty
+- Event ID: `55583b8c075dd483b408ce1ba4c24244`
+- Revision: `89afd31f-965f-4dbe-865d-c5a0f5d17395`
+- Status: `active`
+
+### Full game
+- **Side:** New York Liberty (small)
+  - Evidence: A very recent head-to-head precedent (entry 93) has these exact two teams meeting days earlier: Liberty won by 12 and covered a smaller -7 number after the market eased off them -- directly relevant recent precedent for tonight's rematch; The spread closed at -8, continuing the same gradual ease toward Seattle a prior draft for this matchup had already flagged (-9.5 down to -8.5 at the time), but it has not crossed the -7 level that same draft set as the point to abandon the Liberty cover lean
+  - Watch: This is a closing-number read on a game that has already started -- the gradual ease toward Seattle across the tracked window is a real signal this lean does not fully dismiss, which is why it stays at small rather than a higher strength; Liberty's form has been inconsistent across other recent entries (won by 1 in one spot, lost outright in another), so this is a matchup-specific read rather than a broad trust in Liberty covering generally
+- **Total:** Over (small)
+  - Evidence: The total was essentially flat across the tracked window (183 opening to 183.5 closing), a very mild rise rather than a decisive move; The broader recent precedent for these two teams individually has trended over modest total numbers in several other matchups (203 over 181.5 in entry 82, 187 over 179.5 in entry 84), though the specific prior meeting between these two teams landed under its own total
+  - Watch: The near-total lack of movement here (barely half a point) is why this stays at small strength -- there is not a strong directional signal in the total itself, only the broader base rate
+
+**Summary:** Closing-number lean for a game that has already tipped off. Side leans small toward New York Liberty -8: a very recent head-to-head precedent has Liberty beating Seattle by 12 and covering a smaller number days earlier, but the spread's continued gradual ease toward Seattle across tonight's window (a caution a prior draft for this exact matchup already flagged) keeps this at minimum-plus rather than higher confidence. Total leans small Over 183.5: the number barely moved, so this leans on the broader recent base rate rather than any real movement signal. No first-half lean: a closing first-half number exists (Liberty -4.5 / 95) but there is no tracked movement history or precedent to support a specific first-half read.
+<!-- WNBA_LEAN_EVENT_END event_id=55583b8c075dd483b408ce1ba4c24244 -->
