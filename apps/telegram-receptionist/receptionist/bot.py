@@ -270,7 +270,7 @@ class Receptionist:
             deployment_id = str(deployment["id"])
         except (OSError, ValueError, KeyError):
             return
-        if not self.database.mark_deployment_seen(deployment_id):
+        if self.database.deployment_is_seen(deployment_id):
             return
         state = self.database.ensure_user_state(
             self.config.allowed_user_id, self.config.allowed_user_id
@@ -284,6 +284,7 @@ class Receptionist:
             f"Revision: {str(deployment.get('revision', 'unknown'))[:12]}\n"
             f"{deployment.get('message', '')}".strip(),
         )
+        self.database.mark_deployment_seen(deployment_id)
 
 
 def build_application(config: Config) -> Application:

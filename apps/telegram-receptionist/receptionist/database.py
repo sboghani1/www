@@ -510,9 +510,17 @@ class Database:
             ).fetchone()
             return dict(row) if row else None
 
-    def mark_deployment_seen(self, deployment_id: str) -> bool:
+    def deployment_is_seen(self, deployment_id: str) -> bool:
         with self._connect() as connection:
-            cursor = connection.execute(
+            row = connection.execute(
+                "SELECT 1 FROM deployments_seen WHERE deployment_id=?",
+                (deployment_id,),
+            ).fetchone()
+            return row is not None
+
+    def mark_deployment_seen(self, deployment_id: str) -> None:
+        with self._connect() as connection:
+            connection.execute(
                 """
                 INSERT OR IGNORE INTO deployments_seen(deployment_id, seen_at)
                 VALUES (?, ?)
@@ -520,11 +528,9 @@ class Database:
                 (deployment_id, utc_now()),
             )
             connection.commit()
-            return cursor.rowcount == 1
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.path, timeout=30)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys=ON")
         return connection
-

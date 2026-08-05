@@ -28,3 +28,12 @@ def test_reset_creates_new_provider_context(tmp_path: Path) -> None:
     assert first["id"] != second["id"]
     assert second["provider_session_id"] is None
 
+
+def test_deployment_seen_is_recorded_after_notification(tmp_path: Path) -> None:
+    repository = tmp_path / "repos" / "www"
+    repository.mkdir(parents=True)
+    database = Database(tmp_path / "state" / "receptionist.db")
+    database.initialize((RepositoryConfig("www", repository),))
+    assert not database.deployment_is_seen("deploy-1")
+    database.mark_deployment_seen("deploy-1")
+    assert database.deployment_is_seen("deploy-1")

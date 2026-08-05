@@ -136,7 +136,6 @@ class AgentRunner:
                 "-u",
                 "receptionist-agent",
                 self.config.agent_launcher,
-                cwd=repository,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,

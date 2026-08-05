@@ -707,6 +707,8 @@ proposal.
   release before reporting rollback success.
 - Notification: deployment status is written atomically to the state directory;
   the bot polls for unseen statuses and reports them after it is available.
+- A status is marked seen only after Telegram accepts the notification, so a
+  transient send failure remains retryable.
 - Build/test failures also write a failed deployment status before cleanup.
 - Release pruning explicitly excludes the active `current` target so reusing an
   older revision cannot delete the live release.
