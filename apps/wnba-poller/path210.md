@@ -847,3 +847,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Revised now that real Past Events precedent is available. The side lean stays at minimum (watch) strength on Las Vegas Aces: the spread is still a dead-flat pick'em across three captures spanning 2.5 hours, and precedent repeatedly shows the market's own movement (not pre-game narrative) is the reliable signal -- there is none to read yet. The total is upgraded to a moderate Over: 7 of the 8 most relevant recent precedent games (matching the Aces and/or the Fever) finished over their total, several by wide margins, reinforcing the log's seasonal over-leaning guidance with concrete recent results rather than narrative alone. No first-half lean: BetOnline has not posted a first-half market for this game yet.
 <!-- WNBA_LEAN_EVENT_END event_id=58beff9061f15ff3f416542cb51f4751 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=2977c51845a4f2621deca3d4a38a0ac2 -->
+## WNBA Lean: Phoenix Mercury @ Atlanta Dream
+- Event ID: `2977c51845a4f2621deca3d4a38a0ac2`
+- Revision: `265498a3-a464-4c35-a73c-6edf85ba4d1a`
+- Status: `active`
+
+### Full game
+- **Side:** Phoenix Mercury (small)
+  - Evidence: The spread firmed further toward Atlanta from -5.5 at ~16.7h out to -7 at close -- continued one-directional movement toward the favorite, which this log treats as its single strongest signal; A prior recent-form audit already logged for this matchup shows Atlanta's last three spread reads went only 1/3 (failed to cover each time backed), while Phoenix's last three side directions went 3/3 -- specific, directly-relevant recent evidence that cuts against the growing favorite number; The submitted thought expected Dream -4.5 winning by ~5; the market closed nearly 2.5 points higher than that projection (-7), a bigger number than the thought anticipated
+  - Watch: This is a closing-number read on a game that has already started -- there is no further line movement to watch; a fresh lean would be needed for the next meeting between these teams; The continued firming toward Atlanta is a real signal this lean does not fully override; treat this as a genuine tension (line direction vs. recent team-specific cover rate), not a confident fade
+- **Total:** Over (small)
+  - Evidence: The total opened 183.5 and closed 181.5 -- only a mild ~2-point net easing, not a decisive move either way; Most of the closely relevant recent precedent for these two teams individually finished well over modest total numbers (196 over 184.5 in entry 92; 207 over 179.5 in entry 94; 187 over 179.5 in entry 84), consistent with the log's broader current over-leaning guidance
+  - Watch: The mild downward drift (183.5 -> 181.5) is a soft caution against a stronger over commitment, which is why this stays at small rather than moderate strength
+
+**Summary:** Closing-number lean for a game that has already tipped off. Side leans small toward Phoenix Mercury +7: a prior recent-form audit for this exact matchup shows Atlanta covering only 1 of its last 3 spread reads while Phoenix went 3/3, but the spread's continued firming toward Atlanta all the way to close (-5.5 to -7) is a real countersignal from the log's strongest indicator, so this stays at minimum-plus rather than a confident fade. Total leans small Over 181.5: the number was only mildly easing (183.5 to 181.5), but the broader recent precedent involving these two teams individually has trended well over modest totals. No first-half lean: a closing first-half number exists (Dream -4 / 95.5) but there is no tracked movement history or precedent to support a specific first-half read.
+<!-- WNBA_LEAN_EVENT_END event_id=2977c51845a4f2621deca3d4a38a0ac2 -->
