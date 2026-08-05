@@ -10,4 +10,5 @@ class ProviderResult:
     final_response: str = ""
     usage: dict[str, Any] = field(default_factory=dict)
     activity: str = "Starting agent"
+    current_work: str = "Preparing Claude"
     is_error: bool = False

@@ -9,6 +9,7 @@ import receptionist.runner as runner_module
 from receptionist.config import RepositoryConfig
 from receptionist.database import Database
 from receptionist.runner import AgentRunner
+from receptionist.runner import next_update_label
 
 
 class FakeBot:
@@ -193,3 +194,8 @@ def test_restarted_worker_does_not_run_queue_while_orphan_is_alive(
         await runner.close()
 
     asyncio.run(exercise())
+
+
+def test_next_update_rounds_now_plus_30_seconds_up_to_minute() -> None:
+    now = datetime(2026, 8, 5, 20, 43, 27, tzinfo=UTC)
+    assert next_update_label(now) == "4:44 PM ET"

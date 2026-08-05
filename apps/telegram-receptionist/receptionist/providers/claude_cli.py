@@ -61,12 +61,13 @@ def parse_event(line: str, result: ProviderResult) -> tuple[str, dict[str, Any]]
             if key in payload
         }
         result.activity = "Finishing response"
+        result.current_work = "Preparing response"
         return "result", payload
 
     if provider_type == "assistant":
         activities = _assistant_activities(payload)
         if activities:
-            result.activity = activities[-1]
+            result.activity, result.current_work = activities[-1]
         return "assistant", payload
 
     if provider_type == "system":
@@ -83,23 +84,67 @@ def parse_event(line: str, result: ProviderResult) -> tuple[str, dict[str, Any]]
     return "other", payload
 
 
-def _assistant_activities(payload: dict[str, Any]) -> list[str]:
+def _assistant_activities(
+    payload: dict[str, Any],
+) -> list[tuple[str, str]]:
     message = payload.get("message")
     if not isinstance(message, dict):
         return []
     content = message.get("content")
     if not isinstance(content, list):
         return []
-    activities: list[str] = []
+    activities: list[tuple[str, str]] = []
     for block in content:
         if not isinstance(block, dict):
             continue
         if block.get("type") == "tool_use":
-            name = block.get("name", "tool")
-            activities.append(f"Using {name}")
+            name = str(block.get("name", "tool"))
+            tool_input = block.get("input")
+            activities.append(
+                (
+                    f"Using {name}",
+                    _tool_current_work(
+                        name,
+                        tool_input if isinstance(tool_input, dict) else {},
+                    ),
+                )
+            )
         elif block.get("type") == "text":
             text = str(block.get("text", "")).strip()
             if text:
                 first_line = text.splitlines()[0]
-                activities.append(first_line[:140])
+                activities.append((first_line[:140], "Thinking"))
     return activities
+
+
+def _tool_current_work(name: str, tool_input: dict[str, Any]) -> str:
+    path = tool_input.get("file_path") or tool_input.get("path")
+    compact_path = _compact_path(path) if isinstance(path, str) else ""
+    actions = {
+        "Read": "Reading",
+        "Edit": "Editing",
+        "Write": "Writing",
+        "Glob": "Finding files in",
+        "Grep": "Searching files in",
+    }
+    if name in actions and compact_path:
+        return f"{actions[name]} {compact_path}"
+    summaries = {
+        "Bash": "Running command",
+        "Task": "Delegating task",
+        "TodoWrite": "Updating task list",
+        "WebSearch": "Researching web",
+        "WebFetch": "Reading web page",
+        "Skill": "Running skill",
+    }
+    return summaries.get(name, f"Using {name}")[:100]
+
+
+def _compact_path(path: str) -> str:
+    normalized = path.strip().rstrip("/")
+    if not normalized:
+        return ""
+    marker = "/home/receptionist/repos/"
+    if marker in normalized:
+        normalized = normalized.split(marker, 1)[1]
+    return normalized[-100:]

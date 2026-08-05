@@ -860,6 +860,11 @@ QUICK DECISION AND GUARDRAIL INDEX
   flood limits.
 - Verbose behavior: update at most every 30 seconds with agent activity,
   process-tree RSS/CPU, VPS CPU, RAM, and swap. Compact mode updates less often.
+- Progress detail: each status edit includes a safe **Current** line derived
+  from the latest tool event. File tools show a compact workspace-relative path;
+  shell commands and prompts are never echoed because they may contain secrets.
+- Update expectation: status edits show **Next update by** in Eastern time,
+  calculated as the edit time plus 30 seconds and rounded up to the next minute.
 
 2026-08-05 — Long polling and strict private-chat authorization
 
@@ -950,6 +955,13 @@ QUICK DECISION AND GUARDRAIL INDEX
   agent launcher from the selected release before restarting the service.
   Updating only the Python package would leave recovery logic split across
   mismatched versions.
+- Follow-up incident: run `855d60e4` completed, produced a final assistant
+  response, and pushed commit `9d6f7e1`, but the live execution path rejected
+  recovery because it still held the pre-start run object whose `started_at`
+  was null. The run was reconciled and delivered without replaying its prompt.
+- Fix: immediately reload the run from SQLite after `start_run` persists its
+  PID and start timestamp. All later recovery comparisons use that durable
+  record rather than the stale queued snapshot.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD

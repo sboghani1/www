@@ -34,3 +34,54 @@ def test_parse_non_object_json_does_not_crash() -> None:
     event_type, payload = parse_event('["unexpected"]', result)
     assert event_type == "unparsed"
     assert payload == {"raw_json": ["unexpected"]}
+
+
+def test_parse_read_activity_includes_compact_file_path() -> None:
+    result = ProviderResult()
+    parse_event(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "name": "Read",
+                            "input": {
+                                "file_path": (
+                                    "/home/receptionist/repos/www/"
+                                    "plans/wnba_poller.plan.txt"
+                                )
+                            },
+                        }
+                    ]
+                },
+            }
+        ),
+        result,
+    )
+    assert result.activity == "Using Read"
+    assert result.current_work == "Reading www/plans/wnba_poller.plan.txt"
+
+
+def test_parse_bash_activity_does_not_expose_command() -> None:
+    result = ProviderResult()
+    parse_event(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "name": "Bash",
+                            "input": {"command": "echo secret-value"},
+                        }
+                    ]
+                },
+            }
+        ),
+        result,
+    )
+    assert result.current_work == "Running command"
+    assert "secret-value" not in result.current_work

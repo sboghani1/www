@@ -6,9 +6,10 @@ import logging
 import os
 import signal
 import time
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import psutil
 from telegram import Bot
@@ -225,6 +226,7 @@ class AgentRunner:
         self._active_run_id = run["id"]
         self._cancel_requested = False
         self.database.start_run(run["id"], process.pid)
+        run = self.database.get_run(run["id"])
         result = ProviderResult()
         stderr_lines: list[str] = []
         started = time.monotonic()
@@ -547,7 +549,10 @@ class AgentRunner:
             elapsed = int(time.monotonic() - started)
             text = (
                 f"⏳ Run {run['id'][:8]} · {run['repository_name']}\n"
-                f"{result.activity}\nElapsed: {elapsed // 60}m {elapsed % 60}s"
+                f"{result.activity}\n"
+                f"Current: {result.current_work}\n"
+                f"Elapsed: {elapsed // 60}m {elapsed % 60}s\n"
+                f"Next update by: {next_update_label()}"
             )
             if verbose:
                 text += "\n" + resource_summary(process.pid)
@@ -678,3 +683,12 @@ def process_group_alive(process_group_id: int) -> bool:
     except PermissionError:
         return True
     return True
+
+
+def next_update_label(now: datetime | None = None) -> str:
+    eastern = ZoneInfo("America/New_York")
+    current = now or datetime.now(UTC)
+    expected = current.astimezone(eastern) + timedelta(seconds=30)
+    if expected.second or expected.microsecond:
+        expected = expected.replace(second=0, microsecond=0) + timedelta(minutes=1)
+    return expected.strftime("%-I:%M %p ET")
