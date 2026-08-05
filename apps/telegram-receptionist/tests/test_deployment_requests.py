@@ -200,3 +200,31 @@ def test_head_changed_deployment_can_be_cloned_once(
     assert equivalent is not None
     assert equivalent["id"] == new_id
     assert database.latest_head_changed_deployment(123) is None
+
+
+def test_pending_deployment_can_be_superseded_for_new_revision(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repos"
+    repository = repo_root / "www"
+    repository.mkdir(parents=True)
+    database = Database(tmp_path / "state" / "receptionist.db")
+    database.initialize((RepositoryConfig("workspace", repo_root),))
+    now = datetime.now(UTC)
+    request_id = "77777777-7777-4777-8777-777777777777"
+    database.import_deployment_request(
+        request_id=request_id,
+        user_id=123,
+        repository_path=str(repository),
+        revision="a" * 40,
+        command="deploy exact command",
+        summary="Deploy tested change",
+        created_at=now.isoformat(),
+        expires_at=(now + timedelta(minutes=15)).isoformat(),
+    )
+
+    pending = database.latest_pending_deployment(123)
+    assert pending is not None
+    assert pending["id"] == request_id
+    assert database.supersede_pending_deployment(request_id)
+    assert database.latest_pending_deployment(123) is None

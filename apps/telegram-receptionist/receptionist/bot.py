@@ -493,10 +493,12 @@ class Receptionist:
         )
 
     async def _recover_stale_deployment(self, user_id: int) -> str:
-        failed = self.database.latest_head_changed_deployment(user_id)
-        if failed is None:
+        candidate = self.database.latest_pending_deployment(user_id)
+        if candidate is None:
+            candidate = self.database.latest_head_changed_deployment(user_id)
+        if candidate is None:
             return ""
-        repository = Path(failed["repository_path"]).resolve()
+        repository = Path(candidate["repository_path"]).resolve()
         if not repository.is_relative_to(self.config.repo_root):
             return "Deployment recovery refused: repository is outside the workspace."
         try:
@@ -507,13 +509,21 @@ class Receptionist:
             user_id=user_id,
             repository_path=str(repository),
             revision=revision,
-            command=failed["command"],
+            command=candidate["command"],
         )
         if existing:
             return (
                 f"Recovered deployment request already pending: "
                 f"{existing['id'][:8]} at {revision[:8]}."
             )
+        if candidate["revision"] == revision:
+            return (
+                f"Deployment request {candidate['id'][:8]} is already pending "
+                f"at verified current revision {revision[:8]}."
+            )
+        if candidate["status"] == "pending":
+            if not self.database.supersede_pending_deployment(candidate["id"]):
+                return "Deployment recovery could not supersede the stale request."
         now = datetime.now(UTC)
         request_id = str(uuid.uuid4())
         created = self.database.import_deployment_request(
@@ -521,11 +531,11 @@ class Receptionist:
             user_id=user_id,
             repository_path=str(repository),
             revision=revision,
-            command=failed["command"],
-            summary=failed["summary"],
+            command=candidate["command"],
+            summary=candidate["summary"],
             created_at=now.isoformat(),
             expires_at=(now + timedelta(minutes=15)).isoformat(),
-            recovered_from_id=failed["id"],
+            recovered_from_id=candidate["id"],
         )
         if not created:
             return "Deployment recovery could not create a replacement request."
@@ -535,27 +545,38 @@ class Receptionist:
         )
 
     async def _verified_git_revision(self, repository: Path) -> str:
-        async def git(*arguments: str) -> str:
-            process = await asyncio.create_subprocess_exec(
-                "/usr/bin/git",
-                "-c",
-                f"safe.directory={repository}",
-                "-C",
-                str(repository),
-                *arguments,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await process.communicate()
-            if process.returncode != 0:
-                detail = stderr.decode("utf-8", errors="replace").strip()
-                raise RuntimeError(detail or "read-only Git verification failed")
-            return stdout.decode("utf-8", errors="replace").strip()
-
-        if await git("status", "--porcelain"):
+        process = await asyncio.create_subprocess_exec(
+            "/usr/bin/sudo",
+            "-n",
+            "-H",
+            "-u",
+            "receptionist-agent",
+            self.config.agent_launcher,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await process.communicate(
+            json.dumps(
+                {
+                    "action": "inspect_repository",
+                    "repository": str(repository),
+                }
+            ).encode("utf-8")
+        )
+        if process.returncode != 0:
+            detail = stderr.decode("utf-8", errors="replace").strip()
+            raise RuntimeError(detail or "read-only Git verification failed")
+        try:
+            inspection = json.loads(stdout.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise RuntimeError(
+                "repository inspection returned invalid data"
+            ) from error
+        if not inspection.get("clean"):
             raise RuntimeError("working tree is not clean")
-        revision = await git("rev-parse", "HEAD")
-        upstream = await git("rev-parse", "@{upstream}")
+        revision = str(inspection.get("revision") or "")
+        upstream = str(inspection.get("upstream_revision") or "")
         if revision != upstream:
             raise RuntimeError("HEAD does not match its configured upstream")
         return revision

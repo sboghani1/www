@@ -991,6 +991,19 @@ QUICK DECISION AND GUARDRAIL INDEX
   tree whose HEAD equals its configured upstream, then copies the failed
   request's exact summary and command into one new pending request at that
   revision. It never approves or executes the replacement automatically.
+- Private Git object handling: repository inspection runs through the fixed
+  root-owned launcher as `receptionist-agent`, not as the Telegram bot user.
+  This preserves restrictive Git object permissions while exposing only branch,
+  cleanliness, HEAD, and upstream revision metadata.
+- Missing result-event recovery: Claude can finish with a valid final assistant
+  response but exit without the expected stream `result` event, as in run
+  `d3cc58d7`. The normal completion path now checks the durable session whenever
+  no final response was parsed, regardless of whether the process disappeared.
+  `/recover` can also convert an already-failed matching run to succeeded and
+  deliver that response without replaying its prompt.
+- Pending stale request recovery: if a pending request already points at an old
+  revision, `/recover` expires it and creates one replacement at the verified
+  clean upstream HEAD. A pending request already at current HEAD is left intact.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD

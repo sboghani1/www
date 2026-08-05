@@ -555,6 +555,25 @@ class Database:
             ).fetchall()
         return [self.get_run(row["id"]) for row in rows]
 
+    def latest_recoverable_failed_run(self) -> dict[str, Any] | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT runs.id FROM runs
+                JOIN sessions ON sessions.id=runs.session_id
+                WHERE runs.status='failed'
+                  AND runs.final_response IS NULL
+                  AND sessions.provider_session_id IS NOT NULL
+                  AND (
+                    runs.error LIKE 'Claude exited without a final response%'
+                    OR runs.error LIKE 'Claude stopped without a recoverable final response%'
+                    OR runs.error LIKE 'Claude''s process disappeared without a recoverable final response%'
+                  )
+                ORDER BY runs.finished_at DESC LIMIT 1
+                """
+            ).fetchone()
+        return self.get_run(row["id"]) if row else None
+
     def next_queued_run(self) -> dict[str, Any] | None:
         with self._connect() as connection:
             row = connection.execute(
@@ -997,6 +1016,35 @@ class Database:
                 ),
             ).fetchone()
             return dict(row) if row else None
+
+    def latest_pending_deployment(
+        self, user_id: int
+    ) -> dict[str, Any] | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT * FROM deployment_requests
+                WHERE telegram_user_id=? AND status='pending'
+                  AND expires_at > ?
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                (user_id, utc_now()),
+            ).fetchone()
+            return dict(row) if row else None
+
+    def supersede_pending_deployment(self, request_id: str) -> bool:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE deployment_requests
+                SET status='expired', finished_at=?,
+                    error='Superseded by deterministic recovery at a newer revision.'
+                WHERE id=? AND status='pending'
+                """,
+                (utc_now(), request_id),
+            )
+            connection.commit()
+            return cursor.rowcount == 1
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.path, timeout=30)

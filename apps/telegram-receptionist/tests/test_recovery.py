@@ -2,6 +2,7 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 from telegram.error import NetworkError
 
@@ -237,3 +238,39 @@ def test_restarted_worker_does_not_run_queue_while_orphan_is_alive(
 def test_next_update_rounds_now_plus_30_seconds_up_to_minute() -> None:
     now = datetime(2026, 8, 5, 20, 43, 27, tzinfo=UTC)
     assert next_update_label(now) == "4:44 PM ET"
+
+
+def test_failed_run_can_recover_missing_result_event(tmp_path: Path) -> None:
+    database, run = _finished_run(tmp_path)
+    database.update_provider_session(run["session_id"], "session-1")
+    database.finish_run(
+        run["id"],
+        status="failed",
+        exit_code=0,
+        final_response=None,
+        error="Claude exited without a final response.",
+    )
+    failed = database.get_run(run["id"])
+    response_time = (
+        datetime.fromisoformat(failed["started_at"]) + timedelta(seconds=1)
+    ).isoformat()
+    bot = FakeBot()
+    bot.fail_on_call = None
+    runner = AgentRunner(SimpleNamespace(), database, bot)
+    runner._recover_provider_session = AsyncMock(
+        return_value={
+            "final_response": "recovered response",
+            "final_response_timestamp": response_time,
+            "last_conversation_type": "assistant",
+            "last_conversation_timestamp": response_time,
+            "last_assistant_has_tool_use": False,
+        }
+    )
+
+    message = asyncio.run(runner._recover_failed_run(failed))
+
+    recovered = database.get_run(run["id"])
+    assert recovered["status"] == "succeeded"
+    assert recovered["delivery_status"] == "delivered"
+    assert bot.sent == ["recovered response"]
+    assert "prompt was not replayed" in message

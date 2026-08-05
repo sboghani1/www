@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -23,6 +24,7 @@ SESSION_ID_RE = re.compile(
     r"[0-9a-f]{4}-[0-9a-f]{12}$"
 )
 CLAUDE_PROJECTS = Path("/home/receptionist-agent/.claude/projects")
+GIT_BINARY = "/usr/bin/git"
 
 
 def load_google_environment() -> None:
@@ -113,12 +115,45 @@ def recover_session(session_id: str) -> None:
     )
 
 
+def inspect_repository(repository_value: str) -> None:
+    repository = Path(repository_value).resolve()
+    if not repository.is_relative_to(REPO_ROOT) or not repository.is_dir():
+        raise SystemExit("Repository is outside the approved root or missing.")
+
+    def git(*arguments: str) -> str:
+        result = subprocess.run(
+            [GIT_BINARY, "-C", str(repository), *arguments],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise SystemExit(
+                result.stderr.strip() or "Repository inspection failed."
+            )
+        return result.stdout.strip()
+
+    print(
+        json.dumps(
+            {
+                "revision": git("rev-parse", "HEAD"),
+                "upstream_revision": git("rev-parse", "@{upstream}"),
+                "branch": git("branch", "--show-current"),
+                "clean": not bool(git("status", "--porcelain")),
+            }
+        )
+    )
+
+
 def main() -> None:
     try:
         request = json.loads(sys.stdin.read())
         action = request.get("action", "run")
         if action == "recover_session":
             recover_session(str(request["session_id"]))
+            return
+        if action == "inspect_repository":
+            inspect_repository(str(request["repository"]))
             return
         if action != "run":
             raise SystemExit("Unsupported agent action.")

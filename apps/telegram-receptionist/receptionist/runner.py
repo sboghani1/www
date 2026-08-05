@@ -81,6 +81,9 @@ class AgentRunner:
             message = await self._recover_run(self.database.get_run(active["id"]))
         else:
             message = "No stale active run was found."
+        failed = self.database.latest_recoverable_failed_run()
+        if failed:
+            message += "\n" + await self._recover_failed_run(failed)
         delivered = await self.retry_pending_deliveries()
         if self._worker is None or self._worker.done():
             self._worker = asyncio.create_task(self._work_loop())
@@ -279,7 +282,7 @@ class AgentRunner:
             )
 
         recovered = False
-        if process_disappeared and result.session_id and not result.final_response:
+        if result.session_id and not result.final_response:
             recovery = await self._recover_provider_session(result.session_id)
             recovered_response = recovery.get("final_response")
             if (
@@ -465,6 +468,31 @@ class AgentRunner:
             )
         await self._deliver_run(self.database.get_run(run["id"]))
         return message
+
+    async def _recover_failed_run(self, run: dict[str, Any]) -> str:
+        session_id = run.get("provider_session_id")
+        if not isinstance(session_id, str) or not session_id:
+            return f"Run {run['id'][:8]} has no provider session to recover."
+        recovery = await self._recover_provider_session(session_id)
+        response = recovery.get("final_response")
+        if not (
+            self._recovery_matches_run(recovery, run)
+            and isinstance(response, str)
+            and response.strip()
+        ):
+            return f"Run {run['id'][:8]} has no recoverable final response."
+        self.database.finish_run(
+            run["id"],
+            status="succeeded",
+            exit_code=0,
+            final_response=response.strip(),
+            error=None,
+        )
+        await self._deliver_run(self.database.get_run(run["id"]))
+        return (
+            f"Recovered completed run {run['id'][:8]} from its durable "
+            "Claude session; the prompt was not replayed."
+        )
 
     @staticmethod
     def _recovery_is_complete(recovery: dict[str, Any]) -> bool:
