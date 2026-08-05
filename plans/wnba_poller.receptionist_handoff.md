@@ -191,7 +191,10 @@ Deliver a continuously running VPS system with:
       timers, then enable the bot once its env was staged). All three
       confirmed running/scheduled via direct `systemctl` inspection — see
       Current progress.
-- [ ] Deploy receptionist changes only through the approval broker.
+- [x] Deploy receptionist changes only through the approval broker.
+      Done 2026-08-05 via `request-receptionist-deploy`/approval; confirmed
+      the deployed commit is a descendant of the requested one and all WNBA
+      binaries/skill file are live — see Current progress.
 - [ ] Run the guided production acceptance sequence.
 
 ## Guided user test sequence
@@ -520,19 +523,49 @@ manually, once each, from this session.
   (daily 05:20 ET), `wnba-guesser-bot.service` (`@wnbaguesser_bot`, running).
   This closes checklist items "Install/enable schedule, poller, and WNBA bot
   systemd units."
-- **Not yet done:** the receptionist deployment (WNBA handlers, skill,
-  `lean_cli`/`receptionist_helper` binaries in its own venv) — see below.
-  The standalone poller/bot are fully independent of this and do not need
-  it to keep working.
+- **Receptionist deployment DONE and CONFIRMED SUCCESSFUL (2026-08-05).**
+  Deploy request `1df8d768-636c-4084-9de3-375320433d5c` (command from
+  `CLAUDE.md`'s standard `systemd-run --unit=telegram-receptionist-deploy-...
+  --collect /usr/local/libexec/deploy-telegram-receptionist-worker`, HEAD
+  `192c2bf` at request time) was approved. **Note on what actually got
+  deployed:** because the worker runs detached (`systemd-run --collect`,
+  precisely so restarting the receptionist service doesn't kill the
+  deploy process itself — this service is what runs this very agent
+  session), it re-reads `main`'s HEAD at execution time rather than using
+  the SHA captured at request time. By the time it actually ran, one more
+  unrelated commit (`17c2b933`, "fix(receptionist): drain runs during
+  self-deploy") had landed from concurrent work and got deployed instead.
+  Verified `git merge-base --is-ancestor 192c2bf 17c2b933` succeeds, so
+  every bit of this session's WNBA work is included — this was a race in
+  *which* good commit got deployed, not a partial/wrong deploy.
+  - `telegram-receptionist.service`: `active (running)`, `NRestarts=0`,
+    `ExecMainStatus=0`, `/opt/telegram-receptionist/current` →
+    `.../releases/17c2b933...`.
+  - `/opt/telegram-receptionist/current/.venv/bin/` contains
+    `wnba-lean-workflow`, `wnba-receptionist-helper`, `wnba-guesser-bot`,
+    `wnba-poller` — confirming the deploy worker's `apps/wnba-poller[test]`
+    install step (added in an earlier session, see the "already differs
+    from installed" note above) is itself now live, not just present in
+    the repo.
+  - `/home/receptionist/repos/.claude/skills/wnba-lean/SKILL.md` exists at
+    its fixed path with matching content.
+  - The restart happened mid-session (this agent process is a child of
+    `telegram-receptionist.service`); the harness's `--resume` mechanic
+    picked the conversation back up transparently after the SIGTERM/
+    restart cycle.
+- **All three deployment phases are now complete: live Sheet schema,
+  WNBA systemd services, and the receptionist deployment.** Ready for the
+  guided user test sequence (see that section above) — not yet run this
+  session.
 
 ### Next proposed live/production steps (NOT yet executed — still need explicit confirmation each)
 
-1. Deploy the receptionist changes (WNBA handlers, skill, `lean_cli`/
-   `receptionist_helper` binaries in its venv) through the existing
-   `request-receptionist-deploy` approval broker per `CLAUDE.md`. This is
-   the last piece needed before the guided user test sequence (game
-   picker, Generate now/Copy template, edit/delete/undo) can run against
-   production.
+1. Walk through the guided user test sequence in production: `/start` to
+   `@wnbaguesser_bot`, verify allowlist enforcement, a structured thought
+   and a repeated update, thought history, a receptionist-generated lean
+   (Generate now and Copy template), shared history in both bots, and
+   edit/delete/undo. This is live user interaction — pace it with the user
+   rather than assuming.
 2. Optional: ask the user whether to also remove the orphaned
    `team_emojis`/`suggestions`/`allowed_users` tabs noted above.
 3. Once the receptionist is deployed, walk through the guided user test
