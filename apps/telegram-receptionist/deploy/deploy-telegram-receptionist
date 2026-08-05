@@ -1,0 +1,16 @@
+#!/bin/bash
+set -euo pipefail
+
+if [[ "${SUDO_USER:-}" != "receptionist-agent" ]]; then
+    echo "This launcher is only available to the receptionist-agent user." >&2
+    exit 1
+fi
+
+unit="telegram-receptionist-deploy-$(date +%s)"
+systemd-run \
+    --unit="$unit" \
+    --collect \
+    --property=Type=oneshot \
+    /usr/local/libexec/deploy-telegram-receptionist-worker
+
+echo "Deployment started as $unit. The bot will report success or rollback after restart."

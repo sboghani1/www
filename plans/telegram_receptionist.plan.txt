@@ -1,0 +1,751 @@
+TELEGRAM RECEPTIONIST PLAN
+==========================
+
+Status: architecture decisions approved; ready for implementation planning
+Date: 2026-08-04
+
+
+1. GOAL
+-------
+
+Create a private Telegram bot that acts as a receptionist for coding agents
+running on the existing VPS.
+
+The bot must:
+
+- Accept messages only from my numeric Telegram user ID in a private chat.
+- Let me select and switch among repositories cloned on the VPS.
+- Start, resume, inspect, stop, and reset agent conversations.
+- Pass ordinary Telegram text to the selected agent as the exact next user
+  message, without paraphrasing or adding an application-level prompt.
+- Relay useful progress and the final agent response back to Telegram.
+- Run the agent and all code operations on the VPS, not on my phone.
+- Start with Claude Code, while keeping the orchestration layer adaptable to
+  Codex, GitHub Copilot CLI/SDK, and other agents later.
+- Run unattended. Agent tool calls should not wait for approval, but broad
+  permissions must be contained inside a dedicated Unix account and restricted
+  repository root rather than granting the bot root access.
+
+A VPS is a virtual private server: normally a virtual machine hosted by a cloud
+provider. It gives us a persistent Linux environment, but being a VM does not by
+itself make unrestricted agent commands safe. A process can still access every
+file, credential, service, and network resource available to its Unix user.
+
+
+2. RESEARCH CONCLUSION
+----------------------
+
+Recommended first implementation:
+
+  Telegram Bot API
+        |
+        v
+  provider-neutral receptionist service
+        |
+        v
+  Claude Code headless adapter
+        |
+        v
+  selected repository on the VPS
+
+Use Claude Code's programmatic/headless mode for the first adapter:
+
+  claude -p "<exact Telegram message>" \
+    --resume "<claude-session-id>" \
+    --output-format stream-json \
+    --verbose \
+    --include-partial-messages \
+    --dangerously-skip-permissions
+
+For a new conversation, omit --resume and record the session_id returned in the
+JSON result. Run the command with the selected repository as its working
+directory. Each Telegram message starts one agent turn; when it completes, the
+process exits while Claude's session state remains resumable on disk.
+
+Why this is the best v1:
+
+- It uses Claude Code's real agent loop, tools, skills, hooks, CLAUDE.md files,
+  and session context rather than rebuilding those features over the Messages
+  API.
+- stream-json provides machine-readable lifecycle events, partial output,
+  errors, cost metadata, and the resulting session ID.
+- --resume turns a sequence of separate subprocess invocations into one
+  multi-turn conversation.
+- A subprocess boundary makes cancellation, timeouts, logs, and repository
+  isolation straightforward.
+- The receptionist can define a small provider adapter contract instead of
+  depending on Claude-specific Telegram behavior.
+- It can use the Claude Code authentication already supported on the VPS. This
+  is important because the Claude Agent SDK is intended to use API-key
+  authentication for third-party integrations rather than silently reusing a
+  personal claude.ai subscription login.
+
+Do not use the direct Anthropic Messages API for v1. It is stateless and would
+require us to implement the coding tool loop, command execution, permissions,
+conversation persistence, context compaction, and error recovery ourselves.
+
+
+3. OPTIONS COMPARED
+-------------------
+
+A. Existing official Claude Telegram channel
+
+The telegram-channel-forwarder VPS already runs:
+
+- Claude Code in a tmux session.
+- telegram@claude-plugins-official.
+- A dedicated Telegram bot token and paired allowlist.
+- --dangerously-skip-permissions.
+- systemd supervision and an independent watchdog bot.
+- A UserPromptSubmit receipt hook and restart notification hook.
+
+Advantages:
+
+- Already proven on this VPS.
+- Smallest amount of new code.
+- Full interactive Claude Code environment, including plugins, hooks, skills,
+  memory, and channel reply tooling.
+- Official two-way Telegram integration and sender allowlisting.
+- Uses a continuously running session, so inbound messages feel immediate.
+
+Disadvantages for the receptionist goal:
+
+- It is Claude-specific.
+- One bot is tied to one running Claude process, working directory, and
+  continuous context.
+- The current deployment cannot truly reset context from Telegram; /clear is
+  forwarded as plain text.
+- Repository and conversation switching would require supervising multiple
+  Claude processes or building a custom channel/router anyway.
+- Telegram Bot API messages sent during a restart can be lost because there is
+  no history/backfill.
+- Channels are still a research-preview feature.
+
+Decision:
+
+Do not extend the existing forwarder bot into the new receptionist. Keep it as
+a working reference and fallback. Reuse its operational lessons, but build a
+separate bot, service, Unix user, credentials, state store, and repository root.
+
+
+B. Fresh receptionist around Claude Code headless CLI
+
+Advantages:
+
+- Natural one-message/one-turn request model.
+- Exact text can be passed as the next prompt.
+- Multiple repositories and sessions are easy to model explicitly.
+- Processes can be queued, timed out, cancelled, and restarted independently.
+- Provider adapters can hide CLI-specific flags and event formats.
+- No long-lived interactive TTY or tmux session is required.
+- Claude session IDs survive receptionist restarts.
+
+Disadvantages:
+
+- Some interactive-only behavior is unavailable. In -p mode, terminal UI
+  prompts such as multiple-choice questions and plan approval cannot pause for
+  input.
+- The bot must parse JSON events and decide what progress is useful.
+- Each turn pays CLI startup overhead.
+- A Claude turn may ask a question in its final text rather than through an
+  interactive prompt. That is acceptable: my next Telegram message becomes the
+  exact answer and resumes the same session.
+
+Decision:
+
+Use this for v1.
+
+
+C. Claude Agent SDK
+
+Advantages:
+
+- Official Python and TypeScript libraries around the same Claude Code agent
+  loop.
+- Native message objects, streaming callbacks, permission callbacks, hooks,
+  session resume/forking, and stronger lifecycle control.
+- Cleaner than parsing CLI JSON if the product becomes more complex.
+
+Disadvantages:
+
+- Claude-specific.
+- Requires API-key/provider authentication for this type of application and
+  therefore separate API billing and spend controls.
+- It gives less immediate leverage for future CLI providers than a subprocess
+  adapter.
+
+Decision:
+
+Keep the receptionist/provider interface compatible with an SDK-backed adapter.
+Consider migrating the Claude adapter after v1 if event parsing, interruption,
+or session lifecycle becomes brittle.
+
+
+D. Direct Anthropic Messages API
+
+Advantages:
+
+- Stable HTTP integration and token streaming.
+- Full control over prompts and application data.
+
+Disadvantages:
+
+- No Claude Code tool loop, repository agent, shell lifecycle, or session store
+  is supplied automatically.
+- We would be responsible for safely implementing every tool and repeatedly
+  feeding tool results back to the model.
+- Least reusable path for running existing coding-agent CLIs.
+
+Decision:
+
+Do not use it for the coding receptionist.
+
+
+4. FUTURE PROVIDERS
+-------------------
+
+Other CLIs are manageable, but they are not interchangeable merely because they
+are command-line programs. Each has different session, streaming, permission,
+authentication, and cancellation semantics.
+
+Define this internal provider interface:
+
+- start_session(repository, prompt, options) -> event stream + provider session
+- resume_session(provider_session_id, prompt, options) -> event stream
+- cancel_run(run_id)
+- inspect_session(provider_session_id)
+- delete_session(provider_session_id)
+- healthcheck()
+- capabilities() -> streaming, resume, attachments, interruption, cost data
+
+Initial adapters:
+
+1. ClaudeCodeCliAdapter
+   - claude -p
+   - stream-json parsing
+   - --resume session ID
+   - --dangerously-skip-permissions
+
+2. Copilot adapter, later
+   - Copilot CLI officially supports non-interactive `copilot -p`, silent
+     output, --no-ask-user, repository/path grants, and --allow-all/--yolo.
+   - The Copilot SDK has explicit persistent session IDs, streaming, working
+     directory selection, and resume APIs. The SDK is likely preferable to its
+     CLI when we add this provider.
+
+3. Codex adapter, later
+   - Perform a focused spike against the installed version and official docs
+     before implementation.
+   - Do not assume Claude or Copilot flag names, event schemas, or resume
+     behavior.
+
+Provider-specific details must stay inside adapters. Telegram handlers should
+only know about receptionist sessions, runs, and normalized events.
+
+
+5. TELEGRAM EXPERIENCE
+----------------------
+
+Use a new BotFather bot and long polling. Polling matches the existing VPS
+pattern and does not require exposing a public webhook endpoint.
+
+Plain-text behavior:
+
+- If no command is detected, preserve the Telegram message text exactly.
+- Do not strip, summarize, quote, or prepend hidden task instructions.
+- Associate the message with the currently selected receptionist session.
+- If a turn is already running, queue the message and clearly report that it is
+  queued. Do not inject it into a running turn in v1.
+- The next queued message is submitted only after the prior turn reaches a
+  terminal state.
+
+Commands:
+
+- /start        show current provider, repository, and session
+- /repos        list registered repositories
+- /repo         select a repository
+- /new          create a new conversation in the selected repository
+- /sessions     list recent conversations for the selected repository
+- /switch       switch the active conversation
+- /status       show active run, elapsed time, queue depth, and last result
+- /stop         terminate the active agent process tree
+- /reset        archive the current conversation and create a fresh one
+- /provider     show or change the provider for a new conversation
+- /verbose      toggle detailed tool/progress messages
+- /help         explain commands and exact-message behavior
+
+Output relay:
+
+- Immediately acknowledge receipt with the run ID and selected repository.
+- Show compact progress by default: receipt, current high-level activity, elapsed
+  time, and then the complete final answer.
+- Provide `/verbose` mode for detailed tool/activity events plus VPS system
+  state: agent-process RSS, total memory and swap usage, and CPU usage.
+- In verbose mode, edit one status message approximately every 30 seconds rather
+  than sending a new message for each update.
+- Update progress at a conservative interval to avoid Telegram flood limits.
+- Send the final response in chunks below Telegram's message-size limit.
+- Preserve Markdown/code fences when splitting where practical.
+- For very large output, attach a UTF-8 text file and send a short summary.
+- Store the complete normalized event log on the VPS even when Telegram receives
+  only a compact view.
+- Include explicit failure messages for authentication, timeout, process exit,
+  malformed event output, missing repository, and session-resume failure.
+
+Attachments are phase 2. The initial release supports exact text messages only.
+
+
+6. STATE MODEL
+--------------
+
+Use SQLite with WAL mode. The bot is single-user initially, but user ownership
+must still be present on every row so authorization cannot be forgotten later.
+
+repositories
+
+- id
+- name
+- absolute_path
+- default_branch
+- enabled
+- created_at
+
+sessions
+
+- id (receptionist-owned UUID)
+- telegram_user_id
+- repository_id
+- provider
+- provider_session_id
+- display_name
+- status: active, archived, broken
+- created_at
+- updated_at
+- last_used_at
+
+runs
+
+- id
+- session_id
+- exact_prompt
+- status: queued, running, succeeded, failed, cancelled, timed_out
+- process_id/process_group_id while active
+- started_at
+- finished_at
+- exit_code
+- final_response
+- error
+- provider_usage_json
+
+events
+
+- id
+- run_id
+- sequence
+- provider_event_type
+- normalized_event_type
+- payload_json
+- created_at
+
+bot_state
+
+- telegram_user_id
+- active_repository_id
+- active_session_id
+- verbose
+
+Never store bot tokens, API keys, OAuth credentials, or SSH private keys in
+SQLite.
+
+
+7. AUTHENTICATION AND SECRETS
+-----------------------------
+
+Telegram:
+
+- Create a dedicated receptionist bot token.
+- Require a private chat.
+- Compare update.effective_user.id against one numeric allowlisted user ID
+  before command parsing or database access.
+- Ignore or explicitly reject all other users, groups, and channels.
+- Do not rely on Telegram username or display name; both can change.
+- Keep the token and user ID in a server-only environment file with mode 0600.
+
+VPS and agent:
+
+- Create a dedicated `receptionist` Unix user.
+- Run the systemd service as that user, never root.
+- Clone approved repositories under one root such as
+  /home/receptionist/repos.
+- Resolve and validate every selected path; it must remain under that root.
+- Give the user only the Git credentials it needs.
+- Do not copy unrelated forwarder secrets into the receptionist account.
+- Do not grant passwordless sudo.
+- Run Claude with broad permissions only inside this constrained account.
+- Redact configured secret environment variables from logs and Telegram output.
+
+This differs deliberately from "root on a VM." It still provides unattended
+write/shell/network access within the coding workspace while limiting the blast
+radius of a malicious prompt, compromised dependency, or accidental command.
+
+
+8. PROCESS AND CONCURRENCY MODEL
+--------------------------------
+
+- One active run globally for v1 because the current VPS is small and already
+  hosts production Telegram services.
+- Queue additional messages FIFO.
+- Spawn each agent in a new process group.
+- Capture stdout and stderr independently.
+- Parse stdout line-by-line as provider events.
+- Apply a configurable wall-clock timeout, initially 60 minutes.
+- /stop sends SIGTERM to the process group, waits a grace period, then SIGKILLs
+  that specific process group if necessary.
+- On service restart, mark orphaned running rows failed; do not blindly replay a
+  possibly completed prompt.
+- Persist the provider session ID as soon as it appears.
+- Lock each receptionist session so two turns can never mutate the same agent
+  context concurrently.
+- Add disk, memory, and run-duration limits before allowing parallel agents.
+
+
+9. DEPLOYMENT DESIGN
+--------------------
+
+Proposed future monorepo layout:
+
+  /plans/telegram_receptionist.plan.txt
+  /apps/telegram-receptionist/
+      receptionist/
+          bot.py
+          config.py
+          database.py
+          models.py
+          runner.py
+          telegram_format.py
+          providers/
+              base.py
+              claude_cli.py
+      tests/
+      deploy/
+          telegram-receptionist.service
+      pyproject.toml
+      README.md
+
+Systemd service:
+
+- User=receptionist
+- WorkingDirectory=/home/receptionist/www/apps/telegram-receptionist
+- EnvironmentFile=/home/receptionist/.config/telegram-receptionist/env
+- Restart=on-failure
+- RestartSec=5
+- KillMode=control-group
+- NoNewPrivileges=true
+- PrivateTmp=true
+- ProtectSystem=strict with explicit writable paths
+- ReadWritePaths for the repository root, app state, Claude state, and logs
+- journald output with no secret-bearing environment dump
+
+Operational features to reuse from telegram-channel-forwarder:
+
+- Separate, dedicated bot credentials.
+- Numeric Telegram user-ID allowlisting.
+- systemd supervision and cgroup cleanup.
+- Independent health/status monitoring.
+- Explicit delivery acknowledgement.
+- Source-controlled service files and drift checks.
+- Server-only secret files with strict ownership and permissions.
+- Spend watchdogs and rate-limited alerts.
+
+Do not reuse:
+
+- The forwarder's Unix user or environment files.
+- Its bot tokens, Telegram sessions, database, tmux session, or Claude context.
+- Root SSH execution as the normal agent path.
+
+
+10. IMPLEMENTATION PHASES
+-------------------------
+
+Phase 0: verify the host
+
+- Record CPU, RAM, swap, disk, Linux distribution, Claude Code version, Bun/
+  Node/Python versions, and current service load.
+- Confirm Claude authentication for the new Unix user.
+- Confirm `claude -p` can run in a test repository, emit stream-json, return a
+  session ID, and resume that ID in a second invocation.
+- Confirm the chosen authentication method is permitted for this personal bot.
+
+Phase 1: skeleton and authorization
+
+- Create the application package, configuration loader, SQLite migrations, and
+  systemd unit.
+- Implement private-chat and numeric-user-ID authorization first.
+- Add /start, /help, /status, and health logging.
+
+Phase 2: repositories and sessions
+
+- Register repositories from an explicit configuration list.
+- Add /repos, /repo, /new, /sessions, /switch, and /reset.
+- Validate all paths under the allowed root.
+
+Phase 3: Claude CLI adapter
+
+- Implement subprocess launch, stream-json parser, normalized events, session ID
+  capture, resume, timeout, cancellation, and complete event logging.
+- Pass plain Telegram text unchanged as the prompt.
+- Start with one global worker and per-session locking.
+
+Phase 4: Telegram output quality
+
+- Add receipt, throttled progress, final-message chunking, large-output files,
+  error messages, and /verbose.
+- Add restart recovery and delivery/run correlation IDs.
+
+Phase 5: hardening and deployment
+
+- Create the dedicated Unix account and repository root.
+- Install the service with systemd hardening.
+- Add backup/retention for SQLite and session metadata.
+- Add health, memory, disk, spend, and stuck-run alerts.
+- Test restart, cancellation, timeout, malformed output, expired authentication,
+  unavailable model, Git failure, and Telegram flood handling.
+
+Phase 6: additional providers
+
+- Add provider contract tests using a fake adapter.
+- Evaluate Copilot SDK first because it documents persistent sessions and
+  working-directory control.
+- Evaluate Codex independently against its current official interface.
+
+
+11. ACCEPTANCE CRITERIA
+-----------------------
+
+- A message from any unauthorized Telegram user cannot start a process, select a
+  repository, or reveal state.
+- I can select at least two VPS repositories and maintain separate conversations
+  in each.
+- Sending "yes", a multiline answer, code, or quoted text results in those exact
+  characters being used as the next user prompt, subject only to Telegram's own
+  text representation.
+- A Claude conversation can be resumed after the bot service restarts.
+- /reset creates a genuinely fresh provider session.
+- /stop terminates the active process tree without restarting unrelated VPS
+  services.
+- Two turns cannot execute concurrently in the same conversation.
+- Agent output reaches Telegram without exceeding message limits or flooding the
+  Bot API.
+- Full run events and final responses are auditable on the VPS.
+- The agent cannot select paths outside the approved repository root.
+- The agent has no root access and cannot read the forwarder's unrelated secrets.
+- A failed, timed-out, or cancelled run is visibly reported and never presented
+  as success.
+
+
+12. APPROVED IMPLEMENTATION DECISIONS
+-------------------------------------
+
+Approved on 2026-08-04:
+
+- Claude authentication: use a dedicated Claude Code subscription login under
+  the new receptionist Unix account.
+- Isolation: create a restricted `receptionist` Unix user for the Telegram bot
+  and a separate restricted `receptionist-agent` Unix user for Claude, Git, and
+  repository writes. This prevents an unrestricted agent turn from reading the
+  bot token or bot database through same-user files or `/proc`. Neither account
+  has root or general sudo access, and neither can access forwarder secrets.
+- VPS repository root: `/home/receptionist/repos`. Do not use the `asce` home or
+  account for receptionist files or execution.
+- Language: implement v1 in Python.
+- Telegram library: use `python-telegram-bot` with Bot API long polling. Do not
+  create or maintain a Telethon/MTProto session for this bot.
+- Initial repositories: approve `www` and create a private
+  `sboghani1/agent-sandbox` repository. Add other production repositories only
+  after isolation, cancellation, and recovery tests pass.
+- Git authority: the agent may push branches and perform production deployments.
+- Privileged deployment: expose only a root-owned, agent-non-writable deployment
+  wrapper. The wrapper must allowlist named repositories and services, validate
+  branch and working-tree conditions, and reject arbitrary commands. Grant
+  passwordless sudo only for that exact wrapper.
+- Initial deployment scope: the wrapper may deploy and restart only the Telegram
+  receptionist service from the `www` repository.
+- Deployment trigger: the agent may invoke deployment automatically when it
+  decides its work is complete; no separate Telegram confirmation is required.
+- Deployment safety: before restart, the wrapper must record the previous
+  revision and require the configured tests to pass. After restart it must run a
+  health check and automatically roll back to the previous revision if startup
+  or health validation fails.
+- Concurrency: permit one active agent run globally.
+- Run timeout: 60 minutes.
+- Queue limit: 10 Telegram messages.
+- Telegram input: exact text messages only in v1; no files or photos.
+- Progress display: compact by default. `/verbose` adds detailed agent activity
+  and edits one resource/status message every 30 seconds with CPU, memory, swap,
+  elapsed time, and agent-process RSS.
+- Retention: delete detailed events after 30 days while retaining session
+  metadata and final responses until explicitly deleted.
+
+Remaining implementation-time inputs:
+
+- The numeric Telegram user ID and new BotFather token, supplied only through
+  the VPS secret environment file.
+- The exact `www` test command and health-check command required by the
+  deployment wrapper once the application exists.
+- The eventual production repositories, branches, services, and commands to add
+  after v1.
+
+
+13. IMPLEMENTATION DECISION LOG
+-------------------------------
+
+This section records decisions made while implementing the approved design so
+the plan remains the source of truth rather than only describing the original
+proposal.
+
+2026-08-05 — Separate bot and agent Unix identities
+
+- Decision: run the Telegram service as `receptionist`, but run Claude, Git, and
+  repository commands as `receptionist-agent` through a fixed root-owned
+  launcher.
+- Reason: Claude has broad unattended shell/filesystem authority. If it shared
+  the bot's Unix identity, it could read the Telegram token from the environment
+  file or `/proc`, regardless of application-level redaction. Unix identity
+  separation provides a real kernel-enforced secret boundary.
+- Consequence: `receptionist` receives sudo permission only to execute the exact
+  agent launcher as `receptionist-agent`; it receives no general shell or root
+  sudo. The launcher accepts a JSON request on stdin, validates that the
+  repository resolves under `/home/receptionist/repos`, permits only
+  `/usr/bin/claude`, and uses `exec` without a shell.
+
+2026-08-05 — Exact prompts use argv/JSON, never shell interpolation
+
+- Decision: Telegram text is stored unchanged in SQLite, encoded in the
+  bot-to-agent launcher JSON request, and passed as one `claude -p` argument.
+- Reason: this preserves multiline replies and shell metacharacters exactly
+  while preventing a Telegram message from becoming shell syntax.
+- Verification: automated tests cover multiline text, quotes, code fences, and
+  shell-like text such as command substitution characters.
+
+2026-08-05 — Persistent turns use Claude session IDs
+
+- Decision: one Claude subprocess handles one Telegram turn. The receptionist
+  captures `session_id` from stream-json events and supplies it with `--resume`
+  on the next turn.
+- Reason: this provides durable multi-turn context without keeping a fragile
+  interactive TTY alive, and allows the bot service to restart independently.
+- Consequence: `/reset` archives the receptionist session and creates a new row
+  with no provider session ID, guaranteeing a fresh Claude context.
+
+2026-08-05 — SQLite is the durable queue and audit log
+
+- Decision: persist repositories, user state, sessions, exact prompts, runs,
+  normalized events, usage, and final responses in SQLite WAL mode.
+- Reason: a memory-only queue would lose exact replies on restart and could not
+  safely recover or audit agent activity.
+- Recovery behavior: queued runs remain queued; a run marked `running` when the
+  process restarts is marked failed rather than replayed, because replaying a
+  possibly completed coding turn could duplicate edits, pushes, or deployments.
+
+2026-08-05 — One global worker, bounded queue
+
+- Decision: process one run globally, enforce a 60-minute timeout, and accept at
+  most 10 queued messages.
+- Reason: the VPS has roughly 1GB RAM and already runs production services.
+  Serial execution prevents concurrent agents from exhausting memory or racing
+  in the same repositories.
+- Cancellation: every agent invocation receives its own process group. `/stop`
+  sends SIGTERM through sudo's signal relay, waits 10 seconds, and invokes a
+  separate fixed `receptionist-agent` kill helper for SIGKILL if needed.
+- Reason for the helper: SIGKILL cannot be caught or relayed by sudo. Killing
+  only the sudo monitor could orphan the real Claude process under the agent
+  user, invalidating both `/stop` and the 60-minute timeout.
+
+2026-08-05 — Queue worker failures are contained and health-visible
+
+- Decision: catch unexpected exceptions around each run, mark the affected run
+  failed, terminate any associated process, notify Telegram when possible, and
+  continue servicing the queue.
+- Reason: one transient Telegram or parsing exception must not silently kill the
+  only worker while the bot continues accepting messages.
+- Health behavior: the main heartbeat is withheld if the worker task is dead, so
+  deployment health checks fail instead of declaring a bot with a dead queue
+  worker healthy.
+
+2026-08-05 — Telegram output is compact and flood-aware
+
+- Decision: acknowledge receipt immediately, edit one status message while
+  working, and send the final result in bounded chunks or as a UTF-8 attachment
+  when large.
+- Reason: forwarding raw token/tool streams would create noise and risk Telegram
+  flood limits.
+- Verbose behavior: update at most every 30 seconds with agent activity,
+  process-tree RSS/CPU, VPS CPU, RAM, and swap. Compact mode updates less often.
+
+2026-08-05 — Long polling and strict private-chat authorization
+
+- Decision: use `python-telegram-bot` long polling and reject every update unless
+  it is a private chat from the configured numeric Telegram user ID.
+- Reason: polling requires no public web endpoint and matches existing VPS
+  operations. Numeric IDs are stable; usernames and display names are not.
+- Bootstrap: discover the initial ID only after the user sends a private
+  `/claim <random-one-time-code>` message to the new bot.
+
+2026-08-05 — Immutable release deployment with detached execution
+
+- Decision: an agent-triggered deployment launches a detached root-owned
+  transient systemd unit. That worker validates a clean `main` matching
+  `origin/main`, creates an immutable revision-addressed release under
+  `/opt/telegram-receptionist/releases`, installs dependencies, runs tests,
+  switches a `current` symlink, restarts, and checks a service heartbeat plus
+  SQLite integrity.
+- Reason: restarting the bot from a deployment process inside the bot's own
+  cgroup would kill the deployment before it could validate or roll back.
+  Detached transient execution survives the service restart.
+- Rollback: retain the previous release symlink and restore it automatically if
+  the new service does not become healthy, then health-check the restored
+  release before reporting rollback success.
+- Notification: deployment status is written atomically to the state directory;
+  the bot polls for unseen statuses and reports them after it is available.
+- Build/test failures also write a failed deployment status before cleanup.
+- Release pruning explicitly excludes the active `current` target so reusing an
+  older revision cannot delete the live release.
+
+2026-08-05 — Release virtual environments are created at final paths
+
+- Decision: move archived source into its final revision directory before
+  creating the virtual environment.
+- Reason: Python virtual-environment scripts contain absolute interpreter paths.
+  Creating a venv in a temporary directory and moving it would leave broken
+  shebangs.
+
+
+14. PRIMARY SOURCES
+-------------------
+
+Claude Code channels:
+https://code.claude.com/docs/en/channels
+
+Claude Code custom channel contract and permission relay:
+https://code.claude.com/docs/en/channels-reference
+
+Claude Code programmatic/headless mode:
+https://code.claude.com/docs/en/headless
+
+Claude Code CLI reference:
+https://code.claude.com/docs/en/cli-reference
+
+Claude Agent SDK overview:
+https://code.claude.com/docs/en/agent-sdk/overview
+
+GitHub Copilot CLI programmatic usage:
+https://docs.github.com/en/copilot/how-tos/copilot-cli/automate-copilot-cli/run-cli-programmatically
+
+GitHub Copilot CLI programmatic reference:
+https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-programmatic-reference
+
+GitHub Copilot SDK session persistence:
+https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/session-persistence
+
+Existing local reference:
+/Users/boghani/repos/telegram-channel-forwarder

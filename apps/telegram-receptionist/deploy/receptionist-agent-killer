@@ -1,0 +1,25 @@
+#!/usr/bin/python3
+from __future__ import annotations
+
+import json
+import os
+import signal
+import sys
+
+
+def main() -> None:
+    try:
+        request = json.loads(sys.stdin.read())
+        process_group_id = int(request["process_group_id"])
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+        raise SystemExit(f"Invalid kill request: {error}") from error
+    if process_group_id <= 1:
+        raise SystemExit("Invalid process group.")
+    try:
+        os.killpg(process_group_id, signal.SIGKILL)
+    except ProcessLookupError:
+        return
+
+
+if __name__ == "__main__":
+    main()

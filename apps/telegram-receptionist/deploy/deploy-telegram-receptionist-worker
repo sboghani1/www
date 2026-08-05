@@ -1,0 +1,138 @@
+#!/bin/bash
+set -euo pipefail
+
+repo="/home/receptionist/repos/www"
+app_rel="apps/telegram-receptionist"
+install_root="/opt/telegram-receptionist"
+releases="$install_root/releases"
+state_dir="/var/lib/telegram-receptionist"
+service="telegram-receptionist.service"
+lock="/run/lock/telegram-receptionist-deploy.lock"
+
+exec 9>"$lock"
+flock -n 9 || {
+    echo "A receptionist deployment is already running." >&2
+    exit 1
+}
+
+as_agent() {
+    runuser -u receptionist-agent -- "$@"
+}
+
+write_status() {
+    local status="$1"
+    local revision="$2"
+    local message="$3"
+    python3 - "$state_dir/deployment.json" "$status" "$revision" "$message" <<'PY'
+import json
+import os
+import sys
+import time
+import uuid
+
+path, status, revision, message = sys.argv[1:]
+temporary = f"{path}.tmp"
+with open(temporary, "w", encoding="utf-8") as handle:
+    json.dump(
+        {
+            "id": str(uuid.uuid4()),
+            "status": status,
+            "revision": revision,
+            "message": message,
+            "timestamp": time.time(),
+        },
+        handle,
+    )
+os.replace(temporary, path)
+PY
+    chown receptionist:receptionist "$state_dir/deployment.json"
+    chmod 600 "$state_dir/deployment.json"
+}
+
+wait_healthy() {
+    local release_path="$1"
+    for _ in $(seq 1 12); do
+        sleep 5
+        if systemctl is-active --quiet "$service" &&
+            runuser -u receptionist -- \
+                "$release_path/.venv/bin/telegram-receptionist-health" \
+                --state-dir "$state_dir" --maximum-age 45 >/dev/null 2>&1; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+mkdir -p "$releases" "$state_dir"
+
+if [[ "$(as_agent git -C "$repo" branch --show-current)" != "main" ]]; then
+    echo "Workspace must be on main." >&2
+    exit 1
+fi
+if [[ -n "$(as_agent git -C "$repo" status --porcelain)" ]]; then
+    echo "Workspace must be clean." >&2
+    exit 1
+fi
+
+as_agent git -C "$repo" fetch --quiet origin main
+revision="$(as_agent git -C "$repo" rev-parse HEAD)"
+remote_revision="$(as_agent git -C "$repo" rev-parse origin/main)"
+if [[ "$revision" != "$remote_revision" ]]; then
+    echo "Workspace HEAD must exactly match origin/main." >&2
+    exit 1
+fi
+
+release="$releases/$revision"
+previous="$(readlink -f "$install_root/current" 2>/dev/null || true)"
+
+if [[ ! -d "$release" ]]; then
+    temporary="$releases/.${revision}.tmp"
+    rm -rf "$temporary"
+    mkdir -p "$temporary"
+    as_agent git -C "$repo" archive "$revision" | tar -x -C "$temporary"
+    mv "$temporary" "$release"
+    trap 'write_status "failed" "$revision" "Build or tests failed."; rm -rf "$release"' ERR
+    python3 -m venv "$release/.venv"
+    "$release/.venv/bin/pip" install --quiet --upgrade pip
+    "$release/.venv/bin/pip" install --quiet "$release/$app_rel[test]"
+    (
+        cd "$release/$app_rel"
+        PYTHONDONTWRITEBYTECODE=1 "$release/.venv/bin/pytest" -p no:cacheprovider
+    )
+    chown -R root:root "$release"
+    chmod -R go-w "$release"
+    trap - ERR
+fi
+
+ln -sfn "$release" "$install_root/current.new"
+mv -Tf "$install_root/current.new" "$install_root/current"
+systemctl daemon-reload
+systemctl restart "$service"
+
+healthy=0
+if wait_healthy "$release"; then
+    healthy=1
+fi
+
+if [[ "$healthy" == "1" ]]; then
+    write_status "succeeded" "$revision" "Health check passed."
+    current_release="$(readlink -f "$install_root/current")"
+    find "$releases" -mindepth 1 -maxdepth 1 -type d -mtime +14 \
+        ! -path "$current_release" -exec rm -rf -- {} +
+    exit 0
+fi
+
+if [[ -n "$previous" && -d "$previous" ]]; then
+    ln -sfn "$previous" "$install_root/current.new"
+    mv -Tf "$install_root/current.new" "$install_root/current"
+    systemctl restart "$service"
+    if wait_healthy "$previous"; then
+        write_status "rolled back" "$revision" "Health check failed; restored the previous healthy release."
+    else
+        write_status "failed" "$revision" "The new release and automatic rollback both failed health checks."
+    fi
+else
+    systemctl stop "$service" || true
+    write_status "failed" "$revision" "Health check failed and no previous release exists."
+fi
+exit 1

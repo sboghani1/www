@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+from __future__ import annotations
+
+import json
+import os
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path("/home/receptionist/repos").resolve()
+CLAUDE_BINARY = "/usr/bin/claude"
+
+
+def main() -> None:
+    try:
+        request = json.loads(sys.stdin.read())
+        repository = Path(request["repository"]).resolve()
+        command = request["command"]
+    except (json.JSONDecodeError, KeyError, TypeError, OSError) as error:
+        raise SystemExit(f"Invalid agent request: {error}") from error
+
+    if not repository.is_relative_to(REPO_ROOT) or not repository.is_dir():
+        raise SystemExit("Repository is outside the approved root or missing.")
+    if (
+        not isinstance(command, list)
+        or not command
+        or command[0] != CLAUDE_BINARY
+        or any(not isinstance(argument, str) for argument in command)
+    ):
+        raise SystemExit("Only the configured Claude command is allowed.")
+
+    os.chdir(repository)
+    os.execv(CLAUDE_BINARY, command)
+
+
+if __name__ == "__main__":
+    main()
