@@ -1,7 +1,7 @@
 TELEGRAM RECEPTIONIST PLAN
 ==========================
 
-Status: architecture decisions approved; ready for implementation planning
+Status: v1 implemented, deployed, and acceptance-tested
 Date: 2026-08-04
 
 
@@ -755,7 +755,55 @@ proposal.
   shebangs.
 
 
-14. PRIMARY SOURCES
+14. DEPLOYMENT AND VALIDATION RECORD
+------------------------------------
+
+Completed on 2026-08-05:
+
+- Created and pushed the `sboghani1/www` monorepo implementation.
+- Created private `sboghani1/agent-sandbox` for disposable integration tests.
+- Deployed the bot as `@ascereceptionist_bot` on the existing VPS.
+- Created separate `receptionist` and `receptionist-agent` Unix identities.
+- Authenticated Claude Code with the dedicated agent user's subscription login.
+- Installed the root-owned agent launcher, hard-kill helper, deployment worker,
+  sudo allowlists, systemd service, watchdog, and maintenance timer.
+- Enabled the receptionist and daily maintenance timer at boot.
+- Confirmed source and installed trust-boundary files have matching SHA-256
+  hashes.
+
+Acceptance evidence:
+
+- Python 3.12 test suite: 10 passing tests.
+- Package builds as a Python wheel.
+- Unauthorized-update checks occur before command handling or database access.
+- Exact Telegram text completed a real Claude turn and returned the requested
+  exact response.
+- A direct sandbox test created a Claude session, resumed the same session ID,
+  and changed a file based on the second turn.
+- Telegram repository selection and new-session creation worked for both `www`
+  and `agent-sandbox`.
+- The bot service restarted and resumed the existing Claude conversation.
+- `/reset` returned a new receptionist session with no prior provider context.
+- Verbose mode edited one status message after 30 seconds with agent/VPS CPU,
+  RAM, and swap, then delivered the final result.
+- `/stop` cancelled a real long-running Claude turn, reported `cancelled`, and
+  left no Claude process running.
+- The fixed hard-kill helper terminated a dedicated agent process group.
+- Restricted self-deployment ran in a detached transient systemd unit, selected
+  the expected immutable revision, passed health checks, and notified Telegram.
+- The main service reports healthy with a 60-second systemd watchdog.
+- The daily maintenance timer is enabled and produced a coherent SQLite backup.
+- The disposable sandbox working tree was clean after smoke-test cleanup.
+
+Operational note:
+
+- The VPS has approximately 1GB RAM plus 2GB swap. Agent runs are intentionally
+  serialized. A temporary reading near 80% RAM is acceptable; investigate
+  sustained usage above roughly 90%, available memory below roughly 100MB, or
+  continuously increasing swap.
+
+
+15. PRIMARY SOURCES
 -------------------
 
 Claude Code channels:
