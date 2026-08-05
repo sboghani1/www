@@ -89,6 +89,11 @@ Deliver a continuously running VPS system with:
 - The original private Mac Odds API key file is intentionally retained as an
   emergency fallback, but the Mac must not run a scheduler after cutover.
 - The new BotFather token was validated for `@wnbaguesser_bot`.
+- Private inputs are staged on the VPS for the agent, without being committed:
+  - `/home/receptionist-agent/.config/wnba-poller/telegram-token`
+  - `/home/receptionist-agent/.config/wnba-poller/odds.env`
+  Both are owned by `receptionist-agent` with mode `0600`. Build the final
+  service environment from these files without printing their values.
 - The Sheet must not be replaced until its backup and initialization command
   are verified.
 
@@ -184,6 +189,10 @@ Updated 2026-08-05:
   tests, but the complete suites have not run after the cross-app changes.
 - No live Sheet replacement or WNBA service deployment had occurred at this
   checkpoint.
+- VPS readiness was verified at commit `b39a909`: `main` matched `origin/main`,
+  the workspace was clean, the plan/skill/app files were present, Google Sheet
+  access and Claude authentication worked, and the existing receptionist
+  service and health check were active.
 - Before continuing, inspect the committed checkpoint and run tests; do not
   assume every checklist item is complete merely because files exist.
 
