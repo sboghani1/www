@@ -180,7 +180,12 @@ Deliver a continuously running VPS system with:
       progress. The *live* Sheet initialization itself has not run; see
       "Proposed live changes" above.
 - [ ] Verify/install VPS secret environment without printing values.
-- [ ] Initialize the Sheet only after asking the user for confirmation.
+- [x] Initialize the Sheet only after asking the user for confirmation.
+      Done 2026-08-05: user confirmed replacing the NFL tabs and supplied
+      their Telegram ID; live `asce Guesser` now has the 6 WNBA tabs and a
+      one-user allowlist. Backup at
+      `/home/receptionist-agent/.config/wnba-poller/pre-wnba-backup-20260805T170038Z.json`.
+      See Current progress for full detail.
 - [ ] Install/enable schedule, poller, and WNBA bot systemd units.
 - [ ] Deploy receptionist changes only through the approval broker.
 - [ ] Run the guided production acceptance sequence.
@@ -307,36 +312,87 @@ Updated 2026-08-05 (session 3, resumed from `f83ad8a`):
   `test_sheets_initialize.py`; telegram-receptionist grew from 14 to 45 from
   the unrelated recovery-work commits pulled at the start of this session).
   `py_compile` clean on every touched module, `git diff --check` clean.
-- Still no live Sheet mutation and no WNBA service deployment. This session
-  did not go past plan section 13 steps 2-3 (dry-run + offline schema
-  validation) — no `wnba-poller initialize-sheet` command has been run
-  against `asce Guesser`, staging or production.
+- **LIVE SHEET INITIALIZED (2026-08-05, same session).** The user explicitly
+  confirmed replacing the copied NFL tabs ("you do not have to preserve the
+  nfl stuff anywhere") and supplied their numeric Telegram user ID
+  (`6780239459`) for the allowlist seed. Ran the exact command from the
+  (then-)"Proposed live changes" section below, using the shared
+  `GOOGLE_CREDENTIALS` already present in this environment and
+  `WNBA_SHEET_ID=1toTFz0zmeMQI5WnuWr-jhg0HwVkMPEF5nLBIe0R3wyk` (the plan's
+  documented spreadsheet ID; `SheetsStore.connect()` independently verifies
+  the workbook title is exactly `asce Guesser` before any write, so this
+  cannot have hit the wrong spreadsheet).
+  - Pre-flight read-only check (before running anything) listed the live
+    tabs: `nfl_games`, `nfl_line_snapshots`, `nfl_leans`, `team_emojis`,
+    `suggestions`, `allowed_users`.
+  - Ran `wnba-poller initialize-sheet --backup ... --confirm-replace-tabs
+    --remove-legacy-nfl-tabs --seed-allowed-user-id 6780239459`. Output:
+    `Workbook initialized: 6 tab(s) created, 3 tab(s) removed.` Backup
+    written to
+    `/home/receptionist-agent/.config/wnba-poller/pre-wnba-backup-20260805T170038Z.json`
+    (43089 bytes, contains the full pre-replacement `nfl_games`/
+    `nfl_line_snapshots`/`nfl_leans` tab values — this is the rollback
+    artifact referenced in plan section 11).
+  - Post-flight read-only verification confirmed: `nfl_games`,
+    `nfl_line_snapshots`, `nfl_leans` are gone; `wnba_games`,
+    `wnba_line_snapshots`, `wnba_thoughts`, `wnba_lean_revisions`,
+    `wnba_allowed_users`, `wnba_settings` exist with correct dimensions
+    (50/27/41/47/6/4 columns respectively, matching each `TAB_HEADERS`
+    entry's length); `store.allowed_user_ids() == {6780239459}` exactly;
+    `store.status()` reports `games: 0` (expected — no schedule sync has run
+    yet).
+  - **Left untouched, on purpose:** `team_emojis`, `suggestions`,
+    `allowed_users` (no `wnba_` prefix) are *also* copies from the original
+    NFL Guesser workbook but are **not** in `LEGACY_NFL_TABS` (which is
+    hardcoded to exactly `nfl_games`/`nfl_line_snapshots`/`nfl_leans`), so
+    `--remove-legacy-nfl-tabs` did not remove them. They're harmless (no
+    WNBA code references them) but are orphaned NFL-Guesser copies sitting
+    in `asce Guesser`. Not removed automatically since that's outside the
+    tested/reviewed mechanism — flag to the user as an optional manual
+    follow-up, don't remove without a separate explicit confirmation.
+  - **What has NOT happened yet:** no ESPN schedule sync, no odds poll, no
+    systemd units installed, no `@wnbaguesser_bot` running, no receptionist
+    deployment. `wnba_games` currently has zero rows. The Sheet schema exists
+    but the system is not yet live end-to-end.
 - This chunk's work is committed and pushed to `www/main` (see git log for
   the exact revision when resuming).
 
-### Proposed live changes (NOT yet executed — needs explicit confirmation)
+### Live changes already executed this session
 
-The exact command that would initialize the live `asce Guesser` workbook,
-replacing its copied NFL tabs with the validated WNBA schema above, is:
+The Sheet initialization above is done; the command actually run was:
 
 ```bash
 cd /home/receptionist/repos/www/apps/wnba-poller
+export WNBA_SHEET_ID="1toTFz0zmeMQI5WnuWr-jhg0HwVkMPEF5nLBIe0R3wyk"
 <venv>/bin/wnba-poller initialize-sheet \
-  --backup /home/receptionist-agent/.config/wnba-poller/pre-wnba-backup-<timestamp>.json \
+  --backup /home/receptionist-agent/.config/wnba-poller/pre-wnba-backup-20260805T170038Z.json \
   --confirm-replace-tabs \
   --remove-legacy-nfl-tabs \
-  --seed-allowed-user-id <owner's numeric Telegram user ID> \
-  --seed-allowed-username "<owner's Telegram username>" \
-  --seed-allowed-display-name "<owner's display name>"
+  --seed-allowed-user-id 6780239459
 ```
 
-This has NOT been run. Per the task instructions and this file's standing
-guardrail, it will only run after showing the user this exact command and
-receiving explicit confirmation. `WNBA_SHEET_ID`/`GOOGLE_CREDENTIALS` must
-already be set in the environment `wnba-poller` runs under (the connect step
-in `SheetsStore.connect()` also verifies the workbook title is exactly
-`asce Guesser` before allowing any write, so this cannot accidentally target
-the wrong spreadsheet).
+(`--seed-allowed-username`/`--seed-allowed-display-name` were left blank —
+not supplied by the user; harmless, purely cosmetic Sheet columns for
+operator reference.)
+
+### Next proposed live/production steps (NOT yet executed — still need explicit confirmation each)
+
+1. Run a schedule sync (`wnba-poller sync-schedule`) and one odds poll
+   (`wnba-poller poll-odds`) against the now-live Sheet to populate
+   `wnba_games` and validate real ESPN/Odds API data end-to-end, per plan
+   section 9 steps 9-11 / section 13 step 4. This calls external APIs and
+   writes real rows — should confirm with the user before running, even
+   though it's not a systemd/service deployment.
+2. Configure and install the `wnba-guesser-bot`/`wnba-poller` systemd
+   services (`apps/wnba-poller/deploy/`). This needs root
+   (`apps/wnba-poller/deploy/install-wnba-poller`) — check whether that goes
+   through the same Telegram approval broker as the receptionist, or needs a
+   different authorized path; do not assume.
+3. Deploy the receptionist changes (WNBA handlers, skill, `lean_cli`/
+   `receptionist_helper` binaries in its venv) through the existing
+   `request-receptionist-deploy` approval broker per `CLAUDE.md`.
+4. Optional: ask the user whether to also remove the orphaned
+   `team_emojis`/`suggestions`/`allowed_users` tabs noted above.
 
 Prior "Current progress" history (session 1-2, retained for continuity):
 
