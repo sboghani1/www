@@ -4,8 +4,11 @@ import asyncio
 import json
 import logging
 import os
+import re
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Awaitable, Callable
+from zoneinfo import ZoneInfo
 
 import psutil
 from telegram import (
@@ -34,6 +37,16 @@ WATCHDOG_CALLBACK_PATTERN = (
     r"^watchdog:(?:ping|status|restart|restart-confirm|logs|mem|menu)$"
 )
 Handler = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
+EASTERN = ZoneInfo("America/New_York")
+LOG_PREFIX = re.compile(
+    r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+ "
+    r"(?:DEBUG|INFO|WARNING|ERROR|CRITICAL) [^:]+: "
+)
+ROUTINE_LOG_MARKERS = (
+    "apscheduler.executors.default:",
+    "apscheduler.scheduler:",
+    "telegram.ext.Application: Application started",
+)
 
 
 @dataclass(frozen=True)
@@ -163,9 +176,8 @@ class ReceptionistWatchdog:
                 reply_markup=watchdog_menu(),
             )
             return
-        text = stdout[-3800:] or "(no recent logs)"
         await update.effective_message.reply_text(
-            f"Recent receptionist logs:\n{text}",
+            _format_logs(stdout),
             reply_markup=watchdog_menu(),
         )
 
@@ -267,6 +279,66 @@ def _format_status(raw: str) -> str:
         f"Revision: {revision}\n"
         f"Deployment drain: {drain}"
     )
+
+
+def _format_logs(raw: str) -> str:
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return f"Could not parse receptionist logs:\n{raw[-1000:]}"
+    entries = payload.get("entries")
+    if not isinstance(entries, list):
+        return "Could not parse receptionist logs."
+
+    lines = []
+    hidden = 0
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        message = entry.get("message")
+        if not isinstance(message, str) or not message.strip():
+            continue
+        priority = _priority(entry.get("priority"))
+        if priority > 4 and any(
+            marker in message for marker in ROUTINE_LOG_MARKERS
+        ):
+            hidden += 1
+            continue
+        timestamp = _log_time(entry.get("timestamp"))
+        icon = "❌" if priority <= 3 else "⚠️" if priority == 4 else "•"
+        cleaned = LOG_PREFIX.sub("", message.strip())
+        cleaned = cleaned.replace("\n", "\n    ")
+        if len(cleaned) > 700:
+            cleaned = cleaned[:697] + "..."
+        lines.append(f"{timestamp} {icon} {cleaned}")
+
+    visible = lines[-15:]
+    if not visible:
+        body = "No warnings, errors, or user-visible activity in the last 2 hours."
+    else:
+        body = "\n\n".join(visible)
+    suffix = (
+        f"\n\n{hidden} routine scheduler entries hidden."
+        if hidden
+        else ""
+    )
+    return f"Recent receptionist activity\n\n{body}{suffix}"[:4000]
+
+
+def _priority(value: object) -> int:
+    try:
+        return int(str(value))
+    except (TypeError, ValueError):
+        return 6
+
+
+def _log_time(value: object) -> str:
+    try:
+        timestamp = int(str(value)) / 1_000_000
+    except (TypeError, ValueError):
+        return "Unknown time"
+    local = datetime.fromtimestamp(timestamp, UTC).astimezone(EASTERN)
+    return local.strftime("%b %d %I:%M:%S %p").replace(" 0", " ")
 
 
 def _mib(value: int) -> int:

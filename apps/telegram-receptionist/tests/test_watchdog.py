@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock
 from receptionist.watchdog import (
     ReceptionistWatchdog,
     WatchdogConfig,
+    _format_logs,
     _format_status,
     watchdog_menu,
 )
@@ -115,3 +116,35 @@ def test_status_format_includes_revision_and_drain() -> None:
     assert "active (running)" in text
     assert "1234567890ab" in text
     assert "Deployment drain: yes" in text
+
+
+def test_logs_hide_scheduler_noise_and_format_meaningful_entries() -> None:
+    text = _format_logs(
+        json.dumps(
+            {
+                "entries": [
+                    {
+                        "timestamp": "1785976137000000",
+                        "priority": "6",
+                        "message": (
+                            "2026-08-05 20:28:57,960 INFO "
+                            "apscheduler.executors.default: Job executed successfully"
+                        ),
+                    },
+                    {
+                        "timestamp": "1785976140000000",
+                        "priority": "4",
+                        "message": (
+                            "2026-08-05 20:29:00,000 WARNING receptionist: "
+                            "Agent worker is not alive"
+                        ),
+                    },
+                ]
+            }
+        )
+    )
+
+    assert "Recent receptionist activity" in text
+    assert "⚠️ Agent worker is not alive" in text
+    assert "Job executed successfully" not in text
+    assert "1 routine scheduler entries hidden" in text

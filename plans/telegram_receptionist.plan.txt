@@ -1023,6 +1023,10 @@ QUICK DECISION AND GUARDRAIL INDEX
   button panel, and Restart requires a second confirmation button. Slash
   commands remain as fallback. `/reset` and `/recover` remain in the main
   receptionist.
+- Watchdog log presentation: `/logs` retrieves up to two hours of structured
+  journald entries, hides successful APScheduler polling/heartbeat chatter,
+  preserves warnings and errors, and renders at most 15 meaningful events with
+  concise Eastern timestamps and severity markers.
 - Resume-notify adaptation: do not send internal Claude transcript paths for
   copy/paste. Receptionist already persists sessions and provider session IDs.
   After an unexpected service restart it sends safe guidance to continue

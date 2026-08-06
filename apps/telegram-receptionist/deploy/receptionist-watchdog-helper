@@ -75,13 +75,27 @@ def main() -> None:
                 "-u",
                 SERVICE,
                 "--no-pager",
+                "--since=-2 hours",
                 "-n",
-                "30",
-                "--output=short-iso",
+                "300",
+                "--output=json",
             ],
             check=True,
         )
-        print(result.stdout, end="")
+        entries = []
+        for line in result.stdout.splitlines():
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            entries.append(
+                {
+                    "timestamp": record.get("__REALTIME_TIMESTAMP"),
+                    "priority": record.get("PRIORITY"),
+                    "message": record.get("MESSAGE"),
+                }
+            )
+        print(json.dumps({"entries": entries}))
         return
     raise SystemExit("Unsupported watchdog action.")
 
