@@ -8,7 +8,12 @@ install_root="/opt/telegram-receptionist"
 releases="$install_root/releases"
 state_dir="/var/lib/telegram-receptionist"
 service="telegram-receptionist.service"
+watchdog_service="telegram-receptionist-watchdog.service"
 lock="/run/lock/telegram-receptionist-deploy.lock"
+revision="unknown"
+status_written=0
+failure_message="Deployment worker failed before completion."
+cleanup_release=0
 
 exec 9>"$lock"
 flock -n 9 || {
@@ -48,7 +53,28 @@ os.replace(temporary, path)
 PY
     chown receptionist:receptionist "$state_dir/deployment.json"
     chmod 600 "$state_dir/deployment.json"
+    status_written=1
 }
+
+on_error() {
+    local exit_code=$?
+    if [[ "$cleanup_release" == "1" && -n "${release:-}" ]]; then
+        rm -rf "$release"
+    fi
+    if [[ "$status_written" == "0" ]]; then
+        write_status "failed" "$revision" "$failure_message" || true
+    fi
+    exit "$exit_code"
+}
+
+fail() {
+    local message="$1"
+    echo "$message" >&2
+    write_status "failed" "$revision" "$message"
+    exit 1
+}
+
+trap on_error ERR
 
 wait_healthy() {
     local release_path="$1"
@@ -64,36 +90,42 @@ wait_healthy() {
     return 1
 }
 
+restart_watchdog_if_enabled() {
+    if ! systemctl is-enabled --quiet "$watchdog_service"; then
+        return 0
+    fi
+    systemctl restart "$watchdog_service"
+    systemctl is-active --quiet "$watchdog_service"
+}
+
 mkdir -p "$releases" "$state_dir"
 chmod 0755 /home/receptionist/repos
 
 if [[ "$(as_agent git -C "$repo" branch --show-current)" != "main" ]]; then
-    echo "Workspace must be on main." >&2
-    exit 1
+    fail "Workspace must be on main."
 fi
 if [[ -n "$(as_agent git -C "$repo" status --porcelain)" ]]; then
-    echo "Workspace must be clean." >&2
-    exit 1
+    fail "Workspace must be clean."
 fi
 
 as_agent git -C "$repo" fetch --quiet origin main
 revision="$(as_agent git -C "$repo" rev-parse HEAD)"
 remote_revision="$(as_agent git -C "$repo" rev-parse origin/main)"
 if [[ "$revision" != "$remote_revision" ]]; then
-    echo "Workspace HEAD must exactly match origin/main." >&2
-    exit 1
+    fail "Workspace HEAD must exactly match origin/main."
 fi
 
 release="$releases/$revision"
 previous="$(readlink -f "$install_root/current" 2>/dev/null || true)"
 
 if [[ ! -d "$release" ]]; then
+    failure_message="Build or tests failed."
+    cleanup_release=1
     temporary="$releases/.${revision}.tmp"
     rm -rf "$temporary"
     mkdir -p "$temporary"
     as_agent git -C "$repo" archive "$revision" | tar -x -C "$temporary"
     mv "$temporary" "$release"
-    trap 'write_status "failed" "$revision" "Build or tests failed."; rm -rf "$release"' ERR
     python3 -m venv "$release/.venv"
     "$release/.venv/bin/pip" install --quiet --upgrade pip
     "$release/.venv/bin/pip" install --quiet \
@@ -109,9 +141,10 @@ if [[ ! -d "$release" ]]; then
     )
     chown -R root:root "$release"
     chmod -R go-w "$release"
-    trap - ERR
+    cleanup_release=0
 fi
 
+failure_message="Installation failed."
 install -m 0644 -o receptionist-agent -g receptionist-agent \
     "$release/$app_rel/deploy/workspace-CLAUDE.md" \
     /home/receptionist/repos/CLAUDE.md
@@ -132,23 +165,42 @@ install -m 0755 -o root -g root \
 install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/receptionist-wnba-helper" \
     /usr/local/libexec/receptionist-wnba-helper
+install -m 0755 -o root -g root \
+    "$release/$app_rel/deploy/receptionist-watchdog-helper" \
+    /usr/local/libexec/receptionist-watchdog-helper
+install -m 0755 -o root -g root \
+    "$release/$app_rel/deploy/configure-receptionist-watchdog" \
+    /usr/local/sbin/configure-receptionist-watchdog
+id -u receptionist-watchdog >/dev/null 2>&1 || \
+    useradd --system --home-dir /nonexistent --shell /usr/sbin/nologin \
+        receptionist-watchdog
 install -d -m 0755 -o receptionist-agent -g receptionist-agent \
     /home/receptionist/repos/.claude/skills/wnba-lean
 install -m 0644 -o receptionist-agent -g receptionist-agent \
     "$release/.claude/skills/wnba-lean/SKILL.md" \
     /home/receptionist/repos/.claude/skills/wnba-lean/SKILL.md
 visudo -cf "$release/$app_rel/deploy/telegram-receptionist.sudoers"
+visudo -cf "$release/$app_rel/deploy/telegram-receptionist-watchdog.sudoers"
 install -m 0440 -o root -g root \
     "$release/$app_rel/deploy/telegram-receptionist.sudoers" \
     /etc/sudoers.d/telegram-receptionist
+install -m 0440 -o root -g root \
+    "$release/$app_rel/deploy/telegram-receptionist-watchdog.sudoers" \
+    /etc/sudoers.d/telegram-receptionist-watchdog
+install -m 0644 -o root -g root \
+    "$release/$app_rel/deploy/telegram-receptionist-watchdog.service" \
+    /etc/systemd/system/telegram-receptionist-watchdog.service
 chmod -R a+rX "$release"
 
 ln -sfn "$release" "$install_root/current.new"
 mv -Tf "$install_root/current.new" "$install_root/current"
 systemctl daemon-reload
 
+failure_message="Receptionist failed its health check."
 healthy=0
-if systemctl restart "$service" && wait_healthy "$release"; then
+if systemctl restart "$service" &&
+    wait_healthy "$release" &&
+    restart_watchdog_if_enabled; then
     healthy=1
 fi
 
@@ -163,7 +215,9 @@ fi
 if [[ -n "$previous" && -d "$previous" ]]; then
     ln -sfn "$previous" "$install_root/current.new"
     mv -Tf "$install_root/current.new" "$install_root/current"
-    if systemctl restart "$service" && wait_healthy "$previous"; then
+    if systemctl restart "$service" &&
+        wait_healthy "$previous" &&
+        restart_watchdog_if_enabled; then
         write_status "rolled back" "$revision" "Health check failed; restored the previous healthy release."
     else
         systemctl stop "$service" || true

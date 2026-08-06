@@ -260,6 +260,7 @@ class Receptionist:
         application.job_queue.run_repeating(
             self._delivery_retry_poll, interval=60, first=30
         )
+        await self._notify_unexpected_restart(application)
         await self._notify_deployment(application)
         systemd_notify("READY=1\nSTATUS=Telegram polling and agent worker ready")
         log.info(
@@ -1276,6 +1277,38 @@ class Receptionist:
         )
         self.database.mark_deployment_seen(deployment_id)
         self._clear_deployment_drain()
+
+    async def _notify_unexpected_restart(
+        self, application: Application
+    ) -> None:
+        path = self.config.state_dir / "startup.json"
+        previous_start = path.exists()
+        planned_deployment = self._deployment_drain_path.exists()
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(
+            json.dumps(
+                {
+                    "id": str(uuid.uuid4()),
+                    "started_at": datetime.now(UTC).isoformat(),
+                }
+            ),
+            encoding="utf-8",
+        )
+        os.replace(temporary, path)
+        if not previous_start or planned_deployment:
+            return
+        state = self.database.ensure_user_state(
+            self.config.allowed_user_id, self.config.allowed_user_id
+        )
+        chat_id = state["telegram_chat_id"]
+        if not chat_id:
+            return
+        await application.bot.send_message(
+            chat_id,
+            "▶️ Receptionist restarted. Continue normally to resume the "
+            "current session, send /recover for an interrupted run, or /reset "
+            "for fresh context.",
+        )
 
     @property
     def _deployment_drain_path(self) -> Path:

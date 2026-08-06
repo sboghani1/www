@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+SERVICE = "telegram-receptionist.service"
+CURRENT_RELEASE = Path("/opt/telegram-receptionist/current")
+DEPLOYMENT_DRAIN = Path(
+    "/var/lib/telegram-receptionist/deployment-drain.json"
+)
+
+
+def run(command: list[str], *, check: bool = False) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        command,
+        check=check,
+        capture_output=True,
+        text=True,
+        timeout=45,
+    )
+
+
+def service_status() -> None:
+    result = run(
+        [
+            "/usr/bin/systemctl",
+            "show",
+            SERVICE,
+            "--property=ActiveState,SubState,MainPID,NRestarts",
+        ],
+        check=True,
+    )
+    values = {}
+    for line in result.stdout.splitlines():
+        key, _, value = line.partition("=")
+        values[key] = value
+    revision = "unknown"
+    try:
+        revision = Path(os.path.realpath(CURRENT_RELEASE)).name
+    except OSError:
+        pass
+    print(
+        json.dumps(
+            {
+                "active_state": values.get("ActiveState", "unknown"),
+                "sub_state": values.get("SubState", "unknown"),
+                "main_pid": values.get("MainPID", "unknown"),
+                "restarts": values.get("NRestarts", "unknown"),
+                "revision": revision,
+                "deployment_drain": DEPLOYMENT_DRAIN.exists(),
+            }
+        )
+    )
+
+
+def main() -> None:
+    if len(sys.argv) != 2:
+        raise SystemExit("Usage: receptionist-watchdog-helper ACTION")
+    action = sys.argv[1]
+    if action == "status":
+        service_status()
+        return
+    if action == "restart":
+        run(["/usr/bin/systemctl", "restart", SERVICE], check=True)
+        service_status()
+        return
+    if action == "logs":
+        result = run(
+            [
+                "/usr/bin/journalctl",
+                "-u",
+                SERVICE,
+                "--no-pager",
+                "-n",
+                "30",
+                "--output=short-iso",
+            ],
+            check=True,
+        )
+        print(result.stdout, end="")
+        return
+    raise SystemExit("Unsupported watchdog action.")
+
+
+if __name__ == "__main__":
+    main()

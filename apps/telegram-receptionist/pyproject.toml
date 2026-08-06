@@ -20,6 +20,7 @@ telegram-receptionist = "receptionist.bot:main"
 telegram-receptionist-bootstrap = "receptionist.bootstrap:main"
 telegram-receptionist-health = "receptionist.health:main"
 telegram-receptionist-maintenance = "receptionist.maintenance:main"
+telegram-receptionist-watchdog = "receptionist.watchdog:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

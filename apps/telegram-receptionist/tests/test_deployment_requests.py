@@ -309,3 +309,79 @@ def test_seen_reaction_failure_does_not_block_message(tmp_path: Path) -> None:
     asyncio.run(receptionist.authorized(handler)(update, SimpleNamespace()))
 
     handler.assert_awaited_once()
+
+
+def test_unexpected_restart_sends_safe_resume_guidance(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repos"
+    repo_root.mkdir()
+    config = Config(
+        telegram_token="test-token",
+        allowed_user_id=123,
+        repo_root=repo_root,
+        repositories=(RepositoryConfig("workspace", repo_root),),
+        state_dir=tmp_path / "state",
+        claude_binary="/usr/bin/claude",
+        agent_launcher="/launcher",
+        agent_killer="/killer",
+        deploy_request_dir=repo_root / ".receptionist" / "deploy-requests",
+        deploy_executor="/executor",
+        deploy_timeout_seconds=900,
+        wnba_helper="/wnba-helper",
+        wnba_helper_timeout_seconds=45,
+        agent_timeout_seconds=3600,
+        max_queued_messages=10,
+        model=None,
+    )
+    config.state_dir.mkdir()
+    database = Database(config.database_path)
+    database.initialize(config.repositories)
+    database.ensure_user_state(123, 456)
+    (config.state_dir / "startup.json").write_text("{}", encoding="utf-8")
+    receptionist = Receptionist(config, database)
+    application = SimpleNamespace(
+        bot=SimpleNamespace(send_message=AsyncMock())
+    )
+
+    asyncio.run(receptionist._notify_unexpected_restart(application))
+
+    application.bot.send_message.assert_awaited_once()
+    message = application.bot.send_message.await_args.args[1]
+    assert "/recover" in message
+    assert "/reset" in message
+
+
+def test_planned_deployment_suppresses_restart_guidance(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repos"
+    repo_root.mkdir()
+    config = Config(
+        telegram_token="test-token",
+        allowed_user_id=123,
+        repo_root=repo_root,
+        repositories=(RepositoryConfig("workspace", repo_root),),
+        state_dir=tmp_path / "state",
+        claude_binary="/usr/bin/claude",
+        agent_launcher="/launcher",
+        agent_killer="/killer",
+        deploy_request_dir=repo_root / ".receptionist" / "deploy-requests",
+        deploy_executor="/executor",
+        deploy_timeout_seconds=900,
+        wnba_helper="/wnba-helper",
+        wnba_helper_timeout_seconds=45,
+        agent_timeout_seconds=3600,
+        max_queued_messages=10,
+        model=None,
+    )
+    config.state_dir.mkdir()
+    database = Database(config.database_path)
+    database.initialize(config.repositories)
+    database.ensure_user_state(123, 456)
+    (config.state_dir / "startup.json").write_text("{}", encoding="utf-8")
+    receptionist = Receptionist(config, database)
+    receptionist._set_deployment_drain("request-1")
+    application = SimpleNamespace(
+        bot=SimpleNamespace(send_message=AsyncMock())
+    )
+
+    asyncio.run(receptionist._notify_unexpected_restart(application))
+
+    application.bot.send_message.assert_not_awaited()

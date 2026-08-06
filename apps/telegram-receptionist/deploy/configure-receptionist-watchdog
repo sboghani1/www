@@ -1,0 +1,35 @@
+#!/bin/bash
+set -euo pipefail
+umask 077
+
+if [[ "$EUID" -ne 0 ]]; then
+    echo "Run this installer as root." >&2
+    exit 1
+fi
+
+main_env="/home/receptionist/.config/telegram-receptionist/env"
+watchdog_env="/etc/telegram-receptionist-watchdog.env"
+
+allowed_user_id="$(
+    sed -n 's/^TELEGRAM_ALLOWED_USER_ID=//p' "$main_env" | tail -1
+)"
+if [[ ! "$allowed_user_id" =~ ^[0-9]+$ ]]; then
+    echo "Could not read TELEGRAM_ALLOWED_USER_ID from the receptionist config." >&2
+    exit 1
+fi
+
+read -r -s -p "BotFather token for the watchdog bot: " token
+echo
+if [[ ! "$token" =~ ^[0-9]+:[A-Za-z0-9_-]{20,}$ ]]; then
+    echo "The watchdog bot token format is invalid." >&2
+    exit 1
+fi
+
+temporary="$(mktemp)"
+trap 'rm -f "$temporary"' EXIT
+printf 'WATCHDOG_BOT_TOKEN=%s\nWATCHDOG_ALLOWED_USER_ID=%s\n' \
+    "$token" "$allowed_user_id" >"$temporary"
+install -m 0600 -o root -g root "$temporary" "$watchdog_env"
+systemctl enable --now telegram-receptionist-watchdog.service
+systemctl is-active --quiet telegram-receptionist-watchdog.service
+echo "Receptionist watchdog is active."

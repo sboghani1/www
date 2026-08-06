@@ -1014,6 +1014,20 @@ QUICK DECISION AND GUARDRAIL INDEX
   Receptionist can retrieve only the structured receipt/final result through a
   restricted launcher action, then deliver through its normal deduplicated
   database path. Claude hooks never receive the Telegram token or send directly.
+- Break-glass watchdog adaptation: deploy a separate least-privilege Telegram
+  bot with its own BotFather token and dedicated Unix account. Its fixed command
+  surface is `/ping`, `/status`, `/restart`, `/logs`, and `/mem`; a root-owned
+  helper accepts only those exact inspection/restart actions. It cannot execute
+  arbitrary shell commands, force-kill Claude, read agent credentials, approve
+  deployments, or clear application state. The normal interface is an inline
+  button panel, and Restart requires a second confirmation button. Slash
+  commands remain as fallback. `/reset` and `/recover` remain in the main
+  receptionist.
+- Resume-notify adaptation: do not send internal Claude transcript paths for
+  copy/paste. Receptionist already persists sessions and provider session IDs.
+  After an unexpected service restart it sends safe guidance to continue
+  normally, use `/recover` for an interrupted run, or `/reset` for fresh
+  context. Planned deployment restarts suppress this extra message.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD
