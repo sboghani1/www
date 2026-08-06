@@ -1020,6 +1020,21 @@ are now done — see below. What's actually still open:
   - All 4 verified directly (not just trusted): 4 clean commits on
     `www/main`, and each event's `wnba_lean_revisions` active revision
     confirmed with a matching `git_commit_sha`.
+- **Sparks @ Sky revised to final** (`afeaa3b`) once the game reached
+  ~20 minutes to tip. The line never moved at all across the full pregame
+  window: 4 captures spanning 17:04-20:15 ET all showed Sky -3 / total
+  186.5 exactly flat. Kept the same side/total selections and strengths as
+  the preliminary read (watch Sky -3, small Over 186.5) since there was
+  nothing new to react to, but reframed the summary/evidence as a
+  confirmed closing number rather than "revisit before tip." Verified the
+  preliminary `create` revision now shows `effective_status: superseded`
+  and the new `revise` is `active` with a matching commit SHA.
+- Also gave the user a 1-3 star confidence rating per leg (8 total, 2 per
+  game) in chat only — not written to the Sheet or `path210.md`, since
+  there is no schema field for it and it was a conversational ask, not a
+  request to persist a new data point. If asked to persist this in the
+  future, it would need a schema decision (e.g. a new
+  `wnba_lean_revisions` column) rather than being invented ad hoc.
 
 ### Done this checkpoint, per explicit user request
 
