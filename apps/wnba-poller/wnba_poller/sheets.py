@@ -1180,6 +1180,22 @@ class SheetsStore:
         ]
         return records[-limit:]
 
+    def read_all_lean_revision_events(
+        self, *, limit: int = 5000
+    ) -> list[dict[str, Any]]:
+        if limit < 1 or limit > 20000:
+            raise ValueError("revision limit must be between 1 and 20000")
+        records = [
+            record
+            for _, record in self._indexed_records(
+                SHEET_TABS["lean_revisions"],
+                LEAN_REVISION_HEADERS,
+                formulas=True,
+            )
+            if record.get("record_id")
+        ]
+        return records[-limit:]
+
     def append_lean_revision_event(
         self,
         record: dict[str, Any],

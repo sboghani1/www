@@ -108,6 +108,22 @@ class TestResolveCurrentGame:
                 now=_now(),
             )
 
+    def test_allow_started_permits_a_long_finished_game(self) -> None:
+        # Resolution deliberately opts out of the "no longer current" cutoff
+        # -- it only ever operates on games that have already finished,
+        # often the next day.
+        store = FakeStore(
+            games=[{**GAME, "commence_time_utc": "2026-08-01T00:00:00Z"}]
+        )
+        game = resolve_current_game(
+            store,
+            event_id="evt-1",
+            expected_matchup="Indiana Fever @ Las Vegas Aces",
+            now=_now(),
+            allow_started=True,
+        )
+        assert game["event_id"] == "evt-1"
+
     def test_rejects_game_outside_horizon(self) -> None:
         store = FakeStore(
             games=[{**GAME, "commence_time_utc": "2026-09-15T00:00:00Z"}]

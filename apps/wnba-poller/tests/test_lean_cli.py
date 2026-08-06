@@ -236,6 +236,135 @@ class TestHandleRequestApply:
             )
 
 
+def _seed_resolvable_document(git_repo: Path) -> None:
+    path210 = git_repo / "apps" / "wnba-poller" / "path210.md"
+    path210.write_text(
+        "# Notes For Model\n\nRules text.\n"
+        "\n# Past Events\n\n"
+        "1fadesparks\nwrong\nsome_tag\ncontext: monday. some context.\n"
+        "\n# Model Cache\n\ncache stuff\n"
+        "\n# Upcoming Events\n\n",
+        encoding="utf-8",
+    )
+    _git(["add", "-A"], git_repo)
+    _git(["commit", "-m", "seed resolution fixture"], git_repo)
+    _git(["push", "origin", "main"], git_repo)
+
+
+class TestHandleRequestResolve:
+    def test_context_requires_allow_started_for_a_finished_game(
+        self, git_repo: Path
+    ) -> None:
+        _seed_resolvable_document(git_repo)
+        store = FakeStore()
+        long_after_tip = datetime(2026, 8, 12, 0, 0, tzinfo=timezone.utc)
+
+        with pytest.raises(ValueError, match="no longer current"):
+            handle_request(
+                {
+                    "action": "context",
+                    "event_id": "evt-1",
+                    "matchup": "Indiana Fever @ Las Vegas Aces",
+                },
+                store=store,
+                repository=git_repo,
+                now=long_after_tip,
+            )
+
+        result = handle_request(
+            {
+                "action": "context",
+                "event_id": "evt-1",
+                "matchup": "Indiana Fever @ Las Vegas Aces",
+                "allow_started": True,
+            },
+            store=store,
+            repository=git_repo,
+            now=long_after_tip,
+        )
+        assert result["game"]["event_id"] == "evt-1"
+
+    def test_resolve_action_grades_and_publishes(self, git_repo: Path) -> None:
+        _seed_resolvable_document(git_repo)
+        store = FakeStore()
+        create_result = handle_request(
+            {
+                "action": "apply",
+                "event_id": "evt-1",
+                "matchup": "Indiana Fever @ Las Vegas Aces",
+                "operation": "create",
+                "request_text": "generate using standard template",
+                "output": VALID_OUTPUT,
+            },
+            store=store,
+            repository=git_repo,
+            now=_now(),
+        )
+
+        store.game.update(
+            {
+                "away_score": "78",
+                "home_score": "85",
+                "latest_away_spread": "0",
+                "latest_home_spread": "0",
+                "latest_total": "160",
+            }
+        )
+        long_after_tip = datetime(2026, 8, 12, 0, 0, tzinfo=timezone.utc)
+
+        result = handle_request(
+            {
+                "action": "resolve",
+                "event_id": "evt-1",
+                "matchup": "Indiana Fever @ Las Vegas Aces",
+                "entry_slug": "fadeaces",
+                "tags": "back_favorite",
+                "line_movement": "aces pick'em throughout",
+                "context_text": "context: sunday. resolved the aces lean.",
+                "model_lean_text": "side (ACES pick'em) -- HIT; total (OVER 160) -- HIT.",
+                "request_text": "Resolve using the final score.",
+            },
+            store=store,
+            repository=git_repo,
+            now=long_after_tip,
+        )
+
+        assert result["operation"] == "resolve"
+        # Aces (home) won 85-78 at a pick'em line -- side HIT.
+        assert result["result"] == "right"
+        assert result["entry_name"] == "2fadeaces"
+
+        content = (
+            git_repo / "apps" / "wnba-poller" / "path210.md"
+        ).read_text(encoding="utf-8")
+        assert "WNBA_LEAN_EVENT_START" not in content
+        assert "2fadeaces" in content
+
+        history = store.read_game_history(event_id="evt-1")
+        assert history["active_revision"]["revision_id"] == (
+            result["revision_id"]
+        )
+        assert history["active_revision"]["effective_status"] == "resolved"
+
+    def test_resolve_rejects_missing_entry_slug(self, git_repo: Path) -> None:
+        _seed_resolvable_document(git_repo)
+        store = FakeStore()
+        with pytest.raises(ValueError, match="entry_slug is invalid"):
+            handle_request(
+                {
+                    "action": "resolve",
+                    "event_id": "evt-1",
+                    "matchup": "Indiana Fever @ Las Vegas Aces",
+                    "tags": "tag",
+                    "context_text": "context: x.",
+                    "request_text": "x",
+                },
+                store=store,
+                repository=git_repo,
+                now=_now(),
+            )
+
+
 class TestHandleRequestValidation:
     def test_rejects_unsupported_action(self, git_repo: Path) -> None:
         store = FakeStore()

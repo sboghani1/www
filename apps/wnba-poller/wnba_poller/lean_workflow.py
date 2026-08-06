@@ -544,6 +544,7 @@ def execute_resolution(
         expected_matchup=expected_matchup,
         path210_document=before,
         now=now,
+        allow_started=True,
     )
     game = context["game"]
     active = context["lean_history"].get("active_revision")

@@ -31,6 +31,7 @@ def resolve_current_game(
     expected_matchup: str,
     now: datetime,
     horizon_days: int = 14,
+    allow_started: bool = False,
 ) -> dict[str, Any]:
     if not event_id or len(event_id) > 128:
         raise ValueError("event_id is invalid")
@@ -50,7 +51,12 @@ def resolve_current_game(
     if expected_matchup.strip() != matchup:
         raise ValueError("template matchup does not match current Sheet state")
     commence = parse_timestamp(str(game.get("commence_time_utc") or ""))
-    if commence < now - timedelta(hours=12):
+    # Generating/revising a fresh pregame lean for a long-started game makes
+    # no sense, so that path stays capped at 12h post-commence. Resolving a
+    # lean is the opposite case -- it is only ever done *after* the game is
+    # over, often the next day -- so resolution callers opt out of this
+    # lower bound entirely rather than needing an ever-larger fixed window.
+    if not allow_started and commence < now - timedelta(hours=12):
         raise ValueError("selected WNBA game is no longer current")
     if commence > now + timedelta(days=horizon_days):
         raise ValueError("selected WNBA game is outside the active horizon")
@@ -199,12 +205,14 @@ def build_lean_context(
     expected_matchup: str,
     path210_document: str,
     now: datetime,
+    allow_started: bool = False,
 ) -> dict[str, Any]:
     game = resolve_current_game(
         store,
         event_id=event_id,
         expected_matchup=expected_matchup,
         now=now,
+        allow_started=allow_started,
     )
     snapshots = store.read_snapshots_for_event(
         event_id=str(game["event_id"])

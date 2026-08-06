@@ -9,7 +9,7 @@ from typing import Any, Mapping
 
 from .config import Config
 from .lean_context import build_lean_context
-from .lean_workflow import GitPublisher, execute_revision
+from .lean_workflow import GitPublisher, execute_resolution, execute_revision
 from .sheets import SheetsStore
 
 MAX_REQUEST_BYTES = 131_072
@@ -54,6 +54,7 @@ def handle_request(
             expected_matchup=matchup,
             path210_document=path210_path.read_text(encoding="utf-8"),
             now=now,
+            allow_started=bool(request.get("allow_started", False)),
         )
     if action == "apply":
         operation = _required_text(request, "operation", maximum=20)
@@ -87,6 +88,44 @@ def handle_request(
                     request.get("target_revision_id") or ""
                 ),
                 dry_run=dry_run,
+            )
+    if action == "resolve":
+        entry_slug = _required_text(request, "entry_slug", maximum=64)
+        tags = _required_text(request, "tags", maximum=500)
+        line_movement = str(request.get("line_movement") or "")
+        if len(line_movement) > 1000:
+            raise ValueError("line_movement is too long")
+        context_text = _required_text(
+            request, "context_text", maximum=3000
+        )
+        model_lean_text = str(request.get("model_lean_text") or "")
+        if len(model_lean_text) > 1000:
+            raise ValueError("model_lean_text is too long")
+        request_text = _required_text(
+            request, "request_text", maximum=5000
+        )
+        lock_path = repository / ".git/wnba-lean.lock"
+        with lock_path.open("w", encoding="utf-8") as lock:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as exc:
+                raise RuntimeError(
+                    "another WNBA lean workflow is running"
+                ) from exc
+            return execute_resolution(
+                store=store,
+                publisher=GitPublisher(repository=repository),
+                path210_path=path210_path,
+                event_id=event_id,
+                expected_matchup=matchup,
+                entry_slug=entry_slug,
+                tags=tags,
+                line_movement=line_movement,
+                context_text=context_text,
+                model_lean_text=model_lean_text,
+                request_text=request_text,
+                source="claude-skill",
+                now=now,
             )
     raise ValueError("unsupported WNBA lean workflow action")
 

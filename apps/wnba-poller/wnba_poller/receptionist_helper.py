@@ -6,8 +6,10 @@ from datetime import UTC, datetime
 from typing import Any, Mapping
 
 from .config import Config
+from .grading import grade_lean
 from .guesser_bot import select_games, selection_id
 from .lean_context import resolve_current_game
+from .lean_revisions import derive_revision_history
 from .lean_workflow import (
     build_request_template,
     build_skill_prompt,
@@ -29,10 +31,13 @@ def _public_game(game: Mapping[str, Any]) -> dict[str, Any]:
     allowed = (
         "event_id",
         "espn_event_id",
+        "status",
         "commence_time_utc",
         "commence_time_et",
         "away_team",
         "home_team",
+        "away_score",
+        "home_score",
         "bookmaker",
         "latest_captured_at",
         "latest_away_spread",
@@ -103,6 +108,42 @@ def _bounded_history(history: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+_RESOLVE_REVISION_FIELDS = (
+    "revision_id",
+    "requested_at_et",
+    "operation",
+    "effective_status",
+    "full_game_side_selection",
+    "full_game_side_strength",
+    "full_game_total_selection",
+    "full_game_total_strength",
+    "summary",
+    "git_commit_sha",
+)
+
+
+def _resolvable_game_summary(
+    game: Mapping[str, Any], active: Mapping[str, Any]
+) -> dict[str, Any]:
+    return {
+        "event_id": str(game.get("event_id") or ""),
+        "away_team": game.get("away_team", ""),
+        "home_team": game.get("home_team", ""),
+        "commence_time_et": game.get("commence_time_et", ""),
+        "status": game.get("status", ""),
+        "away_score": game.get("away_score", ""),
+        "home_score": game.get("home_score", ""),
+        "full_game_side_selection": active.get("full_game_side_selection", ""),
+        "full_game_side_strength": active.get("full_game_side_strength", ""),
+        "full_game_total_selection": active.get(
+            "full_game_total_selection", ""
+        ),
+        "full_game_total_strength": active.get(
+            "full_game_total_strength", ""
+        ),
+    }
+
+
 def handle_request(
     request: Mapping[str, Any],
     *,
@@ -113,6 +154,28 @@ def handle_request(
     if action == "list_games":
         games = select_games(store.read_games(), now=now)
         return {"games": [_public_game(game) for game in games]}
+    if action == "list_resolvable_games":
+        games_by_id = {
+            str(game.get("event_id") or ""): game
+            for game in store.read_games()
+        }
+        by_event: dict[str, list[dict[str, Any]]] = {}
+        for record in store.read_all_lean_revision_events():
+            event_id_value = str(record.get("event_id") or "")
+            if event_id_value:
+                by_event.setdefault(event_id_value, []).append(record)
+        resolvable = []
+        for candidate_id, records in by_event.items():
+            history = derive_revision_history(records, event_id=candidate_id)
+            active = history.get("active_revision")
+            if not active or active.get("effective_status") != "active":
+                continue
+            game = games_by_id.get(candidate_id)
+            if game is None:
+                continue
+            resolvable.append(_resolvable_game_summary(game, active))
+        resolvable.sort(key=lambda item: str(item["commence_time_et"]))
+        return {"games": resolvable}
     if action == "validate_template":
         template = str(request.get("template") or "")
         parsed = parse_request_template(template)
@@ -178,6 +241,52 @@ def handle_request(
                 f"({game['away_team']} @ {game['home_team']}). "
                 "Validate the game against current Sheet state and use "
                 "the deterministic undo workflow."
+            ),
+            "game": _public_game(game),
+        }
+    if action == "resolve_preview":
+        matches = [
+            game
+            for game in store.read_games()
+            if str(game.get("event_id") or "") == event_id
+        ]
+        if len(matches) != 1:
+            raise ValueError("event_id does not identify one WNBA game")
+        game = matches[0]
+        history = store.read_game_history(event_id=event_id)
+        active = history.get("active_revision")
+        if not active or active.get("effective_status") != "active":
+            raise ValueError("no resolvable active lean for this event")
+        try:
+            graded = grade_lean(game=game, active_revision=active)
+        except ValueError:
+            graded = None
+        return {
+            "game": _public_game(game),
+            "active_revision": {
+                key: active.get(key, "") for key in _RESOLVE_REVISION_FIELDS
+            },
+            "graded": graded,
+        }
+    if action == "build_resolution":
+        matchup = str(request.get("matchup") or "")
+        game = resolve_current_game(
+            store,
+            event_id=event_id,
+            expected_matchup=matchup,
+            now=now,
+            allow_started=True,
+        )
+        return {
+            "skill_prompt": (
+                "Use the wnba-lean skill to resolve the published lean "
+                f"for immutable event_id {game['event_id']} "
+                f"({game['away_team']} @ {game['home_team']}). Load the "
+                "game's recorded final score and closing lines from "
+                "current Sheet state, confirm the deterministic grade, "
+                "and use the resolve workflow to convert the lean into a "
+                "Past Events entry. Do not claim a result the recorded "
+                "score does not support."
             ),
             "game": _public_game(game),
         }

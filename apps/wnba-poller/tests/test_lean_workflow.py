@@ -526,6 +526,75 @@ class TestExecuteResolution:
         commits = _git(["log", "--oneline"], git_repo).splitlines()
         assert len(commits) == 4  # init + seed + create + resolve
 
+    def test_resolves_a_game_more_than_twelve_hours_after_commence(
+        self, git_repo: Path
+    ) -> None:
+        # Regression test: resolve_current_game's ordinary 12h-post-commence
+        # cutoff (correctly used to stop *generating* a fresh pregame lean
+        # for a long-finished game) must NOT block *resolving* one -- that
+        # is the whole point of resolution, and it is routinely done the
+        # next day, well past 12h. GAME commences 2026-08-10T23:00:00Z;
+        # resolve at 2026-08-12T01:00:00Z, ~26 hours later.
+        _seed_resolvable_document(git_repo)
+        store = FakeStore(
+            game={
+                **GAME,
+                "away_team": "Phoenix Mercury",
+                "home_team": "Atlanta Dream",
+            }
+        )
+        publisher = GitPublisher(repository=git_repo)
+        path210 = git_repo / "apps" / "wnba-poller" / "path210.md"
+        execute_revision(
+            store=store,
+            publisher=publisher,
+            path210_path=path210,
+            event_id="evt-1",
+            expected_matchup="Phoenix Mercury @ Atlanta Dream",
+            operation="create",
+            request_text="generate using standard template",
+            source="receptionist",
+            now=_now(),
+            output={
+                **VALID_OUTPUT,
+                "full_game": {
+                    "side": {
+                        **VALID_OUTPUT["full_game"]["side"],
+                        "selection": "Phoenix Mercury",
+                    },
+                    "total": VALID_OUTPUT["full_game"]["total"],
+                },
+            },
+        )
+        store.game.update(
+            {
+                "away_score": "82",
+                "home_score": "96",
+                "latest_away_spread": "7",
+                "latest_home_spread": "-7",
+                "latest_total": "181.5",
+            }
+        )
+        next_day = datetime(2026, 8, 12, 1, 0, tzinfo=timezone.utc)
+
+        resolve_result = execute_resolution(
+            store=store,
+            publisher=publisher,
+            path210_path=path210,
+            event_id="evt-1",
+            expected_matchup="Phoenix Mercury @ Atlanta Dream",
+            entry_slug="fademercury",
+            tags="tag",
+            line_movement="",
+            context_text="context: wednesday. resolved the next day.",
+            model_lean_text="",
+            request_text="Resolve the next day.",
+            source="claude-skill",
+            now=next_day,
+        )
+
+        assert resolve_result["result"] == "wrong"
+
     def test_cannot_resolve_without_an_active_lean(self, git_repo: Path) -> None:
         _seed_resolvable_document(git_repo)
         store = FakeStore()
