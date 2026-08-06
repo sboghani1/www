@@ -5,6 +5,10 @@ from receptionist.bot import (
     wnba_games_header,
     wnba_games_markup,
     wnba_page_games,
+    wnba_resolve_header,
+    wnba_resolve_markup,
+    wnba_resolve_preview_text,
+    wnba_resolve_status_label,
 )
 
 
@@ -145,3 +149,104 @@ def test_callback_pattern_matches_existing_actions() -> None:
 def test_callback_pattern_rejects_unknown_actions() -> None:
     assert not WNBA_CALLBACK_PATTERN.match("wnba:bogus")
     assert not WNBA_CALLBACK_PATTERN.match("wnba:")
+
+
+def test_callback_pattern_matches_resolve_actions() -> None:
+    for data in (
+        "wnba:resolve_list",
+        "wnba:resolve_confirm",
+        "wnba:resolve_game:evt-1",
+    ):
+        assert WNBA_CALLBACK_PATTERN.match(data), data
+
+
+def test_resolve_status_label_shows_final_score() -> None:
+    game = {"status": "final", "away_score": "82", "home_score": "96"}
+    assert wnba_resolve_status_label(game) == "FINAL 82-96"
+
+
+def test_resolve_status_label_final_without_score_falls_through() -> None:
+    # Defensive: a "final" status with no recorded score yet (backfill
+    # hasn't run) must not claim a score that doesn't exist.
+    game = {"status": "final", "away_score": "", "home_score": ""}
+    assert wnba_resolve_status_label(game) == "final"
+
+
+def test_resolve_status_label_in_progress_and_scheduled() -> None:
+    assert wnba_resolve_status_label({"status": "in_progress"}) == (
+        "in progress"
+    )
+    assert wnba_resolve_status_label({"status": "scheduled"}) == (
+        "not started"
+    )
+
+
+def test_resolve_header_empty_vs_populated() -> None:
+    assert "No WNBA games" in wnba_resolve_header([])
+    assert "Tap a game" in wnba_resolve_header(_games(1))
+
+
+def test_resolve_markup_uses_resolve_game_callback_with_status_label() -> None:
+    games = [
+        {
+            "event_id": "evt-1",
+            "away_team": "Away",
+            "home_team": "Home",
+            "status": "final",
+            "away_score": "82",
+            "home_score": "96",
+        }
+    ]
+    markup = wnba_resolve_markup(games)
+    button = markup.inline_keyboard[0][0]
+    assert button.callback_data == wnba_callback("resolve_game", "evt-1")
+    assert "FINAL 82-96" in button.text
+
+
+def test_resolve_preview_text_shows_final_score_and_graded_outcome() -> None:
+    preview = {
+        "game": {
+            "away_team": "Phoenix Mercury",
+            "home_team": "Atlanta Dream",
+            "status": "final",
+            "away_score": "82",
+            "home_score": "96",
+        },
+        "active_revision": {
+            "full_game_side_selection": "Phoenix Mercury",
+            "full_game_side_strength": "watch",
+            "full_game_total_selection": "Over",
+            "full_game_total_strength": "small",
+        },
+        "graded": {
+            "side": {"selection": "Phoenix Mercury", "result": "wrong"},
+            "total": {"selection": "Over", "result": "wrong"},
+        },
+    }
+    text = wnba_resolve_preview_text(preview)
+    assert "Final: Phoenix Mercury 82 - Atlanta Dream 96" in text
+    assert "Side Phoenix Mercury: WRONG" in text
+    assert "Total Over: WRONG" in text
+    assert "Confirm to resolve" in text
+
+
+def test_resolve_preview_text_warns_when_not_final() -> None:
+    preview = {
+        "game": {
+            "away_team": "Los Angeles Sparks",
+            "home_team": "Chicago Sky",
+            "status": "scheduled",
+            "away_score": "",
+            "home_score": "",
+        },
+        "active_revision": {
+            "full_game_side_selection": "Chicago Sky",
+            "full_game_side_strength": "watch",
+            "full_game_total_selection": "Over",
+            "full_game_total_strength": "small",
+        },
+        "graded": None,
+    }
+    text = wnba_resolve_preview_text(preview)
+    assert "Not final yet" in text
+    assert "Final:" not in text

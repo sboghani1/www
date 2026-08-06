@@ -40,7 +40,9 @@ Handler = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
 MAX_CALLBACK_BYTES = 64
 WNBA_CALLBACK_PATTERN = re.compile(
     r"^wnba:(?:game:[A-Za-z0-9_.-]{1,48}|page:[0-9]{1,4}|"
-    r"generate|copy|history|revisions|undo)$"
+    r"resolve_game:[A-Za-z0-9_.-]{1,48}|"
+    r"generate|copy|history|revisions|undo|"
+    r"resolve_list|resolve_confirm)$"
 )
 
 
@@ -118,6 +120,99 @@ def wnba_games_markup(games: list[dict], page: int = 0) -> InlineKeyboardMarkup:
     if navigation:
         rows.append(navigation)
     return InlineKeyboardMarkup(rows)
+
+
+def wnba_resolve_status_label(game: dict) -> str:
+    status = str(game.get("status") or "")
+    away_score = game.get("away_score")
+    home_score = game.get("home_score")
+    if (
+        status == "final"
+        and away_score not in ("", None)
+        and home_score not in ("", None)
+    ):
+        return f"FINAL {away_score}-{home_score}"
+    if status == "in_progress":
+        return "in progress"
+    if status == "scheduled":
+        return "not started"
+    return status or "unknown"
+
+
+def wnba_resolve_header(games: list[dict]) -> str:
+    if not games:
+        return "No WNBA games have a lean waiting to be resolved."
+    return (
+        "🏁 WNBA games with a lean to resolve\n"
+        "Tap a game to preview the final score and confirm."
+    )
+
+
+def wnba_resolve_markup(games: list[dict]) -> InlineKeyboardMarkup:
+    rows = []
+    for game in games[:30]:
+        label = (
+            f"{_wnba_matchup(game)} — {wnba_resolve_status_label(game)}"
+        )[:90]
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    label,
+                    callback_data=wnba_callback(
+                        "resolve_game", str(game.get("event_id") or "")
+                    ),
+                )
+            ]
+        )
+    return InlineKeyboardMarkup(rows)
+
+
+def wnba_resolve_preview_text(preview: dict) -> str:
+    game = preview["game"]
+    active = preview.get("active_revision") or {}
+    lines = [f"🏁 {_wnba_matchup(game)}"]
+    status = str(game.get("status") or "")
+    away_score = game.get("away_score")
+    home_score = game.get("home_score")
+    if (
+        status == "final"
+        and away_score not in ("", None)
+        and home_score not in ("", None)
+    ):
+        lines.append(
+            f"Final: {game.get('away_team', '')} {away_score} - "
+            f"{game.get('home_team', '')} {home_score}"
+        )
+    else:
+        lines.append(
+            f"⚠️ Not final yet (status: {status or 'unknown'}) -- "
+            "resolving now will fail until a final score is recorded."
+        )
+    lines.append("")
+    lines.append(
+        "Lean: "
+        f"{active.get('full_game_side_selection', '')} "
+        f"({active.get('full_game_side_strength', '')}); "
+        f"{active.get('full_game_total_selection', '')} "
+        f"({active.get('full_game_total_strength', '')})"
+    )
+    graded = preview.get("graded")
+    if graded:
+        lines.extend(["", "Deterministic grade preview:"])
+        side = graded.get("side")
+        if side:
+            lines.append(
+                f"  Side {side['selection']}: {side['result'].upper()}"
+            )
+        total = graded.get("total")
+        if total:
+            lines.append(
+                f"  Total {total['selection']}: {total['result'].upper()}"
+            )
+    lines.extend(
+        ["", "Confirm to resolve this lean into path210.md's Past Events log."]
+    )
+    return "\n".join(lines)[:3900]
 
 
 def wnba_game_text(game: dict) -> str:
@@ -335,6 +430,8 @@ class Receptionist:
             "/deny — reject the only pending deployment request\n"
             "/deployments — show recent deployment requests\n\n"
             "/wnba — choose a game for Claude lean analysis\n"
+            "/wnba_resolve — grade a published lean against the final "
+            "score and record it in path210.md\n"
             "/wnba_history — latest active lean and user history\n"
             "/wnba_revisions — superseded/deleted lean revisions\n"
             "/wnba_undo — undo the latest published lean\n"
@@ -733,6 +830,25 @@ class Receptionist:
             reply_markup=wnba_games_markup(games, 0),
         )
 
+    async def wnba_resolve(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        try:
+            result = await self.wnba.request(
+                {"action": "list_resolvable_games"}
+            )
+        except Exception as error:
+            log.warning("WNBA resolvable list failed: %s", error)
+            await update.message.reply_text(
+                "❌ Could not load resolvable WNBA games. Try again."
+            )
+            return
+        games = result.get("games") or []
+        await update.message.reply_text(
+            wnba_resolve_header(games),
+            reply_markup=wnba_resolve_markup(games),
+        )
+
     async def wnba_cancel(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
@@ -880,6 +996,8 @@ class Receptionist:
             acknowledgement=(
                 "↩️ WNBA undo queued"
                 if action == "build_undo"
+                else "🏁 WNBA resolution queued"
+                if action == "build_resolution"
                 else "🏀 WNBA lean generation queued"
             ),
         )
@@ -998,6 +1116,58 @@ class Receptionist:
                     user_id=user_id,
                     chat_id=update.effective_chat.id,
                     action="build_undo",
+                )
+                return
+            if action == "resolve_list":
+                result = await self.wnba.request(
+                    {"action": "list_resolvable_games"}
+                )
+                games = result.get("games") or []
+                await query.edit_message_text(
+                    wnba_resolve_header(games),
+                    reply_markup=wnba_resolve_markup(games),
+                )
+                await query.answer()
+                return
+            if action == "resolve_game" and len(parts) == 3:
+                preview = await self.wnba.request(
+                    {"action": "resolve_preview", "event_id": parts[2]}
+                )
+                game = preview["game"]
+                self.database.set_wnba_selection(
+                    user_id=user_id,
+                    event_id=str(game["event_id"]),
+                    matchup=_wnba_matchup(game),
+                )
+                keyboard = InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "Confirm resolve",
+                                callback_data=wnba_callback("resolve_confirm"),
+                            )
+                        ],
+                        [
+                            InlineKeyboardButton(
+                                "◀ Back to list",
+                                callback_data=wnba_callback("resolve_list"),
+                            )
+                        ],
+                    ]
+                )
+                await query.edit_message_text(
+                    wnba_resolve_preview_text(preview),
+                    reply_markup=keyboard,
+                )
+                await query.answer()
+                return
+            if action == "resolve_confirm":
+                await query.answer("Queuing WNBA resolution…")
+                await self._queue_wnba_action(
+                    query.message,
+                    user_id=user_id,
+                    chat_id=update.effective_chat.id,
+                    action="build_resolution",
                 )
                 return
             await query.answer("Invalid WNBA action.", alert=True)
@@ -1360,6 +1530,7 @@ def build_application(config: Config) -> Application:
         ("deny", receptionist.deny),
         ("deployments", receptionist.deployments),
         ("wnba", receptionist.wnba_games),
+        ("wnba_resolve", receptionist.wnba_resolve),
         ("wnba_history", receptionist.wnba_history),
         ("wnba_revisions", receptionist.wnba_revisions),
         ("wnba_undo", receptionist.wnba_undo),
