@@ -1065,3 +1065,88 @@ are now done — see below. What's actually still open:
 3. Noted above (item 1) that the guided test sequence remains untested
    beyond what's happened organically — flagged per the user's request
    rather than silently assumed complete.
+
+### Resolution feature: grade a published lean against the final score (2026-08-05/08-06)
+
+Per explicit user request: "just add a button for resolution which asks
+which games to resolve (and also provides options for the games in
+path210.md so I can know whether I want that game to be resolved yet or
+not) and includes the final scores when asking for confirmation." Built
+end-to-end and merged to `www/main` across three commits
+(`8dd37e0`, `7c24199`, `2e77451`) — **not yet deployed to production**,
+see "Next proposed live/production step" below.
+
+**Design, in one sentence:** Python always computes the graded outcome
+(right/wrong/push) and the Past Events entry number from the Sheet's own
+recorded final score and closing lines; Claude only ever authors the
+narrative fields (`entry_slug`, `tags`, `line_movement`, `context_text`,
+`model_lean_text`) — this is the integrity guarantee that stops Claude
+from ever being able to claim a false result.
+
+- **Score data now flows into the Sheet.** `wnba-poller backfill-scores`
+  (chained after `sync-schedule` in the systemd unit, so it runs on the
+  existing daily timer) finds tipped-off games missing a score, fetches
+  each distinct game-date once from ESPN, and only ever writes
+  `away_score`/`home_score` when ESPN reports `status == "final"` — never
+  for in-progress games, consistent with the existing "no live/in-play
+  tracking" principle. New `schema_version` "4" (was "3"); `away_score`/
+  `home_score` inserted into `GAME_HEADERS` right after `home_team`.
+- **Deterministic grading** (`wnba_poller/grading.py`, new file):
+  `grade_side`/`grade_total`/`grade_lean`. Verified against a real result
+  (Mercury @ Dream, 82-96) before anything else was built on top of it.
+- **path210.md conversion** (`wnba_poller/path210_ops.py` additions):
+  `next_past_events_entry_number`, `render_resolution_entry`,
+  `apply_resolution_entry`, `validate_resolution_change` move a
+  game's `WNBA_LEAN_EVENT` block out of Upcoming Events and render it as a
+  numbered Past Events entry, with a diff-based "nothing unrelated
+  changed" check.
+- **New `resolve` revision operation** (`lean_revisions.py`,
+  `lean_workflow.py`'s `execute_resolution`): reuses the existing
+  `wnba_lean_revisions` columns (`operation`/`resulting_status`/
+  `summary`) rather than adding new Sheet columns — deliberately, to
+  avoid a live-schema migration risk (`require_headers()` would have
+  broken on the already-populated production revisions tab). Rejects
+  double-resolution. One commit, same lock/precondition/recovery pattern
+  as `execute_revision`.
+- **`allow_started` fix:** the existing 12-hour "no longer current" guard
+  (correct for blocking fresh *generation* on a stale game) would have
+  incorrectly also blocked *resolving* a game from the previous day —
+  the exact case this feature exists for. Fixed with an explicit
+  `allow_started: bool = False` opt-in threaded through
+  `resolve_current_game` → `build_lean_context`, and through
+  `lean_cli.py`'s `"context"` action so the skill's own context load
+  doesn't hit the same guard. Regression-tested resolving a game 26h
+  post-commence.
+- **`receptionist_helper.py`** (restricted, Sheet-read-only bridge) gained
+  three actions: `list_resolvable_games` (games with an active,
+  not-yet-resolved lean, so the button only ever offers real candidates),
+  `resolve_preview` (final score or a "not final yet" signal, plus a
+  graded preview computed the same way the real resolution will grade
+  it), `build_resolution` (queues the actual Claude skill run).
+- **`/wnba_resolve` in the bot:** lists resolvable games with a status
+  label (`FINAL {away}-{home}` / `in progress` / `not started`); tapping
+  one shows the final score (or a `⚠️ Not final yet` warning) and the
+  deterministic graded preview before asking to confirm; confirming
+  queues the Claude skill run exactly like `/wnba` and `/wnba_undo` do.
+  `WNBA_CALLBACK_PATTERN` extended for `resolve_game:<id>`/`resolve_list`/
+  `resolve_confirm` — proactively this time, having been burned once
+  earlier in the project by forgetting to extend this allowlist for a new
+  button (silent no-op, not an error).
+- **`.claude/skills/wnba-lean/SKILL.md`** documents the new resolve flow
+  as step 4, explicitly telling Claude the helper — not Claude — always
+  computes the result and entry number, and to only state the result
+  after seeing the helper's own returned value.
+- **Tests:** 95 tests pass across both apps
+  (`apps/wnba-poller/tests` + `apps/telegram-receptionist/tests`),
+  including a full local-git-repo integration test of
+  `execute_resolution` end to end and new bot.py coverage for every new
+  UI function and callback pattern. `py_compile` clean on all touched
+  files.
+
+**Next proposed live/production step (NOT yet executed — needs explicit
+confirmation):** deploy the updated `telegram-receptionist` service via
+`request-receptionist-deploy` so `/wnba_resolve` becomes usable in
+production, same as every prior deploy this project. No Sheet
+initialization/clearing is involved — this is a pure code deploy plus the
+already-live `schema_version` "4" header addition, which is additive-only
+and does not touch existing rows.
