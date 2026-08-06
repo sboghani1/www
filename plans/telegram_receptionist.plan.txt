@@ -1028,6 +1028,10 @@ QUICK DECISION AND GUARDRAIL INDEX
   After an unexpected service restart it sends safe guidance to continue
   normally, use `/recover` for an interrupted run, or `/reset` for fresh
   context. Planned deployment restarts suppress this extra message.
+- Deployment-worker bootstrap rule: each successful receptionist deployment
+  installs its own worker into `/usr/local/libexec`. When introducing that rule
+  to an older production worker, run the immutable worker from the approved
+  repository revision once; subsequent standard deployments self-update.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD
