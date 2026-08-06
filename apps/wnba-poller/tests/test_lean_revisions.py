@@ -249,3 +249,57 @@ class TestRevisionToOutput:
         )
         restored = revision_to_output(record)
         assert restored["first_half"] == {}
+
+
+class TestResolveOperation:
+    def test_resolve_sets_resulting_status_resolved(self) -> None:
+        record = _revision("rev-1", operation="resolve")
+        assert record["resulting_status"] == "resolved"
+
+    def test_resolve_is_a_valid_operation(self) -> None:
+        # Should not raise -- "resolve" needed no new Sheet columns, it
+        # reuses operation/resulting_status/summary like every other op.
+        build_revision_event(
+            game=GAME,
+            operation="resolve",
+            output=OUTPUT,
+            request_text="x",
+            source="receptionist",
+            now=_now(),
+            git_base_sha="a" * 40,
+            content_hash="hash",
+            revision_id="rev-1",
+        )
+
+    def test_resolved_revision_still_surfaces_as_active_revision(self) -> None:
+        create = _revision("rev-1")
+        create["requested_at_utc"] = "2026-08-05T22:00:00Z"
+        receipt_1 = build_publication_receipt(
+            revision_id="rev-1",
+            event_id="evt-1",
+            commit_sha="c" * 40,
+            branch="main",
+            now=_now(),
+        )
+        resolve = _revision("rev-2", operation="resolve")
+        resolve["requested_at_utc"] = "2026-08-06T02:00:00Z"
+        resolve["supersedes_revision_id"] = "rev-1"
+        receipt_2 = build_publication_receipt(
+            revision_id="rev-2",
+            event_id="evt-1",
+            commit_sha="d" * 40,
+            branch="main",
+            now=_now(),
+        )
+
+        history = derive_revision_history(
+            [create, receipt_1, resolve, receipt_2], event_id="evt-1"
+        )
+
+        assert history["active_revision"]["revision_id"] == "rev-2"
+        assert history["active_revision"]["effective_status"] == "resolved"
+        statuses = {
+            record["revision_id"]: record["effective_status"]
+            for record in history["revision_history"]
+        }
+        assert statuses == {"rev-1": "superseded", "rev-2": "resolved"}

@@ -4,10 +4,14 @@ import pytest
 
 from wnba_poller.path210_ops import (
     apply_event_block,
+    apply_resolution_entry,
     content_hash,
     get_event_block,
+    next_past_events_entry_number,
     render_event_block,
+    render_resolution_entry,
     validate_event_change,
+    validate_resolution_change,
 )
 
 GAME = {
@@ -223,3 +227,194 @@ class TestContentHash:
     def test_is_deterministic_and_sensitive_to_content(self) -> None:
         assert content_hash("abc") == content_hash("abc")
         assert content_hash("abc") != content_hash("abd")
+
+
+def _resolution_document(*, entries: str = "", event_block: str = "") -> str:
+    return (
+        "# Notes For Model\n\nrules text\n"
+        "\n# Past Events\n\n"
+        f"{entries}"
+        "\n# Model Cache\n\ncache stuff\n"
+        "\n# Upcoming Events\n\n"
+        f"{event_block}\n"
+    )
+
+
+class TestNextPastEventsEntryNumber:
+    def test_increments_from_the_highest_existing_number(self) -> None:
+        document = _resolution_document(
+            entries="1fadesparks\nwrong\ntag\ncontext: x.\n\n5fadeaces\nright\ntag\ncontext: y.\n"
+        )
+        assert next_past_events_entry_number(document) == 6
+
+    def test_starts_at_one_when_no_entries_exist(self) -> None:
+        document = _resolution_document(entries="")
+        assert next_past_events_entry_number(document) == 1
+
+    def test_missing_past_events_section_raises(self) -> None:
+        with pytest.raises(ValueError, match="Past Events"):
+            next_past_events_entry_number("# Notes For Model\n\nno sections here\n")
+
+
+class TestRenderResolutionEntry:
+    def test_renders_all_fields_in_order(self) -> None:
+        text = render_resolution_entry(
+            entry_name="6fademercury",
+            result="wrong",
+            tags="back_favorite,follow_line_movement",
+            line_movement="dream -5.5 (open) -> -7 (close)",
+            context="context: wednesday. faded the dream cover.",
+            model_lean="side (MERCURY +7) -- MISS.",
+        )
+        assert text == (
+            "6fademercury\n"
+            "wrong\n"
+            "back_favorite,follow_line_movement\n"
+            "line movement: dream -5.5 (open) -> -7 (close)\n"
+            "context: wednesday. faded the dream cover.\n"
+            "model_lean: side (MERCURY +7) -- MISS."
+        )
+
+    def test_line_movement_and_model_lean_are_optional(self) -> None:
+        text = render_resolution_entry(
+            entry_name="6fademercury",
+            result="right",
+            tags="tag",
+            line_movement="",
+            context="context: x.",
+            model_lean="",
+        )
+        assert "line movement:" not in text
+        assert "model_lean:" not in text
+
+    def test_rejects_bad_entry_name(self) -> None:
+        with pytest.raises(ValueError, match="invalid path210 resolution entry name"):
+            render_resolution_entry(
+                entry_name="fademercury",
+                result="right",
+                tags="tag",
+                line_movement="",
+                context="context: x.",
+                model_lean="",
+            )
+
+    def test_rejects_bad_result(self) -> None:
+        with pytest.raises(ValueError, match="right, wrong, or push"):
+            render_resolution_entry(
+                entry_name="6fademercury",
+                result="maybe",
+                tags="tag",
+                line_movement="",
+                context="context: x.",
+                model_lean="",
+            )
+
+    def test_rejects_missing_tags(self) -> None:
+        with pytest.raises(ValueError, match="requires tags"):
+            render_resolution_entry(
+                entry_name="6fademercury",
+                result="right",
+                tags="  ",
+                line_movement="",
+                context="context: x.",
+                model_lean="",
+            )
+
+    def test_rejects_context_without_prefix(self) -> None:
+        with pytest.raises(ValueError, match="must start with 'context:'"):
+            render_resolution_entry(
+                entry_name="6fademercury",
+                result="right",
+                tags="tag",
+                line_movement="",
+                context="wednesday, faded the dream.",
+                model_lean="",
+            )
+
+
+class TestApplyAndValidateResolutionEntry:
+    def _block(self) -> str:
+        return render_event_block(
+            game=GAME, revision_id="rev-1", status="active", output=OUTPUT
+        )
+
+    def _entry(self) -> str:
+        return render_resolution_entry(
+            entry_name="6fadeaces",
+            result="right",
+            tags="back_favorite",
+            line_movement="aces -3 (close)",
+            context="context: wednesday. faded the fever.",
+            model_lean="side (ACES -3) -- HIT.",
+        )
+
+    def test_removes_block_and_appends_before_model_cache(self) -> None:
+        block = self._block()
+        before = _resolution_document(
+            entries="1fadesparks\nwrong\ntag\ncontext: x.\n\n",
+            event_block=block,
+        )
+        entry = self._entry()
+
+        after = apply_resolution_entry(
+            before, event_id="evt-1", entry_text=entry
+        )
+
+        assert get_event_block(after, "evt-1") is None
+        assert entry in after
+        # The new entry lands before Model Cache, i.e. within Past Events.
+        assert after.index(entry) < after.index("# Model Cache")
+
+    def test_rejects_when_block_is_missing(self) -> None:
+        before = _resolution_document(entries="", event_block="")
+        with pytest.raises(ValueError, match="does not exist"):
+            apply_resolution_entry(
+                before, event_id="evt-1", entry_text=self._entry()
+            )
+
+    def test_validate_accepts_clean_application(self) -> None:
+        block = self._block()
+        before = _resolution_document(
+            entries="1fadesparks\nwrong\ntag\ncontext: x.\n\n",
+            event_block=block,
+        )
+        entry = self._entry()
+        after = apply_resolution_entry(
+            before, event_id="evt-1", entry_text=entry
+        )
+
+        validate_resolution_change(
+            before, after, event_id="evt-1", entry_text=entry
+        )
+
+    def test_validate_rejects_leftover_block(self) -> None:
+        block = self._block()
+        before = _resolution_document(
+            entries="1fadesparks\nwrong\ntag\ncontext: x.\n\n",
+            event_block=block,
+        )
+        entry = self._entry()
+        # Simulate a bad apply that failed to remove the original block.
+        after = before + "\n" + entry + "\n"
+
+        with pytest.raises(ValueError, match="did not remove"):
+            validate_resolution_change(
+                before, after, event_id="evt-1", entry_text=entry
+            )
+
+    def test_validate_rejects_unrelated_drift(self) -> None:
+        block = self._block()
+        before = _resolution_document(
+            entries="1fadesparks\nwrong\ntag\ncontext: x.\n\n",
+            event_block=block,
+        )
+        entry = self._entry()
+        after = apply_resolution_entry(
+            before, event_id="evt-1", entry_text=entry
+        )
+        tampered = after.replace("rules text", "tampered rules text")
+
+        with pytest.raises(ValueError, match="modified content outside"):
+            validate_resolution_change(
+                before, tampered, event_id="evt-1", entry_text=entry
+            )

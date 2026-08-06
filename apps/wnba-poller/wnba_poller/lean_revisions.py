@@ -110,12 +110,17 @@ def build_revision_event(
     revision_id: str | None = None,
     id_factory: Callable[[], str] = lambda: str(uuid.uuid4()),
 ) -> dict[str, Any]:
-    if operation not in {"create", "revise", "delete", "undo"}:
+    if operation not in {"create", "revise", "delete", "undo", "resolve"}:
         raise ValueError("unsupported lean revision operation")
     revision_id = revision_id or id_factory()
     if not revision_id or len(revision_id) > 100:
         raise ValueError("revision_id is invalid")
-    resulting_status = "deleted" if operation == "delete" else "active"
+    if operation == "delete":
+        resulting_status = "deleted"
+    elif operation == "resolve":
+        resulting_status = "resolved"
+    else:
+        resulting_status = "active"
     metadata = telegram_metadata or {}
     record = {header: "" for header in LEAN_REVISION_HEADERS}
     record.update(
@@ -261,7 +266,12 @@ def derive_revision_history(
         if record.get("operation") == "delete":
             item["effective_status"] = "deleted"
         elif str(record.get("revision_id")) == active_id:
-            item["effective_status"] = "active"
+            # A resolved lean is still the effective "current" state for
+            # the event (the pick is settled, not gone), just tagged
+            # distinctly from a still-open "active" one.
+            item["effective_status"] = (
+                "resolved" if record.get("operation") == "resolve" else "active"
+            )
         else:
             item["effective_status"] = "superseded"
         receipt = next(
@@ -283,7 +293,7 @@ def derive_revision_history(
         (
             record
             for record in history
-            if record.get("effective_status") == "active"
+            if record.get("effective_status") in {"active", "resolved"}
         ),
         None,
     )

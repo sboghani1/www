@@ -57,6 +57,8 @@ class ScheduleGame:
     home_team: str
     venue: str
     broadcast: str
+    away_score: int | None = None
+    home_score: int | None = None
 
 
 @dataclass(frozen=True)

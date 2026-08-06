@@ -6,7 +6,8 @@ from typing import Any, Callable, Protocol
 
 import httpx
 
-from .espn import fetch_schedule
+from .espn import fetch_schedule, fetch_scores_for_date
+from .models import ET, parse_timestamp
 from .odds import OddsClient, OddsFetchResult
 from .scheduler import due_games
 
@@ -63,6 +64,56 @@ def sync_schedule(
         timeout=timeout,
     )
     return store.upsert_schedule(games, now=now)
+
+
+def backfill_scores(
+    store: Store,
+    *,
+    now: datetime,
+    http_client: httpx.Client | None = None,
+    timeout: float = 20,
+) -> tuple[int, int]:
+    """Fill in away_score/home_score for games that have already tipped off
+    but have no recorded score, and have aged out of sync_schedule's
+    forward-looking rolling window.
+    """
+    candidates: dict[str, dict[str, Any]] = {}
+    missing_dates: set[str] = set()
+    for record in store.read_games():
+        if str(record.get("away_score") or "") and str(
+            record.get("home_score") or ""
+        ):
+            continue
+        commence = str(record.get("commence_time_utc") or "")
+        espn_id = str(record.get("espn_event_id") or "")
+        if not commence or not espn_id:
+            continue
+        try:
+            tip = parse_timestamp(commence)
+        except ValueError:
+            continue
+        if tip >= now:
+            continue
+        candidates[espn_id] = record
+        missing_dates.add(tip.astimezone(ET).strftime("%Y%m%d"))
+
+    if not candidates:
+        return 0, 0
+
+    matched = []
+    for date in sorted(missing_dates):
+        fetched = fetch_scores_for_date(
+            date, client=http_client, timeout=timeout
+        )
+        matched.extend(
+            game
+            for game in fetched
+            if game.status == "final" and game.espn_event_id in candidates
+        )
+
+    if not matched:
+        return 0, 0
+    return store.upsert_schedule(matched, now=now)
 
 
 def poll_odds(

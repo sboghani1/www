@@ -48,6 +48,8 @@ GAME_HEADERS = [
     "commence_time_et",
     "away_team",
     "home_team",
+    "away_score",
+    "home_score",
     "venue",
     "broadcast",
     "bookmaker",
@@ -146,7 +148,7 @@ SETTING_DESCRIPTIONS = {
 }
 
 DEFAULT_SETTINGS = {
-    "schema_version": "3",
+    "schema_version": "4",
     "schedule_horizon_days": "14",
     "timezone": "America/New_York",
     "poll_far_minutes": "60",
@@ -214,6 +216,14 @@ def merge_schedule_record(
             "last_updated_at": utc_timestamp(now),
         }
     )
+    # A None score means "ESPN did not report a final score in this
+    # response" (e.g. a routine forward-looking sync sees the game is
+    # still scheduled), not "clear any score already recorded" -- so an
+    # existing score is only ever replaced, never blanked, by a fresh one.
+    if game.away_score is not None:
+        record["away_score"] = game.away_score
+    if game.home_score is not None:
+        record["home_score"] = game.home_score
     if not record.get("last_odds_polled_at"):
         record["next_poll_at"] = utc_timestamp(now)
     return {header: record.get(header, "") for header in GAME_HEADERS}

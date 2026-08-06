@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Sequence
 
 from .config import Config
-from .service import odds_client_factory, poll_odds, sync_schedule
+from .service import backfill_scores, odds_client_factory, poll_odds, sync_schedule
 from .sheets import SheetsStore
 
 
@@ -57,6 +57,13 @@ def _parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "sync-schedule",
         help="Upsert the rolling 14-day ESPN WNBA schedule.",
+    )
+    subparsers.add_parser(
+        "backfill-scores",
+        help=(
+            "Fill in final scores for games that already tipped off but "
+            "have no recorded score."
+        ),
     )
     subparsers.add_parser(
         "poll-odds",
@@ -127,6 +134,15 @@ def _run(args: argparse.Namespace) -> int:
             f"Schedule sync succeeded: {created} game(s) added, "
             f"{updated} game(s) updated."
         )
+        return 0
+
+    if args.command == "backfill-scores":
+        created, updated = backfill_scores(
+            store,
+            now=now,
+            timeout=config.http_timeout_seconds,
+        )
+        print(f"Score backfill succeeded: {updated} game(s) updated.")
         return 0
 
     if args.command == "poll-odds":

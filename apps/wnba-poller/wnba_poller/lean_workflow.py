@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
+from .grading import grade_lean
 from .lean_context import LeanContextStore, build_lean_context
 from .lean_revisions import (
     build_abort_receipt,
@@ -18,9 +19,13 @@ from .lean_revisions import (
 )
 from .path210_ops import (
     apply_event_block,
+    apply_resolution_entry,
     content_hash,
+    next_past_events_entry_number,
     render_event_block,
+    render_resolution_entry,
     validate_event_change,
+    validate_resolution_change,
 )
 
 REQUEST_HEADER = "WNBA_LEAN_REQUEST_V1"
@@ -491,6 +496,156 @@ def execute_revision(
             "commit_sha": commit_sha,
             "operation": operation,
             "event_id": game["event_id"],
+        }
+    except Exception as exc:
+        path210_path.write_text(before, encoding="utf-8")
+        abort = build_abort_receipt(
+            revision_id=revision_id,
+            event_id=str(game["event_id"]),
+            error=str(exc),
+            now=now,
+        )
+        store.append_lean_revision_event(abort)
+        raise
+
+
+def execute_resolution(
+    *,
+    store: RevisionStore,
+    publisher: GitPublisher,
+    path210_path: Path,
+    event_id: str,
+    expected_matchup: str,
+    entry_slug: str,
+    tags: str,
+    line_movement: str,
+    context_text: str,
+    model_lean_text: str,
+    request_text: str,
+    source: str,
+    now: datetime,
+    revision_id_factory: Callable[[], str] = lambda: str(uuid.uuid4()),
+    telegram_metadata: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Convert an active published lean into a graded Past Events entry.
+
+    The deterministic outcome (final score, per-leg right/wrong/push) is
+    computed here from the Sheet's own recorded score and closing lines --
+    never accepted as an argument -- so nothing calling this can claim a
+    result the data doesn't support. `entry_slug`/`tags`/`line_movement`/
+    `context_text`/`model_lean_text` are the only Claude-authored inputs;
+    the entry's leading number and its `result` line are always assembled
+    by this function, not trusted from the caller.
+    """
+    before = path210_path.read_text(encoding="utf-8")
+    context = build_lean_context(
+        store,
+        event_id=event_id,
+        expected_matchup=expected_matchup,
+        path210_document=before,
+        now=now,
+    )
+    game = context["game"]
+    active = context["lean_history"].get("active_revision")
+    if not active:
+        raise ValueError("cannot resolve without an active lean")
+    if active.get("operation") == "resolve":
+        raise ValueError("this lean has already been resolved")
+
+    graded = grade_lean(game=game, active_revision=active)
+    if graded["side"] is None and graded["total"] is None:
+        raise ValueError("active lean has no full-game side or total to grade")
+    primary_result = (
+        graded["side"]["result"] if graded["side"] else graded["total"]["result"]
+    )
+
+    output = revision_to_output(active)
+    outcome_bits = []
+    if graded["side"]:
+        outcome_bits.append(
+            f"Side {graded['side']['selection']} ({graded['side']['line']}): "
+            f"{graded['side']['result'].upper()}"
+        )
+    if graded["total"]:
+        outcome_bits.append(
+            f"Total {graded['total']['selection']} ({graded['total']['line']}): "
+            f"{graded['total']['result'].upper()}"
+        )
+    outcome_stamp = (
+        f"RESOLVED -- Final {game['away_team']} {graded['away_score']}, "
+        f"{game['home_team']} {graded['home_score']}. "
+        + "; ".join(outcome_bits)
+    )
+    resolved_output = {**output, "summary": f"{output['summary']} | {outcome_stamp}"}
+    normalized_output = validate_lean_output(
+        resolved_output,
+        game=game,
+        allowed_snapshot_ids=set(context["snapshot_ids"]),
+    )
+
+    base_sha = publisher.precondition()
+    revision_id = revision_id_factory()
+    entry_number = next_past_events_entry_number(before)
+    entry_name = f"{entry_number}{entry_slug}"
+    entry_text = render_resolution_entry(
+        entry_name=entry_name,
+        result=primary_result,
+        tags=tags,
+        line_movement=line_movement,
+        context=context_text,
+        model_lean=model_lean_text,
+    )
+    after = apply_resolution_entry(
+        before, event_id=str(game["event_id"]), entry_text=entry_text
+    )
+    validate_resolution_change(
+        before,
+        after,
+        event_id=str(game["event_id"]),
+        entry_text=entry_text,
+    )
+    revision = build_revision_event(
+        game=game,
+        operation="resolve",
+        output=normalized_output,
+        request_text=request_text,
+        source=source,
+        now=now,
+        git_base_sha=base_sha,
+        content_hash=content_hash(entry_text),
+        supersedes_revision_id=str(active.get("revision_id") or ""),
+        telegram_metadata=telegram_metadata,
+        revision_id=revision_id,
+    )
+    if not store.append_lean_revision_event(revision):
+        raise ValueError("duplicate lean revision record")
+
+    try:
+        path210_path.write_text(after, encoding="utf-8")
+        commit_sha = publisher.publish(
+            path=path210_path,
+            expected_base_sha=base_sha,
+            commit_message=(
+                f"Resolve WNBA lean for {game['away_team']} "
+                f"at {game['home_team']}"
+            ),
+        )
+        receipt = build_publication_receipt(
+            revision_id=revision_id,
+            event_id=str(game["event_id"]),
+            commit_sha=commit_sha,
+            branch=publisher.branch,
+            now=now,
+        )
+        if not store.append_lean_revision_event(receipt):
+            raise RuntimeError("publication receipt was not recorded")
+        return {
+            "revision_id": revision_id,
+            "commit_sha": commit_sha,
+            "operation": "resolve",
+            "event_id": game["event_id"],
+            "entry_name": entry_name,
+            "result": primary_result,
         }
     except Exception as exc:
         path210_path.write_text(before, encoding="utf-8")

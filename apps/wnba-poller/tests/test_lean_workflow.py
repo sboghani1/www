@@ -13,6 +13,7 @@ from wnba_poller.lean_workflow import (
     _run_command,
     build_request_template,
     build_skill_prompt,
+    execute_resolution,
     execute_revision,
     parse_request_template,
     validate_lean_output,
@@ -424,6 +425,249 @@ class TestDryRun:
             output=VALID_OUTPUT,
             dry_run=True,
         )
+
+
+def _seed_resolvable_document(git_repo: Path) -> None:
+    path210 = git_repo / "apps" / "wnba-poller" / "path210.md"
+    path210.write_text(
+        "# Notes For Model\n\nRules text.\n"
+        "\n# Past Events\n\n"
+        "1fadesparks\nwrong\nsome_tag\ncontext: monday. some context.\n"
+        "\n# Model Cache\n\ncache stuff\n"
+        "\n# Upcoming Events\n\n",
+        encoding="utf-8",
+    )
+    _git(["add", "-A"], git_repo)
+    _git(["commit", "-m", "seed resolution fixture"], git_repo)
+    _git(["push", "origin", "main"], git_repo)
+
+
+class TestExecuteResolution:
+    def test_resolves_using_the_real_mercury_dream_result(
+        self, git_repo: Path
+    ) -> None:
+        _seed_resolvable_document(git_repo)
+        store = FakeStore(
+            game={
+                **GAME,
+                "away_team": "Phoenix Mercury",
+                "home_team": "Atlanta Dream",
+            }
+        )
+        publisher = GitPublisher(repository=git_repo)
+        path210 = git_repo / "apps" / "wnba-poller" / "path210.md"
+
+        create_result = execute_revision(
+            store=store,
+            publisher=publisher,
+            path210_path=path210,
+            event_id="evt-1",
+            expected_matchup="Phoenix Mercury @ Atlanta Dream",
+            operation="create",
+            request_text="generate using standard template",
+            source="receptionist",
+            now=_now(),
+            output={
+                **VALID_OUTPUT,
+                "full_game": {
+                    "side": {
+                        **VALID_OUTPUT["full_game"]["side"],
+                        "selection": "Phoenix Mercury",
+                    },
+                    "total": VALID_OUTPUT["full_game"]["total"],
+                },
+            },
+        )
+
+        # The game has since gone final -- update the store the same way
+        # a real backfill would (never touched by execute_revision above).
+        store.game.update(
+            {
+                "away_score": "82",
+                "home_score": "96",
+                "latest_away_spread": "7",
+                "latest_home_spread": "-7",
+                "latest_total": "181.5",
+            }
+        )
+
+        resolve_result = execute_resolution(
+            store=store,
+            publisher=publisher,
+            path210_path=path210,
+            event_id="evt-1",
+            expected_matchup="Phoenix Mercury @ Atlanta Dream",
+            entry_slug="fademercury",
+            tags="back_favorite,follow_line_movement",
+            line_movement="dream -5.5 (open) -> -7 (close)",
+            context_text="context: wednesday. faded the dream cover.",
+            model_lean_text="side (MERCURY +7) -- MISS; total (OVER 181.5) -- MISS.",
+            request_text="Resolve using the final score.",
+            source="claude-skill",
+            now=_now(),
+        )
+
+        assert resolve_result["operation"] == "resolve"
+        assert resolve_result["result"] == "wrong"
+        assert resolve_result["entry_name"] == "2fademercury"
+
+        content = path210.read_text(encoding="utf-8")
+        assert "WNBA_LEAN_EVENT_START" not in content
+        assert "2fademercury" in content
+        assert content.index("2fademercury") < content.index("# Model Cache")
+
+        history = store.read_game_history(event_id="evt-1")
+        assert history["active_revision"]["revision_id"] == (
+            resolve_result["revision_id"]
+        )
+        assert history["active_revision"]["effective_status"] == "resolved"
+        assert history["active_revision"]["operation"] == "resolve"
+
+        commits = _git(["log", "--oneline"], git_repo).splitlines()
+        assert len(commits) == 4  # init + seed + create + resolve
+
+    def test_cannot_resolve_without_an_active_lean(self, git_repo: Path) -> None:
+        _seed_resolvable_document(git_repo)
+        store = FakeStore()
+        publisher = GitPublisher(repository=git_repo)
+        path210 = git_repo / "apps" / "wnba-poller" / "path210.md"
+
+        with pytest.raises(ValueError, match="cannot resolve without"):
+            execute_resolution(
+                store=store,
+                publisher=publisher,
+                path210_path=path210,
+                event_id="evt-1",
+                expected_matchup="Indiana Fever @ Las Vegas Aces",
+                entry_slug="fadeaces",
+                tags="tag",
+                line_movement="",
+                context_text="context: x.",
+                model_lean_text="",
+                request_text="x",
+                source="claude-skill",
+                now=_now(),
+            )
+
+    def test_cannot_resolve_twice(self, git_repo: Path) -> None:
+        _seed_resolvable_document(git_repo)
+        store = FakeStore(
+            game={
+                **GAME,
+                "away_team": "Phoenix Mercury",
+                "home_team": "Atlanta Dream",
+            }
+        )
+        publisher = GitPublisher(repository=git_repo)
+        path210 = git_repo / "apps" / "wnba-poller" / "path210.md"
+        execute_revision(
+            store=store,
+            publisher=publisher,
+            path210_path=path210,
+            event_id="evt-1",
+            expected_matchup="Phoenix Mercury @ Atlanta Dream",
+            operation="create",
+            request_text="generate using standard template",
+            source="receptionist",
+            now=_now(),
+            output={
+                **VALID_OUTPUT,
+                "full_game": {
+                    "side": {
+                        **VALID_OUTPUT["full_game"]["side"],
+                        "selection": "Phoenix Mercury",
+                    },
+                    "total": VALID_OUTPUT["full_game"]["total"],
+                },
+            },
+        )
+        store.game.update(
+            {
+                "away_score": "82",
+                "home_score": "96",
+                "latest_away_spread": "7",
+                "latest_home_spread": "-7",
+                "latest_total": "181.5",
+            }
+        )
+        kwargs = dict(
+            store=store,
+            publisher=publisher,
+            path210_path=path210,
+            event_id="evt-1",
+            expected_matchup="Phoenix Mercury @ Atlanta Dream",
+            entry_slug="fademercury",
+            tags="tag",
+            line_movement="",
+            context_text="context: x.",
+            model_lean_text="",
+            request_text="x",
+            source="claude-skill",
+            now=_now(),
+        )
+        execute_resolution(**kwargs)
+
+        with pytest.raises(ValueError, match="already been resolved"):
+            execute_resolution(**kwargs)
+
+    def test_dry_run_style_failure_does_not_corrupt_state(
+        self, git_repo: Path
+    ) -> None:
+        _seed_resolvable_document(git_repo)
+        store = FakeStore(
+            game={
+                **GAME,
+                "away_team": "Phoenix Mercury",
+                "home_team": "Atlanta Dream",
+            }
+        )
+        publisher = GitPublisher(repository=git_repo)
+        path210 = git_repo / "apps" / "wnba-poller" / "path210.md"
+        create_result = execute_revision(
+            store=store,
+            publisher=publisher,
+            path210_path=path210,
+            event_id="evt-1",
+            expected_matchup="Phoenix Mercury @ Atlanta Dream",
+            operation="create",
+            request_text="generate using standard template",
+            source="receptionist",
+            now=_now(),
+            output={
+                **VALID_OUTPUT,
+                "full_game": {
+                    "side": {
+                        **VALID_OUTPUT["full_game"]["side"],
+                        "selection": "Phoenix Mercury",
+                    },
+                    "total": VALID_OUTPUT["full_game"]["total"],
+                },
+            },
+        )
+        content_after_create = path210.read_text(encoding="utf-8")
+        # Game has not actually gone final yet -- no score recorded.
+        with pytest.raises(ValueError, match="no recorded final score"):
+            execute_resolution(
+                store=store,
+                publisher=publisher,
+                path210_path=path210,
+                event_id="evt-1",
+                expected_matchup="Phoenix Mercury @ Atlanta Dream",
+                entry_slug="fademercury",
+                tags="tag",
+                line_movement="",
+                context_text="context: x.",
+                model_lean_text="",
+                request_text="x",
+                source="claude-skill",
+                now=_now(),
+            )
+        assert path210.read_text(encoding="utf-8") == content_after_create
+        history = store.read_game_history(event_id="evt-1")
+        assert history["active_revision"]["revision_id"] == (
+            create_result["revision_id"]
+        )
+        assert history["active_revision"]["effective_status"] == "active"
 
 
 class TestExecuteRevisionGuards:

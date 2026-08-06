@@ -98,6 +98,53 @@ def test_schedule_upsert_preserves_manual_and_line_fields() -> None:
     assert merged["user_notes"] == "=keep this exact note"
 
 
+def test_schedule_upsert_writes_final_score() -> None:
+    schedule = ScheduleGame(
+        espn_event_id="espn-1",
+        status="final",
+        commence_time_utc="2026-08-05T23:00:00Z",
+        commence_time_et="2026-08-05T19:00:00-04:00",
+        away_team="Atlanta Dream",
+        home_team="New York Liberty",
+        venue="Arena",
+        broadcast="ESPN",
+        away_score=82,
+        home_score=96,
+    )
+
+    merged = merge_schedule_record(None, schedule, now=NOW)
+
+    assert merged["away_score"] == 82
+    assert merged["home_score"] == 96
+    assert merged["status"] == "final"
+
+
+def test_schedule_upsert_never_blanks_an_existing_score() -> None:
+    existing = {
+        "event_id": "odds-1",
+        "away_score": 82,
+        "home_score": 96,
+        "status": "final",
+    }
+    schedule = ScheduleGame(
+        espn_event_id="espn-1",
+        status="final",
+        commence_time_utc="2026-08-05T23:00:00Z",
+        commence_time_et="2026-08-05T19:00:00-04:00",
+        away_team="Atlanta Dream",
+        home_team="New York Liberty",
+        venue="Arena",
+        broadcast="ESPN",
+        # No score on this pass -- e.g. a routine forward sync response
+        # that didn't happen to include this now-past game.
+    )
+
+    merged = merge_schedule_record(existing, schedule, now=NOW)
+
+    assert merged["away_score"] == 82
+    assert merged["home_score"] == 96
+
+
 def test_opening_is_preserved_while_latest_changes() -> None:
     first = apply_odds_lines({}, _lines(away_spread=4.5), now=NOW)
     later = apply_odds_lines(

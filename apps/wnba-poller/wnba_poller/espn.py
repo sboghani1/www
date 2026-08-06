@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -58,6 +59,16 @@ def _venue(competition: dict[str, Any]) -> str:
     return ", ".join(part for part in parts if part)
 
 
+def _score(competitor: dict[str, Any]) -> int | None:
+    raw = competitor.get("score")
+    if raw in (None, ""):
+        return None
+    try:
+        return int(str(raw))
+    except ValueError:
+        return None
+
+
 def _broadcast(competition: dict[str, Any]) -> str:
     names: list[str] = []
     for item in competition.get("broadcasts") or []:
@@ -86,6 +97,7 @@ def parse_schedule(payload: dict[str, Any]) -> list[ScheduleGame]:
                 raise ValueError("expected two competitors")
 
             teams: dict[str, str] = {}
+            scores: dict[str, int | None] = {}
             for competitor in competitors:
                 side = str(competitor.get("homeAway") or "")
                 team = competitor.get("team") or {}
@@ -94,6 +106,7 @@ def parse_schedule(payload: dict[str, Any]) -> list[ScheduleGame]:
                 )
                 if side in {"away", "home"} and name:
                     teams[side] = name
+                    scores[side] = _score(competitor)
             if set(teams) != {"away", "home"}:
                 raise ValueError("missing home or away team")
 
@@ -101,16 +114,24 @@ def parse_schedule(payload: dict[str, Any]) -> list[ScheduleGame]:
             event_id = str(event["id"])
             if not event_id:
                 raise ValueError("missing event id")
+            status = _status(event)
+            # Only a completed game has a meaningful final score. This
+            # poller never tracks in-play/live scores, so a "scheduled" or
+            # "in_progress" score (often "0" or absent) is deliberately
+            # dropped rather than stored as if it were final.
+            final = status == "final"
             games.append(
                 ScheduleGame(
                     espn_event_id=event_id,
-                    status=_status(event),
+                    status=status,
                     commence_time_utc=utc_timestamp(commence),
                     commence_time_et=eastern_timestamp(commence),
                     away_team=teams["away"],
                     home_team=teams["home"],
                     venue=_venue(competition),
                     broadcast=_broadcast(competition),
+                    away_score=scores.get("away") if final else None,
+                    home_score=scores.get("home") if final else None,
                 )
             )
         except (KeyError, TypeError, ValueError):
@@ -121,14 +142,12 @@ def parse_schedule(payload: dict[str, Any]) -> list[ScheduleGame]:
     return sorted(games, key=lambda game: game.commence_time_utc)
 
 
-def fetch_schedule(
+def _fetch_for_date_query(
+    date_query: str,
     *,
-    now: datetime,
-    days: int = 14,
     client: httpx.Client | None = None,
     timeout: float = 20,
 ) -> list[ScheduleGame]:
-    start, end = rolling_date_range(now, days=days)
     owns_client = client is None
     if client is None:
         client = httpx.Client(timeout=timeout)
@@ -136,7 +155,7 @@ def fetch_schedule(
         try:
             response = client.get(
                 ESPN_SCOREBOARD_URL,
-                params={"dates": f"{start}-{end}", "limit": "500"},
+                params={"dates": date_query, "limit": "500"},
                 headers={"User-Agent": "wnba-poller/0.1"},
             )
         except httpx.HTTPError as exc:
@@ -152,3 +171,32 @@ def fetch_schedule(
     finally:
         if owns_client:
             client.close()
+
+
+def fetch_schedule(
+    *,
+    now: datetime,
+    days: int = 14,
+    client: httpx.Client | None = None,
+    timeout: float = 20,
+) -> list[ScheduleGame]:
+    start, end = rolling_date_range(now, days=days)
+    return _fetch_for_date_query(
+        f"{start}-{end}", client=client, timeout=timeout
+    )
+
+
+def fetch_scores_for_date(
+    date: str,
+    *,
+    client: httpx.Client | None = None,
+    timeout: float = 20,
+) -> list[ScheduleGame]:
+    """Fetch ESPN's scoreboard for one specific Eastern date (YYYYMMDD).
+
+    Used to backfill final scores for games that have already aged out of
+    the forward-looking rolling window `fetch_schedule` covers.
+    """
+    if not re.fullmatch(r"\d{8}", date):
+        raise ValueError("date must be an 8-digit YYYYMMDD string")
+    return _fetch_for_date_query(date, client=client, timeout=timeout)

@@ -77,3 +77,66 @@ def test_changed_espn_shape_fails_visibly() -> None:
 def test_all_malformed_events_fail_instead_of_clearing_schedule() -> None:
     with pytest.raises(ValueError, match="no parseable"):
         parse_schedule({"events": [{"id": "broken"}]})
+
+
+def _final_payload(*, away_score: str = "82", home_score: str = "96") -> dict:
+    return {
+        "events": [
+            {
+                "id": "402",
+                "date": "2026-08-05T23:00:00Z",
+                "status": {
+                    "type": {
+                        "name": "STATUS_FINAL",
+                        "state": "post",
+                        "completed": True,
+                    }
+                },
+                "competitions": [
+                    {
+                        "competitors": [
+                            {
+                                "homeAway": "home",
+                                "team": {"displayName": "Atlanta Dream"},
+                                "score": home_score,
+                            },
+                            {
+                                "homeAway": "away",
+                                "team": {"displayName": "Phoenix Mercury"},
+                                "score": away_score,
+                            },
+                        ],
+                    }
+                ],
+            }
+        ]
+    }
+
+
+def test_final_game_captures_scores() -> None:
+    games = parse_schedule(_final_payload())
+
+    assert len(games) == 1
+    game = games[0]
+    assert game.status == "final"
+    assert game.away_score == 82
+    assert game.home_score == 96
+
+
+def test_scheduled_game_has_no_score_even_if_espn_sends_zero() -> None:
+    payload = _payload()
+    for competitor in payload["events"][0]["competitions"][0]["competitors"]:
+        competitor["score"] = "0"
+
+    games = parse_schedule(payload)
+
+    assert games[0].status == "scheduled"
+    assert games[0].away_score is None
+    assert games[0].home_score is None
+
+
+def test_final_game_with_unparseable_score_leaves_it_none() -> None:
+    games = parse_schedule(_final_payload(away_score="", home_score="TBD"))
+
+    assert games[0].away_score is None
+    assert games[0].home_score is None
