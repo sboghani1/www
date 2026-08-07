@@ -10,6 +10,7 @@ from telegram.error import TelegramError
 from receptionist.bot import (
     DIAGNOSE_DEPLOYMENT_MENU_TEXT,
     RECOVER_MENU_TEXT,
+    WNBA_RESOLVE_MENU_TEXT,
     Receptionist,
 )
 from receptionist.config import Config, RepositoryConfig
@@ -499,6 +500,9 @@ def test_start_exposes_persistent_recovery_menu(tmp_path: Path) -> None:
     assert tuple(button.text for button in markup.keyboard[0]) == (
         RECOVER_MENU_TEXT,
         DIAGNOSE_DEPLOYMENT_MENU_TEXT,
+    )
+    assert tuple(button.text for button in markup.keyboard[1]) == (
+        WNBA_RESOLVE_MENU_TEXT,
     )
 
 

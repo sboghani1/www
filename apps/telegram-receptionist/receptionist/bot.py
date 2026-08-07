@@ -42,6 +42,7 @@ log = logging.getLogger("receptionist")
 SELF_DEPLOY_WORKER = "/usr/local/libexec/deploy-telegram-receptionist-worker"
 RECOVER_MENU_TEXT = "♻️ Recover"
 DIAGNOSE_DEPLOYMENT_MENU_TEXT = "/agent-try-recovery"
+WNBA_RESOLVE_MENU_TEXT = "🏁 Resolve WNBA"
 
 Handler = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
 MAX_CALLBACK_BYTES = 64
@@ -344,7 +345,10 @@ class Receptionist:
     @staticmethod
     def recovery_menu() -> ReplyKeyboardMarkup:
         return ReplyKeyboardMarkup(
-            [[RECOVER_MENU_TEXT, DIAGNOSE_DEPLOYMENT_MENU_TEXT]],
+            [
+                [RECOVER_MENU_TEXT, DIAGNOSE_DEPLOYMENT_MENU_TEXT],
+                [WNBA_RESOLVE_MENU_TEXT],
+            ],
             resize_keyboard=True,
             is_persistent=True,
         )
@@ -601,6 +605,11 @@ class Receptionist:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         await self.recover(update, context)
+
+    async def wnba_resolve_menu_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        await self.wnba_resolve(update, context)
 
     async def recover_button(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -1766,6 +1775,12 @@ def build_application(config: Config) -> Application:
             receptionist.authorized(
                 receptionist.diagnose_deployment_menu_button
             ),
+        )
+    )
+    application.add_handler(
+        MessageHandler(
+            filters.Regex(f"^{re.escape(WNBA_RESOLVE_MENU_TEXT)}$"),
+            receptionist.authorized(receptionist.wnba_resolve_menu_button),
         )
     )
     application.add_handler(
