@@ -15,11 +15,17 @@ status_written=0
 failure_message="Deployment worker failed before completion."
 cleanup_release=0
 
-exec 9>"$lock"
-flock -n 9 || {
-    echo "A receptionist deployment is already running." >&2
+if [[ "${RECEPTIONIST_DEPLOY_LOCK_HELD:-0}" != "1" ]]; then
+    exec 9>"$lock"
+    flock -n 9 || {
+        echo "A receptionist deployment is already running." >&2
+        exit 1
+    }
+    export RECEPTIONIST_DEPLOY_LOCK_HELD=1
+elif ! : >&9 2>/dev/null; then
+    echo "Inherited deployment lock was lost during worker re-exec." >&2
     exit 1
-}
+fi
 
 as_agent() {
     runuser -u receptionist-agent -- "$@"
@@ -144,6 +150,15 @@ if [[ ! -d "$release" ]]; then
     cleanup_release=0
 fi
 
+release_worker="$release/$app_rel/deploy/deploy-telegram-receptionist-worker"
+installed_worker="/usr/local/libexec/deploy-telegram-receptionist-worker"
+if [[ "${RECEPTIONIST_DEPLOY_WORKER_REVISION:-}" != "$revision" ]] &&
+    ! cmp -s "$release_worker" "$installed_worker"; then
+    install -m 0755 -o root -g root "$release_worker" "$installed_worker"
+    export RECEPTIONIST_DEPLOY_WORKER_REVISION="$revision"
+    exec "$installed_worker"
+fi
+
 failure_message="Installation failed."
 install -m 0644 -o receptionist-agent -g receptionist-agent \
     "$release/$app_rel/deploy/workspace-CLAUDE.md" \
@@ -160,8 +175,7 @@ install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/receptionist-deploy-executor" \
     /usr/local/libexec/receptionist-deploy-executor
 install -m 0755 -o root -g root \
-    "$release/$app_rel/deploy/deploy-telegram-receptionist-worker" \
-    /usr/local/libexec/deploy-telegram-receptionist-worker
+    "$release_worker" "$installed_worker"
 install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/receptionist-agent-runner" \
     /usr/local/libexec/receptionist-agent-runner

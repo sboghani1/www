@@ -1036,6 +1036,11 @@ QUICK DECISION AND GUARDRAIL INDEX
   installs its own worker into `/usr/local/libexec`. When introducing that rule
   to an older production worker, run the immutable worker from the approved
   repository revision once; subsequent standard deployments self-update.
+- Deployment-worker same-run re-exec: when the approved release contains a
+  newer worker, the running worker atomically installs it and re-execs under
+  the inherited deployment lock before infrastructure installation. This lets
+  new root-owned helpers, units, and sudoers rules install in the same approval
+  instead of requiring a second bootstrap deployment.
 - Host recovery permission boundary: `receptionist-agent` may run one fixed
   root helper in read-only `diagnose` mode. It compares the caller mount
   namespace with PID 1's host namespace, probes only `/opt`, `/etc`, and
