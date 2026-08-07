@@ -1,0 +1,3 @@
+#!/bin/sh
+exec /opt/telegram-receptionist/current/.venv/bin/python \
+    -m receptionist.host_recovery "$@"

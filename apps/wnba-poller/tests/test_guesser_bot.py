@@ -256,7 +256,7 @@ def _state() -> dict:
         "market": "total",
         "side": "under",
         "prompt_message_id": 100,
-        "expires_at": NOW + timedelta(days=1),
+        "expires_at": datetime.now(UTC) + timedelta(days=1),
         "completed_message_ids": set(),
     }
 

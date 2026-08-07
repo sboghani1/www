@@ -180,6 +180,16 @@ sudo /usr/local/sbin/install-wnba-poller \
   --enable-timers --enable-guesser-bot
 ```
 
+From the receptionist approval broker, run the installer outside the
+read-only service namespace and pipe its real output back:
+
+```bash
+systemd-run --unit=wnba-poller-install-$(date +%s) \
+  --collect --wait --pipe \
+  /bin/bash /home/receptionist/repos/www/apps/wnba-poller/deploy/install-wnba-poller \
+  --enable-timers --enable-guesser-bot
+```
+
 Both jobs run as `receptionist-agent` and share one nonblocking `flock`. The
 15-minute service polls due odds and reconciles direct-Sheet thoughts. The
 schedule timer runs daily at 5:20 AM America/New_York. Services use a 96 MB

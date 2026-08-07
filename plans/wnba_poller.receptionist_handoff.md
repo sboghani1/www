@@ -481,7 +481,7 @@ manually, once each, from this session.
   current HEAD each time (this repo has other concurrent work landing on
   `main`; HEAD moved between submissions) and, for the final one, wrapped
   the command in `systemd-run --unit=wnba-poller-install-$(date +%s)
-  --collect --wait ...` per the workspace's detached-root-installer
+  --collect --wait --pipe ...` per the workspace's detached-root-installer
   convention. **Request `af7c98a7-99ca-45f5-b433-85540b2bad6f`
   (HEAD `c0824ae`) was approved and executed successfully.**
 - **Systemd install CONFIRMED SUCCESSFUL (2026-08-05).** Verified by direct
@@ -500,6 +500,16 @@ manually, once each, from this session.
     now exists (created by root during install), owned by
     `receptionist-agent`, with an empty `env` file inside — exactly as
     designed, unblocking step 2 below.
+- **2026-08-06 deployment incident correction:** the VPS root filesystem was
+  healthy and mounted `rw`; root write probes under `/opt`, `/etc`, and
+  `/usr/local` succeeded and the boot's kernel journal had no ext4/I/O errors.
+  The `ro,...,errors=remount-ro` view came from the receptionist service's
+  intended `ProtectSystem=strict` namespace. A direct installer request failed
+  in that sandbox, while the detached request reached the full test suite and
+  failed on two Guesser tests whose `expires_at` fixture was fixed to August 6
+  and had expired overnight. The fixture now uses `datetime.now() + 1 day`,
+  and future detached requests use `--wait --pipe` so the actual failing test
+  output returns through the approval broker.
 - **Step 2 done: populated `/home/receptionist-agent/.config/wnba-guesser/env`**
   directly (no root needed — I now own that directory), from the pre-staged
   `/home/receptionist-agent/.config/wnba-poller/telegram-token`

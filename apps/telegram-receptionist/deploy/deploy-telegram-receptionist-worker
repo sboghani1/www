@@ -172,6 +172,9 @@ install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/receptionist-watchdog-helper" \
     /usr/local/libexec/receptionist-watchdog-helper
 install -m 0755 -o root -g root \
+    "$release/$app_rel/deploy/receptionist-host-recovery" \
+    /usr/local/libexec/receptionist-host-recovery
+install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/configure-receptionist-watchdog" \
     /usr/local/sbin/configure-receptionist-watchdog
 id -u receptionist-watchdog >/dev/null 2>&1 || \

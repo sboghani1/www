@@ -38,4 +38,18 @@ This directory is the root of a private coding workspace.
 - For the receptionist itself, the detached command is:
   `systemd-run --unit=telegram-receptionist-deploy-$(date +%s) --collect /usr/local/libexec/deploy-telegram-receptionist-worker`
 - Use the same pattern for other root installers, with a unique unit name and
-  `--wait` when the approval result must reflect installer success or failure.
+  `--wait --pipe` when the approval result must reflect installer success or
+  failure and include its actual output.
+- The receptionist service intentionally sees `/` as read-only. Never infer a
+  host filesystem incident from `findmnt` or a write test in the service/agent
+  namespace. Run the fixed read-only diagnostic instead:
+  `sudo -n /usr/local/libexec/receptionist-host-recovery diagnose`.
+- `errors=remount-ro` is a normal ext4 safety option even while the filesystem
+  is healthy and mounted `rw`; it is not evidence of an error by itself.
+- If diagnostics prove the host root is actually `ro`, create a normal
+  immutable deployment request for this exact guarded repair:
+  `systemd-run --unit=receptionist-root-recovery-$(date +%s) --collect --wait --pipe /usr/local/libexec/receptionist-host-recovery remount-root-rw`.
+  The helper refuses to remount when kernel filesystem/I/O errors are present;
+  that case requires provider recovery and offline `fsck`.
+- WNBA installer requests must use:
+  `systemd-run --unit=wnba-poller-install-$(date +%s) --collect --wait --pipe /bin/bash /home/receptionist/repos/www/apps/wnba-poller/deploy/install-wnba-poller --enable-timers --enable-guesser-bot`.
