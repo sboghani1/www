@@ -7,6 +7,9 @@ from pathlib import Path
 TRUSTED_REPO_ROOT = Path("/home/receptionist/repos").resolve()
 TRUSTED_CLAUDE_BINARY = "/usr/bin/claude"
 TRUSTED_WNBA_HELPER = "/usr/local/libexec/receptionist-wnba-helper"
+DEFAULT_CLAUDE_MODEL = "claude-opus-4-8"
+DEFAULT_CLAUDE_EFFORT = "medium"
+CLAUDE_EFFORT_LEVELS = {"low", "medium", "high", "xhigh", "max"}
 
 
 @dataclass(frozen=True)
@@ -33,6 +36,7 @@ class Config:
     agent_timeout_seconds: int
     max_queued_messages: int
     model: str | None
+    effort: str | None = None
 
     @property
     def database_path(self) -> Path:
@@ -108,7 +112,12 @@ class Config:
             wnba_helper_timeout_seconds=wnba_timeout,
             agent_timeout_seconds=timeout,
             max_queued_messages=queue_limit,
-            model=os.getenv("CLAUDE_MODEL") or None,
+            model=os.getenv("CLAUDE_MODEL", DEFAULT_CLAUDE_MODEL) or None,
+            effort=_optional_choice(
+                "CLAUDE_EFFORT",
+                DEFAULT_CLAUDE_EFFORT,
+                CLAUDE_EFFORT_LEVELS,
+            ),
         )
 
 
@@ -123,4 +132,16 @@ def _positive_int(name: str, default: int) -> int:
     value = int(os.getenv(name, str(default)))
     if value <= 0:
         raise ValueError(f"{name} must be positive")
+    return value
+
+
+def _optional_choice(
+    name: str, default: str, choices: set[str]
+) -> str | None:
+    value = os.getenv(name, default).strip().lower()
+    if not value:
+        return None
+    if value not in choices:
+        allowed = ", ".join(sorted(choices))
+        raise ValueError(f"{name} must be one of: {allowed}")
     return value

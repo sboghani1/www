@@ -11,6 +11,23 @@ def test_build_command_keeps_prompt_as_one_exact_argument() -> None:
     assert command[-2:] == ["--resume", "session-1"]
 
 
+def test_build_command_sets_model_and_effort() -> None:
+    command = build_command(
+        "/usr/bin/claude",
+        "prompt",
+        None,
+        "claude-opus-4-8",
+        "medium",
+    )
+
+    assert command[-4:] == [
+        "--model",
+        "claude-opus-4-8",
+        "--effort",
+        "medium",
+    ]
+
+
 def test_parse_result_captures_response_and_session() -> None:
     result = ProviderResult()
     event_type, _ = parse_event(

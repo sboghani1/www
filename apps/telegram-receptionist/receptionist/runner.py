@@ -24,6 +24,19 @@ from .providers.claude_cli import build_command, parse_event
 log = logging.getLogger("receptionist.runner")
 
 
+async def read_stream_line(reader: asyncio.StreamReader) -> bytes:
+    chunks: list[bytes] = []
+    while True:
+        try:
+            chunks.append(await reader.readuntil(b"\n"))
+            return b"".join(chunks)
+        except asyncio.LimitOverrunError as error:
+            chunks.append(await reader.read(error.consumed))
+        except asyncio.IncompleteReadError as error:
+            chunks.append(error.partial)
+            return b"".join(chunks)
+
+
 class AgentRunner:
     def __init__(self, config: Config, database: Database, bot: Bot) -> None:
         self.config = config
@@ -187,6 +200,7 @@ class AgentRunner:
             run["exact_prompt"],
             run["provider_session_id"],
             self.config.model,
+            self.config.effort,
         )
         status_message = await self.bot.send_message(
             run["telegram_chat_id"],
@@ -609,7 +623,7 @@ class AgentRunner:
     ) -> None:
         assert process.stdout is not None
         sequence = 0
-        while line_bytes := await process.stdout.readline():
+        while line_bytes := await read_stream_line(process.stdout):
             line = line_bytes.decode("utf-8", errors="replace").rstrip("\n")
             if not line:
                 continue
@@ -632,7 +646,7 @@ class AgentRunner:
         self, process: asyncio.subprocess.Process, lines: list[str]
     ) -> None:
         assert process.stderr is not None
-        while line_bytes := await process.stderr.readline():
+        while line_bytes := await read_stream_line(process.stderr):
             line = line_bytes.decode("utf-8", errors="replace").rstrip()
             if line:
                 lines.append(line)

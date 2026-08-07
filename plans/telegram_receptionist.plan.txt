@@ -1069,6 +1069,10 @@ QUICK DECISION AND GUARDRAIL INDEX
   `/agent-try-recovery`. The latter resolves the latest failed deployment when
   pressed rather than embedding a potentially stale request identifier, then
   uses the same one-run atomic diagnosis path.
+- Claude runs default explicitly to `claude-opus-4-8` with `medium` effort.
+  Provider stdout and stderr use unbounded newline reads so large stream-json
+  tool events cannot exceed asyncio's default 64 KiB line limit and deadlock
+  the privileged launcher while it waits for the receptionist to drain output.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD

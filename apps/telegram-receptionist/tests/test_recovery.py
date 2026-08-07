@@ -10,7 +10,7 @@ import receptionist.runner as runner_module
 from receptionist.config import RepositoryConfig
 from receptionist.database import Database
 from receptionist.runner import AgentRunner
-from receptionist.runner import next_update_label
+from receptionist.runner import next_update_label, read_stream_line
 
 
 class FakeBot:
@@ -53,6 +53,20 @@ class MissingProcess:
     async def wait(self) -> int:
         await asyncio.Event().wait()
         return 0
+
+
+def test_read_stream_line_handles_oversized_provider_event() -> None:
+    async def read() -> bytes:
+        reader = asyncio.StreamReader(limit=64)
+        event = b'{"type":"assistant","payload":"' + b"x" * 72_000 + b'"}\n'
+        reader.feed_data(event)
+        reader.feed_eof()
+        return await read_stream_line(reader)
+
+    line = asyncio.run(read())
+
+    assert len(line) > 72_000
+    assert line.endswith(b"\n")
 
 
 def _finished_run(tmp_path: Path) -> tuple[Database, dict]:

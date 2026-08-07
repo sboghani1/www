@@ -11,6 +11,7 @@ def build_command(
     prompt: str,
     provider_session_id: str | None,
     model: str | None,
+    effort: str | None = None,
 ) -> list[str]:
     command = [
         binary,
@@ -26,6 +27,8 @@ def build_command(
         command.extend(["--resume", provider_session_id])
     if model:
         command.extend(["--model", model])
+    if effort:
+        command.extend(["--effort", effort])
     return command
 
 

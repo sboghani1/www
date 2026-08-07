@@ -536,6 +536,8 @@ class Receptionist:
     ) -> None:
         await update.message.reply_text(
             "Provider: Claude Code CLI\n"
+            f"Model: {self.config.model or 'Claude Code default'}\n"
+            f"Effort: {self.config.effort or 'Claude Code default'}\n"
             "Copilot and Codex adapters are planned but not enabled."
         )
 
