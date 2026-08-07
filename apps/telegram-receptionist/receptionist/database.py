@@ -124,7 +124,8 @@ class Database:
                     exit_code INTEGER,
                     output TEXT,
                     error TEXT,
-                    recovered_from_id TEXT
+                    recovered_from_id TEXT,
+                    diagnosis_run_id TEXT REFERENCES runs(id)
                 );
 
                 CREATE TABLE IF NOT EXISTS wnba_selections (
@@ -198,11 +199,16 @@ class Database:
                 "PRAGMA table_info(deployment_requests)"
             )
         }
-        if "recovered_from_id" not in existing:
-            connection.execute(
-                "ALTER TABLE deployment_requests "
-                "ADD COLUMN recovered_from_id TEXT"
-            )
+        columns = {
+            "recovered_from_id": "TEXT",
+            "diagnosis_run_id": "TEXT REFERENCES runs(id)",
+        }
+        for name, definition in columns.items():
+            if name not in existing:
+                connection.execute(
+                    f"ALTER TABLE deployment_requests "
+                    f"ADD COLUMN {name} {definition}"
+                )
 
     def set_wnba_selection(
         self,
@@ -970,6 +976,66 @@ class Database:
                     (user_id, limit),
                 )
             ]
+
+    def latest_deployment_request(
+        self, user_id: int
+    ) -> dict[str, Any] | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT * FROM deployment_requests
+                WHERE telegram_user_id=?
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                (user_id,),
+            ).fetchone()
+            return dict(row) if row else None
+
+    def enqueue_deployment_diagnosis(
+        self,
+        *,
+        request_id: str,
+        user_id: int,
+        session_id: str,
+        chat_id: int,
+        exact_prompt: str,
+    ) -> tuple[dict[str, Any], bool]:
+        run_id = str(uuid.uuid4())
+        created = False
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            request = connection.execute(
+                """
+                SELECT status, diagnosis_run_id FROM deployment_requests
+                WHERE id=? AND telegram_user_id=?
+                """,
+                (request_id, user_id),
+            ).fetchone()
+            if request is None or request["status"] != "failed":
+                raise LookupError("Failed deployment request was not found.")
+            existing_run_id = request["diagnosis_run_id"]
+            if existing_run_id:
+                run_id = str(existing_run_id)
+            else:
+                connection.execute(
+                    """
+                    INSERT INTO runs(
+                        id, session_id, telegram_chat_id, exact_prompt,
+                        status, created_at
+                    ) VALUES (?, ?, ?, ?, 'queued', ?)
+                    """,
+                    (run_id, session_id, chat_id, exact_prompt, utc_now()),
+                )
+                connection.execute(
+                    """
+                    UPDATE deployment_requests SET diagnosis_run_id=?
+                    WHERE id=? AND diagnosis_run_id IS NULL
+                    """,
+                    (run_id, request_id),
+                )
+                created = True
+            connection.commit()
+        return self.get_run(run_id), created
 
     def latest_head_changed_deployment(
         self, user_id: int

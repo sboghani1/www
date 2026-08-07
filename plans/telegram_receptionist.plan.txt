@@ -1057,6 +1057,14 @@ QUICK DECISION AND GUARDRAIL INDEX
   stale overnight. `errors=remount-ro` was misread as evidence rather than a
   configured policy. The fixture now uses a relative future expiry, detached
   installs pipe their logs, and host diagnostics compare both namespaces.
+- `/recover` non-determinism boundary: `/recover` itself remains deterministic
+  and never starts Claude, replays prompts, or retries failed root commands. If
+  the newest deployment failure cannot be repaired deterministically, its
+  response includes an explicit `Diagnose & fix deployment` button. Pressing
+  that button is a separate user authorization that atomically queues one
+  bounded `DEPLOYMENT_DIAGNOSIS_V1` agent turn linked to the failed request.
+  The record is delimited as data, duplicate presses reuse the same run, and
+  the agent may fix/commit/push and request fresh approval but never approve.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD

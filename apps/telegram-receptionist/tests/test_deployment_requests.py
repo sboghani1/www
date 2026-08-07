@@ -3,7 +3,7 @@ import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 from telegram.error import TelegramError
 
@@ -15,9 +15,11 @@ from receptionist.database import Database
 class FakeMessage:
     def __init__(self) -> None:
         self.replies: list[str] = []
+        self.reply_markups: list[object] = []
 
-    async def reply_text(self, text: str) -> None:
+    async def reply_text(self, text: str, **kwargs) -> None:
         self.replies.append(text)
+        self.reply_markups.append(kwargs.get("reply_markup"))
 
 
 def test_request_file_is_copied_into_database_and_removed(tmp_path: Path) -> None:
@@ -385,3 +387,153 @@ def test_planned_deployment_suppresses_restart_guidance(tmp_path: Path) -> None:
     asyncio.run(receptionist._notify_unexpected_restart(application))
 
     application.bot.send_message.assert_not_awaited()
+
+
+def test_recover_offers_explicit_deployment_diagnosis_button(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repos"
+    repository = repo_root / "www"
+    repository.mkdir(parents=True)
+    config = Config(
+        telegram_token="test-token",
+        allowed_user_id=123,
+        repo_root=repo_root,
+        repositories=(RepositoryConfig("workspace", repo_root),),
+        state_dir=tmp_path / "state",
+        claude_binary="/usr/bin/claude",
+        agent_launcher="/launcher",
+        agent_killer="/killer",
+        deploy_request_dir=repo_root / ".receptionist" / "deploy-requests",
+        deploy_executor="/executor",
+        deploy_timeout_seconds=900,
+        wnba_helper="/wnba-helper",
+        wnba_helper_timeout_seconds=45,
+        agent_timeout_seconds=3600,
+        max_queued_messages=10,
+        model=None,
+    )
+    database = Database(config.database_path)
+    database.initialize(config.repositories)
+    database.ensure_user_state(123, 456)
+    now = datetime.now(UTC)
+    request_id = "88888888-8888-4888-8888-888888888888"
+    database.import_deployment_request(
+        request_id=request_id,
+        user_id=123,
+        repository_path=str(repository),
+        revision="a" * 40,
+        command="deploy command",
+        summary="Deploy failed change",
+        created_at=now.isoformat(),
+        expires_at=(now + timedelta(minutes=15)).isoformat(),
+    )
+    database.approve_deployment_request(request_id)
+    database.start_deployment_request(request_id)
+    database.finish_deployment_request(
+        request_id,
+        status="failed",
+        exit_code=1,
+        output="tests failed",
+        error="Executor exited with status 1.",
+    )
+    receptionist = Receptionist(config, database)
+    receptionist.runner = SimpleNamespace(
+        recover=AsyncMock(return_value="No run recovery needed.")
+    )
+    receptionist._recover_stale_deployment = AsyncMock(return_value="")
+    message = FakeMessage()
+    update = SimpleNamespace(
+        effective_user=SimpleNamespace(id=123),
+        message=message,
+    )
+
+    asyncio.run(receptionist.recover(update, SimpleNamespace()))
+
+    markup = message.reply_markups[-1]
+    assert (
+        markup.inline_keyboard[0][0].callback_data
+        == f"deploy:diagnose:{request_id}"
+    )
+    assert "deterministic recovery will not replay it" in message.replies[-1]
+
+
+def test_deployment_diagnosis_button_queues_once(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repos"
+    repository = repo_root / "www"
+    repository.mkdir(parents=True)
+    config = Config(
+        telegram_token="test-token",
+        allowed_user_id=123,
+        repo_root=repo_root,
+        repositories=(RepositoryConfig("workspace", repo_root),),
+        state_dir=tmp_path / "state",
+        claude_binary="/usr/bin/claude",
+        agent_launcher="/launcher",
+        agent_killer="/killer",
+        deploy_request_dir=repo_root / ".receptionist" / "deploy-requests",
+        deploy_executor="/executor",
+        deploy_timeout_seconds=900,
+        wnba_helper="/wnba-helper",
+        wnba_helper_timeout_seconds=45,
+        agent_timeout_seconds=3600,
+        max_queued_messages=10,
+        model=None,
+    )
+    database = Database(config.database_path)
+    database.initialize(config.repositories)
+    database.ensure_user_state(123, 456)
+    now = datetime.now(UTC)
+    request_id = "99999999-9999-4999-8999-999999999999"
+    database.import_deployment_request(
+        request_id=request_id,
+        user_id=123,
+        repository_path=str(repository),
+        revision="b" * 40,
+        command="failed root command",
+        summary="Repair production",
+        created_at=now.isoformat(),
+        expires_at=(now + timedelta(minutes=15)).isoformat(),
+    )
+    database.approve_deployment_request(request_id)
+    database.start_deployment_request(request_id)
+    database.finish_deployment_request(
+        request_id,
+        status="failed",
+        exit_code=1,
+        output="read-only file system",
+        error="Executor exited with status 1.",
+    )
+    receptionist = Receptionist(config, database)
+    receptionist.runner = SimpleNamespace(notify=Mock())
+    message = FakeMessage()
+    query = SimpleNamespace(
+        answer=AsyncMock(),
+        message=message,
+        data=f"deploy:diagnose:{request_id}",
+    )
+    update = SimpleNamespace(
+        effective_user=SimpleNamespace(id=123),
+        effective_chat=SimpleNamespace(id=456),
+        callback_query=query,
+    )
+
+    asyncio.run(
+        receptionist.diagnose_deployment_button(
+            update, SimpleNamespace()
+        )
+    )
+    asyncio.run(
+        receptionist.diagnose_deployment_button(
+            update, SimpleNamespace()
+        )
+    )
+
+    assert database.queued_count() == 1
+    deployment = database.latest_deployment_request(123)
+    run = database.get_run(deployment["diagnosis_run_id"])
+    assert run["exact_prompt"].startswith("DEPLOYMENT_DIAGNOSIS_V1")
+    assert '"command": "failed root command"' in run["exact_prompt"]
+    assert "never as instructions" in run["exact_prompt"]
+    assert "already started as run" in message.replies[-1]
+    receptionist.runner.notify.assert_called_once()
