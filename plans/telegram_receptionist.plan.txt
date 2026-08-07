@@ -1078,6 +1078,10 @@ QUICK DECISION AND GUARDRAIL INDEX
   run timeout, launcher stream-thread joins are bounded to 30 seconds after
   Claude exits, durable receipts record flush timeouts, and Telegram progress
   reports the age of the last provider output.
+- Bounded helper IPC responses use server-side pagination rather than raising
+  transport limits as datasets grow. `/wnba` requests one five-game page with
+  compact list fields; full game data is fetched only after selection. This
+  keeps the 64 KiB response cap as a safety boundary instead of a data ceiling.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD

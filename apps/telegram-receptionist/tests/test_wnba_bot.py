@@ -72,6 +72,12 @@ def test_games_header_shows_page_indicator() -> None:
     )
 
 
+def test_games_header_accepts_server_side_page_metadata() -> None:
+    assert wnba_games_header(_games(2), 7, 8) == (
+        "🏀 WNBA games in the next 14 days\nPage 8 of 8"
+    )
+
+
 def test_games_header_empty() -> None:
     assert wnba_games_header([], 0) == "No upcoming WNBA games are available."
 
@@ -111,6 +117,16 @@ def test_markup_last_page_has_only_prev_button() -> None:
     nav_row = markup.inline_keyboard[-1]
     callbacks = [button.callback_data for button in nav_row]
     assert callbacks == [wnba_callback("page", "1")]
+
+
+def test_markup_accepts_server_side_page_metadata() -> None:
+    markup = wnba_games_markup(_games(2), 7, 8)
+
+    assert len(markup.inline_keyboard) == 3
+    callbacks = [
+        button.callback_data for button in markup.inline_keyboard[-1]
+    ]
+    assert callbacks == [wnba_callback("page", "6")]
 
 
 def test_markup_single_page_has_no_navigation_row() -> None:

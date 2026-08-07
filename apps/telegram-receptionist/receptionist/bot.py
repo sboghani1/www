@@ -83,18 +83,33 @@ def wnba_page_games(
     )
 
 
-def wnba_games_header(games: list[dict], page: int) -> str:
+def wnba_games_header(
+    games: list[dict], page: int, page_count: int | None = None
+) -> str:
     if not games:
         return "No upcoming WNBA games are available."
-    _, normalized, page_count = wnba_page_games(games, page)
+    if page_count is None:
+        _, normalized, page_count = wnba_page_games(games, page)
+    else:
+        page_count = max(1, page_count)
+        normalized = min(max(page, 0), page_count - 1)
     return (
         "🏀 WNBA games in the next 14 days\n"
         f"Page {normalized + 1} of {page_count}"
     )
 
 
-def wnba_games_markup(games: list[dict], page: int = 0) -> InlineKeyboardMarkup:
-    current, normalized, page_count = wnba_page_games(games, page)
+def wnba_games_markup(
+    games: list[dict],
+    page: int = 0,
+    page_count: int | None = None,
+) -> InlineKeyboardMarkup:
+    if page_count is None:
+        current, normalized, page_count = wnba_page_games(games, page)
+    else:
+        current = games
+        page_count = max(1, page_count)
+        normalized = min(max(page, 0), page_count - 1)
     rows = []
     for game in current:
         label = (
@@ -1013,7 +1028,9 @@ class Receptionist:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         try:
-            result = await self.wnba.request({"action": "list_games"})
+            result = await self.wnba.request(
+                {"action": "list_games", "page": 0}
+            )
         except Exception as error:
             log.warning("WNBA game lookup failed: %s", error)
             await update.message.reply_text(
@@ -1021,9 +1038,11 @@ class Receptionist:
             )
             return
         games = result.get("games") or []
+        page = int(result.get("page") or 0)
+        page_count = int(result.get("page_count") or 1)
         await update.message.reply_text(
-            wnba_games_header(games, 0),
-            reply_markup=wnba_games_markup(games, 0),
+            wnba_games_header(games, page, page_count),
+            reply_markup=wnba_games_markup(games, page, page_count),
         )
 
     async def wnba_resolve(
@@ -1226,11 +1245,17 @@ class Receptionist:
                 except ValueError:
                     await query.answer("Invalid WNBA action.", alert=True)
                     return
-                result = await self.wnba.request({"action": "list_games"})
+                result = await self.wnba.request(
+                    {"action": "list_games", "page": target_page}
+                )
                 games = result.get("games") or []
+                page = int(result.get("page") or 0)
+                page_count = int(result.get("page_count") or 1)
                 await query.edit_message_text(
-                    wnba_games_header(games, target_page),
-                    reply_markup=wnba_games_markup(games, target_page),
+                    wnba_games_header(games, page, page_count),
+                    reply_markup=wnba_games_markup(
+                        games, page, page_count
+                    ),
                 )
                 await query.answer()
                 return

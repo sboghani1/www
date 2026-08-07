@@ -99,6 +99,40 @@ class FakeStore:
         )
 
 
+def test_list_games_returns_one_compact_server_side_page() -> None:
+    games = [
+        {
+            **GAME,
+            "event_id": f"evt-{index}",
+            "status": "scheduled",
+            "commence_time_utc": f"2026-08-{7 + index:02d}T23:00:00Z",
+            "commence_time_et": f"2026-08-{7 + index:02d}T19:00:00-04:00",
+            "latest_total": "200.5",
+        }
+        for index in range(7)
+    ]
+
+    result = handle_request(
+        {"action": "list_games", "page": 1},
+        store=FakeStore(games=games),
+        now=_now(),
+    )
+
+    assert result["page"] == 1
+    assert result["page_count"] == 2
+    assert result["total_games"] == 7
+    assert [game["event_id"] for game in result["games"]] == [
+        "evt-5",
+        "evt-6",
+    ]
+    assert set(result["games"][0]) == {
+        "event_id",
+        "commence_time_et",
+        "away_team",
+        "home_team",
+    }
+
+
 class TestListResolvableGames:
     def test_lists_only_events_with_an_active_unresolved_lean(self) -> None:
         store = FakeStore(

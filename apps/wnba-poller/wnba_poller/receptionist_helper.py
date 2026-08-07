@@ -18,6 +18,7 @@ from .lean_workflow import (
 from .sheets import SheetsStore
 
 MAX_REQUEST_BYTES = 16_384
+GAMES_PAGE_SIZE = 5
 
 
 def _validated_event_id(value: Any) -> str:
@@ -58,6 +59,33 @@ def _public_game(game: Mapping[str, Any]) -> dict[str, Any]:
         "latest_first_half_under_price",
     )
     return {key: game.get(key, "") for key in allowed}
+
+
+def _game_list_item(game: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "event_id": selection_id(game),
+        "commence_time_et": game.get("commence_time_et", ""),
+        "away_team": game.get("away_team", ""),
+        "home_team": game.get("home_team", ""),
+    }
+
+
+def _page(
+    items: list[dict[str, Any]], requested_page: Any
+) -> dict[str, Any]:
+    try:
+        page = int(requested_page or 0)
+    except (TypeError, ValueError) as error:
+        raise ValueError("page must be an integer") from error
+    page_count = max(1, (len(items) + GAMES_PAGE_SIZE - 1) // GAMES_PAGE_SIZE)
+    normalized = min(max(page, 0), page_count - 1)
+    start = normalized * GAMES_PAGE_SIZE
+    return {
+        "games": items[start : start + GAMES_PAGE_SIZE],
+        "page": normalized,
+        "page_count": page_count,
+        "total_games": len(items),
+    }
 
 
 def _bounded_history(history: Mapping[str, Any]) -> dict[str, Any]:
@@ -153,7 +181,10 @@ def handle_request(
     action = request.get("action")
     if action == "list_games":
         games = select_games(store.read_games(), now=now)
-        return {"games": [_public_game(game) for game in games]}
+        return _page(
+            [_game_list_item(game) for game in games],
+            request.get("page"),
+        )
     if action == "list_resolvable_games":
         games_by_id = {
             str(game.get("event_id") or ""): game
