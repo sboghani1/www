@@ -1,0 +1,146 @@
+ODDS API QUOTA / COST ANALYSIS
+Date: 2026-08-07
+Author: receptionist agent (Claude Opus 4.8)
+Trigger: WNBA Odds API quota fell from ~18,800 remaining (Aug 5) to ~2,200
+remaining (Aug 7) — ~80%+ of a month's allowance burned in a few days.
+
+======================================================================
+1. HEADLINE FINDING
+======================================================================
+The WNBA poller is NOT the cause. Our poller's own calls cost 3-23 credits
+each (usually 3-9). The vast majority of consumption came in two large jumps
+that happened OUTSIDE our poller's activity — one of them during a window when
+our poller was provably making ZERO API calls. A separate multi-sport
+pick-grading system in this same workspace (telegram-channel-forwarder, running
+under the `forwarder` user) is the strong suspect: it also uses the Odds API,
+including expensive historical + dual-region calls.
+
+CAVEAT (unproven): I could not confirm the forwarder uses the SAME Odds API key
+as our poller. Both read an env var named ODDS_API_KEY, but from different
+files, and /home/forwarder/app/.env is owned by the forwarder user
+(permission denied — correct security boundary). What IS certain: something on
+OUR key burned the credits (the numbers came back in our own poller's
+x-requests-remaining response headers). Identifying that "something" as the
+forwarder is circumstantial-but-strong, not confirmed. To confirm: someone with
+root should compare /home/forwarder/app/.env's ODDS_API_KEY with
+/home/receptionist-agent/.config/wnba-poller/env's, or compare the two
+the-odds-api.com dashboards.
+
+======================================================================
+2. EVIDENCE (per-poll quota deltas, from journalctl -u wnba-poller)
+======================================================================
+Our WNBA poller's own polls (cheap):
+  - Typical successful poll: delta = 3-9 credits
+  - Bulk /odds request = markets(h2h,spreads,totals = 3) x 1 bookmaker = ~3
+  - A full clean day (Aug 7) cost only 81 credits total across ~18 polls.
+  - Extrapolated true rate: ~80-150 credits/day.
+
+The two anomalous jumps (NOT our poller):
+  - Aug 5 ~20:45 -> 21:45 : quota USED jumped +3,271
+      (our poller logged no successful poll that hour)
+  - Aug 6 15:00 -> 23:55  : quota USED jumped +12,888
+      (our poller was COMPLETELY BROKEN this whole window — every 15-min tick
+       errored "wnba_games headers do not match the expected schema" on the
+       Sheet READ, before any Odds API call. So our poller made ZERO Odds API
+       requests here, yet 12,888 credits vanished.)
+  Combined: ~16,159 credits = ~91% of the ~17,779 total used — none of it ours.
+
+The Aug 6 jump is the bulletproof one: our code cannot have spent those credits
+because it never reached the fetch step.
+
+======================================================================
+3. WHY THE FORWARDER IS EXPENSIVE (code inspection, read-only)
+======================================================================
+File: /home/receptionist/repos/telegram-channel-forwarder/odds.py
+
+It ALREADY HAS a cache (so "add a cache" is not the fix — it's already there):
+  - SQLite tables odds_cache + events_cache, TTL eviction in _evict_old():
+      * event lists (current): 30 minutes
+      * pregame odds (current): 2 days
+      * live odds (live): 5 minutes
+      * historical: 60 days
+  - Every fetch checks the cache and short-circuits before any API call, so
+    repeated tracker passes (every 5 min + fast-path after each forward + the
+    grade daemon) on the SAME pick do NOT re-hit the API.
+
+The real cost drivers are API CHOICES, not missing caching:
+  (a) regions="us,us2" (TWO regions). The Odds API bills markets x regions, so
+      two region groups ~= 2x the credits of one. Used at odds.py lines 438
+      (historical) and 1332 (current). Line 1120 uses "us" only (inconsistent).
+      NOTE: us2 is NOT wasted — _collect_outcomes() iterates ALL bookmakers and
+      _pick_best() takes the max price, i.e. it line-shops the best available
+      number across the whole US market (us = BetOnline/Bovada/MyBookie/etc.,
+      us2 = Fanatics/ESPN BET/Fliff/Hard Rock/etc.). More books = better "best
+      line" for grading/EV. It's a deliberate tradeoff, not a bug. HOWEVER the
+      displayed/liability book (_betonline_both_sides, _BOOK_PRIORITY =
+      betonlineag, bovada, mybookieag) is all `us`; only the best-line-shopping
+      path benefits from us2.
+  (b) HISTORICAL endpoints (/historical/...) — billed by The Odds API at 10x a
+      normal request. Used in ~8 places (event list + event odds for closing
+      lines used in grading). A single historical event-odds call at us,us2 with
+      a few markets can be 20-60 credits (vs. our entire WNBA poll at 3-9).
+  (c) Many sports x many channels x many picks/day. Cost scales with the number
+      of DISTINCT events/picks fetched, and spikes on busy slates or any
+      backfill (which matches the timing of the two jumps).
+
+======================================================================
+4. DOLLAR COST OF 10,000 CREDITS
+======================================================================
+The Odds API sells MONTHLY PLANS with a credit allowance (not per-credit
+metering). So "cost of 10,000 credits" = the slice of the plan it consumes.
+Plan pricing (the-odds-api.com; via oddspapi.io 2026 comparison), 2026:
+  - 20K plan:  $30/mo for  20,000 credits -> ~$15  per 10k (half the plan)
+  - 100K plan: $59/mo for 100,000 credits -> ~$5.90 per 10k
+  - 5M plan:  $119/mo for 5,000,000       -> ~$0.24 per 10k
+Our key started at ~20,000 remaining, so we are almost certainly on the
+20K / $30 plan. On that plan, 10,000 credits = ~$15 of value / HALF the monthly
+allowance, and burning ~80% in a few days means the 20K is exhausted well before
+the monthly reset -> polling gets cut off mid-slate OR a forced upgrade to
+100K/$59. (Confirm exact plan on the the-odds-api.com dashboard.)
+
+======================================================================
+5. WOULD A LONGER CACHE TTL HELP? (mostly no)
+======================================================================
+Marginal at best, because the expensive calls are already effectively
+"fetched once":
+  - Pregame odds are already cached 2 days. A given (event, markets) pregame
+    entry is only requested during its ~1-2 day pregame window; after the game
+    it's irrelevant. Extending 2d -> longer saves ~nothing.
+  - Historical is cached 60 days; a closing line is immutable once the game is
+    over, so it's already effectively permanent. No gain.
+  - Live odds cached 5 min — intentionally short (in-play lines move fast);
+    lengthening would serve stale prices. Do NOT extend.
+  - The ONLY modest TTL win: the 30-min event-list cache could go to ~2h,
+    cutting event-list refetches ~4x — but those are the CHEAP calls (shared
+    across all picks in a sport, no per-market/region blowup), so the savings
+    are small.
+Conclusion: cost scales with (# distinct events/picks) x (regions x markets x
+historical-10x-multiplier), NOT with re-fetch frequency. TTL is not the lever.
+
+======================================================================
+6. RECOMMENDATIONS
+======================================================================
+Best (cleanest): give the WNBA poller its OWN Odds API key. Our footprint is
+  ~80-150 credits/day, so even a small/free tier covers it, usage becomes
+  attributable, and the two systems can no longer starve each other. (We
+  provision a key; wiring is a one-line change to
+  /home/receptionist-agent/.config/wnba-poller/env, no code change.)
+If they must share the key, the forwarder's savings are in the CHOICES:
+  - drop us,us2 -> us where best-line-shopping across the DFS-style us2 books
+    isn't essential (halves per-request cost);
+  - confirm historical (10x) calls only fire when a current/pregame call can't
+    serve the grade;
+  These are changes to the forwarder repo (separate owner / VPS deploy flow) —
+  not made here.
+Also worth adding: an Odds-API quota/spend watchdog (the forwarder already has a
+Claude-spend watchdog and a mem watchdog, but nothing watches Odds credits —
+which is exactly why an 80% burn went unnoticed until the poller nearly ran dry).
+
+======================================================================
+7. WHAT WAS AND WASN'T TOUCHED
+======================================================================
+- Read-only inspection of telegram-channel-forwarder/odds.py only. No changes
+  to that repo (separate owner, separate VPS deploy flow, its own CLAUDE.md).
+- Could not read /home/forwarder/app/.env or the forwarder's picks.db
+  (permission denied — different user; correct boundary). Same-key hypothesis
+  therefore remains unconfirmed (see section 1 caveat).
