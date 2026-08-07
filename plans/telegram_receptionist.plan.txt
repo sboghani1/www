@@ -1073,6 +1073,11 @@ QUICK DECISION AND GUARDRAIL INDEX
   Provider stdout and stderr use unbounded newline reads so large stream-json
   tool events cannot exceed asyncio's default 64 KiB line limit and deadlock
   the privileged launcher while it waits for the receptionist to drain output.
+- Provider stream tasks are supervised alongside the launcher process. Reader
+  failures terminate the process group immediately instead of waiting for the
+  run timeout, launcher stream-thread joins are bounded to 30 seconds after
+  Claude exits, durable receipts record flush timeouts, and Telegram progress
+  reports the age of the last provider output.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD

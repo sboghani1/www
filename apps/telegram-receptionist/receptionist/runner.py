@@ -24,6 +24,10 @@ from .providers.claude_cli import build_command, parse_event
 log = logging.getLogger("receptionist.runner")
 
 
+class ProviderStreamError(RuntimeError):
+    pass
+
+
 async def read_stream_line(reader: asyncio.StreamReader) -> bytes:
     chunks: list[bytes] = []
     while True:
@@ -248,13 +252,14 @@ class AgentRunner:
         result = ProviderResult()
         stderr_lines: list[str] = []
         started = time.monotonic()
+        last_output = [started]
         state = self.database.get_user_state(run["telegram_user_id"])
 
         stdout_task = asyncio.create_task(
-            self._read_stdout(run, process, result)
+            self._read_stdout(run, process, result, last_output)
         )
         stderr_task = asyncio.create_task(
-            self._read_stderr(process, stderr_lines)
+            self._read_stderr(process, stderr_lines, last_output)
         )
         status_task = asyncio.create_task(
             self._status_loop(
@@ -263,27 +268,26 @@ class AgentRunner:
                 result,
                 status_message.message_id,
                 started,
+                last_output,
                 bool(state["verbose"]),
             )
         )
 
         timed_out = False
         process_disappeared = False
+        stream_error = ""
         try:
             process_disappeared = await self._wait_for_process(
-                process, self.config.agent_timeout_seconds
+                process,
+                self.config.agent_timeout_seconds,
+                stream_tasks=(stdout_task, stderr_task),
             )
+        except ProviderStreamError as error:
+            stream_error = str(error)
+            await self._terminate_process_group(process)
         except TimeoutError:
             timed_out = True
-            try:
-                os.killpg(process.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            try:
-                await asyncio.wait_for(process.wait(), timeout=10)
-            except TimeoutError:
-                await self._force_kill_process_group(process.pid)
-                await process.wait()
+            await self._terminate_process_group(process)
         finally:
             await self._finish_stream_tasks(
                 stdout_task, stderr_task, cancel=process_disappeared
@@ -325,6 +329,9 @@ class AgentRunner:
         if self._cancel_requested:
             status = "cancelled"
             error = "Cancelled from Telegram."
+        elif stream_error:
+            status = "failed"
+            error = stream_error
         elif timed_out:
             status = "timed_out"
             error = (
@@ -394,8 +401,10 @@ class AgentRunner:
         process: asyncio.subprocess.Process,
         timeout: int,
         poll_interval: float = 5,
+        stream_tasks: tuple[asyncio.Task[None], ...] = (),
     ) -> bool:
         wait_task = asyncio.create_task(process.wait())
+        active_stream_tasks = set(stream_tasks)
         deadline = time.monotonic() + timeout
         missing_checks = 0
         try:
@@ -404,9 +413,19 @@ class AgentRunner:
                 if remaining <= 0:
                     raise TimeoutError
                 done, _ = await asyncio.wait(
-                    {wait_task}, timeout=min(poll_interval, remaining)
+                    {wait_task, *active_stream_tasks},
+                    timeout=min(poll_interval, remaining),
+                    return_when=asyncio.FIRST_COMPLETED,
                 )
-                if done:
+                for task in done & active_stream_tasks:
+                    active_stream_tasks.remove(task)
+                    error = task.exception()
+                    if error is not None:
+                        raise ProviderStreamError(
+                            "Provider output reader failed: "
+                            f"{type(error).__name__}: {error}"
+                        ) from error
+                if wait_task in done:
                     await wait_task
                     return False
                 if process_group_alive(process.pid):
@@ -417,10 +436,10 @@ class AgentRunner:
                     wait_task.cancel()
                     await asyncio.gather(wait_task, return_exceptions=True)
                     return True
-        except asyncio.CancelledError:
-            wait_task.cancel()
-            await asyncio.gather(wait_task, return_exceptions=True)
-            raise
+        finally:
+            if not wait_task.done():
+                wait_task.cancel()
+                await asyncio.gather(wait_task, return_exceptions=True)
 
     @staticmethod
     async def _finish_stream_tasks(
@@ -620,10 +639,12 @@ class AgentRunner:
         run: dict[str, Any],
         process: asyncio.subprocess.Process,
         result: ProviderResult,
+        last_output: list[float],
     ) -> None:
         assert process.stdout is not None
         sequence = 0
         while line_bytes := await read_stream_line(process.stdout):
+            last_output[0] = time.monotonic()
             line = line_bytes.decode("utf-8", errors="replace").rstrip("\n")
             if not line:
                 continue
@@ -643,10 +664,14 @@ class AgentRunner:
                 )
 
     async def _read_stderr(
-        self, process: asyncio.subprocess.Process, lines: list[str]
+        self,
+        process: asyncio.subprocess.Process,
+        lines: list[str],
+        last_output: list[float],
     ) -> None:
         assert process.stderr is not None
         while line_bytes := await read_stream_line(process.stderr):
+            last_output[0] = time.monotonic()
             line = line_bytes.decode("utf-8", errors="replace").rstrip()
             if line:
                 lines.append(line)
@@ -658,17 +683,21 @@ class AgentRunner:
         result: ProviderResult,
         message_id: int,
         started: float,
+        last_output: list[float],
         verbose: bool,
     ) -> None:
         interval = 30 if verbose else 45
         while process.returncode is None:
             await asyncio.sleep(interval)
-            elapsed = int(time.monotonic() - started)
+            now = time.monotonic()
+            elapsed = int(now - started)
+            output_age = int(now - last_output[0])
             text = (
                 f"⏳ Run {run['id'][:8]} · {run['repository_name']}\n"
                 f"{result.activity}\n"
                 f"Current: {result.current_work}\n"
                 f"Elapsed: {elapsed // 60}m {elapsed % 60}s\n"
+                f"Last output: {output_age}s ago\n"
                 f"Next update by: {next_update_label()}"
             )
             if verbose:
@@ -774,6 +803,19 @@ class AgentRunner:
         await process.stdin.drain()
         process.stdin.close()
         await process.wait()
+
+    async def _terminate_process_group(
+        self, process: asyncio.subprocess.Process
+    ) -> None:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            await asyncio.wait_for(process.wait(), timeout=10)
+        except TimeoutError:
+            await self._force_kill_process_group(process.pid)
+            await process.wait()
 
 
 def resource_summary(process_id: int) -> str:

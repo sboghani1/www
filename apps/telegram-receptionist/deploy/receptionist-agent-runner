@@ -7,6 +7,7 @@ import re
 import subprocess
 import sys
 import threading
+import time
 import uuid
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -31,6 +32,8 @@ GIT_BINARY = "/usr/bin/git"
 RUN_STATE_DIR = Path(
     "/home/receptionist-agent/.local/state/telegram-receptionist/runs"
 )
+STREAM_JOIN_TIMEOUT_SECONDS = 30
+STREAM_FLUSH_TIMEOUT_EXIT_CODE = 74
 
 
 def load_google_environment() -> None:
@@ -258,22 +261,31 @@ def run_claude(
     stdout_thread.start()
     stderr_thread.start()
     return_code = process.wait()
-    stdout_thread.join()
-    stderr_thread.join()
+    join_deadline = time.monotonic() + STREAM_JOIN_TIMEOUT_SECONDS
+    for thread in (stdout_thread, stderr_thread):
+        thread.join(timeout=max(0, join_deadline - time.monotonic()))
+    stream_flush_timed_out = stdout_thread.is_alive() or stderr_thread.is_alive()
+    exit_code = (
+        return_code
+        if return_code or not stream_flush_timed_out
+        else STREAM_FLUSH_TIMEOUT_EXIT_CODE
+    )
     temporary_receipt.write_text(
         json.dumps(
             {
                 "run_id": run_id,
                 "started_at": started_at,
                 "finished_at": datetime.now(UTC).isoformat(),
-                "exit_code": return_code,
+                "exit_code": exit_code,
+                "provider_exit_code": return_code,
+                "stream_flush_timed_out": stream_flush_timed_out,
             }
         ),
         encoding="utf-8",
     )
     os.chmod(temporary_receipt, 0o600)
     os.replace(temporary_receipt, receipt_path)
-    raise SystemExit(return_code)
+    raise SystemExit(exit_code)
 
 
 def main() -> None:

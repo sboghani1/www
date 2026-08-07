@@ -4,12 +4,13 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
+import pytest
 from telegram.error import NetworkError
 
 import receptionist.runner as runner_module
 from receptionist.config import RepositoryConfig
 from receptionist.database import Database
-from receptionist.runner import AgentRunner
+from receptionist.runner import AgentRunner, ProviderStreamError
 from receptionist.runner import next_update_label, read_stream_line
 
 
@@ -67,6 +68,45 @@ def test_read_stream_line_handles_oversized_provider_event() -> None:
 
     assert len(line) > 72_000
     assert line.endswith(b"\n")
+
+
+def test_read_stream_line_returns_partial_event_at_eof() -> None:
+    async def read() -> bytes:
+        reader = asyncio.StreamReader(limit=64)
+        event = b'{"type":"assistant","payload":"' + b"x" * 72_000
+        reader.feed_data(event)
+        reader.feed_eof()
+        return await read_stream_line(reader)
+
+    line = asyncio.run(read())
+
+    assert len(line) > 72_000
+    assert not line.endswith(b"\n")
+
+
+def test_wait_for_process_surfaces_stream_reader_failure(
+    tmp_path: Path, monkeypatch
+) -> None:
+    database, _ = _finished_run(tmp_path)
+    runner = AgentRunner(SimpleNamespace(), database, FakeBot())
+    monkeypatch.setattr(runner_module, "process_group_alive", lambda _pid: True)
+
+    async def wait() -> None:
+        async def fail_reader() -> None:
+            raise ValueError("oversized broken event")
+
+        stream_task = asyncio.create_task(fail_reader())
+        with pytest.raises(
+            ProviderStreamError, match="oversized broken event"
+        ):
+            await runner._wait_for_process(
+                MissingProcess(),
+                timeout=10,
+                poll_interval=0.01,
+                stream_tasks=(stream_task,),
+            )
+
+    asyncio.run(wait())
 
 
 def _finished_run(tmp_path: Path) -> tuple[Database, dict]:
