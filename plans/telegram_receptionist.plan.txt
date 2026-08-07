@@ -1065,6 +1065,10 @@ QUICK DECISION AND GUARDRAIL INDEX
   bounded `DEPLOYMENT_DIAGNOSIS_V1` agent turn linked to the failed request.
   The record is delimited as data, duplicate presses reuse the same run, and
   the agent may fix/commit/push and request fresh approval but never approve.
+- The private chat exposes a persistent recovery keyboard with `Recover` and
+  `/agent-try-recovery`. The latter resolves the latest failed deployment when
+  pressed rather than embedding a potentially stale request identifier, then
+  uses the same one-run atomic diagnosis path.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD

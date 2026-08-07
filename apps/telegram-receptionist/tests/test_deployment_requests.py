@@ -7,7 +7,11 @@ from unittest.mock import AsyncMock, Mock
 
 from telegram.error import TelegramError
 
-from receptionist.bot import Receptionist
+from receptionist.bot import (
+    DIAGNOSE_DEPLOYMENT_MENU_TEXT,
+    RECOVER_MENU_TEXT,
+    Receptionist,
+)
 from receptionist.config import Config, RepositoryConfig
 from receptionist.database import Database
 
@@ -456,6 +460,115 @@ def test_recover_offers_explicit_deployment_diagnosis_button(
         == f"deploy:diagnose:{request_id}"
     )
     assert "deterministic recovery will not replay it" in message.replies[-1]
+
+
+def test_start_exposes_persistent_recovery_menu(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repos"
+    config = Config(
+        telegram_token="test-token",
+        allowed_user_id=123,
+        repo_root=repo_root,
+        repositories=(RepositoryConfig("workspace", repo_root),),
+        state_dir=tmp_path / "state",
+        claude_binary="/usr/bin/claude",
+        agent_launcher="/launcher",
+        agent_killer="/killer",
+        deploy_request_dir=repo_root / ".receptionist" / "deploy-requests",
+        deploy_executor="/executor",
+        deploy_timeout_seconds=900,
+        wnba_helper="/wnba-helper",
+        wnba_helper_timeout_seconds=45,
+        agent_timeout_seconds=3600,
+        max_queued_messages=10,
+        model=None,
+    )
+    database = Database(config.database_path)
+    database.initialize(config.repositories)
+    database.ensure_user_state(123, 456)
+    receptionist = Receptionist(config, database)
+    message = FakeMessage()
+    update = SimpleNamespace(
+        effective_user=SimpleNamespace(id=123),
+        message=message,
+    )
+
+    asyncio.run(receptionist.start(update, SimpleNamespace()))
+
+    markup = message.reply_markups[-1]
+    assert markup.is_persistent is True
+    assert tuple(button.text for button in markup.keyboard[0]) == (
+        RECOVER_MENU_TEXT,
+        DIAGNOSE_DEPLOYMENT_MENU_TEXT,
+    )
+
+
+def test_deployment_diagnosis_menu_uses_latest_failed_request(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path / "repos"
+    repository = repo_root / "www"
+    repository.mkdir(parents=True)
+    config = Config(
+        telegram_token="test-token",
+        allowed_user_id=123,
+        repo_root=repo_root,
+        repositories=(RepositoryConfig("workspace", repo_root),),
+        state_dir=tmp_path / "state",
+        claude_binary="/usr/bin/claude",
+        agent_launcher="/launcher",
+        agent_killer="/killer",
+        deploy_request_dir=repo_root / ".receptionist" / "deploy-requests",
+        deploy_executor="/executor",
+        deploy_timeout_seconds=900,
+        wnba_helper="/wnba-helper",
+        wnba_helper_timeout_seconds=45,
+        agent_timeout_seconds=3600,
+        max_queued_messages=10,
+        model=None,
+    )
+    database = Database(config.database_path)
+    database.initialize(config.repositories)
+    database.ensure_user_state(123, 456)
+    now = datetime.now(UTC)
+    request_id = "77777777-7777-4777-8777-777777777777"
+    database.import_deployment_request(
+        request_id=request_id,
+        user_id=123,
+        repository_path=str(repository),
+        revision="c" * 40,
+        command="failed deployment command",
+        summary="Repair latest deployment",
+        created_at=now.isoformat(),
+        expires_at=(now + timedelta(minutes=15)).isoformat(),
+    )
+    database.approve_deployment_request(request_id)
+    database.start_deployment_request(request_id)
+    database.finish_deployment_request(
+        request_id,
+        status="failed",
+        exit_code=1,
+        output="deployment failed",
+        error="Executor exited with status 1.",
+    )
+    receptionist = Receptionist(config, database)
+    receptionist.runner = SimpleNamespace(notify=Mock())
+    message = FakeMessage()
+    update = SimpleNamespace(
+        effective_user=SimpleNamespace(id=123),
+        effective_chat=SimpleNamespace(id=456),
+        message=message,
+    )
+
+    asyncio.run(
+        receptionist.diagnose_deployment_menu_button(
+            update, SimpleNamespace()
+        )
+    )
+
+    deployment = database.latest_deployment_request(123)
+    assert deployment["diagnosis_run_id"]
+    assert "diagnosis queued as run" in message.replies[-1]
+    receptionist.runner.notify.assert_called_once()
 
 
 def test_deployment_diagnosis_button_queues_once(tmp_path: Path) -> None:

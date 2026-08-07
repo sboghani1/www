@@ -10,7 +10,12 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Awaitable, Callable
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ReplyKeyboardMarkup,
+    Update,
+)
 from telegram.constants import ChatType
 from telegram.error import TelegramError
 from telegram.ext import (
@@ -35,6 +40,8 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 log = logging.getLogger("receptionist")
 SELF_DEPLOY_WORKER = "/usr/local/libexec/deploy-telegram-receptionist-worker"
+RECOVER_MENU_TEXT = "♻️ Recover"
+DIAGNOSE_DEPLOYMENT_MENU_TEXT = "/agent-try-recovery"
 
 Handler = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
 MAX_CALLBACK_BYTES = 64
@@ -334,6 +341,14 @@ class Receptionist:
         self._deployment_tasks: set[asyncio.Task[None]] = set()
         self._deployment_process: asyncio.subprocess.Process | None = None
 
+    @staticmethod
+    def recovery_menu() -> ReplyKeyboardMarkup:
+        return ReplyKeyboardMarkup(
+            [[RECOVER_MENU_TEXT, DIAGNOSE_DEPLOYMENT_MENU_TEXT]],
+            resize_keyboard=True,
+            is_persistent=True,
+        )
+
     async def post_init(self, application: Application) -> None:
         self.config.state_dir.mkdir(parents=True, exist_ok=True)
         self.database.initialize(self.config.repositories)
@@ -411,7 +426,8 @@ class Receptionist:
             "Workspace: /home/receptionist/repos\n"
             f"Session: {state['session_name'] or 'none'}\n"
             f"Provider: {state['session_provider'] or 'claude'}\n\n"
-            "Send plain text to run an exact agent turn. Use /help for commands."
+            "Send plain text to run an exact agent turn. Use /help for commands.",
+            reply_markup=self.recovery_menu(),
         )
 
     async def help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -439,7 +455,8 @@ class Receptionist:
             "Deployment messages also include Approve and Deny buttons.\n\n"
             "A WNBA_LEAN_REQUEST_V1 template is validated and routed through "
             "the same WNBA generation path as Generate now. Any other text "
-            "is passed unchanged as the next agent prompt."
+            "is passed unchanged as the next agent prompt.",
+            reply_markup=self.recovery_menu(),
         )
 
     async def repos(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -580,6 +597,11 @@ class Receptionist:
             message, reply_markup=keyboard
         )
 
+    async def recover_menu_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        await self.recover(update, context)
+
     async def recover_button(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
@@ -629,7 +651,7 @@ class Receptionist:
                     [
                         [
                             InlineKeyboardButton(
-                                "Diagnose & fix deployment",
+                                DIAGNOSE_DEPLOYMENT_MENU_TEXT,
                                 callback_data=(
                                     f"deploy:diagnose:{latest['id']}"
                                 ),
@@ -647,49 +669,84 @@ class Receptionist:
     ) -> None:
         query = update.callback_query
         await query.answer("Preparing a new diagnosis run…")
+        request_id = str(query.data).removeprefix("deploy:diagnose:")
+        await self._enqueue_deployment_diagnosis(
+            user_id=update.effective_user.id,
+            chat_id=update.effective_chat.id,
+            request_id=request_id,
+            message=query.message,
+        )
+
+    async def diagnose_deployment_menu_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        latest = self.database.latest_deployment_request(
+            update.effective_user.id
+        )
+        if latest is None or latest["status"] != "failed":
+            await update.message.reply_text(
+                "No latest failed deployment needs diagnosis.",
+                reply_markup=self.recovery_menu(),
+            )
+            return
+        await self._enqueue_deployment_diagnosis(
+            user_id=update.effective_user.id,
+            chat_id=update.effective_chat.id,
+            request_id=latest["id"],
+            message=update.message,
+        )
+
+    async def _enqueue_deployment_diagnosis(
+        self,
+        *,
+        user_id: int,
+        chat_id: int,
+        request_id: str,
+        message,
+    ) -> None:
         if self._deployment_drain_path.exists():
-            await query.message.reply_text(
+            await message.reply_text(
                 "⏸️ Receptionist deployment is still completing. Wait for "
-                "the final 🚀 notification, then press Diagnose again."
+                "the final 🚀 notification, then press "
+                f"{DIAGNOSE_DEPLOYMENT_MENU_TEXT} again."
             )
             return
         if self.database.queued_count() >= self.config.max_queued_messages:
-            await query.message.reply_text(
+            await message.reply_text(
                 f"Queue is full ({self.config.max_queued_messages} messages)."
             )
             return
-        request_id = str(query.data).removeprefix("deploy:diagnose:")
         try:
             request = self.database.find_deployment_request(
-                update.effective_user.id,
+                user_id,
                 request_id,
                 ("failed",),
             )
         except LookupError as error:
-            await query.message.reply_text(str(error))
+            await message.reply_text(str(error))
             return
         session = self.database.get_or_create_active_session(
-            update.effective_user.id
+            user_id
         )
         prompt = self._deployment_diagnosis_prompt(request)
         try:
             run, created = self.database.enqueue_deployment_diagnosis(
                 request_id=request["id"],
-                user_id=update.effective_user.id,
+                user_id=user_id,
                 session_id=session["id"],
-                chat_id=update.effective_chat.id,
+                chat_id=chat_id,
                 exact_prompt=prompt,
             )
         except LookupError as error:
-            await query.message.reply_text(str(error))
+            await message.reply_text(str(error))
             return
         if not created:
-            await query.message.reply_text(
+            await message.reply_text(
                 f"Deployment diagnosis already started as run {run['id'][:8]}."
             )
             return
         position = self.database.queued_count()
-        await query.message.reply_text(
+        await message.reply_text(
             f"🔧 Deployment diagnosis queued as run {run['id'][:8]} "
             f"({session['repository_name']}, queue position {position})."
         )
@@ -1572,6 +1629,7 @@ class Receptionist:
             f"🚀 Receptionist deployment {deployment.get('status', 'unknown')}\n"
             f"Revision: {str(deployment.get('revision', 'unknown'))[:12]}\n"
             f"{deployment.get('message', '')}".strip(),
+            reply_markup=self.recovery_menu(),
         )
         self.database.mark_deployment_seen(deployment_id)
         self._clear_deployment_drain()
@@ -1692,6 +1750,22 @@ def build_application(config: Config) -> Application:
         CallbackQueryHandler(
             receptionist.authorized(receptionist.wnba_button),
             pattern=WNBA_CALLBACK_PATTERN,
+        )
+    )
+    application.add_handler(
+        MessageHandler(
+            filters.Regex(f"^{re.escape(RECOVER_MENU_TEXT)}$"),
+            receptionist.authorized(receptionist.recover_menu_button),
+        )
+    )
+    application.add_handler(
+        MessageHandler(
+            filters.Regex(
+                f"^{re.escape(DIAGNOSE_DEPLOYMENT_MENU_TEXT)}$"
+            ),
+            receptionist.authorized(
+                receptionist.diagnose_deployment_menu_button
+            ),
         )
     )
     application.add_handler(
