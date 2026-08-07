@@ -1,3 +1,6 @@
+import subprocess
+
+import receptionist.host_recovery as host_recovery
 from receptionist.host_recovery import (
     filesystem_error_lines,
     mount_is_read_only,
@@ -31,3 +34,15 @@ def test_real_ext4_and_io_errors_are_detected() -> None:
     )
 
     assert filesystem_error_lines(logs) == logs.splitlines()
+
+
+def test_kernel_journal_timeout_is_reported(monkeypatch) -> None:
+    def timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired(args[0], 30)
+
+    monkeypatch.setattr(host_recovery, "run", timeout)
+
+    errors, error = host_recovery.kernel_filesystem_errors()
+
+    assert errors == []
+    assert error == "Kernel journal query timed out."

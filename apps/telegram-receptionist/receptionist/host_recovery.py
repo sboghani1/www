@@ -52,12 +52,28 @@ def filesystem_error_lines(logs: str) -> list[str]:
     ]
 
 
-def kernel_filesystem_errors() -> list[str]:
-    result = run(
-        ["/usr/bin/journalctl", "-k", "-b", "--no-pager"],
-        check=False,
-    )
-    return filesystem_error_lines(result.stdout + result.stderr)
+def kernel_filesystem_errors() -> tuple[list[str], str]:
+    try:
+        result = run(
+            [
+                "/usr/bin/journalctl",
+                "-k",
+                "-b",
+                "--no-pager",
+                "--quiet",
+                "-n",
+                "500",
+            ],
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return [], "Kernel journal query timed out."
+    if result.returncode != 0:
+        return [], (
+            result.stderr.strip()
+            or f"Kernel journal query exited with {result.returncode}."
+        )
+    return filesystem_error_lines(result.stdout), ""
 
 
 def host_write_probe(directory: str) -> bool:
@@ -78,7 +94,7 @@ def host_write_probe(directory: str) -> bool:
 
 
 def diagnostics() -> dict[str, object]:
-    errors = kernel_filesystem_errors()
+    errors, kernel_log_error = kernel_filesystem_errors()
     return {
         "caller_root_options": mount_options(host=False),
         "host_root_options": mount_options(host=True),
@@ -86,6 +102,7 @@ def diagnostics() -> dict[str, object]:
             path: host_write_probe(path) for path in WRITE_PATHS
         },
         "kernel_filesystem_errors": errors[-20:],
+        "kernel_log_error": kernel_log_error,
         "note": (
             "errors=remount-ro is a configured safety policy, not evidence "
             "that an error occurred. Check the leading ro/rw option and "
@@ -99,7 +116,21 @@ def remount_root_read_write() -> None:
     if not mount_is_read_only(options):
         print(json.dumps({"status": "already_read_write", **diagnostics()}))
         return
-    errors = kernel_filesystem_errors()
+    errors, kernel_log_error = kernel_filesystem_errors()
+    if kernel_log_error:
+        print(
+            json.dumps(
+                {
+                    "status": "refused",
+                    "reason": (
+                        "Kernel filesystem health could not be verified; "
+                        "refusing a blind remount."
+                    ),
+                    "kernel_log_error": kernel_log_error,
+                }
+            )
+        )
+        raise SystemExit(2)
     if errors:
         print(
             json.dumps(
