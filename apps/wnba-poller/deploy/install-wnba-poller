@@ -98,9 +98,12 @@ if [[ "$enable_timers" == "1" ]]; then
     systemctl enable --now wnba-poller.timer wnba-schedule-sync.timer
 fi
 if [[ "$enable_guesser_bot" == "1" ]]; then
-    systemctl enable --now wnba-guesser-bot.service
-elif systemctl is-active --quiet wnba-guesser-bot.service; then
+    systemctl enable wnba-guesser-bot.service
+fi
+if [[ "$enable_guesser_bot" == "1" ]] ||
+    systemctl is-active --quiet wnba-guesser-bot.service; then
     systemctl restart wnba-guesser-bot.service
+    systemctl is-active --quiet wnba-guesser-bot.service
 fi
 
 current_release="$(readlink -f "$install_root/current")"

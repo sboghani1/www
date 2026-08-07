@@ -427,3 +427,16 @@ def test_dedicated_service_uses_separate_env_and_fixed_entrypoint() -> None:
     )
     assert "ExecStart=/opt/wnba-poller/current/bin/wnba-guesser-bot" in service
     assert "telegram-receptionist" not in service
+
+
+def test_installer_restarts_enabled_guesser_after_release_switch() -> None:
+    installer = (
+        Path(__file__).resolve().parents[1]
+        / "deploy"
+        / "install-wnba-poller"
+    ).read_text(encoding="utf-8")
+
+    assert "systemctl enable wnba-guesser-bot.service" in installer
+    assert "systemctl restart wnba-guesser-bot.service" in installer
+    assert "systemctl is-active --quiet wnba-guesser-bot.service" in installer
+    assert "systemctl enable --now wnba-guesser-bot.service" not in installer
