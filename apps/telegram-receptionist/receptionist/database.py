@@ -851,14 +851,14 @@ class Database:
             connection.commit()
             return cursor.rowcount
 
-    def unnotified_deployment_requests(self) -> list[dict[str, Any]]:
+    def pending_deployment_requests(self) -> list[dict[str, Any]]:
         with self._connect() as connection:
             return [
                 dict(row)
                 for row in connection.execute(
                     """
                     SELECT * FROM deployment_requests
-                    WHERE status='pending' AND notified_at IS NULL
+                    WHERE status='pending'
                     ORDER BY created_at
                     """
                 )

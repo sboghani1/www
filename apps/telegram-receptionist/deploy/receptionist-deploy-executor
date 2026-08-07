@@ -42,12 +42,12 @@ def main() -> None:
         status = str(request["status"])
         expires_at = datetime.fromisoformat(str(request["expires_at"]))
     except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
-        fail(f"Invalid approved deployment request: {error}")
+        fail(f"Invalid deployment request: {error}")
 
     if status != "approved":
-        fail("Request is not approved.")
+        fail("Request is not authorized for execution.")
     if expires_at <= datetime.now(UTC):
-        fail("Request approval has expired.")
+        fail("Deployment request has expired.")
     if not repository.is_relative_to(REPO_ROOT) or not (repository / ".git").is_dir():
         fail("Repository is outside the workspace or is not a Git checkout.")
     if not REVISION_RE.fullmatch(revision):
@@ -55,6 +55,20 @@ def main() -> None:
     if not command or len(command) > MAX_COMMAND_LENGTH or "\0" in command:
         fail("Command is invalid.")
 
+    subprocess.run(
+        [
+            "runuser",
+            "-u",
+            "receptionist-agent",
+            "--",
+            "git",
+            "-C",
+            str(repository),
+            "fetch",
+            "--quiet",
+        ],
+        check=True,
+    )
     current_revision = subprocess.run(
         [
             "runuser",
@@ -72,7 +86,43 @@ def main() -> None:
         text=True,
     ).stdout.strip()
     if current_revision != revision:
-        fail("Repository HEAD changed after the deployment request was displayed.")
+        fail("Repository HEAD changed after the deployment request was created.")
+    status_output = subprocess.run(
+        [
+            "runuser",
+            "-u",
+            "receptionist-agent",
+            "--",
+            "git",
+            "-C",
+            str(repository),
+            "status",
+            "--porcelain",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    if status_output:
+        fail("Repository working tree is no longer clean.")
+    upstream_revision = subprocess.run(
+        [
+            "runuser",
+            "-u",
+            "receptionist-agent",
+            "--",
+            "git",
+            "-C",
+            str(repository),
+            "rev-parse",
+            "@{upstream}",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    if upstream_revision != revision:
+        fail("Repository HEAD no longer matches its configured upstream.")
 
     os.chdir(repository)
     signal.signal(signal.SIGTERM, stop_child)

@@ -16,7 +16,8 @@ This directory is the root of a private coding workspace.
 - A small environment with `gspread` and `google-auth` is available at
   `/home/receptionist-agent/.cache/google-sheet-check`; repositories may create
   their own virtual environments when they need additional dependencies.
-- Never run a production deployment directly. Propose one immutable request:
+- Never run a production deployment directly. Queue one immutable request only
+  after the repository is clean, pushed, tested, and the exact command is ready:
 
   ```bash
   request-receptionist-deploy \
@@ -25,20 +26,20 @@ This directory is the root of a private coding workspace.
     --command "<exact root command to execute on pickbot>"
   ```
 
-- The bot displays the repository, exact revision, summary, and full command.
-  Deployment runs only if the user sends `/approve <request-id>`. Each approval
-  is one-use and expires after 15 minutes.
-- The approved command executes as root on the `pickbot` VPS, so commands should
+- The bot automatically executes a valid request and displays the repository,
+  exact revision, summary, full command, and result. Requests are one-use and
+  expire after 15 minutes.
+- The command executes as root on the `pickbot` VPS, so commands should
   target local production paths directly rather than SSHing back into the same
   server.
-- The approval executor inherits the receptionist service's
+- The deployment executor inherits the receptionist service's
   `ProtectSystem=strict` mount namespace. Any command that writes to `/opt`,
   `/etc`, `/usr/local`, or otherwise changes system services must launch a
   detached transient systemd unit so it runs outside that read-only namespace.
 - For the receptionist itself, the detached command is:
   `systemd-run --unit=telegram-receptionist-deploy-$(date +%s) --collect /usr/local/libexec/deploy-telegram-receptionist-worker`
 - Use the same pattern for other root installers, with a unique unit name and
-  `--wait --pipe` when the approval result must reflect installer success or
+  `--wait --pipe` when the deployment result must reflect installer success or
   failure and include its actual output.
 - The receptionist service intentionally sees `/` as read-only. Never infer a
   host filesystem incident from `findmnt` or a write test in the service/agent

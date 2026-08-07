@@ -27,7 +27,9 @@ class FakeMessage:
         self.reply_markups.append(kwargs.get("reply_markup"))
 
 
-def test_request_file_is_copied_into_database_and_removed(tmp_path: Path) -> None:
+def test_request_file_is_automatically_authorized_and_started(
+    tmp_path: Path,
+) -> None:
     repo_root = tmp_path / "repos"
     repository = repo_root / "www"
     request_dir = repo_root / ".receptionist" / "deploy-requests"
@@ -71,14 +73,46 @@ def test_request_file_is_copied_into_database_and_removed(tmp_path: Path) -> Non
     )
     database = Database(config.database_path)
     database.initialize(config.repositories)
+    database.ensure_user_state(123, 456)
     receptionist = Receptionist(config, database)
+    receptionist._execute_deployment = AsyncMock()
+    application = SimpleNamespace(
+        bot=SimpleNamespace(send_message=AsyncMock())
+    )
+    context = SimpleNamespace(
+        application=application,
+        job=SimpleNamespace(data=application),
+    )
 
-    asyncio.run(receptionist._ingest_deployment_requests())
+    async def poll() -> None:
+        await receptionist._deployment_request_poll(context)
+        await asyncio.sleep(0)
+
+    asyncio.run(poll())
 
     assert not request_path.exists()
-    request = database.find_deployment_request(123, request_id, ("pending",))
+    request = database.find_deployment_request(123, request_id, ("approved",))
     assert request["command"] == "echo exact-command"
     assert request["revision"] == "d" * 40
+    receptionist._execute_deployment.assert_awaited_once()
+    notification = application.bot.send_message.await_args.args[1]
+    assert "Automatic deployment started" in notification
+    assert "echo exact-command" in notification
+
+
+def test_deployment_scripts_require_clean_pushed_revision() -> None:
+    deploy_dir = Path(__file__).resolve().parents[1] / "deploy"
+    requester = (deploy_dir / "request-receptionist-deploy").read_text(
+        encoding="utf-8"
+    )
+    executor = (deploy_dir / "receptionist-deploy-executor").read_text(
+        encoding="utf-8"
+    )
+
+    for script in (requester, executor):
+        assert '"fetch"' in script
+        assert '"--porcelain"' in script
+        assert '"@{upstream}"' in script
 
 
 def test_deployment_drain_blocks_new_prompts(tmp_path: Path) -> None:

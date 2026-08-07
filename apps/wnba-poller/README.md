@@ -180,7 +180,7 @@ sudo /usr/local/sbin/install-wnba-poller \
   --enable-timers --enable-guesser-bot
 ```
 
-From the receptionist approval broker, run the installer outside the
+From the receptionist automatic deployment broker, run the installer outside the
 read-only service namespace and pipe its real output back:
 
 ```bash
@@ -196,6 +196,29 @@ schedule timer runs daily at 5:20 AM America/New_York. Services use a 96 MB
 memory high-water mark and 160 MB hard limit. The independent
 `wnba-guesser-bot.service` also runs as `receptionist-agent`, reads only its
 dedicated environment file, and uses 128 MB/192 MB memory limits.
+
+## Troubleshooting `/wnba` game-loading errors
+
+Two independent bots intentionally use `/wnba` and the same generic failure
+text:
+
+- `@ascereceptionist_bot` runs `telegram-receptionist.service` and calls the
+  short-lived `/usr/local/libexec/receptionist-wnba-helper`.
+- `@wnbaguesser_bot` runs the long-lived `wnba-guesser-bot.service` directly
+  from `/opt/wnba-poller/current`.
+
+Always identify which bot received the command before diagnosing. Search the
+matching unit's journal, then compare the running process command with
+`readlink -f /opt/wnba-poller/current`. A release symlink can be current while
+an old Python process remains resident.
+
+The August 7, 2026 incident in `@wnbaguesser_bot` was exactly that condition:
+the process still loaded the August 5 release and rejected the newer
+`wnba_games` Sheet headers. Restarting `wnba-guesser-bot.service` loaded the
+current release and restored a 46-game Sheet read. The installer now explicitly
+restarts the Guesser after switching the release symlink and verifies the unit
+is active; `systemctl enable --now` alone is not a restart for an already
+running service.
 
 ## Validation
 

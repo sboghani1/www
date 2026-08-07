@@ -23,10 +23,10 @@ The bot must:
 - Run the agent and all code operations on the VPS, not on my phone.
 - Start with Claude Code, while keeping the orchestration layer adaptable to
   Codex, GitHub Copilot CLI/SDK, and other agents later.
-- Run unattended. Agent tool calls should not wait for approval, but broad
-  permissions must be contained inside a dedicated Unix account and restricted
-  repository root. Production deployment is the exception: an exact immutable
-  command requires one explicit Telegram approval before the bot invokes it.
+- Run unattended. Agent tool calls and validated immutable deployment requests
+  do not wait for approval, but broad permissions remain contained behind
+  dedicated Unix accounts, a restricted repository root, exact revision
+  checks, and fixed root executors.
 
 A VPS is a virtual private server: normally a virtual machine hosted by a cloud
 provider. It gives us a persistent Linux environment, but being a VM does not by
@@ -851,6 +851,24 @@ QUICK DECISION AND GUARDRAIL INDEX
   when exactly one request is pending. This avoids typing IDs without guessing
   which request the user intended when several proposals exist.
 
+2026-08-07 — Automatic immutable deployment execution supersedes approval UX
+
+- Decision: remove Approve/Deny buttons and commands. A valid agent-created
+  request executes automatically and Telegram reports the exact repository,
+  revision, command, and result.
+- Preserved boundaries: the agent still has no direct sudo permission; the bot
+  invokes only the fixed root executor. Requests remain immutable, one-use,
+  short-lived, serialized, and audited.
+- Stronger revision gate: both request creation and root execution require a
+  clean working tree whose HEAD exactly matches its configured upstream. The
+  executor rejects any change between request creation and execution.
+- Self-deployment safety: receptionist deployments set the persistent drain
+  before execution and wait for active and queued agent runs to finish, so the
+  service restart cannot interrupt a turn.
+- Recovery: deterministic recovery may create a replacement at verified current
+  HEAD, which then executes automatically. Non-deterministic diagnosis is told
+  to create a request only after tests, commit, push, and exact-command review.
+
 2026-08-05 — Telegram output is compact and flood-aware
 
 - Decision: acknowledge receipt immediately, edit one status message while
@@ -1064,7 +1082,12 @@ QUICK DECISION AND GUARDRAIL INDEX
   that button is a separate user authorization that atomically queues one
   bounded `DEPLOYMENT_DIAGNOSIS_V1` agent turn linked to the failed request.
   The record is delimited as data, duplicate presses reuse the same run, and
-  the agent may fix/commit/push and request fresh approval but never approve.
+  the agent may fix/test/commit/push and create one automatic immutable request.
+  The diagnosis prompt requires a concrete troubleshooting sequence before code
+  changes: identify the exact bot or surface, search duplicate error strings,
+  map it to the owning service and journal, compare the running process release
+  with the current symlink, reproduce as the service user, then verify both the
+  dependency read and live user-facing path.
 - The private chat exposes a persistent recovery keyboard with `Recover` and
   `/agent-try-recovery`. The latter resolves the latest failed deployment when
   pressed rather than embedding a potentially stale request identifier, then
@@ -1082,6 +1105,16 @@ QUICK DECISION AND GUARDRAIL INDEX
   transport limits as datasets grow. `/wnba` requests one five-game page with
   compact list fields; full game data is fetched only after selection. This
   keeps the 64 KiB response cap as a safety boundary instead of a data ceiling.
+- 2026-08-07 duplicate `/wnba` error diagnosis: both
+  `@ascereceptionist_bot` and `@wnbaguesser_bot` emit
+  `❌ Could not load WNBA games. Try again.` The receptionist path was healthy;
+  the failing command was sent to the standalone Guesser. Its systemd unit was
+  still running the August 5 virtual environment even though
+  `/opt/wnba-poller/current` pointed at the August 7 release. The old code
+  rejected the expanded `wnba_games` headers. Restarting
+  `wnba-guesser-bot.service` loaded the current release and read 46 games.
+  `install-wnba-poller` now explicitly restarts and verifies the Guesser after
+  every enabled install instead of relying on `systemctl enable --now`.
 
 
 14. DEPLOYMENT AND VALIDATION RECORD

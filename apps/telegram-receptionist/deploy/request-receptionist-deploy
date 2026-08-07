@@ -17,7 +17,7 @@ MAX_SUMMARY_LENGTH = 500
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Request one Telegram-approved production deployment."
+        description="Queue one immutable automatic production deployment."
     )
     parser.add_argument("--repo", type=Path, default=Path.cwd())
     parser.add_argument("--summary", required=True)
@@ -34,12 +34,32 @@ def main() -> None:
     if not command or len(command) > MAX_COMMAND_LENGTH or "\0" in command:
         raise SystemExit(f"Command must be 1-{MAX_COMMAND_LENGTH} characters.")
 
+    subprocess.run(
+        ["git", "-C", str(repository), "fetch", "--quiet"],
+        check=True,
+    )
+    status = subprocess.run(
+        ["git", "-C", str(repository), "status", "--porcelain"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    if status:
+        raise SystemExit("Repository working tree must be clean.")
     revision = subprocess.run(
         ["git", "-C", str(repository), "rev-parse", "HEAD"],
         check=True,
         capture_output=True,
         text=True,
     ).stdout.strip()
+    upstream = subprocess.run(
+        ["git", "-C", str(repository), "rev-parse", "@{upstream}"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    if revision != upstream:
+        raise SystemExit("Repository HEAD must match its configured upstream.")
     now = datetime.now(UTC)
     request_id = str(uuid.uuid4())
     payload = {
@@ -63,4 +83,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -816,6 +816,36 @@ Next actions (in order):
   `{"ok": true, "result": {"games": [...41 games...]}}`. Told the user to
   retry `/wnba` in Telegram.
 
+### 2026-08-07 — Same `/wnba` error, different bot: stale Guesser process
+
+- Symptom: the user again received
+  `❌ Could not load WNBA games. Try again.`
+- Critical identity check: this command was sent to `@wnbaguesser_bot`, not
+  `@ascereceptionist_bot`. Both bots intentionally expose `/wnba` and used the
+  same generic error text, which initially sent diagnosis down the healthy
+  receptionist-helper path.
+- Owning paths:
+  - `@ascereceptionist_bot` → `telegram-receptionist.service` → short-lived
+    `/usr/local/libexec/receptionist-wnba-helper`.
+  - `@wnbaguesser_bot` → long-lived `wnba-guesser-bot.service` →
+    `/opt/wnba-poller/current/bin/wnba-guesser-bot`.
+- Actual journal error:
+  `ValueError: wnba_games headers do not match the expected schema`.
+- Root cause: `/opt/wnba-poller/current` pointed at the August 7 release, but
+  PID 4193705 was still executing Python and package files from the August 5
+  release. `systemctl enable --now` enabled an already-running service without
+  restarting it after the release symlink changed.
+- Immediate repair: explicitly restarted `wnba-guesser-bot.service`. The new
+  PID loaded the current August 7 release and a direct service-user Sheet read
+  returned 46 games.
+- Permanent repair: `install-wnba-poller` now runs `systemctl enable` when
+  requested, always runs `systemctl restart wnba-guesser-bot.service` after the
+  release switch when enabled/active, and verifies the unit is active.
+- Fast future diagnosis: first ask/establish which bot received `/wnba`; inspect
+  only that unit's journal; compare `ps`/`/proc/<pid>/cmdline` release paths
+  against `readlink -f /opt/wnba-poller/current`; reproduce `read_games()` as
+  `receptionist-agent`; then test the Telegram command.
+
 ### 2026-08-05 — `/wnba` game list was not paginated (user feedback)
 
 - Symptom: after the fix above, `/wnba` worked but listed up to 30 games

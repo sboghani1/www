@@ -15,7 +15,7 @@ next turn.
 - `/new [name]`, `/sessions`, `/switch <session-id-prefix>`, `/reset`
 - `/provider`, `/verbose [on|off]`
 - `/stop`
-- `/approve`, `/deny`, `/deployments`
+- `/deployments`
 
 Plain text is queued as the exact next agent message. V1 accepts text only.
 
@@ -60,16 +60,19 @@ The launcher may load only these Google Sheets values from the agent-owned
 
 It does not load the forwarder's general environment.
 
-## Deployment approvals
+## Automatic deployments
 
-Agents submit deployment proposals with `request-receptionist-deploy`. The bot shows the exact repository revision and root command in Telegram with
-Approve and Deny buttons. `/approve` or `/deny` also works when exactly one
-request is pending. A request:
+Agents queue deployments with `request-receptionist-deploy`. A valid request is
+copied into the bot database and executes automatically. Telegram reports the
+exact repository revision and root command when execution starts. A request:
 
-- executes only after an Approve button or `/approve`
+- requires a clean repository whose HEAD matches its configured upstream
 - can execute once
 - cannot be edited after display
 - expires after 15 minutes
-- is denied permanently with `/deny <request-id>`
+- is rejected if the repository changes before root execution
+- records bounded output and the final status in SQLite
 
-The agent user has no direct root deployment permission.
+The agent user still has no direct root permission. Only the bot may invoke the
+fixed executor, and receptionist self-deployments drain active/queued runs before
+restarting the service.
