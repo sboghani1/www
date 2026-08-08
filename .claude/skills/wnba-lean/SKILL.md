@@ -171,10 +171,14 @@ returned `result`.
 
 The helper acquires the workflow lock, re-validates Sheet/game state, grades
 the active lean deterministically, converts the matching `WNBA_LEAN_EVENT`
-block in `path210.md` into a numbered Past Events entry, validates that no
-unrelated content changed, creates and pushes exactly one auditable commit to
-`www/main`, and appends a publication receipt marking the revision resolved.
-Failures append an abort receipt and restore prior content/Git state.
+block in `path210.md` into a numbered Past Events entry, deterministically
+rebuilds the `# Model Cache` tag counts so they stay in sync with the new entry
+(path210 rule #2), validates that no unrelated content changed, creates and
+pushes exactly one auditable commit to `www/main`, and appends a publication
+receipt marking the revision resolved. Failures append an abort receipt and
+restore prior content/Git state. (The Model Cache's interpretive
+including/excluding breakouts are refreshed separately during the analytical
+lesson pass, not by the deterministic resolve step.)
 
 Report success only after the helper returns `ok: true` with a revision,
 commit SHA, and `result`. State the graded result plainly (right/wrong/push)

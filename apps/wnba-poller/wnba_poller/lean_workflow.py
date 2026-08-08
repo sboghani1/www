@@ -22,9 +22,11 @@ from .path210_ops import (
     apply_resolution_entry,
     content_hash,
     next_past_events_entry_number,
+    rebuild_model_cache_counts,
     render_event_block,
     render_resolution_entry,
     validate_event_change,
+    validate_model_cache_rebuild,
     validate_resolution_change,
 )
 
@@ -605,6 +607,12 @@ def execute_resolution(
         event_id=str(game["event_id"]),
         entry_text=entry_text,
     )
+    # path210 rule #2: the Model Cache counts are derived from the tags and
+    # must stay in sync, so rebuild them deterministically now that a new
+    # tagged entry has been logged -- in the same commit as the resolution.
+    rebuilt = rebuild_model_cache_counts(after)
+    validate_model_cache_rebuild(after, rebuilt)
+    after = rebuilt
     revision = build_revision_event(
         game=game,
         operation="resolve",

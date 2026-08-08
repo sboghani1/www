@@ -224,6 +224,108 @@ def validate_resolution_change(
         )
 
 
+_COUNT_LINE_RE = re.compile(r"^([a-z][a-z0-9_]*): (\d+) right / (\d+) wrong$")
+
+
+def _past_events_section(document: str) -> str:
+    past_start = document.find(_PAST_EVENTS_HEADING)
+    cache_start = document.find(_MODEL_CACHE_HEADING)
+    if past_start < 0 or cache_start < past_start:
+        raise ValueError(
+            "path210 document is missing the Past Events or Model Cache section"
+        )
+    return document[past_start:cache_start]
+
+
+def _past_events_records(document: str) -> list[tuple[str, list[str]]]:
+    """(result, tags) for every Past Events entry, in document order."""
+    section = _past_events_section(document)
+    records: list[tuple[str, list[str]]] = []
+    for block in re.split(r"\n(?=\d+[A-Za-z])", section):
+        lines = block.strip().split("\n")
+        if len(lines) < 3 or not _ENTRY_NUMBER_RE.match(lines[0]):
+            continue
+        result = lines[1].strip()
+        tags = [tag.strip() for tag in lines[2].split(",") if tag.strip()]
+        records.append((result, tags))
+    return records
+
+
+def _tag_record(
+    records: list[tuple[str, list[str]]], tag: str
+) -> tuple[int, int]:
+    """WNBA-only right/wrong count for a tag (soccer/world_cup excluded)."""
+    right = wrong = 0
+    for result, tags in records:
+        if tag not in tags or "soccer" in tags or "world_cup" in tags:
+            continue
+        if result == "right":
+            right += 1
+        elif result == "wrong":
+            wrong += 1
+    return right, wrong
+
+
+def _model_cache_bounds(document: str) -> tuple[int, int]:
+    start = document.find(_MODEL_CACHE_HEADING)
+    if start < 0:
+        raise ValueError("path210 document is missing the Model Cache section")
+    nxt = document.find("\n# ", start + len(_MODEL_CACHE_HEADING))
+    return start, (nxt if nxt >= 0 else len(document))
+
+
+def rebuild_model_cache_counts(document: str) -> str:
+    """Recompute every ``tag: N right / M wrong`` line in the Model Cache from
+    the current Past Events tags (WNBA-only). Prose and breakout lines are left
+    untouched. Deterministic and idempotent; this is the machine-owned half of
+    path210 rule #2 (the counts, which must stay in sync with the tags).
+    """
+    records = _past_events_records(document)
+    start, end = _model_cache_bounds(document)
+    rebuilt = []
+    for line in document[start:end].split("\n"):
+        match = _COUNT_LINE_RE.match(line)
+        if match:
+            right, wrong = _tag_record(records, match.group(1))
+            rebuilt.append(f"{match.group(1)}: {right} right / {wrong} wrong")
+        else:
+            rebuilt.append(line)
+    return document[:start] + "\n".join(rebuilt) + document[end:]
+
+
+def validate_model_cache_rebuild(before: str, after: str) -> None:
+    """Guarantee a cache rebuild changed ONLY ``tag: N right / M wrong`` count
+    lines inside the Model Cache section -- nothing in Notes, Past Events, or
+    Upcoming Events -- and that the resulting counts are internally consistent
+    with ``after``'s own Past Events tags.
+    """
+    b_start, b_end = _model_cache_bounds(before)
+    a_start, a_end = _model_cache_bounds(after)
+    if before[:b_start] != after[:a_start]:
+        raise ValueError(
+            "model cache rebuild changed content before the Model Cache section"
+        )
+    if before[b_end:] != after[a_end:]:
+        raise ValueError(
+            "model cache rebuild changed content after the Model Cache section"
+        )
+    b_lines = before[b_start:b_end].split("\n")
+    a_lines = after[a_start:a_end].split("\n")
+    if len(b_lines) != len(a_lines):
+        raise ValueError("model cache rebuild altered the cache structure")
+    for b_line, a_line in zip(b_lines, a_lines):
+        if b_line == a_line:
+            continue
+        b_match = _COUNT_LINE_RE.match(b_line)
+        a_match = _COUNT_LINE_RE.match(a_line)
+        if not (b_match and a_match and b_match.group(1) == a_match.group(1)):
+            raise ValueError("model cache rebuild changed a non-count line")
+    if rebuild_model_cache_counts(after) != after:
+        raise ValueError(
+            "model cache counts are not consistent with the Past Events tags"
+        )
+
+
 def validate_event_change(
     before: str,
     after: str,

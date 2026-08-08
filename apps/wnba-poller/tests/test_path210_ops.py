@@ -8,9 +8,11 @@ from wnba_poller.path210_ops import (
     content_hash,
     get_event_block,
     next_past_events_entry_number,
+    rebuild_model_cache_counts,
     render_event_block,
     render_resolution_entry,
     validate_event_change,
+    validate_model_cache_rebuild,
     validate_resolution_change,
 )
 
@@ -418,3 +420,73 @@ class TestApplyAndValidateResolutionEntry:
             validate_resolution_change(
                 before, tampered, event_id="evt-1", entry_text=entry
             )
+
+
+_CACHE_DOC = (
+    "# Notes For Model\n\nRules mention '# Model Cache' here (must be ignored).\n"
+    "\n# Past Events\n\n"
+    "1fadea\nright\nback_favorite,total_over\ncontext: monday. a.\n\n"
+    "2fadeb\nwrong\nback_favorite,total_under\ncontext: tuesday. b.\n\n"
+    "3fadec\nwrong\ntotal_over,soccer,world_cup\ncontext: friday. c.\n\n"
+    "# Model Cache\n\n"
+    "Signal right/wrong record (based on tags):\n"
+    "back_favorite: 0 right / 0 wrong\n"
+    "total_over: 9 right / 9 wrong\n"
+    "total_under: 0 right / 0 wrong\n"
+    "  (prose annotation line -- left untouched)\n"
+    "\n# Upcoming Events\n\nsome upcoming text\n"
+)
+
+
+class TestRebuildModelCacheCounts:
+    def test_recomputes_counts_wnba_only(self) -> None:
+        out = rebuild_model_cache_counts(_CACHE_DOC)
+        # back_favorite: entry 1 right, entry 2 wrong -> 1/1
+        assert "back_favorite: 1 right / 1 wrong" in out
+        # total_over: entry 1 right; entry 3 excluded (soccer/world_cup) -> 1/0
+        assert "total_over: 1 right / 0 wrong" in out
+        # total_under: entry 2 wrong -> 0/1
+        assert "total_under: 0 right / 1 wrong" in out
+
+    def test_leaves_prose_and_other_sections_untouched(self) -> None:
+        out = rebuild_model_cache_counts(_CACHE_DOC)
+        assert "  (prose annotation line -- left untouched)" in out
+        assert out.split("# Model Cache")[0] == _CACHE_DOC.split("# Model Cache")[0]
+        assert "some upcoming text" in out.split("# Upcoming Events")[1]
+
+    def test_is_idempotent(self) -> None:
+        once = rebuild_model_cache_counts(_CACHE_DOC)
+        assert rebuild_model_cache_counts(once) == once
+
+    def test_does_not_match_inline_heading_mention(self) -> None:
+        # The Notes section's quoted '# Model Cache' must not be treated as the
+        # real heading (the bug that once wiped Past Events).
+        out = rebuild_model_cache_counts(_CACHE_DOC)
+        assert "1fadea" in out and "2fadeb" in out and "3fadec" in out
+
+
+class TestValidateModelCacheRebuild:
+    def test_accepts_a_clean_rebuild(self) -> None:
+        after = rebuild_model_cache_counts(_CACHE_DOC)
+        validate_model_cache_rebuild(_CACHE_DOC, after)
+
+    def test_rejects_a_change_outside_the_cache(self) -> None:
+        after = rebuild_model_cache_counts(_CACHE_DOC)
+        tampered = after.replace("some upcoming text", "TAMPERED", 1)
+        with pytest.raises(ValueError, match="after the Model Cache"):
+            validate_model_cache_rebuild(_CACHE_DOC, tampered)
+
+    def test_rejects_a_non_count_line_change(self) -> None:
+        after = rebuild_model_cache_counts(_CACHE_DOC)
+        tampered = after.replace("prose annotation line", "prose CHANGED", 1)
+        with pytest.raises(ValueError, match="non-count line"):
+            validate_model_cache_rebuild(_CACHE_DOC, tampered)
+
+    def test_rejects_counts_inconsistent_with_tags(self) -> None:
+        tampered = _CACHE_DOC.replace(
+            "back_favorite: 0 right / 0 wrong",
+            "back_favorite: 50 right / 0 wrong",
+            1,
+        )
+        with pytest.raises(ValueError, match="not consistent"):
+            validate_model_cache_rebuild(_CACHE_DOC, tampered)

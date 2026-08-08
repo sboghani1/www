@@ -433,7 +433,8 @@ def _seed_resolvable_document(git_repo: Path) -> None:
         "# Notes For Model\n\nRules text.\n"
         "\n# Past Events\n\n"
         "1fadesparks\nwrong\nsome_tag\ncontext: monday. some context.\n"
-        "\n# Model Cache\n\ncache stuff\n"
+        "\n# Model Cache\n\nSignal right/wrong record (based on tags):\n"
+        "back_favorite: 0 right / 0 wrong\n"
         "\n# Upcoming Events\n\n",
         encoding="utf-8",
     )
@@ -515,6 +516,10 @@ class TestExecuteResolution:
         assert "WNBA_LEAN_EVENT_START" not in content
         assert "2fademercury" in content
         assert content.index("2fademercury") < content.index("# Model Cache")
+        # resolution rebuilt the Model Cache (path210 rule #2): the resolved
+        # entry carries back_favorite and graded wrong, so its cache count
+        # moved 0/0 -> 0/1 in the same commit.
+        assert "back_favorite: 0 right / 1 wrong" in content
 
         history = store.read_game_history(event_id="evt-1")
         assert history["active_revision"]["revision_id"] == (
