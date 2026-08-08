@@ -980,9 +980,18 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=0cc93c06f67e3eeac12f320fbf0a5d2f -->
 ## WNBA Lean: Atlanta Dream @ Washington Mystics
 - Event ID: `0cc93c06f67e3eeac12f320fbf0a5d2f`
-- Revision: `f60594cd-362e-43fb-9fdb-d226a38736de`
-- Status: `deleted`
-- This lean was deleted through append-only revision history.
+- Revision: `ff2f2d55-819a-4c20-be28-5a135bd2d4b7`
+- Status: `active`
+
+### Full game
+- **Side:** Atlanta Dream (moderate)
+  - Evidence: Line-movement only: the Dream (road favorite) spread firmed a clear net 2 points, opening -3.5 and closing -5.5 (peaking -6.5 midday Aug 7). Sustained money moved toward Atlanta across the whole window -- follow_line_movement, the log's strongest signal, points at the Dream.; The move held: after the -6.5 peak it only eased to -5.5, still a full 2 points clear of the -3.5 open, so this is a real net firm, not a spike that reverted.
+  - Watch: It did tick off the -6.5 peak to -5.5 into close, so weight the net 2-point firm, not the intraday high.
+- **Total:** Over (watch)
+  - Evidence: Line-movement only: the total was essentially pinned -- opened 170.5 and closed 170.5, wandering only within a half-point the entire window. No net move.
+  - Watch: A dead-flat total gives no directional signal; watch only.
+
+**Summary:** Line-movement-only read. Side: moderate Atlanta Dream -- the road favorite's spread firmed a clean net 2 points (-3.5 open to -5.5 close, -6.5 peak), a sustained money-toward-Atlanta move that is the one strong signal on this slate. Total: watch only -- the total closed exactly where it opened (170.5) with no net movement to follow. No first-half lean: nothing in the half-market movement to act on.
 <!-- WNBA_LEAN_EVENT_END event_id=0cc93c06f67e3eeac12f320fbf0a5d2f -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=1abfa68590506baafec863ada56d863d -->
