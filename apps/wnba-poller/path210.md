@@ -698,6 +698,13 @@ line movement: side: mercury -5.5 (open) -> -6.5 (peak) -> -5.5 (close, round tr
 context: friday. line-movement-only lean (no user thought provided). the mercury (away favorite) spread round-tripped -5.5 -> -6.5 -> -5.5 (net flat / line_stable, no side signal) and the total drifted only 173.5 -> 174 (+0.5, effectively flat); both legs were watch-grade (1-star). result: the SUN WON 75-72, so backing mercury -5.5 was WRONG (mercury lost outright), and the 147 total finished WAY UNDER 174, so the over was WRONG. lesson: a round-tripped spread and a dead-flat total gave no real signal and both watch-grade legs missed -- pure line movement with no net move is not a lean; default to PASS when the market has not moved. the 147 also fits the retired all-star over-tilt (overs are no longer the default).
 model_lean: side (watch PHOENIX MERCURY -5.5, 1/3 stars) -- MISS (sun won 75-72); total (watch OVER 174, 1/3 stars) -- MISS (147 under). line-movement-only, no user thought.
 
+97fademystics
+wrong
+back_favorite,follow_line_movement,total_over,line_movement_only
+line movement: side: dream -3.5 (open) -> -6.5 (peak) -> -5.5 (close, net +2 firm); total: o170.5 flat -> 171 (close)
+context: friday. line-movement-only lean (no user thought provided). the dream (road favorite) spread firmed a clean net 2 points -3.5 -> -5.5 (peak -6.5), the strongest movement signal on the slate, so the side was a 2-star moderate follow_line_movement lean on atlanta; the total was pinned near 170.5 (watch, 1-star). result: the MYSTICS WON 79-74, so backing dream -5.5 was WRONG (atlanta lost outright by 5 as the firmed road favorite), and the 153 total finished UNDER 171, so the over was WRONG. lesson: the log's best signal (follow_line_movement) still lost here -- a 2-point firm onto a road favorite did not deliver, a reminder that line direction carries a real built-in loss share and this was one. the 153 under again fits normalized post-all-star scoring.
+model_lean: side (moderate ATLANTA DREAM -5.5, 2/3 stars) -- MISS (mystics won 79-74); total (watch OVER 171, 1/3 stars) -- MISS (153 under). line-movement-only, no user thought.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
@@ -966,23 +973,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** New lean on a near-pickem game. Side takes a small lean on the home Portland Fire: the spread has firmed modestly and without reverting (Tempo +2 -> +2.5), and the log's rules explicitly caution against following a narrative pick that runs against line direction -- which is exactly the shape of the one recorded thought here (Tempo backed outright as 'the better team' while the market has moved the other way). Kept to small strength because the number itself is tiny and has whipsawed between 2.5 and 3, and because Fire's best precedent in this log is specifically as a covering home DOG, not as a favorite, so that history doesn't fully transfer to tonight's role. Total stays at watch/near-pass strength: the 1-point net move is inside the log's no-signal band and there is no blowout dynamic here to add a separate under case. No first-half lean: the first-half spread and total have been completely flat (1.5/-1.5 and 91.5) across all 20 captures, with nothing to read.
 <!-- WNBA_LEAN_EVENT_END event_id=2036e6c92c8c4e14b2b4727f482e74a9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=0cc93c06f67e3eeac12f320fbf0a5d2f -->
-## WNBA Lean: Atlanta Dream @ Washington Mystics
-- Event ID: `0cc93c06f67e3eeac12f320fbf0a5d2f`
-- Revision: `ff2f2d55-819a-4c20-be28-5a135bd2d4b7`
-- Status: `active`
-
-### Full game
-- **Side:** Atlanta Dream (moderate)
-  - Evidence: Line-movement only: the Dream (road favorite) spread firmed a clear net 2 points, opening -3.5 and closing -5.5 (peaking -6.5 midday Aug 7). Sustained money moved toward Atlanta across the whole window -- follow_line_movement, the log's strongest signal, points at the Dream.; The move held: after the -6.5 peak it only eased to -5.5, still a full 2 points clear of the -3.5 open, so this is a real net firm, not a spike that reverted.
-  - Watch: It did tick off the -6.5 peak to -5.5 into close, so weight the net 2-point firm, not the intraday high.
-- **Total:** Over (watch)
-  - Evidence: Line-movement only: the total was essentially pinned -- opened 170.5 and closed 170.5, wandering only within a half-point the entire window. No net move.
-  - Watch: A dead-flat total gives no directional signal; watch only.
-
-**Summary:** Line-movement-only read. Side: moderate Atlanta Dream -- the road favorite's spread firmed a clean net 2 points (-3.5 open to -5.5 close, -6.5 peak), a sustained money-toward-Atlanta move that is the one strong signal on this slate. Total: watch only -- the total closed exactly where it opened (170.5) with no net movement to follow. No first-half lean: nothing in the half-market movement to act on.
-<!-- WNBA_LEAN_EVENT_END event_id=0cc93c06f67e3eeac12f320fbf0a5d2f -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=1abfa68590506baafec863ada56d863d -->
 ## WNBA Lean: Golden State Valkyries @ Dallas Wings
