@@ -705,6 +705,13 @@ line movement: side: dream -3.5 (open) -> -6.5 (peak) -> -5.5 (close, net +2 fir
 context: friday. line-movement-only lean (no user thought provided). the dream (road favorite) spread firmed a clean net 2 points -3.5 -> -5.5 (peak -6.5), the strongest movement signal on the slate, so the side was a 2-star moderate follow_line_movement lean on atlanta; the total was pinned near 170.5 (watch, 1-star). result: the MYSTICS WON 79-74, so backing dream -5.5 was WRONG (atlanta lost outright by 5 as the firmed road favorite), and the 153 total finished UNDER 171, so the over was WRONG. lesson: the log's best signal (follow_line_movement) still lost here -- a 2-point firm onto a road favorite did not deliver, a reminder that line direction carries a real built-in loss share and this was one. the 153 under again fits normalized post-all-star scoring.
 model_lean: side (moderate ATLANTA DREAM -5.5, 2/3 stars) -- MISS (mystics won 79-74); total (watch OVER 171, 1/3 stars) -- MISS (153 under). line-movement-only, no user thought.
 
+98fadevalkyries
+wrong
+line_stable,follow_line_movement,total_under,line_movement_only
+line movement: side: valkyries +1 (open) -> 0 -> +1 -> 0 (close, pick'em, noisy); total: o163.5 -> 162 -> 160.5 (close, net -3)
+context: friday. line-movement-only lean (no user thought provided). the side was a near-pick'em that oscillated +1 -> 0 -> +1 -> 0 and closed pick'em (watch, 1-star, faint tilt to the home wings); the total dropped a clean monotonic net 3 points 163.5 -> 160.5 and held, a 2-star moderate follow_line_movement UNDER. result: the VALKYRIES WON 94-76 by 18, so leaning the wings was WRONG (golden state blew them out), and the 170 total finished OVER 160.5, so the under was WRONG. lesson: a steady 3-point drop in the total was a FALSE signal -- a falling number did not predict a low-scoring game; golden state's blowout produced 170 over a 160.5 close. following a falling total into an under lost here, and the pick'em side gave no protection.
+model_lean: side (watch DALLAS WINGS pick'em, 1/3 stars) -- MISS (valkyries won 94-76); total (moderate UNDER 160.5, 2/3 stars) -- MISS (170 over). line-movement-only, no user thought.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
@@ -974,19 +981,3 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** New lean on a near-pickem game. Side takes a small lean on the home Portland Fire: the spread has firmed modestly and without reverting (Tempo +2 -> +2.5), and the log's rules explicitly caution against following a narrative pick that runs against line direction -- which is exactly the shape of the one recorded thought here (Tempo backed outright as 'the better team' while the market has moved the other way). Kept to small strength because the number itself is tiny and has whipsawed between 2.5 and 3, and because Fire's best precedent in this log is specifically as a covering home DOG, not as a favorite, so that history doesn't fully transfer to tonight's role. Total stays at watch/near-pass strength: the 1-point net move is inside the log's no-signal band and there is no blowout dynamic here to add a separate under case. No first-half lean: the first-half spread and total have been completely flat (1.5/-1.5 and 91.5) across all 20 captures, with nothing to read.
 <!-- WNBA_LEAN_EVENT_END event_id=2036e6c92c8c4e14b2b4727f482e74a9 -->
 
-<!-- WNBA_LEAN_EVENT_START event_id=1abfa68590506baafec863ada56d863d -->
-## WNBA Lean: Golden State Valkyries @ Dallas Wings
-- Event ID: `1abfa68590506baafec863ada56d863d`
-- Revision: `17be7c13-fbd8-4873-9ca6-17bce5e9f72d`
-- Status: `active`
-
-### Full game
-- **Side:** Dallas Wings (watch)
-  - Evidence: Line-movement only: a near-pick'em that wandered without direction -- the Valkyries side went +1 open -> +1.5 -> 0 -> +1 -> 0 close. It closed at pick'em, roughly one tick toward the home Wings from the open but with no sustained one-way move.
-  - Watch: The spread oscillated around zero the whole window and closed pick'em; there is no clean net side signal to follow.
-- **Total:** Under (moderate)
-  - Evidence: Line-movement only: the total declined a clear net 3 points, opening 163.5 and closing 160.5, stepping down (163.5 -> 162 -> 161 -> 160.5) without reverting. A sustained one-way move DOWN -- follow_line_movement points to the under.; The decline was monotonic across the back half of the window and held into close, so it is a real net move rather than a late blip.
-  - Watch: If read after the fact against the result, weight that the move was steady and never bounced back up.
-
-**Summary:** Line-movement-only read. Side: watch on Dallas Wings -- the spread oscillated around pick'em (+1 -> 0 -> +1 -> 0) and closed pick'em, only a tick toward the home side with no sustained move. Total: moderate Under -- the total dropped a clean, monotonic net 3 points (163.5 to 160.5) and held, a real one-way move down. No first-half lean: the half markets were flat.
-<!-- WNBA_LEAN_EVENT_END event_id=1abfa68590506baafec863ada56d863d -->
