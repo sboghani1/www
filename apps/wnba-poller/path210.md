@@ -954,3 +954,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** New lean on a near-pickem game. Side takes a small lean on the home Portland Fire: the spread has firmed modestly and without reverting (Tempo +2 -> +2.5), and the log's rules explicitly caution against following a narrative pick that runs against line direction -- which is exactly the shape of the one recorded thought here (Tempo backed outright as 'the better team' while the market has moved the other way). Kept to small strength because the number itself is tiny and has whipsawed between 2.5 and 3, and because Fire's best precedent in this log is specifically as a covering home DOG, not as a favorite, so that history doesn't fully transfer to tonight's role. Total stays at watch/near-pass strength: the 1-point net move is inside the log's no-signal band and there is no blowout dynamic here to add a separate under case. No first-half lean: the first-half spread and total have been completely flat (1.5/-1.5 and 91.5) across all 20 captures, with nothing to read.
 <!-- WNBA_LEAN_EVENT_END event_id=2036e6c92c8c4e14b2b4727f482e74a9 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=19f38817b4595a67366159a1ef5433be -->
+## WNBA Lean: Phoenix Mercury @ Connecticut Sun
+- Event ID: `19f38817b4595a67366159a1ef5433be`
+- Revision: `23167fec-5bdf-49bd-a6ed-edc98bc3ca77`
+- Status: `active`
+
+### Full game
+- **Side:** Phoenix Mercury (watch)
+  - Evidence: Line-movement only: the Mercury spread opened -5.5, firmed to a -6.5 peak that held through the Aug 7 morning, then eased all the way back and CLOSED at -5.5 -- a full round trip to the opening number, i.e. zero net movement.
+  - Watch: A round-tripped spread that closes where it opened carries no directional side signal; there is nothing in the movement to follow either way.
+- **Total:** Over (watch)
+  - Evidence: Line-movement only: the total opened 173.5, rose to a 175.5 peak overnight, then eased back to close 174 -- a net move of just +0.5 from open, effectively flat with an up-and-back round trip.
+  - Watch: A ~0.5-point net drift after a round trip is inside no-signal territory; not enough movement to back the over with any conviction.
+
+**Summary:** Line-movement-only read. Side: watch on Phoenix Mercury -- the spread round-tripped -5.5 -> -6.5 -> -5.5 and closed exactly at its open, so there is no net directional signal to follow. Total: watch-strength Over only -- the number rose to 175.5 but eased back to close 174, a negligible +0.5 net move. No first-half lean: this is purely a closing-line-movement read and the half markets showed no meaningful net move either.
+<!-- WNBA_LEAN_EVENT_END event_id=19f38817b4595a67366159a1ef5433be -->
