@@ -988,18 +988,9 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=6d2f787ae472f15e9b403dc611d0a141 -->
 ## WNBA Lean: Las Vegas Aces @ Minnesota Lynx
 - Event ID: `6d2f787ae472f15e9b403dc611d0a141`
-- Revision: `5a427cf7-c290-401e-ac58-15a322429bd5`
-- Status: `active`
-
-### Full game
-- **Side:** Las Vegas Aces (moderate)
-  - Evidence: The market disagrees with the 'Lynx win big' read: it settled Lynx -5 (Aces +5), materially short of the Lynx -7.5 the user's thought expects, and the spread never extended toward Minnesota -- it opened Aces +5.5, tightened only to +4.5 for a few afternoon hours, then eased back to +5 at close (net ~flat, no sustained money onto the Lynx blowout).; Backing a favorite to cover on a 'better team should win by ~9' narrative is a losing shape in this log: back_favorite is 19/28 and overconfidence 22/29, and laying points on the Lynx off a narrative has failed before (74fadelynx: Lynx -16.5 won by only 7, the dog covered easily).; The Aces are a live, dangerous +5 dog off a win: 92fadedream shows Las Vegas winning by 22 even as the market moved fully against them -- do not write off the Aces getting a field goal-plus of points.
-  - Watch: The Lynx are genuinely the better team and are off a bad shooting loss to the inferior Sparks, so a motivated bounce-back is a real risk -- this is why the lean is moderate, not strong.; 81fadelynx is the counter-precedent: a big Lynx number CAN be right when they blow out a weak opponent (they covered -12.5 by beating the Tempo by 32); the Aces are not that overmatched, but respect that the Lynx can cover when locked in.
-- **Total:** Under (small)
-  - Evidence: The total fell a net 3 points (186 open -> 183) and then held flat at 183 for roughly the last 22 hours into tip -- a falling, settled total is a follow_line_movement-down signal pointing to the under.; The all-star-break over-tilt is now RETIRED in this log, so there is no seasonal reason to take the over; the default on a nondescript total is under or pass, and the user's implied shootout (187) is exactly the retired over-tilt shape.
-  - Watch: Excluding the retired over-tilt window, the clean total records are near a coin flip (total_over ~10/12, total_under ~7/12), so this rests on the fresh 3-point downward move, not a standing directional edge -- hence small, not moderate.; If the Lynx bounce back in a fast-paced, high-effort spot, a 183 is very reachable; this is a lean-under, not a conviction under.
-
-**Summary:** Model lean fades the user's 'Lynx win big' read. Side: moderate Las Vegas Aces +5 -- the market never extended past Lynx -5 (well short of the -7.5 the thought expects), and backing a favorite to cover on a better-team narrative is a losing shape here (back_favorite 19/28, overconfidence 22/29; 74fadelynx saw the Lynx fail to cover -16.5). The Aces are a live dog off a win (92fadedream: won by 22 while doubted). Tempered to moderate because the Lynx are better and off a loss (bounce-back risk; 81fadelynx shows a big Lynx number can hit). Total: small Under 183 -- the total fell a net 3 points and held, a follow-the-line-down signal, and the all-star over-tilt is retired so there is no reason to chase the over; kept small because the clean total records are near coin-flip. No first-half lean: BetOnline posted no first-half market for this game.
+- Revision: `ced5eb45-63fc-4694-93ae-4195637c5782`
+- Status: `deleted`
+- This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=6d2f787ae472f15e9b403dc611d0a141 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
