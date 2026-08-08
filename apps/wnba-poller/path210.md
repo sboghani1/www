@@ -997,7 +997,16 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=1abfa68590506baafec863ada56d863d -->
 ## WNBA Lean: Golden State Valkyries @ Dallas Wings
 - Event ID: `1abfa68590506baafec863ada56d863d`
-- Revision: `475ca920-85db-469c-8076-fa3f74fba6f0`
-- Status: `deleted`
-- This lean was deleted through append-only revision history.
+- Revision: `17be7c13-fbd8-4873-9ca6-17bce5e9f72d`
+- Status: `active`
+
+### Full game
+- **Side:** Dallas Wings (watch)
+  - Evidence: Line-movement only: a near-pick'em that wandered without direction -- the Valkyries side went +1 open -> +1.5 -> 0 -> +1 -> 0 close. It closed at pick'em, roughly one tick toward the home Wings from the open but with no sustained one-way move.
+  - Watch: The spread oscillated around zero the whole window and closed pick'em; there is no clean net side signal to follow.
+- **Total:** Under (moderate)
+  - Evidence: Line-movement only: the total declined a clear net 3 points, opening 163.5 and closing 160.5, stepping down (163.5 -> 162 -> 161 -> 160.5) without reverting. A sustained one-way move DOWN -- follow_line_movement points to the under.; The decline was monotonic across the back half of the window and held into close, so it is a real net move rather than a late blip.
+  - Watch: If read after the fact against the result, weight that the move was steady and never bounced back up.
+
+**Summary:** Line-movement-only read. Side: watch on Dallas Wings -- the spread oscillated around pick'em (+1 -> 0 -> +1 -> 0) and closed pick'em, only a tick toward the home side with no sustained move. Total: moderate Under -- the total dropped a clean, monotonic net 3 points (163.5 to 160.5) and held, a real one-way move down. No first-half lean: the half markets were flat.
 <!-- WNBA_LEAN_EVENT_END event_id=1abfa68590506baafec863ada56d863d -->
