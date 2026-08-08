@@ -996,16 +996,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
 ## WNBA Lean: Indiana Fever @ Chicago Sky
 - Event ID: `800eb336fe4f10021c1fb5b7d4a808f6`
-- Revision: `b6eb7289-b18c-4c20-80a9-858a336bb7b4`
-- Status: `active`
-
-### Full game
-- **Side:** Chicago Sky (small)
-  - Evidence: The market keeps the Fever at only -6 and eased slightly toward the Sky over the window: the spread opened Fever -6.5, tightened to -5.5 for ~13 hours, then firmed back only to -6 at close (net ~0.5 toward the home Sky), and the Fever ML came in from -250 to -220 (money off the road favorite).; Laying road points on a 'better team should beat an inferior team' narrative is the log's classic losing shape (back_favorite 19/28, overconfidence 22/29) -- exactly the shape of the thought here (Fever -5.5, win by 10 vs the 'inferior sky'); the Sky get a field goal-plus at home.
-  - Watch: REAL counter-signal: the Fever have recently BEATEN fades -- 71/75/85fadefever all resolved wrong (the Fever covered/won, including 75 where they firmed to -9 and won by 10), vs only 88fadefever right. This is a low-conviction, near-pass Sky lean precisely because the Fever have been covering.; The last movement firmed back toward the Fever (-5.5 -> -6, ML -215 -> -220); if that late money keeps coming, the Fever are live to cover -- treat this as close to a pass, not a confident dog play.
-- **Total:** Under (small)
-  - Evidence: The total drifted down a net ~1.5 points (192.5 -> 191) and settled at 191 -- a mild falling-total signal pointing under, and it agrees with the thought's implied low-scoring read (92-82 = 174).; The all-star-break over-tilt is now RETIRED, so the default on a nondescript total is under or pass; there is no seasonal reason to chase the over here.
-  - Watch: The downward move is small (~1.5) and the clean (post-window) total records are near coin-flip, so this rests on the mild drift, not a standing edge -- small only.; 191 is a high number; if either team gets hot from three this clears easily, so this is a lean-under, not conviction.
-
-**Summary:** Model lean partly disagrees with the thought. Side: small (near-pass) Chicago Sky +6 -- the model won't lay road points on a 'better team beats inferior team' narrative (back_favorite 19/28, overconfidence 22/29), and the market only has the Fever -6 with the number and ML both easing slightly toward the Sky. BUT this is deliberately low-conviction: the Fever have recently beaten fades (71/75/85fadefever all wrong), and the last move firmed back toward the Fever, so it's close to a pass. Total: small Under 191 -- agrees with the thought's low-scoring read; the total drifted down ~1.5 and the all-star over-tilt is retired, so no reason to chase the over, kept small because the move is mild and clean total records are near coin-flip. No first-half lean: BetOnline posted no first-half market.
+- Revision: `6eb53bfe-62af-4372-9797-50b16f2859a5`
+- Status: `deleted`
+- This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
