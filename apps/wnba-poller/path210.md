@@ -691,6 +691,13 @@ line movement: valkyries (home fav) spread: -13.5 (open) -> -13.0 -> -13.5 (peak
 context: tuesday. fade valkyries = back the toronto tempo +11.5 to keep the immediate rematch closer, on a primary projection of golden state winning 87-79 by 8. golden state opened -13.5 and initially held the same large mismatch price as entry 91, but the line eventually EASED to -11.5 (money toward toronto), while the total rose 168 -> 169.5. the VALKYRIES WON 92-81, by exactly 11: they did NOT cover -11.5, so toronto +11.5 covered by a half-point and fading the valkyries was RIGHT; the 173 total finished OVER 169.5, so the low 166-point primary projection missed. lesson: the rematch compressed from golden state's 17-point win in entry 91 to 11 here, and the two-point market move toward toronto correctly identified the narrow dog cover. the initial model lean to repeat the valkyries -13 cover was wrong, but honoring the -11.5 downgrade trigger before the game produced the correct final direction. this also supports the work-in-progress market-clearing lens: the closing/latest +11.5 created a near-perfect two-sided number, with the game landing at 11.
 model_lean: side (initial moderate VALKYRIES -13, later downgraded to PASS / small TEMPO +11.5) — FINAL DIRECTION HIT narrowly (toronto covered +11.5 by 0.5; the initial valkyries -13 would have missed); total (PASS / small OVER 169.5) — HIT direction (173 over) but appropriately under-committed. net: MODEL SIDE-AND-TOTAL DIRECTION HIT after the update — reacting to the material spread ease corrected the initial exact-rematch lean.
 
+96fadesun
+wrong
+line_stable,back_favorite,total_over,line_movement_only
+line movement: side: mercury -5.5 (open) -> -6.5 (peak) -> -5.5 (close, round trip); total: o173.5 -> 175.5 -> 174 (close)
+context: friday. line-movement-only lean (no user thought provided). the mercury (away favorite) spread round-tripped -5.5 -> -6.5 -> -5.5 (net flat / line_stable, no side signal) and the total drifted only 173.5 -> 174 (+0.5, effectively flat); both legs were watch-grade (1-star). result: the SUN WON 75-72, so backing mercury -5.5 was WRONG (mercury lost outright), and the 147 total finished WAY UNDER 174, so the over was WRONG. lesson: a round-tripped spread and a dead-flat total gave no real signal and both watch-grade legs missed -- pure line movement with no net move is not a lean; default to PASS when the market has not moved. the 147 also fits the retired all-star over-tilt (overs are no longer the default).
+model_lean: side (watch PHOENIX MERCURY -5.5, 1/3 stars) -- MISS (sun won 75-72); total (watch OVER 174, 1/3 stars) -- MISS (147 under). line-movement-only, no user thought.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
@@ -959,23 +966,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** New lean on a near-pickem game. Side takes a small lean on the home Portland Fire: the spread has firmed modestly and without reverting (Tempo +2 -> +2.5), and the log's rules explicitly caution against following a narrative pick that runs against line direction -- which is exactly the shape of the one recorded thought here (Tempo backed outright as 'the better team' while the market has moved the other way). Kept to small strength because the number itself is tiny and has whipsawed between 2.5 and 3, and because Fire's best precedent in this log is specifically as a covering home DOG, not as a favorite, so that history doesn't fully transfer to tonight's role. Total stays at watch/near-pass strength: the 1-point net move is inside the log's no-signal band and there is no blowout dynamic here to add a separate under case. No first-half lean: the first-half spread and total have been completely flat (1.5/-1.5 and 91.5) across all 20 captures, with nothing to read.
 <!-- WNBA_LEAN_EVENT_END event_id=2036e6c92c8c4e14b2b4727f482e74a9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=19f38817b4595a67366159a1ef5433be -->
-## WNBA Lean: Phoenix Mercury @ Connecticut Sun
-- Event ID: `19f38817b4595a67366159a1ef5433be`
-- Revision: `b26bf7c3-9d5f-4f0a-8238-88525b977ec2`
-- Status: `active`
-
-### Full game
-- **Side:** Phoenix Mercury (watch)
-  - Evidence: Line-movement only: the Mercury spread opened -5.5, firmed to a -6.5 peak that held through the Aug 7 morning, then eased all the way back and CLOSED at -5.5 -- a full round trip to the opening number, i.e. zero net movement.
-  - Watch: A round-tripped spread that closes where it opened carries no directional side signal; there is nothing in the movement to follow either way.
-- **Total:** Over (watch)
-  - Evidence: Line-movement only: the total opened 173.5, rose to a 175.5 peak overnight, then eased back to close 174 -- a net move of just +0.5 from open, effectively flat with an up-and-back round trip.
-  - Watch: A ~0.5-point net drift after a round trip is inside no-signal territory; not enough movement to back the over with any conviction.
-
-**Summary:** Line-movement-only read. Side: watch on Phoenix Mercury -- the spread round-tripped -5.5 -> -6.5 -> -5.5 and closed exactly at its open, so there is no net directional signal to follow. Total: watch-strength Over only -- the number rose to 175.5 but eased back to close 174, a negligible +0.5 net move. No first-half lean: this is purely a closing-line-movement read and the half markets showed no meaningful net move either.
-<!-- WNBA_LEAN_EVENT_END event_id=19f38817b4595a67366159a1ef5433be -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=0cc93c06f67e3eeac12f320fbf0a5d2f -->
 ## WNBA Lean: Atlanta Dream @ Washington Mystics
