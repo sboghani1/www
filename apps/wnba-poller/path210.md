@@ -958,18 +958,9 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=19f38817b4595a67366159a1ef5433be -->
 ## WNBA Lean: Phoenix Mercury @ Connecticut Sun
 - Event ID: `19f38817b4595a67366159a1ef5433be`
-- Revision: `23167fec-5bdf-49bd-a6ed-edc98bc3ca77`
-- Status: `active`
-
-### Full game
-- **Side:** Phoenix Mercury (watch)
-  - Evidence: Line-movement only: the Mercury spread opened -5.5, firmed to a -6.5 peak that held through the Aug 7 morning, then eased all the way back and CLOSED at -5.5 -- a full round trip to the opening number, i.e. zero net movement.
-  - Watch: A round-tripped spread that closes where it opened carries no directional side signal; there is nothing in the movement to follow either way.
-- **Total:** Over (watch)
-  - Evidence: Line-movement only: the total opened 173.5, rose to a 175.5 peak overnight, then eased back to close 174 -- a net move of just +0.5 from open, effectively flat with an up-and-back round trip.
-  - Watch: A ~0.5-point net drift after a round trip is inside no-signal territory; not enough movement to back the over with any conviction.
-
-**Summary:** Line-movement-only read. Side: watch on Phoenix Mercury -- the spread round-tripped -5.5 -> -6.5 -> -5.5 and closed exactly at its open, so there is no net directional signal to follow. Total: watch-strength Over only -- the number rose to 175.5 but eased back to close 174, a negligible +0.5 net move. No first-half lean: this is purely a closing-line-movement read and the half markets showed no meaningful net move either.
+- Revision: `14ad6367-f36b-4501-aac9-e681784cc422`
+- Status: `deleted`
+- This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=19f38817b4595a67366159a1ef5433be -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=0cc93c06f67e3eeac12f320fbf0a5d2f -->
