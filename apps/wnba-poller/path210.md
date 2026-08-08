@@ -716,27 +716,31 @@ model_lean: side (watch DALLAS WINGS pick'em, 1/3 stars) -- MISS (valkyries won 
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 14 right / 10 wrong
+follow_line_movement: 14 right / 12 wrong
 fade_favorite: 15 right / 12 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 35 right / 38 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 14 right / 21 wrong
-back_favorite: 19 right / 26 wrong
+back_favorite: 19 right / 28 wrong
 chased_better_payout: 0 right / 1 wrong
-line_stable: 7 right / 5 wrong
+line_stable: 7 right / 7 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 5 right / 1 wrong
 overconfidence: 22 right / 29 wrong
-total_over: 15 right / 16 wrong
-total_under: 17 right / 19 wrong
+total_over: 15 right / 18 wrong
+total_under: 17 right / 20 wrong
 expired_allstar_over_tilt: 15 right / 14 wrong
-  (entries 67-95 -- games decided during the now-retired all-star-break over-tilt window; the 6-game Wednesday 67-72 is where it should have ended. KEPT in every count above, tagged only so total records can be read clean. Read total factors BOTH ways:
-   total_over:  15/16 including these  /  10/10 excluding these
-   total_under: 17/19 including these  /  7/11 excluding these
+  (entries 67-95 -- decided during the now-retired all-star-break over-tilt window (it should have ended at the 6-game Wednesday 67-72). KEPT in every count above, tagged only so total records read clean:
+   total_over:  15/18 including these  /  10/12 excluding these
+   total_under: 17/20 including these  /  7/12 excluding these
   The excluding-these numbers are the cleaner prior for a fresh total lean now that the tilt is retired.)
+line_movement_only: 0 right / 3 wrong
+  (leans made from closing line movement alone, NO user thought -- a methodology test, not a normal read. KEPT in every count above, tagged so they can be excluded:
+   total_over:  15/18 including these  /  15/16 excluding these
+   total_under: 17/20 including these  /  17/19 excluding these)
 
 # Upcoming Events
 
