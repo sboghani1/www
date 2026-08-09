@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from wnba_poller.odds import OddsFetchResult
 from wnba_poller.scheduler import is_due, poll_interval
 from wnba_poller.service import backfill_scores, poll_odds, sync_schedule
 
@@ -73,6 +74,47 @@ def test_scheduled_poll_makes_no_api_call_when_nothing_is_due() -> None:
 
     assert not outcome.api_called
     assert not called
+
+
+class _DueStore:
+    def read_games(self) -> list[dict]:
+        return [_record(hours_to_tip=7, last_poll=None)]
+
+    def persist_odds_poll(
+        self,
+        *,
+        due_records: list[dict],
+        lines: list,
+        requests_used: str,
+        requests_remaining: str,
+        now: datetime,
+    ) -> tuple[int, int]:
+        return 1, 1
+
+
+class _FallbackClient:
+    def fetch_due(
+        self, due_records: list[dict], *, now: datetime
+    ) -> OddsFetchResult:
+        return OddsFetchResult(
+            [],
+            "3",
+            "497",
+            used_fallback=True,
+            primary_failure="HTTP 401",
+        )
+
+    def close(self) -> None:
+        return None
+
+
+def test_poll_outcome_propagates_fallback_usage() -> None:
+    outcome = poll_odds(
+        _DueStore(), now=NOW, client_factory=_FallbackClient
+    )
+
+    assert outcome.api_called
+    assert outcome.used_fallback is True
 
 
 class _FailingResponse:

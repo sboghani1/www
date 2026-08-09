@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Sequence
 
 from .config import Config
+from .odds_alerts import OddsAlertNotifier
 from .service import backfill_scores, odds_client_factory, poll_odds, sync_schedule
 from .sheets import SheetsStore
 
@@ -146,15 +147,33 @@ def _run(args: argparse.Namespace) -> int:
         return 0
 
     if args.command == "poll-odds":
-        outcome = poll_odds(
-            store,
-            now=now,
-            client_factory=odds_client_factory(
-                api_key=config.odds_api_key,
-                timeout=config.http_timeout_seconds,
-                retries=config.http_retries,
-            ),
+        alerts = OddsAlertNotifier(
+            bot_token=config.odds_alert_bot_token,
+            chat_id=config.odds_alert_chat_id,
+            low_remaining=config.odds_low_remaining,
+            state_path=config.odds_alert_state_path,
         )
+        try:
+            outcome = poll_odds(
+                store,
+                now=now,
+                client_factory=odds_client_factory(
+                    api_key=config.odds_api_key,
+                    fallback_api_key=config.odds_api_fallback_key,
+                    on_primary_unavailable=lambda reason: (
+                        alerts.primary_unavailable(
+                            reason,
+                            fallback_configured=bool(
+                                config.odds_api_fallback_key
+                            ),
+                        )
+                    ),
+                    timeout=config.http_timeout_seconds,
+                    retries=config.http_retries,
+                ),
+            )
+        finally:
+            alerts.close()
         if not outcome.api_called:
             print("No games are due; no Odds API request was made.")
             return 0
@@ -163,17 +182,38 @@ def _run(args: argparse.Namespace) -> int:
             f"{outcome.updated_games} updated, "
             f"{outcome.appended_snapshots} snapshot(s) appended; "
             f"quota used={outcome.requests_used or 'unknown'}, "
-            f"remaining={outcome.requests_remaining or 'unknown'}."
+            f"remaining={outcome.requests_remaining or 'unknown'}, "
+            f"key={'fallback' if outcome.used_fallback else 'primary'}."
         )
-        try:
-            remaining = int(outcome.requests_remaining)
-        except (TypeError, ValueError):
-            remaining = None
-        if remaining is not None and remaining <= 50:
-            print(
-                f"WARNING: Odds API quota is low ({remaining} remaining).",
-                file=sys.stderr,
+        if not outcome.used_fallback:
+            try:
+                remaining = int(outcome.requests_remaining)
+            except (TypeError, ValueError):
+                remaining = None
+            try:
+                used = int(outcome.requests_used)
+            except (TypeError, ValueError):
+                used = None
+            alerts = OddsAlertNotifier(
+                bot_token=config.odds_alert_bot_token,
+                chat_id=config.odds_alert_chat_id,
+                low_remaining=config.odds_low_remaining,
+                state_path=config.odds_alert_state_path,
             )
+            try:
+                alerts.primary_healthy(remaining=remaining, used=used)
+            finally:
+                alerts.close()
+            if (
+                remaining is not None
+                and remaining <= config.odds_low_remaining
+                and not alerts.enabled
+            ):
+                print(
+                    "WARNING: paid Odds API quota is low "
+                    f"({remaining} remaining).",
+                    file=sys.stderr,
+                )
         return 0
 
     if args.command == "reconcile-thoughts":

@@ -1,6 +1,9 @@
 from copy import deepcopy
 from datetime import datetime, timezone
 
+import httpx
+import pytest
+
 from wnba_poller.odds import (
     FIRST_HALF_MARKETS,
     FULL_MARKETS,
@@ -170,3 +173,70 @@ def test_bulk_full_game_and_event_specific_first_half_requests() -> None:
     assert result.lines[0].first_half_total == 82.5
     assert result.requests_used == "11"
     assert result.requests_remaining == "489"
+
+
+class _FailoverHTTPClient:
+    def __init__(self) -> None:
+        self.keys: list[str] = []
+
+    def get(self, url: str, params: dict) -> _Response:
+        self.keys.append(params["apiKey"])
+        if params["apiKey"] == "paid":
+            response = _Response({}, "500")
+            response.status_code = 401
+            return response
+        if "/events/" in url:
+            return _Response(_period_payload(), "2")
+        return _Response([_full_game()], "1")
+
+
+def test_key_failure_switches_current_poll_to_fallback() -> None:
+    http = _FailoverHTTPClient()
+    failures: list[str] = []
+    client = OddsClient(
+        "paid",
+        fallback_api_key="free",
+        on_primary_unavailable=failures.append,
+        client=http,
+        retries=0,
+    )
+    due = [
+        {
+            "espn_event_id": "espn-1",
+            "event_id": "",
+            "commence_time_utc": "2026-08-05T23:00:00Z",
+            "away_team": "Atlanta Dream",
+            "home_team": "New York Liberty",
+        }
+    ]
+
+    result = client.fetch_due(due, now=NOW)
+
+    assert http.keys == ["paid", "free", "free"]
+    assert failures == ["HTTP 401"]
+    assert result.used_fallback is True
+    assert result.primary_failure == "HTTP 401"
+
+
+class _TransportFailureClient:
+    def __init__(self) -> None:
+        self.keys: list[str] = []
+
+    def get(self, url: str, params: dict) -> _Response:
+        self.keys.append(params["apiKey"])
+        raise httpx.ConnectError("offline")
+
+
+def test_transport_failure_does_not_switch_keys() -> None:
+    http = _TransportFailureClient()
+    client = OddsClient(
+        "paid",
+        fallback_api_key="free",
+        client=http,
+        retries=0,
+    )
+
+    with pytest.raises(RuntimeError, match="request failed"):
+        client.fetch_due([{"event_id": "due"}], now=NOW)
+
+    assert http.keys == ["paid"]

@@ -15,7 +15,10 @@ Store these values only in the restricted runtime environment file:
 
 ```text
 WNBA_SHEET_ID=...
-ODDS_API_KEY=...
+ODDS_API_KEY=...                    # paid primary key
+ODDS_API_FALLBACK_KEY=...           # free backup key
+WNBA_ODDS_ALERT_BOT_TOKEN=...       # receptionist bot token
+WNBA_ODDS_ALERT_CHAT_ID=...         # operator's private Telegram chat ID
 GOOGLE_CREDENTIALS=...              # base64 service-account JSON
 # or:
 GOOGLE_SERVICE_ACCOUNT_JSON=/path/to/restricted-service-account.json
@@ -26,6 +29,7 @@ Optional HTTP controls:
 ```text
 WNBA_HTTP_TIMEOUT_SECONDS=20
 WNBA_HTTP_RETRIES=2
+WNBA_ODDS_LOW_REMAINING=2000
 ```
 
 The bot has a separate mode-0600 environment file:
@@ -119,8 +123,13 @@ missing ESPN events never cause existing rows to be deleted. Opening values are
 filled from the first available market and never replaced; latest values always
 reflect the successful poll. Changed snapshots append immediately, while an
 identical snapshot appends only after 60 minutes.
-The CLI records quota headers and emits a journald-visible warning at 50
-remaining requests or fewer.
+The paid key is primary. Authentication, quota, or rate-limit responses
+(`401`, `403`, or `429`) switch the current poll to the free backup key;
+network and upstream `5xx` failures do not, because changing credentials
+cannot repair them. The receptionist bot alerts the operator once when the
+paid key becomes unavailable and once when its remaining quota crosses the
+configured low threshold. Alert state persists in
+`/var/lib/wnba-poller/odds_alert_state.json`, preventing timer-run spam.
 
 Historical text logs are preserved under `source_artifacts/`. Automated history
 import is intentionally omitted because the legacy rows have no immutable event

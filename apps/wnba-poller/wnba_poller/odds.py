@@ -27,6 +27,8 @@ class OddsFetchResult:
     lines: list[OddsLines]
     requests_used: str
     requests_remaining: str
+    used_fallback: bool = False
+    primary_failure: str = ""
 
 
 def _normalized_team(value: str) -> str:
@@ -200,6 +202,8 @@ class OddsClient:
         self,
         api_key: str,
         *,
+        fallback_api_key: str = "",
+        on_primary_unavailable: Callable[[str], None] | None = None,
         client: httpx.Client | None = None,
         timeout: float = 20,
         retries: int = 2,
@@ -208,6 +212,10 @@ class OddsClient:
         if not api_key:
             raise ValueError("ODDS_API_KEY is required")
         self._api_key = api_key
+        self._fallback_api_key = fallback_api_key
+        self._on_primary_unavailable = on_primary_unavailable
+        self._used_fallback = False
+        self._primary_failure = ""
         self._owns_client = client is None
         self._client = client or httpx.Client(timeout=timeout)
         self._retries = retries
@@ -247,6 +255,17 @@ class OddsClient:
             if retryable and attempt < self._retries:
                 self._sleep(2**attempt)
                 continue
+            if (
+                not self._used_fallback
+                and response.status_code in {401, 403, 429}
+            ):
+                self._primary_failure = f"HTTP {response.status_code}"
+                if self._on_primary_unavailable is not None:
+                    self._on_primary_unavailable(self._primary_failure)
+                if self._fallback_api_key:
+                    self._api_key = self._fallback_api_key
+                    self._used_fallback = True
+                    return self._get(path, markets=markets)
             raise RuntimeError(
                 f"The Odds API returned HTTP {response.status_code}"
             )
@@ -316,4 +335,6 @@ class OddsClient:
             ),
             requests_used=used,
             requests_remaining=remaining,
+            used_fallback=self._used_fallback,
+            primary_failure=self._primary_failure,
         )

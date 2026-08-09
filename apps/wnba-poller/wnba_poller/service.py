@@ -49,6 +49,7 @@ class PollOutcome:
     appended_snapshots: int
     requests_used: str
     requests_remaining: str
+    used_fallback: bool = False
 
 
 def sync_schedule(
@@ -145,17 +146,22 @@ def poll_odds(
         snapshots,
         result.requests_used,
         result.requests_remaining,
+        result.used_fallback,
     )
 
 
 def odds_client_factory(
     *,
     api_key: str,
+    fallback_api_key: str = "",
+    on_primary_unavailable: Callable[[str], None] | None = None,
     timeout: float,
     retries: int,
 ) -> Callable[[], OddsClient]:
     return lambda: OddsClient(
         api_key,
+        fallback_api_key=fallback_api_key,
+        on_primary_unavailable=on_primary_unavailable,
         timeout=timeout,
         retries=retries,
     )
