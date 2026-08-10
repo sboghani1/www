@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Callable, Protocol
 
 import httpx
@@ -20,6 +20,10 @@ class Store(Protocol):
     ) -> tuple[int, int]: ...
 
     def upsert_results(
+        self, records: list[dict[str, Any]]
+    ) -> tuple[int, int]: ...
+
+    def upsert_season_streaks(
         self, records: list[dict[str, Any]]
     ) -> tuple[int, int]: ...
 
@@ -184,6 +188,70 @@ def backfill_results(
     if not records:
         return 0, 0
     return store.upsert_results(records)
+
+
+def backfill_season_streaks(
+    store: Store,
+    *,
+    season: int,
+    now: datetime,
+    http_client: httpx.Client | None = None,
+    timeout: float = 20,
+) -> tuple[int, int]:
+    """Compute each franchise's longest win/loss streak for a full season from
+    ESPN (free) and upsert one row per team into wnba_season_streaks. Sweeps
+    May 1 -> Oct 31 of `season` (covers regular season + playoffs); re-runnable.
+    """
+    from .streaks import compute_streaks
+
+    games: list[dict[str, Any]] = []
+    current = date(season, 5, 1)
+    end = date(season, 10, 31)
+    while current <= end:
+        for game in fetch_scores_for_date(
+            current.strftime("%Y%m%d"), client=http_client, timeout=timeout
+        ):
+            if (
+                game.status != "final"
+                or game.away_score is None
+                or game.home_score is None
+                or game.away_team not in WNBA_TEAMS
+                or game.home_team not in WNBA_TEAMS
+            ):
+                continue
+            winner = (
+                game.away_team
+                if game.away_score > game.home_score
+                else game.home_team
+            )
+            games.append(
+                {
+                    "game_date_et": current.isoformat(),
+                    "away_team": game.away_team,
+                    "home_team": game.home_team,
+                    "winner": winner,
+                }
+            )
+        current += timedelta(days=1)
+
+    teams = compute_streaks(games)["teams"]
+    if not teams:
+        return 0, 0
+    stamp = now.astimezone(timezone.utc).isoformat()
+    records = [
+        {
+            "season": season,
+            "team": team,
+            "wins": data["wins"],
+            "losses": data["losses"],
+            "games": data["wins"] + data["losses"],
+            "longest_win_streak": data["longest_win"],
+            "longest_loss_streak": data["longest_loss"],
+            "updated_at_utc": stamp,
+        }
+        for team, data in sorted(teams.items())
+    ]
+    return store.upsert_season_streaks(records)
 
 
 def poll_odds(

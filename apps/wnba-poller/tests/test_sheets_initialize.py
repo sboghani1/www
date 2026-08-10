@@ -13,6 +13,7 @@ from wnba_poller.sheets import (
     LEGACY_NFL_TABS,
     RAW_VALUE_INPUT_OPTION,
     RESULT_HEADERS,
+    SEASON_STREAK_HEADERS,
     SETTINGS_HEADERS,
     SHEET_TABS,
     SNAPSHOT_HEADERS,
@@ -115,6 +116,9 @@ def _fully_seeded_spreadsheet() -> FakeSpreadsheet:
         ),
         FakeWorksheet("wnba_settings", worksheet_id=6, headers=SETTINGS_HEADERS),
         FakeWorksheet("wnba_results", worksheet_id=7, headers=RESULT_HEADERS),
+        FakeWorksheet(
+            "wnba_season_streaks", worksheet_id=8, headers=SEASON_STREAK_HEADERS
+        ),
     ]
     return FakeSpreadsheet(worksheets)
 
@@ -129,6 +133,7 @@ class TestExpectedSchema:
             "wnba_allowed_users",
             "wnba_settings",
             "wnba_results",
+            "wnba_season_streaks",
         }
         assert TAB_HEADERS["wnba_games"] == GAME_HEADERS
         assert TAB_HEADERS["wnba_line_snapshots"] == SNAPSHOT_HEADERS
@@ -137,6 +142,7 @@ class TestExpectedSchema:
         assert TAB_HEADERS["wnba_allowed_users"] == ALLOWED_USER_HEADERS
         assert TAB_HEADERS["wnba_settings"] == SETTINGS_HEADERS
         assert TAB_HEADERS["wnba_results"] == RESULT_HEADERS
+        assert TAB_HEADERS["wnba_season_streaks"] == SEASON_STREAK_HEADERS
 
     def test_games_headers_include_every_plan_line_field_opening_and_latest(
         self,
@@ -166,7 +172,7 @@ class TestExpectedSchema:
 
 
 class TestInitializeOnEmptyWorkbook:
-    def test_creates_all_seven_tabs_with_exact_expected_headers(self) -> None:
+    def test_creates_all_eight_tabs_with_exact_expected_headers(self) -> None:
         spreadsheet = FakeSpreadsheet()
         store = SheetsStore(spreadsheet)
 
@@ -176,7 +182,7 @@ class TestInitializeOnEmptyWorkbook:
             remove_legacy_nfl_tabs=False,
         )
 
-        assert created == 7
+        assert created == 8
         assert removed == 0
         for tab_name, expected_headers in TAB_HEADERS.items():
             worksheet = spreadsheet.worksheet(tab_name)
@@ -299,8 +305,8 @@ class TestInitializeDestructivePaths:
             tab["title"] == "wnba_games" and tab["values"][0] == ["stale", "headers"]
             for tab in backup["worksheets"]
         )
-        assert created == 7
-        assert removed == 7
+        assert created == 8
+        assert removed == 8
         new_games = spreadsheet.worksheet("wnba_games")
         assert new_games.id != old_id
         assert new_games.get_all_values()[0] == GAME_HEADERS

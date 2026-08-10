@@ -13,6 +13,7 @@ from .odds_alerts import OddsAlertNotifier
 from .service import (
     backfill_results,
     backfill_scores,
+    backfill_season_streaks,
     odds_client_factory,
     poll_odds,
     sync_schedule,
@@ -98,6 +99,16 @@ def _parser() -> argparse.ArgumentParser:
         help="Print per-team win/loss streaks (cached by completed-game count).",
     )
     streaks.add_argument("--json", action="store_true")
+    season_streaks = subparsers.add_parser(
+        "backfill-season-streaks",
+        help=(
+            "Compute each team's longest win/loss streak for a full season "
+            "from ESPN and store it in wnba_season_streaks."
+        ),
+    )
+    season_streaks.add_argument(
+        "--season", type=int, required=True, help="Season year, e.g. 2024."
+    )
     subparsers.add_parser(
         "poll-odds",
         help="Poll only games due under the hourly/15-minute policy.",
@@ -195,6 +206,19 @@ def _run(args: argparse.Namespace) -> int:
         print(
             f"Results backfill succeeded from {start_date}: "
             f"{added} added, {updated} updated."
+        )
+        return 0
+
+    if args.command == "backfill-season-streaks":
+        added, updated = backfill_season_streaks(
+            store,
+            season=args.season,
+            now=now,
+            timeout=config.http_timeout_seconds,
+        )
+        print(
+            f"Season {args.season} streaks stored: "
+            f"{added} team(s) added, {updated} updated."
         )
         return 0
 

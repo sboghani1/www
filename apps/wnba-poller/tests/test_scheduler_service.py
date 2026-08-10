@@ -387,3 +387,35 @@ def test_backfill_results_rejects_a_bad_start_date() -> None:
         backfill_results(
             _ResultsStore(), start_date="2026-05-08", now=NOW, http_client=None
         )
+
+
+class _SeasonStreakStore:
+    def __init__(self) -> None:
+        self.upserted: list[dict] = []
+
+    def upsert_season_streaks(self, records: list[dict]) -> tuple[int, int]:
+        self.upserted.extend(records)
+        return len(records), 0
+
+
+def test_backfill_season_streaks_computes_and_stores_one_row_per_team() -> None:
+    from wnba_poller.service import backfill_season_streaks
+
+    # Two Dream wins over the Mercury in the 2024 window.
+    payload = {"events": [_final_event("g1", 70, 90)]}  # away Mercury, home Dream
+    http = _RecordingHTTP({})
+    http.payload_by_date = {"20240515": payload, "20240517": payload}
+    store = _SeasonStreakStore()
+    now = datetime(2026, 8, 10, tzinfo=timezone.utc)
+
+    added, _ = backfill_season_streaks(
+        store, season=2024, now=now, http_client=http
+    )
+
+    assert added == 2  # one row each for Dream and Mercury
+    by_team = {r["team"]: r for r in store.upserted}
+    assert by_team["Atlanta Dream"]["longest_win_streak"] == 2
+    assert by_team["Atlanta Dream"]["longest_loss_streak"] == 0
+    assert by_team["Phoenix Mercury"]["longest_loss_streak"] == 2
+    assert by_team["Atlanta Dream"]["season"] == 2024
+    assert by_team["Atlanta Dream"]["games"] == 2

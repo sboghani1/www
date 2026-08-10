@@ -38,6 +38,7 @@ SHEET_TABS = {
     "allowed_users": "wnba_allowed_users",
     "settings": "wnba_settings",
     "results": "wnba_results",
+    "season_streaks": "wnba_season_streaks",
 }
 LEGACY_NFL_TABS = ("nfl_games", "nfl_line_snapshots", "nfl_leans")
 
@@ -49,6 +50,17 @@ RESULT_HEADERS = [
     "away_score",
     "home_score",
     "winner",
+]
+
+SEASON_STREAK_HEADERS = [
+    "season",
+    "team",
+    "wins",
+    "losses",
+    "games",
+    "longest_win_streak",
+    "longest_loss_streak",
+    "updated_at_utc",
 ]
 
 GAME_HEADERS = [
@@ -143,6 +155,7 @@ TAB_HEADERS = {
     SHEET_TABS["allowed_users"]: ALLOWED_USER_HEADERS,
     SHEET_TABS["settings"]: SETTINGS_HEADERS,
     SHEET_TABS["results"]: RESULT_HEADERS,
+    SHEET_TABS["season_streaks"]: SEASON_STREAK_HEADERS,
 }
 
 SETTING_DESCRIPTIONS = {
@@ -164,7 +177,7 @@ SETTING_DESCRIPTIONS = {
 }
 
 DEFAULT_SETTINGS = {
-    "schema_version": "5",
+    "schema_version": "6",
     "schedule_horizon_days": "14",
     "timezone": "America/New_York",
     "poll_far_minutes": "60",
@@ -714,6 +727,66 @@ class SheetsStore:
                         "range": (
                             f"A{existing}:"
                             f"{gspread.utils.rowcol_to_a1(existing, len(RESULT_HEADERS))}"
+                        ),
+                        "values": [values],
+                    }
+                )
+            else:
+                new_rows.append(values)
+        if updates:
+            self._call(
+                worksheet.batch_update,
+                updates,
+                value_input_option=RAW_VALUE_INPUT_OPTION,
+            )
+        if new_rows:
+            self._call(
+                worksheet.append_rows,
+                new_rows,
+                value_input_option=RAW_VALUE_INPUT_OPTION,
+            )
+        return len(new_rows), len(updates)
+
+    def read_season_streaks(self) -> list[dict[str, Any]]:
+        self._ensure_tab(
+            SHEET_TABS["season_streaks"], SEASON_STREAK_HEADERS
+        )
+        return [
+            record
+            for _, record in self._indexed_records(
+                SHEET_TABS["season_streaks"], SEASON_STREAK_HEADERS
+            )
+        ]
+
+    def upsert_season_streaks(
+        self, records: list[dict[str, Any]]
+    ) -> tuple[int, int]:
+        """Idempotently write per-team season streak rows, keyed by
+        (season, team) so re-running a season replaces its rows in place.
+        """
+        worksheet = self._ensure_tab(
+            SHEET_TABS["season_streaks"], SEASON_STREAK_HEADERS
+        )
+        indexed = self._indexed_records(
+            SHEET_TABS["season_streaks"], SEASON_STREAK_HEADERS
+        )
+        by_key = {
+            (str(record["season"]), str(record["team"])): row_number
+            for row_number, record in indexed
+            if record.get("season") and record.get("team")
+        }
+        updates: list[dict[str, Any]] = []
+        new_rows: list[list[Any]] = []
+        for record in records:
+            values = row_values(record, SEASON_STREAK_HEADERS)
+            key = (str(record.get("season")), str(record.get("team")))
+            existing = by_key.get(key)
+            if existing:
+                updates.append(
+                    {
+                        "range": (
+                            f"A{existing}:"
+                            f"{gspread.utils.rowcol_to_a1(existing, len(SEASON_STREAK_HEADERS))}"
                         ),
                         "values": [values],
                     }
