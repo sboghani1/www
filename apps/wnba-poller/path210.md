@@ -1000,3 +1000,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=92e369aa70824ac85f725db03a3a2be0 -->
+## WNBA Lean: Toronto Tempo @ Atlanta Dream
+- Event ID: `92e369aa70824ac85f725db03a3a2be0`
+- Revision: `c5130981-2704-41db-8486-f6ca2c616f55`
+- Status: `active`
+
+### Full game
+- **Side:** Atlanta Dream (small)
+  - Evidence: Line direction -- the log's most reliable signal -- points at the Dream: the number firmed a clean net ~2.5 points ONTO Atlanta (Tempo +12 open on 08-09 -> +14.5 at the latest 17:01 ET capture, peaking +15), and the away moneyline lengthened from +534 to +637, i.e. sustained money laying the home favorite.; Directly on-point precedent: when the market firms a big number onto a favorite versus the expansion Toronto Tempo, the favorite has blown them out and covered -- 91fadetempo (Valkyries -13 firmed, won by 17) and 81fadelynx (Lynx -12.5 firmed, won by 32). The Tempo (a bottom-tier expansion team) are a genuine punching bag.
+  - Watch: -14.5 is an extreme number and the Dream (a strong but not elite ~19-12 team) are a tier below the Valkyries/Lynx who actually blew the Tempo out; there is no precedent of a merely-good team laying 14.5+ on Toronto and covering, so this is small, not moderate.; 74fadelynx is the cautionary case -- even an ELITE Lynx -16.5 won by only 7 and failed to cover an extreme number; the Tempo +14.5 keeping it to single-to-low-double digits is a live outcome, and the late ease off the +15 peak hints the market pulled back from the biggest number.
+- **Total:** Under (watch)
+  - Evidence: Conflicting total signals, so this is a monitoring flag, not a position: the total rose a net ~2.5 (185 open -> 187.5), and the log says do NOT mechanically fade a rising total -- that argues the over. Against it, a likely lopsided game (-14.5) carries real WNBA garbage-time under-stranding risk on a 187.5, and the all-star over-tilt is retired so there is no seasonal reason to chase the over.
+  - Watch: If the blowout materializes, bench lineups and clock-milking can strand the under despite the high number; if it stays competitive, the rising 187.5 clears easily. Genuinely two-way -- revisit only if the total moves decisively before tip.
+
+**Summary:** Model lean disagrees with the thought on the side. Side: small Atlanta Dream -14.5 -- line direction (the log's best signal) firmed a clean net ~2.5 points onto Atlanta with money lengthening the dog ML, and the on-point precedent is that a favorite firming a big number vs the punching-bag Toronto Tempo has blown them out (91fadetempo won by 17, 81fadelynx by 32). Kept SMALL because -14.5 is extreme and the Dream are strong-not-elite (a tier below the Valkyries/Lynx who did the blowing out), and 74fadelynx shows even elite teams miss extreme numbers -- so the Tempo +14.5 the thought wants is a live outcome. Total: watch only -- the total rose ~2.5 (don't fade a rising total) but a likely blowout carries garbage-time under risk and the all-star over-tilt is retired; the two offset. No first-half lean.
+<!-- WNBA_LEAN_EVENT_END event_id=92e369aa70824ac85f725db03a3a2be0 -->
