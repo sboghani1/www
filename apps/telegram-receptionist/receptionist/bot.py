@@ -43,6 +43,7 @@ SELF_DEPLOY_WORKER = "/usr/local/libexec/deploy-telegram-receptionist-worker"
 RECOVER_MENU_TEXT = "♻️ Recover"
 DIAGNOSE_DEPLOYMENT_MENU_TEXT = "/agent-try-recovery"
 WNBA_RESOLVE_MENU_TEXT = "🏁 Resolve WNBA"
+WNBA_STREAKS_MENU_TEXT = "📊 WNBA Streaks"
 
 Handler = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
 MAX_CALLBACK_BYTES = 64
@@ -238,6 +239,41 @@ def wnba_resolve_preview_text(preview: dict) -> str:
     return "\n".join(lines)[:3900]
 
 
+def wnba_streaks_text(payload: dict) -> str:
+    teams = payload.get("teams") or []
+    if not teams:
+        return "No WNBA games today, so no teams to show streaks for."
+    lines = [
+        f"📊 WNBA streaks — teams playing {payload.get('date', 'today')} "
+        f"(over {payload.get('completed_games', 0)} completed games)",
+        "",
+    ]
+    for team in teams:
+        lines.append(
+            f"{team.get('team', '')}  ({team.get('wins', 0)}-"
+            f"{team.get('losses', 0)})"
+        )
+        lines.append(
+            f"   current {team.get('streak', '')}  ·  "
+            f"season-long W{team.get('longest_win', 0)} / "
+            f"L{team.get('longest_loss', 0)}"
+        )
+    league = payload.get("league") or {}
+    win = league.get("longest_win") or {}
+    loss = league.get("longest_loss") or {}
+    lines.extend(
+        [
+            "",
+            "🏆 Season records (any team):",
+            f"   Longest win streak: W{win.get('length', 0)} "
+            f"({', '.join(win.get('teams', [])) or '-'})",
+            f"   Longest loss streak: L{loss.get('length', 0)} "
+            f"({', '.join(loss.get('teams', [])) or '-'})",
+        ]
+    )
+    return "\n".join(lines)[:3900]
+
+
 def wnba_game_text(game: dict) -> str:
     def value(key: str) -> str:
         raw = game.get(key)
@@ -362,7 +398,7 @@ class Receptionist:
         return ReplyKeyboardMarkup(
             [
                 [RECOVER_MENU_TEXT, DIAGNOSE_DEPLOYMENT_MENU_TEXT],
-                [WNBA_RESOLVE_MENU_TEXT],
+                [WNBA_RESOLVE_MENU_TEXT, WNBA_STREAKS_MENU_TEXT],
             ],
             resize_keyboard=True,
             is_persistent=True,
@@ -465,6 +501,7 @@ class Receptionist:
             "/wnba — choose a game for Claude lean analysis\n"
             "/wnba_resolve — grade a published lean against the final "
             "score and record it in path210.md\n"
+            "/wnba_streaks — win/loss streaks for teams playing today\n"
             "/wnba_history — latest active lean and user history\n"
             "/wnba_revisions — superseded/deleted lean revisions\n"
             "/wnba_undo — undo the latest published lean\n"
@@ -626,6 +663,11 @@ class Receptionist:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         await self.wnba_resolve(update, context)
+
+    async def wnba_streaks_menu_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        await self.wnba_streaks(update, context)
 
     async def recover_button(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -968,6 +1010,19 @@ class Receptionist:
             wnba_resolve_header(games),
             reply_markup=wnba_resolve_markup(games),
         )
+
+    async def wnba_streaks(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        try:
+            payload = await self.wnba.request({"action": "today_streaks"})
+        except Exception as error:
+            log.warning("WNBA streaks lookup failed: %s", error)
+            await update.message.reply_text(
+                "❌ Could not load WNBA streaks. Try again."
+            )
+            return
+        await update.message.reply_text(wnba_streaks_text(payload))
 
     async def wnba_cancel(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -1663,6 +1718,7 @@ def build_application(config: Config) -> Application:
         ("deployments", receptionist.deployments),
         ("wnba", receptionist.wnba_games),
         ("wnba_resolve", receptionist.wnba_resolve),
+        ("wnba_streaks", receptionist.wnba_streaks),
         ("wnba_history", receptionist.wnba_history),
         ("wnba_revisions", receptionist.wnba_revisions),
         ("wnba_undo", receptionist.wnba_undo),
@@ -1712,6 +1768,12 @@ def build_application(config: Config) -> Application:
         MessageHandler(
             filters.Regex(f"^{re.escape(WNBA_RESOLVE_MENU_TEXT)}$"),
             receptionist.authorized(receptionist.wnba_resolve_menu_button),
+        )
+    )
+    application.add_handler(
+        MessageHandler(
+            filters.Regex(f"^{re.escape(WNBA_STREAKS_MENU_TEXT)}$"),
+            receptionist.authorized(receptionist.wnba_streaks_menu_button),
         )
     )
     application.add_handler(

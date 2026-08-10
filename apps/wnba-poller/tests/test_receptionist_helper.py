@@ -333,3 +333,53 @@ class TestBuildResolution:
                 store=store,
                 now=_now(),
             )
+
+
+class TestTodayStreaks:
+    def test_returns_streaks_for_teams_playing_today(self) -> None:
+        from datetime import datetime, timezone
+
+        games = [
+            {
+                "event_id": "e1",
+                "commence_time_et": "2026-08-06T19:00:00-04:00",
+                "away_team": "Phoenix Mercury",
+                "home_team": "Atlanta Dream",
+            },
+            {
+                "event_id": "e2",
+                "commence_time_et": "2026-08-07T19:00:00-04:00",
+                "away_team": "Seattle Storm",
+                "home_team": "New York Liberty",
+            },
+        ]
+        results = [
+            {
+                "game_date_et": "2026-05-08",
+                "away_team": "Phoenix Mercury",
+                "home_team": "Atlanta Dream",
+                "winner": "Atlanta Dream",
+            }
+        ]
+
+        class _Store(FakeStore):
+            def read_results(self_inner):
+                return results
+
+            def read_settings(self_inner):
+                return {}
+
+            def update_settings(self_inner, updates, *, now):
+                pass
+
+        store = _Store(games=games)
+        out = handle_request(
+            {"action": "today_streaks"},
+            store=store,
+            now=datetime(2026, 8, 6, 20, 0, tzinfo=timezone.utc),
+        )
+        # ET date 2026-08-06 -> only the Mercury/Dream game's teams.
+        names = {t["team"] for t in out["teams"]}
+        assert names == {"Phoenix Mercury", "Atlanta Dream"}
+        assert out["completed_games"] == 1
+        assert "longest_win" in out["league"]

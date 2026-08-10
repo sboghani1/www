@@ -208,13 +208,23 @@ def _run(args: argparse.Namespace) -> int:
             f"({'cached' if result['cached'] else 'recomputed'}):"
         )
         for team, data in sorted(
-            result["streaks"].items(),
+            result["teams"].items(),
             key=lambda item: (item[1]["streak"][0], item[0]),
         ):
             print(
                 f"  {team:<26} {data['streak']:>4}   "
-                f"({data['wins']}-{data['losses']})"
+                f"({data['wins']}-{data['losses']})   "
+                f"long W{data['longest_win']}/L{data['longest_loss']}"
             )
+        league = result.get("league", {})
+        win = league.get("longest_win", {})
+        loss = league.get("longest_loss", {})
+        print(
+            f"  season-long win: W{win.get('length', 0)} "
+            f"({', '.join(win.get('teams', [])) or '-'}) | "
+            f"loss: L{loss.get('length', 0)} "
+            f"({', '.join(loss.get('teams', [])) or '-'})"
+        )
         return 0
 
     if args.command == "poll-odds":

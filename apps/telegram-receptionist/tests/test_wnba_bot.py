@@ -266,3 +266,38 @@ def test_resolve_preview_text_warns_when_not_final() -> None:
     text = wnba_resolve_preview_text(preview)
     assert "Not final yet" in text
     assert "Final:" not in text
+
+
+def test_streaks_text_renders_teams_and_league_records() -> None:
+    from receptionist.bot import wnba_streaks_text
+
+    payload = {
+        "date": "2026-08-10",
+        "completed_games": 244,
+        "teams": [
+            {
+                "team": "Minnesota Lynx",
+                "wins": 27,
+                "losses": 7,
+                "streak": "W2",
+                "longest_win": 9,
+                "longest_loss": 1,
+            }
+        ],
+        "league": {
+            "longest_win": {"length": 9, "teams": ["Minnesota Lynx"]},
+            "longest_loss": {"length": 11, "teams": ["Connecticut Sun"]},
+        },
+    }
+    text = wnba_streaks_text(payload)
+    assert "Minnesota Lynx  (27-7)" in text
+    assert "current W2" in text
+    assert "season-long W9 / L1" in text
+    assert "Longest win streak: W9 (Minnesota Lynx)" in text
+    assert "Longest loss streak: L11 (Connecticut Sun)" in text
+
+
+def test_streaks_text_handles_no_games_today() -> None:
+    from receptionist.bot import wnba_streaks_text
+
+    assert "No WNBA games today" in wnba_streaks_text({"teams": []})

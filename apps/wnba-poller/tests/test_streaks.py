@@ -24,10 +24,36 @@ class TestComputeStreaks:
             _game("2026-05-12", "D", "A", "A"),  # A W, D L
             _game("2026-05-14", "A", "E", "A"),  # A W (A: W,L,W,W -> W2)
         ]
-        streaks = compute_streaks(results)
-        assert streaks["A"]["streak"] == "W2"
-        assert streaks["A"]["wins"] == 3
-        assert streaks["A"]["losses"] == 1
+        teams = compute_streaks(results)["teams"]
+        assert teams["A"]["streak"] == "W2"
+        assert teams["A"]["wins"] == 3
+        assert teams["A"]["losses"] == 1
+
+    def test_longest_win_and_loss_runs(self) -> None:
+        # A: W W W L L -> current L2, longest win 3, longest loss 2
+        results = [
+            _game("2026-05-08", "A", "B", "A"),
+            _game("2026-05-09", "A", "C", "A"),
+            _game("2026-05-10", "A", "D", "A"),
+            _game("2026-05-11", "A", "E", "E"),
+            _game("2026-05-12", "A", "F", "F"),
+        ]
+        a = compute_streaks(results)["teams"]["A"]
+        assert a["streak"] == "L2"
+        assert a["longest_win"] == 3
+        assert a["longest_loss"] == 2
+
+    def test_league_records_pick_the_best_run_and_holders(self) -> None:
+        results = [
+            _game("2026-05-08", "A", "B", "A"),
+            _game("2026-05-09", "A", "C", "A"),  # A win streak 2
+            _game("2026-05-10", "D", "B", "D"),  # B loses again
+        ]
+        league = compute_streaks(results)["league"]
+        assert league["longest_win"]["length"] == 2
+        assert league["longest_win"]["teams"] == ["A"]
+        assert league["longest_loss"]["length"] == 2
+        assert league["longest_loss"]["teams"] == ["B"]
 
     def test_orders_by_date_regardless_of_input_order(self) -> None:
         results = [
@@ -36,11 +62,11 @@ class TestComputeStreaks:
             _game("2026-05-10", "A", "C", "A"),
         ]
         # Chronologically A won, won, lost -> current streak L1.
-        assert compute_streaks(results)["A"]["streak"] == "L1"
+        assert compute_streaks(results)["teams"]["A"]["streak"] == "L1"
 
     def test_ignores_rows_with_a_winner_not_in_the_matchup(self) -> None:
         results = [_game("2026-05-08", "A", "B", "Z")]
-        assert compute_streaks(results) == {}
+        assert compute_streaks(results)["teams"] == {}
 
 
 class _FakeStore:
@@ -70,9 +96,11 @@ class TestGetStreaksCache:
         out = get_streaks(store, now=_now())
         assert out["cached"] is False
         assert out["completed_games"] == 1
-        assert out["streaks"]["A"]["streak"] == "W1"
+        assert out["teams"]["A"]["streak"] == "W1"
+        assert out["league"]["longest_win"]["teams"] == ["A"]
         assert store.settings["streak_cache_completed_games"] == "1"
-        assert json.loads(store.settings["streak_cache"])["A"]["streak"] == "W1"
+        cached = json.loads(store.settings["streak_cache"])
+        assert cached["teams"]["A"]["streak"] == "W1"
 
     def test_second_call_uses_cache_without_recomputing(self) -> None:
         store = _FakeStore([_game("2026-05-08", "A", "B", "A")])
@@ -91,7 +119,7 @@ class TestGetStreaksCache:
         out = get_streaks(store, now=_now())
         assert out["cached"] is False
         assert out["completed_games"] == 2
-        assert out["streaks"]["A"]["streak"] == "L1"
+        assert out["teams"]["A"]["streak"] == "L1"
         assert store.update_calls == 2
 
     def test_ignores_a_corrupt_cache_value(self) -> None:
@@ -102,4 +130,4 @@ class TestGetStreaksCache:
         }
         out = get_streaks(store, now=_now())
         assert out["cached"] is False
-        assert out["streaks"]["A"]["streak"] == "W1"
+        assert out["teams"]["A"]["streak"] == "W1"

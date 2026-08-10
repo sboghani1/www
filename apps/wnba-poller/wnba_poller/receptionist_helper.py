@@ -10,6 +10,8 @@ from .grading import grade_lean
 from .guesser_bot import select_games, selection_id
 from .lean_context import resolve_current_game
 from .lean_revisions import derive_revision_history
+from .models import ET
+from .streaks import get_streaks
 from .lean_workflow import (
     build_request_template,
     build_skill_prompt,
@@ -185,6 +187,28 @@ def handle_request(
             [_game_list_item(game) for game in games],
             request.get("page"),
         )
+    if action == "today_streaks":
+        today = now.astimezone(ET).date().isoformat()
+        playing: set[str] = set()
+        for game in store.read_games():
+            if not str(game.get("commence_time_et") or "").startswith(today):
+                continue
+            for side in ("away_team", "home_team"):
+                name = str(game.get(side) or "").strip()
+                if name:
+                    playing.add(name)
+        data = get_streaks(store, now=now)
+        teams = [
+            {"team": name, **data["teams"][name]}
+            for name in sorted(playing)
+            if name in data["teams"]
+        ]
+        return {
+            "date": today,
+            "completed_games": data["completed_games"],
+            "teams": teams,
+            "league": data["league"],
+        }
     if action == "list_resolvable_games":
         games_by_id = {
             str(game.get("event_id") or ""): game
