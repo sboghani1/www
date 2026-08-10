@@ -3,14 +3,22 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Sequence
 
 from .config import Config
+from .models import ET
 from .odds_alerts import OddsAlertNotifier
-from .service import backfill_scores, odds_client_factory, poll_odds, sync_schedule
+from .service import (
+    backfill_results,
+    backfill_scores,
+    odds_client_factory,
+    poll_odds,
+    sync_schedule,
+)
 from .sheets import SheetsStore
+from .streaks import get_streaks
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -66,6 +74,30 @@ def _parser() -> argparse.ArgumentParser:
             "have no recorded score."
         ),
     )
+    results = subparsers.add_parser(
+        "backfill-results",
+        help=(
+            "Upsert completed-game results into wnba_results (free ESPN). "
+            "Use --start for the one-time season seed; the default short "
+            "lookback keeps it current."
+        ),
+    )
+    results.add_argument(
+        "--start",
+        default=None,
+        help="Season-open YYYYMMDD for the one-time seed (default: 3-day lookback).",
+    )
+    results.add_argument(
+        "--lookback-days",
+        type=int,
+        default=3,
+        help="Days back to sweep when --start is omitted.",
+    )
+    streaks = subparsers.add_parser(
+        "streaks",
+        help="Print per-team win/loss streaks (cached by completed-game count).",
+    )
+    streaks.add_argument("--json", action="store_true")
     subparsers.add_parser(
         "poll-odds",
         help="Poll only games due under the hourly/15-minute policy.",
@@ -144,6 +176,45 @@ def _run(args: argparse.Namespace) -> int:
             timeout=config.http_timeout_seconds,
         )
         print(f"Score backfill succeeded: {updated} game(s) updated.")
+        return 0
+
+    if args.command == "backfill-results":
+        if args.start:
+            start_date = args.start
+        else:
+            lookback = max(0, args.lookback_days)
+            start_date = (
+                now.astimezone(ET).date() - timedelta(days=lookback)
+            ).strftime("%Y%m%d")
+        added, updated = backfill_results(
+            store,
+            start_date=start_date,
+            now=now,
+            timeout=config.http_timeout_seconds,
+        )
+        print(
+            f"Results backfill succeeded from {start_date}: "
+            f"{added} added, {updated} updated."
+        )
+        return 0
+
+    if args.command == "streaks":
+        result = get_streaks(store, now=now)
+        if getattr(args, "json", False):
+            print(json.dumps(result, ensure_ascii=False))
+            return 0
+        print(
+            f"Streaks over {result['completed_games']} completed games "
+            f"({'cached' if result['cached'] else 'recomputed'}):"
+        )
+        for team, data in sorted(
+            result["streaks"].items(),
+            key=lambda item: (item[1]["streak"][0], item[0]),
+        ):
+            print(
+                f"  {team:<26} {data['streak']:>4}   "
+                f"({data['wins']}-{data['losses']})"
+            )
         return 0
 
     if args.command == "poll-odds":

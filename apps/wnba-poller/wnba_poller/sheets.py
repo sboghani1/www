@@ -37,8 +37,19 @@ SHEET_TABS = {
     "lean_revisions": "wnba_lean_revisions",
     "allowed_users": "wnba_allowed_users",
     "settings": "wnba_settings",
+    "results": "wnba_results",
 }
 LEGACY_NFL_TABS = ("nfl_games", "nfl_line_snapshots", "nfl_leans")
+
+RESULT_HEADERS = [
+    "espn_event_id",
+    "game_date_et",
+    "away_team",
+    "home_team",
+    "away_score",
+    "home_score",
+    "winner",
+]
 
 GAME_HEADERS = [
     "event_id",
@@ -131,6 +142,7 @@ TAB_HEADERS = {
     SHEET_TABS["lean_revisions"]: LEAN_REVISION_HEADERS,
     SHEET_TABS["allowed_users"]: ALLOWED_USER_HEADERS,
     SHEET_TABS["settings"]: SETTINGS_HEADERS,
+    SHEET_TABS["results"]: RESULT_HEADERS,
 }
 
 SETTING_DESCRIPTIONS = {
@@ -145,10 +157,14 @@ SETTING_DESCRIPTIONS = {
     "last_api_requests_used": "Most recent Odds API usage header",
     "last_api_requests_remaining": "Most recent Odds API remaining header",
     "service_version": "Installed package version",
+    "streak_cache_completed_games": (
+        "Completed-game count the cached streaks were computed for"
+    ),
+    "streak_cache": "Cached per-team win/loss streaks (JSON)",
 }
 
 DEFAULT_SETTINGS = {
-    "schema_version": "4",
+    "schema_version": "5",
     "schedule_horizon_days": "14",
     "timezone": "America/New_York",
     "poll_far_minutes": "60",
@@ -640,6 +656,83 @@ class SheetsStore:
                 SHEET_TABS["games"], GAME_HEADERS
             )
         ]
+
+    def _ensure_tab(self, tab_name: str, headers: list[str]) -> Any:
+        """Return the worksheet, creating it (with a header row) if absent."""
+        try:
+            return self._worksheet(tab_name)
+        except gspread.WorksheetNotFound:
+            worksheet = self._call(
+                self.spreadsheet.add_worksheet,
+                title=tab_name,
+                rows=2000,
+                cols=len(headers),
+            )
+            self._call(
+                worksheet.update,
+                range_name="A1",
+                values=[headers],
+                value_input_option=RAW_VALUE_INPUT_OPTION,
+            )
+            return worksheet
+
+    def read_settings(self) -> dict[str, str]:
+        return {
+            str(record["key"]): str(record.get("value", ""))
+            for _, record in self._indexed_records(
+                SHEET_TABS["settings"], SETTINGS_HEADERS
+            )
+            if record.get("key")
+        }
+
+    def read_results(self) -> list[dict[str, Any]]:
+        self._ensure_tab(SHEET_TABS["results"], RESULT_HEADERS)
+        return [
+            record
+            for _, record in self._indexed_records(
+                SHEET_TABS["results"], RESULT_HEADERS
+            )
+        ]
+
+    def upsert_results(self, records: list[dict[str, Any]]) -> tuple[int, int]:
+        """Idempotently write final-score results, keyed by espn_event_id."""
+        worksheet = self._ensure_tab(SHEET_TABS["results"], RESULT_HEADERS)
+        indexed = self._indexed_records(SHEET_TABS["results"], RESULT_HEADERS)
+        by_id = {
+            str(record["espn_event_id"]): row_number
+            for row_number, record in indexed
+            if record.get("espn_event_id")
+        }
+        updates: list[dict[str, Any]] = []
+        new_rows: list[list[Any]] = []
+        for record in records:
+            values = row_values(record, RESULT_HEADERS)
+            existing = by_id.get(str(record.get("espn_event_id")))
+            if existing:
+                updates.append(
+                    {
+                        "range": (
+                            f"A{existing}:"
+                            f"{gspread.utils.rowcol_to_a1(existing, len(RESULT_HEADERS))}"
+                        ),
+                        "values": [values],
+                    }
+                )
+            else:
+                new_rows.append(values)
+        if updates:
+            self._call(
+                worksheet.batch_update,
+                updates,
+                value_input_option=RAW_VALUE_INPUT_OPTION,
+            )
+        if new_rows:
+            self._call(
+                worksheet.append_rows,
+                new_rows,
+                value_input_option=RAW_VALUE_INPUT_OPTION,
+            )
+        return len(new_rows), len(updates)
 
     def backup_workbook(self, output_path: Path) -> None:
         if output_path.exists():

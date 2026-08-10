@@ -312,3 +312,78 @@ def test_backfill_queries_each_distinct_date_only_once() -> None:
 
     assert sorted(http.requested_dates) == ["20260803", "20260804"]
     assert updated == 2
+
+
+class _ResultsStore:
+    def __init__(self) -> None:
+        self.upserted: list[dict] = []
+
+    def upsert_results(self, records: list[dict]) -> tuple[int, int]:
+        self.upserted.extend(records)
+        return len(records), 0
+
+
+def test_backfill_results_sweeps_each_date_and_records_winner() -> None:
+    from wnba_poller.service import backfill_results
+
+    store = _ResultsStore()
+    http = _RecordingHTTP(
+        {
+            "20260508": {"events": [_final_event("401", 82, 96)]},
+            "20260509": {"events": [_final_event("402", 100, 90)]},
+        }
+    )
+    now = datetime(2026, 5, 9, 18, 0, tzinfo=timezone.utc)  # ET date 2026-05-09
+
+    added, updated = backfill_results(
+        store, start_date="20260508", now=now, http_client=http
+    )
+
+    assert http.requested_dates == ["20260508", "20260509"]
+    assert added == 2
+    first = store.upserted[0]
+    assert first["espn_event_id"] == "401"
+    assert first["game_date_et"] == "2026-05-08"
+    assert first["winner"] == "Atlanta Dream"  # home 96 > away 82
+    assert store.upserted[1]["winner"] == "Phoenix Mercury"  # away 100 > 90
+
+
+def _allstar_event(event_id: str) -> dict:
+    event = _final_event(event_id, 111, 120)
+    comp = event["competitions"][0]["competitors"]
+    comp[0]["team"]["displayName"] = "Team Coop"
+    comp[1]["team"]["displayName"] = "Team Spoon"
+    return event
+
+
+def test_backfill_results_drops_exhibition_games() -> None:
+    from wnba_poller.service import backfill_results
+
+    store = _ResultsStore()
+    http = _RecordingHTTP(
+        {
+            "20260508": {
+                "events": [
+                    _final_event("401", 82, 96),  # real franchises
+                    _allstar_event("999"),  # all-star exhibition
+                ]
+            }
+        }
+    )
+    now = datetime(2026, 5, 8, 23, 0, tzinfo=timezone.utc)
+
+    added, _ = backfill_results(
+        store, start_date="20260508", now=now, http_client=http
+    )
+
+    assert added == 1
+    assert [r["espn_event_id"] for r in store.upserted] == ["401"]
+
+
+def test_backfill_results_rejects_a_bad_start_date() -> None:
+    from wnba_poller.service import backfill_results
+
+    with pytest.raises(ValueError, match="YYYYMMDD"):
+        backfill_results(
+            _ResultsStore(), start_date="2026-05-08", now=NOW, http_client=None
+        )

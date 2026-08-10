@@ -6,6 +6,29 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
+
+# Current WNBA franchises (ESPN displayName). Used to keep the results/streaks
+# log to real regular-season/playoff games and drop exhibitions such as the
+# All-Star Game (e.g. "Team Spoon" vs "Team Coop"). Update on expansion.
+WNBA_TEAMS = frozenset(
+    {
+        "Atlanta Dream",
+        "Chicago Sky",
+        "Connecticut Sun",
+        "Dallas Wings",
+        "Golden State Valkyries",
+        "Indiana Fever",
+        "Las Vegas Aces",
+        "Los Angeles Sparks",
+        "Minnesota Lynx",
+        "New York Liberty",
+        "Phoenix Mercury",
+        "Portland Fire",
+        "Seattle Storm",
+        "Toronto Tempo",
+        "Washington Mystics",
+    }
+)
 NO_DATA = "nodata"
 
 LINE_FIELDS = (

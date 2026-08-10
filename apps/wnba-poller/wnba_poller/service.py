@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Callable, Protocol
 
 import httpx
 
 from .espn import fetch_schedule, fetch_scores_for_date
-from .models import ET, parse_timestamp
+from .models import ET, WNBA_TEAMS, parse_timestamp
 from .odds import OddsClient, OddsFetchResult
 from .scheduler import due_games
 
@@ -17,6 +17,10 @@ class Store(Protocol):
 
     def upsert_schedule(
         self, games: list[Any], *, now: datetime
+    ) -> tuple[int, int]: ...
+
+    def upsert_results(
+        self, records: list[dict[str, Any]]
     ) -> tuple[int, int]: ...
 
     def persist_odds_poll(
@@ -115,6 +119,71 @@ def backfill_scores(
     if not matched:
         return 0, 0
     return store.upsert_schedule(matched, now=now)
+
+
+def backfill_results(
+    store: Store,
+    *,
+    start_date: str,
+    now: datetime,
+    http_client: httpx.Client | None = None,
+    timeout: float = 20,
+) -> tuple[int, int]:
+    """Upsert every completed WNBA game from ``start_date`` (YYYYMMDD) through
+    today's Eastern date into the results log, one free ESPN request per date.
+
+    Idempotent (keyed by espn_event_id), so the one-time season seed and the
+    daily incremental pass share this path -- the seed passes the season-open
+    date; the daily job passes a short lookback.
+    """
+    try:
+        start = datetime.strptime(start_date, "%Y%m%d").date()
+    except ValueError as exc:
+        raise ValueError("start_date must be an 8-digit YYYYMMDD string") from exc
+    end = now.astimezone(ET).date()
+
+    records: list[dict[str, Any]] = []
+    current = start
+    while current <= end:
+        fetched = fetch_scores_for_date(
+            current.strftime("%Y%m%d"), client=http_client, timeout=timeout
+        )
+        iso_date = current.isoformat()
+        for game in fetched:
+            if (
+                game.status != "final"
+                or game.away_score is None
+                or game.home_score is None
+            ):
+                continue
+            # Drop exhibitions (e.g. the All-Star Game) so streaks only cover
+            # real franchises.
+            if (
+                game.away_team not in WNBA_TEAMS
+                or game.home_team not in WNBA_TEAMS
+            ):
+                continue
+            winner = (
+                game.away_team
+                if game.away_score > game.home_score
+                else game.home_team
+            )
+            records.append(
+                {
+                    "espn_event_id": game.espn_event_id,
+                    "game_date_et": iso_date,
+                    "away_team": game.away_team,
+                    "home_team": game.home_team,
+                    "away_score": game.away_score,
+                    "home_score": game.home_score,
+                    "winner": winner,
+                }
+            )
+        current += timedelta(days=1)
+
+    if not records:
+        return 0, 0
+    return store.upsert_results(records)
 
 
 def poll_odds(
