@@ -1044,3 +1044,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Model lean. Side: small Chicago Sky -2.5 -- the road favorite firmed (-1.5 -> -2.5, ML -117 -> -140), and the thought's 'Storm end the streak at home' narrative fights that line; kept small because Seattle is a live home dog on an 11-game skid (motivated_underdog; 84fadestorm) in a near-pickem. Total: small full-game UNDER 179 plus a MODERATE first-half UNDER 86.5, both on the new fh_total_low_big signal -- the 1H total (86.5) is a full ~3 points below half the full total (89.5), the market pricing a slow first half, reinforced by two of the league's worst offenses and the retired over-tilt; the full-game leg is only small because the full total rose mildly and the fh heuristic is unproven. First-half spread gives no side signal (Sky -1 vs half of -1.25 = noise).
 <!-- WNBA_LEAN_EVENT_END event_id=381926a79915a74b2c089625ca320d82 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=7f6be8b73fe0d176884f6aee616e3006 -->
+## WNBA Lean: New York Liberty @ Indiana Fever
+- Event ID: `7f6be8b73fe0d176884f6aee616e3006`
+- Revision: `eafdf2fa-3a82-4573-b503-cd484ac1baaa`
+- Status: `active`
+
+### Full game
+- **Side:** New York Liberty (small)
+  - Evidence: Line direction -- the log's most reliable signal -- moved toward the road dog Liberty: the number shrank from Liberty +4.5 (held ~24h) to +3 at close (peaking +2), and the Liberty ML came in from +149 to +130. Money is on the Liberty getting points.; There is no class mismatch that would justify FADING that move (the log's worst factor, fade_line_movement 14/21, only wins on a real class/health edge): the two teams are near-even by record (Fever 20-12 .625, Liberty 21-14 .600), so nothing overrides following the line to the Liberty +3.
+  - Watch: This is an INITIAL/preliminary read ~3 hours from tip and low-conviction: the move partially reverted (+2 back to +3 at close), so the dog money was not fully sustained -- revisit near tip.; Counter-case for the Fever: they are marginally the better team BY RECORD and are at HOME, they have beaten fades recently (71/75/85 fadefever all wrong), and fading the Liberty has worked twice (82/93 fadeliberty right) -- so the Fever -3 is well-founded and this stays small. NOTE the thought's 'superior Liberty should be favored -4.5' premise is mistaken: the Fever are actually better by record and hosting.
+- **Total:** Under (watch)
+  - Evidence: No-signal total: it barely moved and round-tripped (192 open -> 193 peak -> 191 close, net ~-1), which the log treats as line_stable with no directional read -- so this is a monitoring flag, not a position.
+  - Watch: The first-half total (95.5) sits EXACTLY at half the full total (191/2 = 95.5), so there is NO first-half divergence signal on the total either -- nothing to push the number up or down. Revisit only if the total moves decisively before tip.
+
+**Summary:** Initial (preliminary) lean, ~3h to tip. Side: small New York Liberty +3 -- the line moved a net ~1.5 toward the road-dog Liberty (+4.5 -> +3, ML +149 -> +130) and there is no class edge to justify fading that move (near-even records), so follow the line to the Liberty getting points; kept small because the move partially reverted (+2 -> +3) and the Fever are marginally better by record AT HOME and have beaten fades lately. NOTE the model backs the Liberty for line-movement reasons, NOT the thought's 'superior Liberty' premise, which is wrong -- the Fever (20-12) are actually the better team by record and are hosting. Total: watch only -- a no-signal, round-tripped total (192->193->191), and the first-half total (95.5) is EXACTLY half the full (95.5) so there is no first-half divergence to lean on. No first-half lean. Revisit near tip.
+<!-- WNBA_LEAN_EVENT_END event_id=7f6be8b73fe0d176884f6aee616e3006 -->
