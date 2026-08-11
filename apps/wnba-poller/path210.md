@@ -1084,3 +1084,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Initial (preliminary) lean, revisit near tip. 1H check: total 81.5 vs half 85.75 = -4.25 -> fh_total_low_big (under); spread 1H +3.5 vs half +3.25 = +0.25 noise. Side: small Washington Mystics +6.5 -- the line moved toward the road dog (Aces -7.5 -> -6.5, Mystics ML +296 -> +230), the Mystics have beaten fades lately (83/97 fademystics wrong), and laying -6.5 to 'blow out an average team' (the thought's read) is the losing back_favorite/overconfidence shape; small because the Aces are a strong home favorite and the number round-tripped. Total: CONFLICT -- the full total rose ~3 (do not fade a rising total -> over) but the 1H total is fh_total_low_big (under), so the full-game total is a watch/no-position while the fh divergence is played as a small FIRST-HALF under. No full-game total position.
 <!-- WNBA_LEAN_EVENT_END event_id=d2ac2c666293e102417b78a5093d2aec -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=38b0b03d1b7fb6593df20834189cb081 -->
+## WNBA Lean: Phoenix Mercury @ Los Angeles Sparks
+- Event ID: `38b0b03d1b7fb6593df20834189cb081`
+- Revision: `88743f95-41a8-49af-92c7-a76584611e0c`
+- Status: `active`
+
+### Full game
+- **Side:** Los Angeles Sparks (small)
+  - Evidence: FAVORITE FLIP toward the Sparks: the spread opened Mercury -1.5 (Phoenix favored) and moved a net ~3.5 points across zero to Sparks -2 (Los Angeles now favored), with the Mercury ML going from a small favorite to +110. A favorite flip is a meaningful line signal, and the thought backing Mercury -4.5 fights that whole move.; Follow the line onto the new home favorite; the market decisively repriced this from Phoenix to Los Angeles.
+  - Watch: Favorite flips CAN fail badly (entry 92: the Aces flipped from -1 to +3 as a dog and still won by 22), and the Mercury have beaten fades recently (79/87 fademercury wrong) -- so respect a Phoenix bounce; -2 is a near-pickem, so this is low-conviction.; Initial/preliminary read ~5h to tip; revisit near tip.
+- **Total:** Over (watch)
+  - Evidence: The full-game total round-tripped to flat (179.5 -> 182 -> 177.5 -> 179, net ~0), a no-signal full total. The first-half total, however, is a big divergence UP (fh_total_high_big, see 1H check), which weakly tilts the full game over -- but on its own the full total gives no directional read, so watch.
+  - Watch: The fh over is played on the first-half leg below; revisit the full total only if it moves decisively.
+
+### First half
+- **Total:** Over (small)
+  - Evidence: fh_total_high_big: the first-half total (93) is ~3.5 points ABOVE half the full total (179/2 = 89.5), the market pricing a fast-scoring first half -- a first-half over.
+  - Watch: New/unproven heuristic, so small only.
+
+**Summary:** Initial (preliminary) lean, revisit near tip. 1H check: total 93 vs half 89.5 = +3.5 -> fh_total_high_big (over); spread 1H +0.5 vs half +1.0 = -0.5 noise. Side: small Los Angeles Sparks -2 -- a FAVORITE FLIP repriced this a net ~3.5 points across zero from Mercury -1.5 to Sparks -2 (the Mercury ML falling to +110); follow that decisive line move onto the new home favorite, which the thought's Mercury -4.5 read fights. Small because favorite flips can fail badly (entry 92) and the Mercury have beaten fades lately (79/87 fademercury wrong), and -2 is a near-pickem. Total: the full-game total round-tripped to flat (no-signal, watch), while the 1H total is fh_total_high_big, played as a small FIRST-HALF over. No full-game total position.
+<!-- WNBA_LEAN_EVENT_END event_id=38b0b03d1b7fb6593df20834189cb081 -->
