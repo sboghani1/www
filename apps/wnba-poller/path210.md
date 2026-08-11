@@ -716,6 +716,13 @@ line movement: side: valkyries +1 (open) -> 0 -> +1 -> 0 (close, pick'em, noisy)
 context: friday. line-movement-only lean (no user thought provided). the side was a near-pick'em that oscillated +1 -> 0 -> +1 -> 0 and closed pick'em (watch, 1-star, faint tilt to the home wings); the total dropped a clean monotonic net 3 points 163.5 -> 160.5 and held, a 2-star moderate follow_line_movement UNDER. result: the VALKYRIES WON 94-76 by 18, so leaning the wings was WRONG (golden state blew them out), and the 170 total finished OVER 160.5, so the under was WRONG. lesson: a steady 3-point drop in the total was a FALSE signal -- a falling number did not predict a low-scoring game; golden state's blowout produced 170 over a 160.5 close. following a falling total into an under lost here, and the pick'em side gave no protection.
 model_lean: side (watch DALLAS WINGS pick'em, 1/3 stars) -- MISS (valkyries won 94-76); total (moderate UNDER 160.5, 2/3 stars) -- MISS (170 over). line-movement-only, no user thought.
 
+99fadedream
+wrong
+fade_line_movement,situational_angle,total_over,expired_allstar_over_tilt
+line movement: side: dream -5.5 (open) -> -7.0 (close, firmed); total: o183.5 -> o181.5 (eased)
+context: wednesday. fade dream = back the phoenix mercury +7 (small) on a recent-form audit (phoenix 3/3, atlanta 1/3 on recent spread reads) even though the spread FIRMED toward atlanta -5.5 -> -7 into close. the DREAM WON 96-82, by 14: atlanta covered -7 easily, so fading the dream was WRONG on the side; the 178 total finished UNDER 181.5, so the small over was ALSO wrong. lesson: fade_line_movement again -- a recent-form narrative fought the atlanta firm and the firm was right (atlanta covered by 14). the over lean also rode the retired all-star over-tilt on a game that went under. follow the firm, and stop leaning over on the dead seasonal tilt.
+model_lean: side (small MERCURY +7, faded the atlanta firm) -- MISS (dream won by 14, covered -7); total (small OVER 181.5) -- MISS (178 under). net: double miss -- fading the line and the retired over-tilt both lost.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
@@ -724,9 +731,9 @@ follow_line_movement: 14 right / 12 wrong
 fade_favorite: 15 right / 12 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 35 right / 38 wrong
+situational_angle: 35 right / 39 wrong
 decision_day_before: 1 right / 0 wrong
-fade_line_movement: 14 right / 21 wrong
+fade_line_movement: 14 right / 22 wrong
 back_favorite: 19 right / 28 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 7 right / 7 wrong
@@ -734,7 +741,7 @@ overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 5 right / 1 wrong
 overconfidence: 22 right / 29 wrong
-total_over: 15 right / 18 wrong
+total_over: 15 right / 19 wrong
 total_under: 17 right / 20 wrong
 fh_total_low_big: 0 right / 0 wrong
 fh_total_low_medium: 0 right / 0 wrong
@@ -742,7 +749,7 @@ fh_total_high_big: 0 right / 0 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
 fh_spread_back: 0 right / 0 wrong
-expired_allstar_over_tilt: 15 right / 14 wrong
+expired_allstar_over_tilt: 15 right / 15 wrong
   (entries 67-95 -- decided during the now-retired all-star-break over-tilt window (it should have ended at the 6-game Wednesday 67-72). KEPT in every count above, tagged only so total records read clean:
    total_over:  15/18 including these  /  10/12 excluding these
    total_under: 17/20 including these  /  7/12 excluding these
@@ -887,23 +894,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Revised now that the spread and total have both produced real, sustained pregame movement since the prior revision (which explicitly called for a dead-flat market with no signal to read). Side flips from a watch-strength Aces lean to a small lean on Indiana Fever: after early whipsaw, the market has settled on Fever -1 for the last three hours, and line direction is the log's most reliable factor -- tempered to small strength by entry 92's specific, on-point warning that a market move against the Aces has previously been wrong (Aces won by 22 despite a similar flip). Total flips from a moderate Over to a small Under: the total has dropped a sustained 3 points off the open with no reversion, which is exactly the condition the prior revision flagged as its own reassessment trigger, though the log's active all-star-break over-tilt guidance keeps this at small rather than higher strength. No first-half lean: BetOnline has now posted a first-half market, but it is flat (Fever -0.5/pick'em, total 95) across all four available captures with no signal either way.
 <!-- WNBA_LEAN_EVENT_END event_id=58beff9061f15ff3f416542cb51f4751 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=2977c51845a4f2621deca3d4a38a0ac2 -->
-## WNBA Lean: Phoenix Mercury @ Atlanta Dream
-- Event ID: `2977c51845a4f2621deca3d4a38a0ac2`
-- Revision: `265498a3-a464-4c35-a73c-6edf85ba4d1a`
-- Status: `active`
-
-### Full game
-- **Side:** Phoenix Mercury (small)
-  - Evidence: The spread firmed further toward Atlanta from -5.5 at ~16.7h out to -7 at close -- continued one-directional movement toward the favorite, which this log treats as its single strongest signal; A prior recent-form audit already logged for this matchup shows Atlanta's last three spread reads went only 1/3 (failed to cover each time backed), while Phoenix's last three side directions went 3/3 -- specific, directly-relevant recent evidence that cuts against the growing favorite number; The submitted thought expected Dream -4.5 winning by ~5; the market closed nearly 2.5 points higher than that projection (-7), a bigger number than the thought anticipated
-  - Watch: This is a closing-number read on a game that has already started -- there is no further line movement to watch; a fresh lean would be needed for the next meeting between these teams; The continued firming toward Atlanta is a real signal this lean does not fully override; treat this as a genuine tension (line direction vs. recent team-specific cover rate), not a confident fade
-- **Total:** Over (small)
-  - Evidence: The total opened 183.5 and closed 181.5 -- only a mild ~2-point net easing, not a decisive move either way; Most of the closely relevant recent precedent for these two teams individually finished well over modest total numbers (196 over 184.5 in entry 92; 207 over 179.5 in entry 94; 187 over 179.5 in entry 84), consistent with the log's broader current over-leaning guidance
-  - Watch: The mild downward drift (183.5 -> 181.5) is a soft caution against a stronger over commitment, which is why this stays at small rather than moderate strength
-
-**Summary:** Closing-number lean for a game that has already tipped off. Side leans small toward Phoenix Mercury +7: a prior recent-form audit for this exact matchup shows Atlanta covering only 1 of its last 3 spread reads while Phoenix went 3/3, but the spread's continued firming toward Atlanta all the way to close (-5.5 to -7) is a real countersignal from the log's strongest indicator, so this stays at minimum-plus rather than a confident fade. Total leans small Over 181.5: the number was only mildly easing (183.5 to 181.5), but the broader recent precedent involving these two teams individually has trended well over modest totals. No first-half lean: a closing first-half number exists (Dream -4 / 95.5) but there is no tracked movement history or precedent to support a specific first-half read.
-<!-- WNBA_LEAN_EVENT_END event_id=2977c51845a4f2621deca3d4a38a0ac2 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=55583b8c075dd483b408ce1ba4c24244 -->
 ## WNBA Lean: Seattle Storm @ New York Liberty
