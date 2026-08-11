@@ -1032,3 +1032,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Revised to apply the new first-half divergence rule. Side UNCHANGED: small Atlanta Dream -14.5/-15 -- the line firmed onto the Dream and a firmed big favorite has blown out the punching-bag Tempo before (91, 81), tempered small by the extreme number (74fadelynx). Total moves from watch to small UNDER: the first-half total (91.5) is ~2 points below half the full total (93.5) = fh_total_low_medium, the market pricing a slow first half, which combines with garbage-time stranding risk on a likely blowout and the retired over-tilt to tip the two-way total toward the under; kept small because the full total actually rose ~2 (do not fade a rising total) and this fh heuristic is new/unproven. Added a small first-half Under on the same fh_total_low_medium signal. First-half SPREAD gives no side signal (1H Tempo +8 vs half of 7.5 = +0.5, noise).
 <!-- WNBA_LEAN_EVENT_END event_id=92e369aa70824ac85f725db03a3a2be0 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=381926a79915a74b2c089625ca320d82 -->
+## WNBA Lean: Chicago Sky @ Seattle Storm
+- Event ID: `381926a79915a74b2c089625ca320d82`
+- Revision: `ae311984-0d66-4c24-bc80-80585bfdf220`
+- Status: `active`
+
+### Full game
+- **Side:** Chicago Sky (small)
+  - Evidence: Line direction (the log's best signal) firmed toward the Sky: the road favorite went Sky -1.5 -> -2.5 and the ML shortened -117 -> -140, sustained money onto Chicago. The recorded thought backs the Storm to 'end their losing streak at home' -- a narrative that FIGHTS the line, which the log flags as usually wrong (trust the line over the story).; It is a near-pickem between two poor teams (Sky 12-20, Storm 6-28), so the edge is thin -- but the money is on the Sky.
+  - Watch: The Storm are a HOME dog on an 11-game losing streak (6-28) -- a classic live motivated_underdog/desperation spot (84fadestorm resolved wrong, i.e. the Storm beat the fade), so a get-well upset is real; this is why the side is only small.; -2.5 is a coin-flip number; a single late move either way can flip the value.
+- **Total:** Under (small)
+  - Evidence: Supported by the NEW first-half divergence signal (fh_total_low_big): the first-half total (86.5) is a full ~3 points BELOW half the full-game total (179/2 = 89.5), so BetOnline is pricing a clearly below-average-pace first half -- a strong under lean.; Matchup backs it independently: two of the league's worst offenses (Sky 12-20, Storm 6-28) in a competitive (non-blowout) game, and the all-star over-tilt is retired.
+  - Watch: Kept SMALL on the full game because the full total actually ROSE mildly (177.5 -> 179) and the log says do not mechanically fade a rising total; the fh_total_low signal is also a NEW, unproven heuristic still building a sample.; If either bad offense gets hot from three, a 179 in a competitive game clears easily.
+
+### First half
+- **Total:** Under (moderate)
+  - Evidence: This is where the fh_total_low_big signal applies most directly: the first-half total (86.5) is ~3 points below half the full total (89.5), the market itself pricing a slow first half between two weak offenses -- a moderate first-half under.
+  - Watch: The fh_total divergence heuristic is new and unproven, so even the strongest (big) reading is capped at moderate while the fh_total tags accumulate resolved examples.
+
+**Summary:** Model lean. Side: small Chicago Sky -2.5 -- the road favorite firmed (-1.5 -> -2.5, ML -117 -> -140), and the thought's 'Storm end the streak at home' narrative fights that line; kept small because Seattle is a live home dog on an 11-game skid (motivated_underdog; 84fadestorm) in a near-pickem. Total: small full-game UNDER 179 plus a MODERATE first-half UNDER 86.5, both on the new fh_total_low_big signal -- the 1H total (86.5) is a full ~3 points below half the full total (89.5), the market pricing a slow first half, reinforced by two of the league's worst offenses and the retired over-tilt; the full-game leg is only small because the full total rose mildly and the fh heuristic is unproven. First-half spread gives no side signal (Sky -1 vs half of -1.25 = noise).
+<!-- WNBA_LEAN_EVENT_END event_id=381926a79915a74b2c089625ca320d82 -->
