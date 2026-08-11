@@ -1062,3 +1062,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Initial (preliminary) lean, revisit near tip. 1H check: total 95.5 vs half 95.5 = 0.0 and spread 1H +1.5 vs half +1.5 = 0.0 -> the halves track exactly, no first-half divergence edge (no fh_total/fh_spread tag). Side: small New York Liberty +3 -- the line moved a net ~1.5 toward the road-dog Liberty (+4.5 -> +3, ML +149 -> +130) with no class edge to justify fading it (near-even records), so follow the line to the Liberty getting points; small because the move partially reverted (+2 -> +3) and the Fever are marginally better by record AT HOME and beat fades lately. Model backs the Liberty for line-movement reasons, NOT the thought's 'superior Liberty should be -4.5' premise, which is wrong (Fever better by record and hosting). Total: watch only -- a no-signal round-tripped total and no first-half divergence to lean on.
 <!-- WNBA_LEAN_EVENT_END event_id=7f6be8b73fe0d176884f6aee616e3006 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=d2ac2c666293e102417b78a5093d2aec -->
+## WNBA Lean: Washington Mystics @ Las Vegas Aces
+- Event ID: `d2ac2c666293e102417b78a5093d2aec`
+- Revision: `d0943f26-69c9-4699-90fa-b0b04a0aa0de`
+- Status: `active`
+
+### Full game
+- **Side:** Washington Mystics (small)
+  - Evidence: Line direction moved toward the road dog Mystics: the Aces number came down from -7.5 (held ~24h) to -6.5 at close and the Mystics ML shortened from +296 to +230 -- money on the dog getting points, the log's best signal.; Precedent backs the dog too: the Mystics have BEATEN fades recently (83fademystics and 97fademystics both resolved wrong), and laying a big number on a favorite to 'blow out an average team' is the log's losing shape (back_favorite 19/28, overconfidence 22/29) -- which is exactly the thought's Aces -6.5 blowout read.
+  - Watch: The Aces are a strong home favorite (ML -280) and the spread round-tripped (+7.5 -> +8.5 -> +6 -> +6.5), so the dog move was not one-directional -- small, not moderate.; Initial/preliminary read ~5h to tip; revisit near tip.
+- **Total:** Over (watch)
+  - Evidence: CONFLICTING total signals, so no full-game position: the full total ROSE a net ~3 (168.5 -> 171.5) and the log says do NOT fade a rising total (over), but the first-half total is a big divergence the other way (fh_total_low_big, see 1H check) pointing under. With the fh heuristic unproven, I take no side on the full game.
+  - Watch: Revisit if the full total moves decisively; the 1H under leg below is where the divergence is actually played.
+
+### First half
+- **Total:** Under (small)
+  - Evidence: fh_total_low_big: the first-half total (81.5) is ~4.25 points BELOW half the full total (171.5/2 = 85.75), the market pricing a clearly slow first half -- a first-half under.
+  - Watch: New/unproven heuristic (and it directly contradicts the rising full-game total here), so small only.
+
+**Summary:** Initial (preliminary) lean, revisit near tip. 1H check: total 81.5 vs half 85.75 = -4.25 -> fh_total_low_big (under); spread 1H +3.5 vs half +3.25 = +0.25 noise. Side: small Washington Mystics +6.5 -- the line moved toward the road dog (Aces -7.5 -> -6.5, Mystics ML +296 -> +230), the Mystics have beaten fades lately (83/97 fademystics wrong), and laying -6.5 to 'blow out an average team' (the thought's read) is the losing back_favorite/overconfidence shape; small because the Aces are a strong home favorite and the number round-tripped. Total: CONFLICT -- the full total rose ~3 (do not fade a rising total -> over) but the 1H total is fh_total_low_big (under), so the full-game total is a watch/no-position while the fh divergence is played as a small FIRST-HALF under. No full-game total position.
+<!-- WNBA_LEAN_EVENT_END event_id=d2ac2c666293e102417b78a5093d2aec -->
