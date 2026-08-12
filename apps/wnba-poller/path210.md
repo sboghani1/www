@@ -745,18 +745,25 @@ line movement: side: sky -3 (flat all window); total: o186.5 (flat all window)
 context: wednesday. fade sparks = back the chicago sky -3 (home favorite) on a dead-FLAT closing number (sky -3 / total 186.5 unmoved across the ~3.5h window), watch-strength only since mixed recent form gave no real signal. the SKY WON 95-88, by 7: chicago covered -3, so fading the sparks was RIGHT on the side; but the 183 total finished UNDER 186.5, so the small over was WRONG. lesson: a line_stable no-signal number where the watch-strength favorite happened to cover; the over lost again (183 under) -- the retired all-star over-tilt overs keep landing under.
 model_lean: side (watch CHICAGO SKY -3, dead-flat number) -- HIT (sky won by 7, covered -3); total (small OVER 186.5) -- MISS (183 under). net: SIDE HIT on a no-signal line_stable number, total over missed (another retired-tilt over that went under).
 
+103fadeaces
+wrong
+follow_line_movement,back_favorite,situational_angle,total_under,expired_allstar_over_tilt
+line movement: side: aces/pick'em (open) -> fever -1 (close, settled after whipsaw); total: ~195.5 -> 192.5 (eased)
+context: thursday. fade aces = back the indiana fever -1 (home) after the market settled onto the fever for the last three hours (follow_line_movement, the log's best factor), with a small under 192.5 as the total drifted down. the ACES WON 86-84, by 2: las vegas won outright, so backing the fever -1 was WRONG on the side; but the 170 total finished WAY UNDER 192.5, so the small under was RIGHT. lesson: follow_line_movement is not infallible -- the aces won despite the market moving to the fever (an entry-92 redux the lean itself flagged); but the UNDER hit big, the first total win of this batch and an under -- vindicating the default-under read now that the all-star over-tilt is retired.
+model_lean: side (small INDIANA FEVER -1, followed the late move to the fever) -- MISS (aces won by 2, entry-92 pattern); total (small UNDER 192.5) -- HIT (170 way under). net: SIDE MISS following a flip the aces beat, but TOTAL UNDER HIT big -- first total win, an under.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 14 right / 12 wrong
+follow_line_movement: 14 right / 13 wrong
 fade_favorite: 16 right / 12 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 37 right / 40 wrong
+situational_angle: 37 right / 41 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 14 right / 23 wrong
-back_favorite: 20 right / 29 wrong
+back_favorite: 20 right / 30 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 8 right / 7 wrong
 overcaution: 0 right / 1 wrong
@@ -764,14 +771,14 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 6 right / 1 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 16 right / 20 wrong
-total_under: 18 right / 20 wrong
+total_under: 18 right / 21 wrong
 fh_total_low_big: 0 right / 0 wrong
 fh_total_low_medium: 0 right / 0 wrong
 fh_total_high_big: 0 right / 0 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
 fh_spread_back: 0 right / 0 wrong
-expired_allstar_over_tilt: 17 right / 16 wrong
+expired_allstar_over_tilt: 17 right / 17 wrong
   (entries 67-95 -- decided during the now-retired all-star-break over-tilt window (it should have ended at the 6-game Wednesday 67-72). KEPT in every count above, tagged only so total records read clean:
    total_over:  15/18 including these  /  10/12 excluding these
    total_under: 17/20 including these  /  7/12 excluding these
@@ -899,23 +906,6 @@ recent-team audit: LOS ANGELES — entry 89, i backed fire at pick'em and MISSED
 <ins>total (o189.5): moderate OVER</ins> — the book is 14.5 points above your primary score and the total rose 187.5 -> 189.5 with over juice -115. the latest games involving these teams reached 207 (both), 222/168 for los angeles, and 207/167/182 for chicago. follow the high-scoring market; over is much cleaner than the side.
 net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 24h watch: SPREAD — sky -4.5 or higher confirms your side projection and upgrades chicago; a return to -2/pick'em shifts value toward sparks. TOTAL — holding 189.5 or rising through 191 confirms the over but creates chase risk; a drop to 186 or lower invalidates the rise and downgrades to PASS.
-
-<!-- WNBA_LEAN_EVENT_START event_id=58beff9061f15ff3f416542cb51f4751 -->
-## WNBA Lean: Las Vegas Aces @ Indiana Fever
-- Event ID: `58beff9061f15ff3f416542cb51f4751`
-- Revision: `9fb95606-35ed-4e12-9aef-113797185def`
-- Status: `active`
-
-### Full game
-- **Side:** Indiana Fever (small)
-  - Evidence: The spread has genuinely moved since the prior revision: most of the pregame window was a dead-flat 0 pick'em, but starting roughly 9 hours before tip it broke away and, after early whipsaw (briefly Aces -1/-1.5 around 03:45-09:00 ET), has now sat at Fever -1 for the last four consecutive captures spanning about 11:15-14:15 ET (roughly 3 hours) -- a real, held net move toward the home team, not a single-snapshot blip.; Line direction is the log's strongest signal (follow_line_movement 14 right / 10 wrong); the market has settled on Indiana as the side to follow after the early chop resolved.
-  - Watch: Entry 92 is a direct, specific counter-precedent: the market moved fully against the Aces (-1 to +3 for the Dream) and Las Vegas still won by 22 -- do not treat this move as decisive proof of Aces weakness; keep strength modest given that exact caution.; The line whipsawed three times before settling here (pick'em -> Aces favored -> pick'em -> Fever favored); if it reverses again before tip, this lean should be revisited rather than held on conviction.
-- **Total:** Under (small)
-  - Evidence: The total has drifted down 3 points from the 195.5 opening to 192.5 at the latest capture, with the decline beginning about 9 hours before tip (195.5 -> 193.5) and holding through four more captures without reverting -- a sustained net move, not a late-window spike.; This is the exact reassessment trigger the prior revision's own watch condition flagged ("if the total starts drifting down before tip... this lean should be revisited") -- the no-fade-signal support the earlier moderate Over relied on has now been removed.; Follow_line_movement is the log's best-performing factor (14 right / 10 wrong); the total is moving down, so following it points to the under rather than continuing to back the over on a since-invalidated rationale.
-  - Watch: The log's all-star-break window guidance explicitly warns not to fade a total even in one-sided spots during this window, and it is unclear whether that window is still active for this date -- if it is, this under carries more risk than the historical total_under record alone suggests.; Keep strength at small, not moderate: total_under (17 right / 19 wrong) and total_over (15 right / 16 wrong) are both close to a coin flip league-wide, so this lean rests on the fresh line move alone, not a strong standing total-direction edge.
-
-**Summary:** Revised now that the spread and total have both produced real, sustained pregame movement since the prior revision (which explicitly called for a dead-flat market with no signal to read). Side flips from a watch-strength Aces lean to a small lean on Indiana Fever: after early whipsaw, the market has settled on Fever -1 for the last three hours, and line direction is the log's most reliable factor -- tempered to small strength by entry 92's specific, on-point warning that a market move against the Aces has previously been wrong (Aces won by 22 despite a similar flip). Total flips from a moderate Over to a small Under: the total has dropped a sustained 3 points off the open with no reversion, which is exactly the condition the prior revision flagged as its own reassessment trigger, though the log's active all-star-break over-tilt guidance keeps this at small rather than higher strength. No first-half lean: BetOnline has now posted a first-half market, but it is flat (Fever -0.5/pick'em, total 95) across all four available captures with no signal either way.
-<!-- WNBA_LEAN_EVENT_END event_id=58beff9061f15ff3f416542cb51f4751 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=0c6ed7c2d9458b686d96eafc98f9d07d -->
 ## WNBA Lean: Los Angeles Sparks @ Minnesota Lynx
