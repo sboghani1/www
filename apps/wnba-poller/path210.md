@@ -738,6 +738,13 @@ line movement: side: wings -2.5 (open) -> -2.5 (close, flat/competitive); total:
 context: wednesday. fade wings = back the washington mystics +2.5 (home dog) on a recent-form audit showing washington winning outright in each of its last three home-dog spots, with the market settling at a competitive, UNMOVING wings -2.5 (no push toward a blowout). the MYSTICS WON 96-92, by 4: washington won outright and covered +2.5, so fading the wings was RIGHT on the side; but the 188 total blew WAY OVER 166.5, so the small under was WRONG. lesson: a motivated_underdog / home-dog-wins-outright WIN (the recent-form audit held), but the under read whiffed badly -- two poor offenses still produced 188, so leaning under a low number was the mistake.
 model_lean: side (moderate WASHINGTON MYSTICS +2.5, home dog) -- HIT (washington won outright by 4); total (small UNDER 166.5) -- MISS (188 way over). net: SIDE HIT via home-dog-wins-outright, total under lost badly in a 188 shootout.
 
+102fadesparks
+right
+back_favorite,line_stable,situational_angle,total_over,expired_allstar_over_tilt
+line movement: side: sky -3 (flat all window); total: o186.5 (flat all window)
+context: wednesday. fade sparks = back the chicago sky -3 (home favorite) on a dead-FLAT closing number (sky -3 / total 186.5 unmoved across the ~3.5h window), watch-strength only since mixed recent form gave no real signal. the SKY WON 95-88, by 7: chicago covered -3, so fading the sparks was RIGHT on the side; but the 183 total finished UNDER 186.5, so the small over was WRONG. lesson: a line_stable no-signal number where the watch-strength favorite happened to cover; the over lost again (183 under) -- the retired all-star over-tilt overs keep landing under.
+model_lean: side (watch CHICAGO SKY -3, dead-flat number) -- HIT (sky won by 7, covered -3); total (small OVER 186.5) -- MISS (183 under). net: SIDE HIT on a no-signal line_stable number, total over missed (another retired-tilt over that went under).
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
@@ -746,17 +753,17 @@ follow_line_movement: 14 right / 12 wrong
 fade_favorite: 16 right / 12 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 36 right / 40 wrong
+situational_angle: 37 right / 40 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 14 right / 23 wrong
-back_favorite: 19 right / 29 wrong
+back_favorite: 20 right / 29 wrong
 chased_better_payout: 0 right / 1 wrong
-line_stable: 7 right / 7 wrong
+line_stable: 8 right / 7 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 6 right / 1 wrong
 overconfidence: 22 right / 29 wrong
-total_over: 15 right / 20 wrong
+total_over: 16 right / 20 wrong
 total_under: 18 right / 20 wrong
 fh_total_low_big: 0 right / 0 wrong
 fh_total_low_medium: 0 right / 0 wrong
@@ -764,7 +771,7 @@ fh_total_high_big: 0 right / 0 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
 fh_spread_back: 0 right / 0 wrong
-expired_allstar_over_tilt: 16 right / 16 wrong
+expired_allstar_over_tilt: 17 right / 16 wrong
   (entries 67-95 -- decided during the now-retired all-star-break over-tilt window (it should have ended at the 6-game Wednesday 67-72). KEPT in every count above, tagged only so total records read clean:
    total_over:  15/18 including these  /  10/12 excluding these
    total_under: 17/20 including these  /  7/12 excluding these
@@ -909,23 +916,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Revised now that the spread and total have both produced real, sustained pregame movement since the prior revision (which explicitly called for a dead-flat market with no signal to read). Side flips from a watch-strength Aces lean to a small lean on Indiana Fever: after early whipsaw, the market has settled on Fever -1 for the last three hours, and line direction is the log's most reliable factor -- tempered to small strength by entry 92's specific, on-point warning that a market move against the Aces has previously been wrong (Aces won by 22 despite a similar flip). Total flips from a moderate Over to a small Under: the total has dropped a sustained 3 points off the open with no reversion, which is exactly the condition the prior revision flagged as its own reassessment trigger, though the log's active all-star-break over-tilt guidance keeps this at small rather than higher strength. No first-half lean: BetOnline has now posted a first-half market, but it is flat (Fever -0.5/pick'em, total 95) across all four available captures with no signal either way.
 <!-- WNBA_LEAN_EVENT_END event_id=58beff9061f15ff3f416542cb51f4751 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=03dfbda8989e58cb5886ea6e37b348d3 -->
-## WNBA Lean: Los Angeles Sparks @ Chicago Sky
-- Event ID: `03dfbda8989e58cb5886ea6e37b348d3`
-- Revision: `57d9c373-2140-4eee-a309-275331353d0b`
-- Status: `active`
-
-### Full game
-- **Side:** Chicago Sky (watch)
-  - Evidence: The spread has now been confirmed completely flat at Sky -3 across all four captures spanning the full pregame window (17:04 through 20:15 ET, about 3.5 hours) with no movement at all, only trivial juice noise on the away price; A recent-form audit already logged for both teams remains genuinely mixed: Los Angeles has one hit as a favorite backer and one hit covering as an underdog but also a miss, and Chicago has split results both covering as an underdog and failing to cover as a favorite -- no clean directional signal from recent form
-  - Watch: This is now the closing number -- the dead-flat line the entire window means the book never needed to move off -3 for either side's money, which is itself a mild signal that there is no market-side edge to exploit here; No further movement is expected once the game is underway; this is the final pregame read
-- **Total:** Over (small)
-  - Evidence: The log's current WNBA-scoring guidance: total_over is 8/8 recently, with an active time-bounded tilt toward the over around the WNBA all-star break; The total closed completely flat at 186.5 across the entire tracked window, so there is no fade signal against the over
-  - Watch: A prior draft for this same matchup was built around a higher total (189.5) that settled and held lower (186.5) for the entire tracked window -- that gap is a real caution against a stronger over lean, which is why this stays at small rather than the prior draft's moderate framing
-
-**Summary:** Final closing lean, revised from the earlier preliminary read now that the game is minutes from tip. The line never moved: four captures across the full ~3.5-hour pregame window show Sky -3 and total 186.5 completely flat, with only trivial juice noise. Side stays at minimum (watch) strength on Chicago Sky -3 -- a dead-flat closing number with mixed recent form for both teams gives no real signal either way. Total stays small Over 186.5 -- no fade signal since the number never eased, but it also never confirmed higher, and it remains below the level a prior draft for this matchup was built around. No first-half lean: a first-half number exists (Sky -1.5 / 91.5) but there is no tracked movement history or precedent to support a specific first-half read.
-<!-- WNBA_LEAN_EVENT_END event_id=03dfbda8989e58cb5886ea6e37b348d3 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=0c6ed7c2d9458b686d96eafc98f9d07d -->
 ## WNBA Lean: Los Angeles Sparks @ Minnesota Lynx
