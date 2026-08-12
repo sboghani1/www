@@ -1150,3 +1150,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Initial lean, revisit near tip. 1H check: total 81 vs half 83.25 = -2.25 -> fh_total_low_medium (under); spread 1H +5 vs half +4.25 = +0.75 noise. Side: small Chicago Sky +8.5 -- the line moved to the road dog (Valkyries -9.5 -> -8.5, ML +370 -> +316), laying -8.5 to blow out the Sky is the losing back_favorite shape, and the thought agrees on the Sky. Small (Valkyries a good home team). Total: small Under on fh_total_low_medium with the full total round-tripped flat; also a small first-half Under.
 <!-- WNBA_LEAN_EVENT_END event_id=92025da862cb0756a756006bc12a79e6 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=62ed8d04c26de1f3164b3c15775a52e6 -->
+## WNBA Lean: Minnesota Lynx @ Portland Fire
+- Event ID: `62ed8d04c26de1f3164b3c15775a52e6`
+- Revision: `fe546fbd-8104-4f00-85d6-1d4b81dc13f9`
+- Status: `active`
+
+### Full game
+- **Side:** Portland Fire (small)
+  - Evidence: Take the big points: -12.5 is extreme, the full spread is FLAT (round-tripped -12.5 -> -13.5 -> -12.5, no net follow signal to override), and big-favorite-doesn't-cover is the log's recurring lesson -- 74fadelynx had even an elite Lynx -16.5 win by only 7, and the Fire have covered as a home dog (72fadefire).; Low-conviction, near-pass -- a coin flip on an extreme number.
+  - Watch: The Lynx ARE elite (best team) and covered this exact -12.5 by beating the Tempo by 32 (81fadelynx), so a blowout cover is very live; the thought is on the Lynx.; Initial/preliminary read; revisit near tip.
+- **Total:** Over (small)
+  - Evidence: Aligned over signals: the full total rose mildly (184.5 -> 186) and the 1H total is a medium divergence UP (fh_total_high_medium, see 1H check), the market pricing a fast first half.
+  - Watch: Small -- mild full rise and the fh heuristic is unproven.
+
+### First half
+- **Total:** Over (small)
+  - Evidence: fh_total_high_medium: 1H total 95.5 is ~2.5 above half the full (186/2 = 93.0), a first-half over.
+  - Watch: New/unproven heuristic, small only.
+
+**Summary:** Initial lean, revisit near tip. 1H check: total 95.5 vs half 93.0 = +2.5 -> fh_total_high_medium (over); spread 1H -7.5 vs half -6.25 = -1.25 (borderline front-loaded, under the ~1.5 threshold -> noise). Side: small Portland Fire +12.5 -- extreme number on a FLAT (round-tripped) full spread with no follow signal, big-fav-doesn't-cover (74fadelynx, Fire covered in 72); near-pass and disagrees with a live Lynx blowout (81 covered this exact -12.5), so low conviction. Total: small Over -- mild rise (184.5->186) plus fh_total_high_medium; also a small first-half Over.
+<!-- WNBA_LEAN_EVENT_END event_id=62ed8d04c26de1f3164b3c15775a52e6 -->
