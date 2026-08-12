@@ -731,15 +731,22 @@ line movement: side: liberty -8 (open) -> -8 (close, eased toward seattle); tota
 context: wednesday. fade storm = back the new york liberty -8 (home favorite) to beat seattle by more than 8 on a very recent head-to-head (liberty by 12 days earlier), EVEN THOUGH the spread eased toward seattle across the window. the LIBERTY WON 92-86, by 6: liberty did NOT cover -8 (storm +8 covered), so fading the storm was WRONG on the side; the 178 total finished UNDER 183.5, so the small over was ALSO wrong. lesson: big-favorite-doesn't-cover again (liberty -8 won by only 6), and fading the ease toward seattle (fade_line_movement) lost -- the ease off the liberty was the real signal. the over also rode the retired all-star over-tilt on a game that went under.
 model_lean: side (small NY LIBERTY -8, laid the number against the ease) -- MISS (liberty won by 6, storm +8 covered); total (small OVER 183.5) -- MISS (178 under). net: double miss -- big-fav-doesn't-cover + fading the ease + dead over-tilt.
 
+101fadewings
+right
+fade_favorite,situational_angle,motivated_underdog,total_under,expired_allstar_over_tilt
+line movement: side: wings -2.5 (open) -> -2.5 (close, flat/competitive); total: o168.5 -> o166.5
+context: wednesday. fade wings = back the washington mystics +2.5 (home dog) on a recent-form audit showing washington winning outright in each of its last three home-dog spots, with the market settling at a competitive, UNMOVING wings -2.5 (no push toward a blowout). the MYSTICS WON 96-92, by 4: washington won outright and covered +2.5, so fading the wings was RIGHT on the side; but the 188 total blew WAY OVER 166.5, so the small under was WRONG. lesson: a motivated_underdog / home-dog-wins-outright WIN (the recent-form audit held), but the under read whiffed badly -- two poor offenses still produced 188, so leaning under a low number was the mistake.
+model_lean: side (moderate WASHINGTON MYSTICS +2.5, home dog) -- HIT (washington won outright by 4); total (small UNDER 166.5) -- MISS (188 way over). net: SIDE HIT via home-dog-wins-outright, total under lost badly in a 188 shootout.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 14 right / 12 wrong
-fade_favorite: 15 right / 12 wrong
+fade_favorite: 16 right / 12 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 35 right / 40 wrong
+situational_angle: 36 right / 40 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 14 right / 23 wrong
 back_favorite: 19 right / 29 wrong
@@ -747,17 +754,17 @@ chased_better_payout: 0 right / 1 wrong
 line_stable: 7 right / 7 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 5 right / 1 wrong
+motivated_underdog: 6 right / 1 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 15 right / 20 wrong
-total_under: 17 right / 20 wrong
+total_under: 18 right / 20 wrong
 fh_total_low_big: 0 right / 0 wrong
 fh_total_low_medium: 0 right / 0 wrong
 fh_total_high_big: 0 right / 0 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
 fh_spread_back: 0 right / 0 wrong
-expired_allstar_over_tilt: 15 right / 16 wrong
+expired_allstar_over_tilt: 16 right / 16 wrong
   (entries 67-95 -- decided during the now-retired all-star-break over-tilt window (it should have ended at the 6-game Wednesday 67-72). KEPT in every count above, tagged only so total records read clean:
    total_over:  15/18 including these  /  10/12 excluding these
    total_under: 17/20 including these  /  7/12 excluding these
@@ -902,23 +909,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Revised now that the spread and total have both produced real, sustained pregame movement since the prior revision (which explicitly called for a dead-flat market with no signal to read). Side flips from a watch-strength Aces lean to a small lean on Indiana Fever: after early whipsaw, the market has settled on Fever -1 for the last three hours, and line direction is the log's most reliable factor -- tempered to small strength by entry 92's specific, on-point warning that a market move against the Aces has previously been wrong (Aces won by 22 despite a similar flip). Total flips from a moderate Over to a small Under: the total has dropped a sustained 3 points off the open with no reversion, which is exactly the condition the prior revision flagged as its own reassessment trigger, though the log's active all-star-break over-tilt guidance keeps this at small rather than higher strength. No first-half lean: BetOnline has now posted a first-half market, but it is flat (Fever -0.5/pick'em, total 95) across all four available captures with no signal either way.
 <!-- WNBA_LEAN_EVENT_END event_id=58beff9061f15ff3f416542cb51f4751 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=80bb6c471358f70e96b4571c4470ac0a -->
-## WNBA Lean: Dallas Wings @ Washington Mystics
-- Event ID: `80bb6c471358f70e96b4571c4470ac0a`
-- Revision: `9226c2d1-78fc-41e1-95eb-162cb399703b`
-- Status: `active`
-
-### Full game
-- **Side:** Washington Mystics (moderate)
-  - Evidence: A prior recent-form audit already logged for Washington shows their last three home-underdog side leans went 3/3, all with the Mystics winning outright as dogs (entries 66, 70, 83); The spread was completely flat at Wings -2.5 across the entire tracked window (three captures, ~75 minutes), settling right at a modest, competitive number rather than a blowout price
-  - Watch: The number closed at Wings -2.5 rather than the slightly larger -3 a prior draft for this matchup was originally responding to -- a small half-point move toward Dallas since then, which is a mild caution against this lean, not a reason to abandon it; This is a closing-number read on a game that has already started -- there is no further line movement to watch
-- **Total:** Under (small)
-  - Evidence: The total declined meaningfully across the tracked window, from 168.5 down to 166.5 -- a real 2-point move, not noise, and this log treats line direction as its strongest signal; This total was already the lowest of tonight's four games, consistent with a lower-scoring expectation for this specific matchup
-  - Watch: This runs against the log's general current season-wide lean toward overs, which is why it stays at small rather than a higher strength -- the specific downward movement here is the deciding factor, not the seasonal base rate
-
-**Summary:** Closing-number lean for a game that has already tipped off. Side leans moderate toward Washington Mystics +2.5: a specific recent-form audit shows Washington winning outright as a home underdog in each of its last three relevant spots, and the market settled at a competitive, unmoving number all window (Wings -2.5) rather than pushing toward a blowout -- tempered slightly since a prior draft for this matchup expected -3, a touch more favorable to the underdog than tonight's closing number. Total leans small Under 166.5: this was the one game tonight where the total genuinely moved, declining 2 points (168.5 to 166.5), which is treated as a real signal against this log's broader seasonal over-lean. No first-half lean: a closing first-half number exists (Wings -1 / 81) but there is no tracked movement history or precedent to support a specific first-half read.
-<!-- WNBA_LEAN_EVENT_END event_id=80bb6c471358f70e96b4571c4470ac0a -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=03dfbda8989e58cb5886ea6e37b348d3 -->
 ## WNBA Lean: Los Angeles Sparks @ Chicago Sky
