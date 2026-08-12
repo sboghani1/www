@@ -752,33 +752,40 @@ line movement: side: aces/pick'em (open) -> fever -1 (close, settled after whips
 context: thursday. fade aces = back the indiana fever -1 (home) after the market settled onto the fever for the last three hours (follow_line_movement, the log's best factor), with a small under 192.5 as the total drifted down. the ACES WON 86-84, by 2: las vegas won outright, so backing the fever -1 was WRONG on the side; but the 170 total finished WAY UNDER 192.5, so the small under was RIGHT. lesson: follow_line_movement is not infallible -- the aces won despite the market moving to the fever (an entry-92 redux the lean itself flagged); but the UNDER hit big, the first total win of this batch and an under -- vindicating the default-under read now that the all-star over-tilt is retired.
 model_lean: side (small INDIANA FEVER -1, followed the late move to the fever) -- MISS (aces won by 2, entry-92 pattern); total (small UNDER 192.5) -- HIT (170 way under). net: SIDE MISS following a flip the aces beat, but TOTAL UNDER HIT big -- first total win, an under.
 
+104fadelynx
+right
+fade_favorite,fade_line_movement,situational_angle,motivated_underdog,total_under,expired_allstar_over_tilt
+line movement: side: sparks +15.5 -> +17 (lynx firmed to -17); total: o188.5 -> o187 (eased)
+context: thursday. fade lynx = back the los angeles sparks +17 (road dog) vs the lynx home favorite -17, an EXTREME number, taking the points anchored to 74fadelynx (lynx -16.5 won by only 7, dog covered) against the still-firming lynx line. the SPARKS WON 89-82, by 7 OUTRIGHT: los angeles not only covered +17, they won the game, so fading the lynx was RIGHT on the side; the 171 total finished UNDER 187, so the watch under was ALSO right. lesson: big-favorite-doesn't-cover in its most extreme form -- a -17 home favorite LOST outright; 74fadelynx nailed it, a justified fade_line_movement win (the extreme number was the real edge). the under also hit -- unders now 2/2 while the retired-tilt overs are 0/4.
+model_lean: side (small LA SPARKS +17, faded the extreme lynx number/firm) -- HIT BIG (sparks won outright by 7); total (watch UNDER 187) -- HIT (171 under). net: DOUBLE HIT -- big-favorite-doesn't-cover extreme form + under, the standout of the batch.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 14 right / 13 wrong
-fade_favorite: 16 right / 12 wrong
+fade_favorite: 17 right / 12 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 37 right / 41 wrong
+situational_angle: 38 right / 41 wrong
 decision_day_before: 1 right / 0 wrong
-fade_line_movement: 14 right / 23 wrong
+fade_line_movement: 15 right / 23 wrong
 back_favorite: 20 right / 30 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 8 right / 7 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 6 right / 1 wrong
+motivated_underdog: 7 right / 1 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 16 right / 20 wrong
-total_under: 18 right / 21 wrong
+total_under: 19 right / 21 wrong
 fh_total_low_big: 0 right / 0 wrong
 fh_total_low_medium: 0 right / 0 wrong
 fh_total_high_big: 0 right / 0 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
 fh_spread_back: 0 right / 0 wrong
-expired_allstar_over_tilt: 17 right / 17 wrong
+expired_allstar_over_tilt: 18 right / 17 wrong
   (entries 67-95 -- decided during the now-retired all-star-break over-tilt window (it should have ended at the 6-game Wednesday 67-72). KEPT in every count above, tagged only so total records read clean:
    total_over:  15/18 including these  /  10/12 excluding these
    total_under: 17/20 including these  /  7/12 excluding these
@@ -906,28 +913,6 @@ recent-team audit: LOS ANGELES — entry 89, i backed fire at pick'em and MISSED
 <ins>total (o189.5): moderate OVER</ins> — the book is 14.5 points above your primary score and the total rose 187.5 -> 189.5 with over juice -115. the latest games involving these teams reached 207 (both), 222/168 for los angeles, and 207/167/182 for chicago. follow the high-scoring market; over is much cleaner than the side.
 net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 24h watch: SPREAD — sky -4.5 or higher confirms your side projection and upgrades chicago; a return to -2/pick'em shifts value toward sparks. TOTAL — holding 189.5 or rising through 191 confirms the over but creates chase risk; a drop to 186 or lower invalidates the rise and downgrades to PASS.
-
-<!-- WNBA_LEAN_EVENT_START event_id=0c6ed7c2d9458b686d96eafc98f9d07d -->
-## WNBA Lean: Los Angeles Sparks @ Minnesota Lynx
-- Event ID: `0c6ed7c2d9458b686d96eafc98f9d07d`
-- Revision: `d41f2d22-9970-4d0d-bc2e-19874a50401a`
-- Status: `active`
-
-### Full game
-- **Side:** Los Angeles Sparks (small)
-  - Evidence: The number is extreme (Lynx -17, opened -15.5 and has firmed steadily and monotonically across roughly 8 hours with no reversion) -- directly on point is entry 74fadelynx, where the Lynx were an even more extreme home favorite (-16.5) and won by only 7, failing to cover: 'big-favorite-doesn't-cover in its most extreme form.'; This is not the same situation as entry 81fadelynx (Lynx -12.5 vs. an expansion-tier Toronto Tempo that got blown out by 32); the Sparks are an established franchise, not the punching-bag opponent that made the big number correct in that game, so the extreme-number caution is the more applicable precedent here.
-  - Watch: The line has been firming cleanly and without whipsaw (15.5 -> 17 across the day) -- follow_line_movement is the log's single best-performing factor (14 right / 10 wrong), and that clean, sustained direction argues the other way from this lean; if it keeps climbing toward tip, weight that over the extreme-number caution and revisit.; Entry 81fadelynx is a direct, recent counterexample showing a big Lynx number CAN be exactly right when the market is confidently pricing a real blowout -- keep this at small strength rather than higher because the log's own precedent is genuinely split on extreme Lynx favorites.
-- **Total:** Under (watch)
-  - Evidence: The full-game total has only eased 1.5 points (188.5 -> 187) -- within the log's own 'no-signal total' band (a ~2-point net move, flat in both the early and later windows, has previously been misread as an under cue and then blown well over), so this is not read as a real directional signal on its own.
-  - Watch: This is a likely lopsided game (-17 spread), which raises garbage-time under-stranding risk on a moderate total -- but the log's currently-noted all-star-break guidance explicitly warns NOT to fade a total or lean under in one-sided/blowout spots, and it is unclear whether that window is still active for this date.; Given that direct conflict plus the marginal move itself, this total lean is watch-strength only, effectively a monitoring flag rather than a real position -- revisit if the total moves further in either direction before tip.
-
-### First half
-- **Total:** Under (small)
-  - Evidence: The first-half total has dropped a real 5 points (97.5 -> 92.5) since first posted, roughly 5% of the number and proportionally far sharper than the ~0.8% full-game total move -- a clean, mostly monotonic decline (97.5 -> 97 -> 96 -> 92.5, then flat) rather than a single-tick blip.; The first-half spread has widened in step with the full-game line (8.5 -> 9), consistent with the market pricing a bigger early Lynx lead; a book expecting a lopsided first half lowering the first-half total specifically (while the full-game total barely moved) is a coherent, market-confirmed signal rather than noise.
-  - Watch: This log has little first-half-specific precedent to validate this read against -- treat it as a genuine but thin-precedent lean, not one backed by a track record the way the full-game total/side factors are.; If the first-half total stabilizes or reverses before tip, this lean should be dropped rather than held on the early trend alone.
-
-**Summary:** New lean on an extreme number: Lynx -17 over the Sparks, one of the widest spreads seen in this log's recent window. Side takes a small lean on the Sparks (+17) to not get run off the board entirely, anchored to entry 74fadelynx -- the closest direct precedent, where an even more extreme Lynx home number (-16.5) still failed to cover by more than single digits -- while explicitly weighing the counter-precedent (entry 81fadelynx) where a big Lynx number correctly predicted a blowout against a true punching-bag opponent; the Sparks are not confirmed to be that caliber of overmatched, so the extreme-number caution is favored, but only at small strength given the clean, still-firming line move argues the other way. Full-game total stays at watch/near-pass strength: the 1.5-point net move sits inside the log's own 'no-signal' band, and the blowout-stranding risk that would argue for an under runs directly into the log's currently-noted (but possibly stale) all-star-break guidance against fading totals in one-sided spots. First half gets a small Under lean instead, based on a real, proportionally much sharper 5-point decline in the first-half total that lines up with the widening first-half spread -- a market-confirmed signal, though this book has little first-half-specific track record in the log to lean on.
-<!-- WNBA_LEAN_EVENT_END event_id=0c6ed7c2d9458b686d96eafc98f9d07d -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=2036e6c92c8c4e14b2b4727f482e74a9 -->
 ## WNBA Lean: Toronto Tempo @ Portland Fire
