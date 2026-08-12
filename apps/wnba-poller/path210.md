@@ -1106,3 +1106,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Initial (preliminary) lean, revisit near tip. 1H check: total 93 vs half 89.5 = +3.5 -> fh_total_high_big (over); spread 1H +0.5 vs half +1.0 = -0.5 noise. Side: small Los Angeles Sparks -2 -- a FAVORITE FLIP repriced this a net ~3.5 points across zero from Mercury -1.5 to Sparks -2 (the Mercury ML falling to +110); follow that decisive line move onto the new home favorite, which the thought's Mercury -4.5 read fights. Small because favorite flips can fail badly (entry 92) and the Mercury have beaten fades lately (79/87 fademercury wrong), and -2 is a near-pickem. Total: the full-game total round-tripped to flat (no-signal, watch), while the 1H total is fh_total_high_big, played as a small FIRST-HALF over. No full-game total position.
 <!-- WNBA_LEAN_EVENT_END event_id=38b0b03d1b7fb6593df20834189cb081 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=744d7516c6ce883856e697bfe904153d -->
+## WNBA Lean: Toronto Tempo @ Dallas Wings
+- Event ID: `744d7516c6ce883856e697bfe904153d`
+- Revision: `f106bc57-96f3-40dc-9aea-456dba889dbf`
+- Status: `active`
+
+### Full game
+- **Side:** Toronto Tempo (small)
+  - Evidence: Take the big points: -10 is an extreme number for a non-elite home favorite, and the punching-bag Tempo just covered +14.5 at the Dream two nights ago (lost by only 12) -- big-favorite-doesn't-cover is the log's recurring lesson, and 74fadelynx shows even elite teams miss extreme numbers.; Counter noted below -- the line firmed onto the Wings, so this is a small, deliberate fade of that firm on the extreme-number/recent-Tempo-cover angle.
+  - Watch: Line firmed toward the Wings (-9 -> -10, Tempo ML +324 -> +383) = follow_line_movement pointing the other way; and the Tempo DO get blown out by elite teams (91 by 17, 81 by 32) -- so a Wings cover is live. Small.; Initial/preliminary read; revisit near tip.
+- **Total:** Under (small)
+  - Evidence: Aligned under signals: the full total eased mildly (185 -> 184) and the 1H total is a big divergence down (fh_total_low_big, see 1H check), the market pricing a slow first half. All-star over-tilt retired.
+  - Watch: Small -- the full ease is mild and the fh heuristic is new/unproven (0/2 so far).
+
+### First half
+- **Total:** Under (small)
+  - Evidence: fh_total_low_big: 1H total 88.5 is ~3.5 below half the full total (184/2 = 92.0), a first-half under.
+  - Watch: New/unproven heuristic, small only.
+
+**Summary:** Initial lean, revisit near tip. 1H check: total 88.5 vs half 92.0 = -3.5 -> fh_total_low_big (under); spread 1H +6 vs half +5.0 = +1.0 noise. Side: small Toronto Tempo +10 -- extreme number for a non-elite Wings, and the Tempo just covered +14.5 at the Dream (lost by 12); a deliberate small fade of the Wings firm (-9 -> -10) on big-fav-doesn't-cover, tempered because the line firmed to the Wings and elite teams have blown the Tempo out (91,81). Total: small Under -- mild ease (185->184) plus fh_total_low_big both point under; also a small first-half Under. Retired over-tilt.
+<!-- WNBA_LEAN_EVENT_END event_id=744d7516c6ce883856e697bfe904153d -->
