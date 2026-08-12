@@ -724,6 +724,13 @@ line movement: side: dream -5.5 (open) -> -7.0 (close, firmed); total: o183.5 ->
 context: wednesday. fade dream = back the phoenix mercury +7 (small) on a recent-form audit (phoenix 3/3, atlanta 1/3 on recent spread reads) even though the spread FIRMED toward atlanta -5.5 -> -7 into close. the DREAM WON 96-82, by 14: atlanta covered -7 easily, so fading the dream was WRONG on the side; the 178 total finished UNDER 181.5, so the small over was ALSO wrong. lesson: fade_line_movement again -- a recent-form narrative fought the atlanta firm and the firm was right (atlanta covered by 14). the over lean also rode the retired all-star over-tilt on a game that went under. follow the firm, and stop leaning over on the dead seasonal tilt.
 model_lean: side (small MERCURY +7, faded the atlanta firm) -- MISS (dream won by 14, covered -7); total (small OVER 181.5) -- MISS (178 under). net: double miss -- fading the line and the retired over-tilt both lost.
 
+100fadestorm
+wrong
+back_favorite,fade_line_movement,situational_angle,total_over,expired_allstar_over_tilt
+line movement: side: liberty -8 (open) -> -8 (close, eased toward seattle); total: o183 -> o183.5
+context: wednesday. fade storm = back the new york liberty -8 (home favorite) to beat seattle by more than 8 on a very recent head-to-head (liberty by 12 days earlier), EVEN THOUGH the spread eased toward seattle across the window. the LIBERTY WON 92-86, by 6: liberty did NOT cover -8 (storm +8 covered), so fading the storm was WRONG on the side; the 178 total finished UNDER 183.5, so the small over was ALSO wrong. lesson: big-favorite-doesn't-cover again (liberty -8 won by only 6), and fading the ease toward seattle (fade_line_movement) lost -- the ease off the liberty was the real signal. the over also rode the retired all-star over-tilt on a game that went under.
+model_lean: side (small NY LIBERTY -8, laid the number against the ease) -- MISS (liberty won by 6, storm +8 covered); total (small OVER 183.5) -- MISS (178 under). net: double miss -- big-fav-doesn't-cover + fading the ease + dead over-tilt.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
@@ -732,17 +739,17 @@ follow_line_movement: 14 right / 12 wrong
 fade_favorite: 15 right / 12 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 35 right / 39 wrong
+situational_angle: 35 right / 40 wrong
 decision_day_before: 1 right / 0 wrong
-fade_line_movement: 14 right / 22 wrong
-back_favorite: 19 right / 28 wrong
+fade_line_movement: 14 right / 23 wrong
+back_favorite: 19 right / 29 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 7 right / 7 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 5 right / 1 wrong
 overconfidence: 22 right / 29 wrong
-total_over: 15 right / 19 wrong
+total_over: 15 right / 20 wrong
 total_under: 17 right / 20 wrong
 fh_total_low_big: 0 right / 0 wrong
 fh_total_low_medium: 0 right / 0 wrong
@@ -750,7 +757,7 @@ fh_total_high_big: 0 right / 0 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
 fh_spread_back: 0 right / 0 wrong
-expired_allstar_over_tilt: 15 right / 15 wrong
+expired_allstar_over_tilt: 15 right / 16 wrong
   (entries 67-95 -- decided during the now-retired all-star-break over-tilt window (it should have ended at the 6-game Wednesday 67-72). KEPT in every count above, tagged only so total records read clean:
    total_over:  15/18 including these  /  10/12 excluding these
    total_under: 17/20 including these  /  7/12 excluding these
@@ -895,23 +902,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Revised now that the spread and total have both produced real, sustained pregame movement since the prior revision (which explicitly called for a dead-flat market with no signal to read). Side flips from a watch-strength Aces lean to a small lean on Indiana Fever: after early whipsaw, the market has settled on Fever -1 for the last three hours, and line direction is the log's most reliable factor -- tempered to small strength by entry 92's specific, on-point warning that a market move against the Aces has previously been wrong (Aces won by 22 despite a similar flip). Total flips from a moderate Over to a small Under: the total has dropped a sustained 3 points off the open with no reversion, which is exactly the condition the prior revision flagged as its own reassessment trigger, though the log's active all-star-break over-tilt guidance keeps this at small rather than higher strength. No first-half lean: BetOnline has now posted a first-half market, but it is flat (Fever -0.5/pick'em, total 95) across all four available captures with no signal either way.
 <!-- WNBA_LEAN_EVENT_END event_id=58beff9061f15ff3f416542cb51f4751 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=55583b8c075dd483b408ce1ba4c24244 -->
-## WNBA Lean: Seattle Storm @ New York Liberty
-- Event ID: `55583b8c075dd483b408ce1ba4c24244`
-- Revision: `89afd31f-965f-4dbe-865d-c5a0f5d17395`
-- Status: `active`
-
-### Full game
-- **Side:** New York Liberty (small)
-  - Evidence: A very recent head-to-head precedent (entry 93) has these exact two teams meeting days earlier: Liberty won by 12 and covered a smaller -7 number after the market eased off them -- directly relevant recent precedent for tonight's rematch; The spread closed at -8, continuing the same gradual ease toward Seattle a prior draft for this matchup had already flagged (-9.5 down to -8.5 at the time), but it has not crossed the -7 level that same draft set as the point to abandon the Liberty cover lean
-  - Watch: This is a closing-number read on a game that has already started -- the gradual ease toward Seattle across the tracked window is a real signal this lean does not fully dismiss, which is why it stays at small rather than a higher strength; Liberty's form has been inconsistent across other recent entries (won by 1 in one spot, lost outright in another), so this is a matchup-specific read rather than a broad trust in Liberty covering generally
-- **Total:** Over (small)
-  - Evidence: The total was essentially flat across the tracked window (183 opening to 183.5 closing), a very mild rise rather than a decisive move; The broader recent precedent for these two teams individually has trended over modest total numbers in several other matchups (203 over 181.5 in entry 82, 187 over 179.5 in entry 84), though the specific prior meeting between these two teams landed under its own total
-  - Watch: The near-total lack of movement here (barely half a point) is why this stays at small strength -- there is not a strong directional signal in the total itself, only the broader base rate
-
-**Summary:** Closing-number lean for a game that has already tipped off. Side leans small toward New York Liberty -8: a very recent head-to-head precedent has Liberty beating Seattle by 12 and covering a smaller number days earlier, but the spread's continued gradual ease toward Seattle across tonight's window (a caution a prior draft for this exact matchup already flagged) keeps this at minimum-plus rather than higher confidence. Total leans small Over 183.5: the number barely moved, so this leans on the broader recent base rate rather than any real movement signal. No first-half lean: a closing first-half number exists (Liberty -4.5 / 95) but there is no tracked movement history or precedent to support a specific first-half read.
-<!-- WNBA_LEAN_EVENT_END event_id=55583b8c075dd483b408ce1ba4c24244 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=80bb6c471358f70e96b4571c4470ac0a -->
 ## WNBA Lean: Dallas Wings @ Washington Mystics
