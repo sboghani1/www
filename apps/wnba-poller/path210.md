@@ -780,15 +780,22 @@ line movement: side: sky -1.5 -> -2.5 (firmed); total: o178 -> o179; 1H total 87
 context: monday. fade storm = back the chicago sky -2.5 (road favorite) following the firm, with a full under 179 and a first-half under 87 on fh_total_low_big. the STORM WON 97-88, by 9: seattle (a home dog on an 11-game skid) won OUTRIGHT, so backing the sky was WRONG -- the motivated_underdog desperation spot the lean's own watch flagged; follow_line_movement onto the sky lost. the 185 total finished OVER 179, so the full under was WRONG. BUT the FIRST HALF was low: 80 (sky 33, storm 47) UNDER the 87 line, so the fh_total_low_big 1H under was RIGHT. lesson: fh_total_low predicts the FIRST HALF (now 1/2 on the half) but NOT the full game (0/2 full) -- the 2H blew up (105) here; weight fh_total_low toward the first-half bet, not the full total. also a motivated_underdog win off a long skid.
 model_lean: side (small CHICAGO SKY -2.5, followed the firm) -- MISS (storm won outright, motivated_underdog); full total (small UNDER 179) -- MISS (185 over); first-half total (small UNDER 87, fh_total_low_big) -- HIT (H1 80). net: side + full miss, but the 1H UNDER hit -- fh_total_low is a first-half signal, not full-game.
 
+108fadefever
+wrong
+follow_line_movement,fade_favorite,situational_angle,total_under
+line movement: side: liberty +4.5 -> +3 (money to the liberty); total: o~190 -> flat
+context: tuesday. fade fever = back the new york liberty +3 (road dog) following a net line move onto the liberty, with a watch under. the FEVER WON 106-92, by 14: indiana (better by record and at home) DEMOLISHED the liberty, so backing the liberty was WRONG -- the line move toward the liberty was a HEAD-FAKE and the model's own caveat (fever better by record + home) was the right read; follow_line_movement lost. the 198 total blew OVER, so the under was WRONG. lesson: following a line move AGAINST a clearly-better home team burned; another over beating an under; the thought (liberty wins) was also very wrong.
+model_lean: side (small NY LIBERTY +3, followed the move to the dog) -- MISS (fever won by 14); total (watch UNDER) -- MISS (198 over). net: double miss -- follow_line_movement was a head-fake vs a better home team (the model's own hedge nailed it), another over.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 15 right / 15 wrong
-fade_favorite: 17 right / 12 wrong
+follow_line_movement: 15 right / 16 wrong
+fade_favorite: 17 right / 13 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 39 right / 43 wrong
+situational_angle: 39 right / 44 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 15 right / 23 wrong
 back_favorite: 21 right / 31 wrong
@@ -799,7 +806,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 7 right / 2 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 16 right / 20 wrong
-total_under: 20 right / 23 wrong
+total_under: 20 right / 24 wrong
 fh_total_low_big: 0 right / 1 wrong
 fh_total_low_medium: 0 right / 1 wrong
 fh_total_high_big: 0 right / 0 wrong
@@ -950,23 +957,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=7f6be8b73fe0d176884f6aee616e3006 -->
-## WNBA Lean: New York Liberty @ Indiana Fever
-- Event ID: `7f6be8b73fe0d176884f6aee616e3006`
-- Revision: `b80aba39-c75b-49f7-aed2-441453a9e5cf`
-- Status: `active`
-
-### Full game
-- **Side:** New York Liberty (small)
-  - Evidence: Line direction (the log's best signal) moved toward the road dog Liberty: +4.5 (held ~24h) -> +3 at close (peaking +2), ML +149 -> +130 -- money on the Liberty getting points.; No class mismatch to justify FADING that move (fade_line_movement is the log's worst factor, 14/21, only wins on a real class/health edge): the teams are near-even by record (Fever 20-12 .625, Liberty 21-14 .600), so follow the line to the Liberty +3.
-  - Watch: INITIAL/preliminary read, low-conviction: the move partially reverted (+2 -> +3), so revisit near tip.; Fever counter-case: marginally better BY RECORD and at HOME, have beaten fades lately (71/75/85 fadefever wrong) and fading the Liberty worked twice (82/93 fadeliberty right); the thought's 'superior Liberty, should be -4.5' premise is mistaken (Fever are better by record and hosting).
-- **Total:** Under (watch)
-  - Evidence: 1H check: total 95.5 vs half 95.5 = 0.0, and spread 1H +1.5 vs half +1.5 = 0.0 -> both track half exactly, NO first-half divergence edge on either market.; No-signal full-game total: round-tripped 192 -> 193 -> 191 (net ~-1), which the log treats as line_stable with no directional read -- a monitoring flag, not a position.
-  - Watch: Revisit only if the total moves decisively before tip.
-
-**Summary:** Initial (preliminary) lean, revisit near tip. 1H check: total 95.5 vs half 95.5 = 0.0 and spread 1H +1.5 vs half +1.5 = 0.0 -> the halves track exactly, no first-half divergence edge (no fh_total/fh_spread tag). Side: small New York Liberty +3 -- the line moved a net ~1.5 toward the road-dog Liberty (+4.5 -> +3, ML +149 -> +130) with no class edge to justify fading it (near-even records), so follow the line to the Liberty getting points; small because the move partially reverted (+2 -> +3) and the Fever are marginally better by record AT HOME and beat fades lately. Model backs the Liberty for line-movement reasons, NOT the thought's 'superior Liberty should be -4.5' premise, which is wrong (Fever better by record and hosting). Total: watch only -- a no-signal round-tripped total and no first-half divergence to lean on.
-<!-- WNBA_LEAN_EVENT_END event_id=7f6be8b73fe0d176884f6aee616e3006 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=d2ac2c666293e102417b78a5093d2aec -->
 ## WNBA Lean: Washington Mystics @ Las Vegas Aces
