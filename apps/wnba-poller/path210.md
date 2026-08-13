@@ -794,29 +794,36 @@ line movement: side: aces -7.5 -> -6.5 (money to the mystics); total: o168.5 -> 
 context: tuesday. fade aces = back the washington mystics +6.5 (road dog) following a line move onto the dog, with the full total a NO-POSITION watch (labeled over) and the real total play a first-half UNDER on fh_total_low_big. the ACES WON 86-76, by 10: las vegas COVERED -6.5, so backing the mystics was WRONG -- a big-favorite-COVERS counter-case (the aces did blow out the dog), and following the line to the mystics lost. the full total finished 162 UNDER, so the labeled full over was wrong (a non-position). BUT the FIRST HALF was low: 82 (41-41) UNDER the 83 line, so the fh_total_low_big 1H under was RIGHT. lesson: fh_total_low is now 2/3 on the actual first half (right in 9 and 11) but 0/3 on the full game -- bet the 1H, not the full total. and big favorites CAN cover the mid-size number.
 model_lean: side (small WASHINGTON MYSTICS +6.5) -- MISS (aces won by 10, covered -6.5); full total (watch OVER, non-position) -- MISS (162 under); first-half total (small UNDER 83, fh_total_low_big) -- HIT (H1 82). net: side + full miss, 1H under HIT -- fh_total_low now 2/3 on the half, 0/3 full.
 
+110fademercury
+wrong
+follow_line_movement,back_favorite,situational_angle,total_over,fh_total_high_big
+line movement: side: mercury -1.5 -> sparks -2 (favorite flip); total: o179.5 round-trip -> o179; 1H total 92.5-93
+context: tuesday. fade mercury = back the los angeles sparks -2 (new home favorite) following a FAVORITE FLIP (mercury -1.5 -> sparks -2); full total a watch OVER, and a first-half OVER on fh_total_high_big (1H 93, +3.5 above half). the MERCURY WON 94-87, by 7: the flip FAILED, so backing the sparks was WRONG -- an entry-92 redux (a flip that lost), and the mercury beat a fade again (79/87 pattern the watch flagged). the 181 total finished OVER 179, so the full over was RIGHT. BUT the FIRST HALF was 91 (mercury 44, sparks 47), UNDER the 92.5 line, so the fh_total_high_big 1H over was WRONG. lesson: the MIRROR of the fh-low games -- fh_total_high did NOT predict a high half (91) even though the full went over; the fh divergence is noisy (fh-low 2/3 on the half, fh-high 0/1). and a favorite flip failed again -- respect a fade-beating team over the flip.
+model_lean: side (small LA SPARKS -2, followed the flip) -- MISS (mercury won by 7, flip failed); full total (watch OVER) -- HIT (181 over); first-half total (small OVER 92.5, fh_total_high_big) -- MISS (H1 91 under). net: side + 1H miss, full over hit -- fh-high missed the half.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 15 right / 17 wrong
+follow_line_movement: 15 right / 18 wrong
 fade_favorite: 17 right / 14 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 39 right / 45 wrong
+situational_angle: 39 right / 46 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 15 right / 23 wrong
-back_favorite: 21 right / 31 wrong
+back_favorite: 21 right / 32 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 8 right / 7 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 7 right / 2 wrong
 overconfidence: 22 right / 29 wrong
-total_over: 16 right / 20 wrong
+total_over: 16 right / 21 wrong
 total_under: 20 right / 24 wrong
 fh_total_low_big: 0 right / 2 wrong
 fh_total_low_medium: 0 right / 1 wrong
-fh_total_high_big: 0 right / 0 wrong
+fh_total_high_big: 0 right / 1 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
 fh_spread_back: 0 right / 0 wrong
@@ -964,28 +971,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=38b0b03d1b7fb6593df20834189cb081 -->
-## WNBA Lean: Phoenix Mercury @ Los Angeles Sparks
-- Event ID: `38b0b03d1b7fb6593df20834189cb081`
-- Revision: `88743f95-41a8-49af-92c7-a76584611e0c`
-- Status: `active`
-
-### Full game
-- **Side:** Los Angeles Sparks (small)
-  - Evidence: FAVORITE FLIP toward the Sparks: the spread opened Mercury -1.5 (Phoenix favored) and moved a net ~3.5 points across zero to Sparks -2 (Los Angeles now favored), with the Mercury ML going from a small favorite to +110. A favorite flip is a meaningful line signal, and the thought backing Mercury -4.5 fights that whole move.; Follow the line onto the new home favorite; the market decisively repriced this from Phoenix to Los Angeles.
-  - Watch: Favorite flips CAN fail badly (entry 92: the Aces flipped from -1 to +3 as a dog and still won by 22), and the Mercury have beaten fades recently (79/87 fademercury wrong) -- so respect a Phoenix bounce; -2 is a near-pickem, so this is low-conviction.; Initial/preliminary read ~5h to tip; revisit near tip.
-- **Total:** Over (watch)
-  - Evidence: The full-game total round-tripped to flat (179.5 -> 182 -> 177.5 -> 179, net ~0), a no-signal full total. The first-half total, however, is a big divergence UP (fh_total_high_big, see 1H check), which weakly tilts the full game over -- but on its own the full total gives no directional read, so watch.
-  - Watch: The fh over is played on the first-half leg below; revisit the full total only if it moves decisively.
-
-### First half
-- **Total:** Over (small)
-  - Evidence: fh_total_high_big: the first-half total (93) is ~3.5 points ABOVE half the full total (179/2 = 89.5), the market pricing a fast-scoring first half -- a first-half over.
-  - Watch: New/unproven heuristic, so small only.
-
-**Summary:** Initial (preliminary) lean, revisit near tip. 1H check: total 93 vs half 89.5 = +3.5 -> fh_total_high_big (over); spread 1H +0.5 vs half +1.0 = -0.5 noise. Side: small Los Angeles Sparks -2 -- a FAVORITE FLIP repriced this a net ~3.5 points across zero from Mercury -1.5 to Sparks -2 (the Mercury ML falling to +110); follow that decisive line move onto the new home favorite, which the thought's Mercury -4.5 read fights. Small because favorite flips can fail badly (entry 92) and the Mercury have beaten fades lately (79/87 fademercury wrong), and -2 is a near-pickem. Total: the full-game total round-tripped to flat (no-signal, watch), while the 1H total is fh_total_high_big, played as a small FIRST-HALF over. No full-game total position.
-<!-- WNBA_LEAN_EVENT_END event_id=38b0b03d1b7fb6593df20834189cb081 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=744d7516c6ce883856e697bfe904153d -->
 ## WNBA Lean: Toronto Tempo @ Dallas Wings
