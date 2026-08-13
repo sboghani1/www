@@ -181,6 +181,14 @@ def backfill_results(
                     "away_score": game.away_score,
                     "home_score": game.home_score,
                     "winner": winner,
+                    "away_q1": game.away_q1,
+                    "away_q2": game.away_q2,
+                    "away_q3": game.away_q3,
+                    "away_q4": game.away_q4,
+                    "home_q1": game.home_q1,
+                    "home_q2": game.home_q2,
+                    "home_q3": game.home_q3,
+                    "home_q4": game.home_q4,
                 }
             )
         current += timedelta(days=1)

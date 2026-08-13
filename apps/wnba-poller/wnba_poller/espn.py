@@ -69,6 +69,18 @@ def _score(competitor: dict[str, Any]) -> int | None:
         return None
 
 
+def _period_scores(competitor: dict[str, Any]) -> list[int]:
+    """Per-quarter points from a competitor's ESPN linescores, in order."""
+    out: list[int] = []
+    for entry in competitor.get("linescores") or []:
+        raw = entry.get("value") if isinstance(entry, dict) else entry
+        try:
+            out.append(int(float(raw)))
+        except (TypeError, ValueError):
+            break
+    return out
+
+
 def _broadcast(competition: dict[str, Any]) -> str:
     names: list[str] = []
     for item in competition.get("broadcasts") or []:
@@ -98,6 +110,7 @@ def parse_schedule(payload: dict[str, Any]) -> list[ScheduleGame]:
 
             teams: dict[str, str] = {}
             scores: dict[str, int | None] = {}
+            periods: dict[str, list[int]] = {"away": [], "home": []}
             for competitor in competitors:
                 side = str(competitor.get("homeAway") or "")
                 team = competitor.get("team") or {}
@@ -107,6 +120,7 @@ def parse_schedule(payload: dict[str, Any]) -> list[ScheduleGame]:
                 if side in {"away", "home"} and name:
                     teams[side] = name
                     scores[side] = _score(competitor)
+                    periods[side] = _period_scores(competitor)
             if set(teams) != {"away", "home"}:
                 raise ValueError("missing home or away team")
 
@@ -120,6 +134,11 @@ def parse_schedule(payload: dict[str, Any]) -> list[ScheduleGame]:
             # "in_progress" score (often "0" or absent) is deliberately
             # dropped rather than stored as if it were final.
             final = status == "final"
+
+            def _q(side: str, index: int) -> int | None:
+                run = periods.get(side) or []
+                return run[index] if final and len(run) > index else None
+
             games.append(
                 ScheduleGame(
                     espn_event_id=event_id,
@@ -132,6 +151,14 @@ def parse_schedule(payload: dict[str, Any]) -> list[ScheduleGame]:
                     broadcast=_broadcast(competition),
                     away_score=scores.get("away") if final else None,
                     home_score=scores.get("home") if final else None,
+                    away_q1=_q("away", 0),
+                    away_q2=_q("away", 1),
+                    away_q3=_q("away", 2),
+                    away_q4=_q("away", 3),
+                    home_q1=_q("home", 0),
+                    home_q2=_q("home", 1),
+                    home_q3=_q("home", 2),
+                    home_q4=_q("home", 3),
                 )
             )
         except (KeyError, TypeError, ValueError):

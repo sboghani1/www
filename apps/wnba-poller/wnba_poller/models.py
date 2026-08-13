@@ -82,6 +82,14 @@ class ScheduleGame:
     broadcast: str
     away_score: int | None = None
     home_score: int | None = None
+    away_q1: int | None = None
+    away_q2: int | None = None
+    away_q3: int | None = None
+    away_q4: int | None = None
+    home_q1: int | None = None
+    home_q2: int | None = None
+    home_q3: int | None = None
+    home_q4: int | None = None
 
 
 @dataclass(frozen=True)

@@ -50,6 +50,14 @@ RESULT_HEADERS = [
     "away_score",
     "home_score",
     "winner",
+    "away_q1",
+    "away_q2",
+    "away_q3",
+    "away_q4",
+    "home_q1",
+    "home_q2",
+    "home_q3",
+    "home_q4",
 ]
 
 SEASON_STREAK_HEADERS = [

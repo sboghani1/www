@@ -140,3 +140,23 @@ def test_final_game_with_unparseable_score_leaves_it_none() -> None:
 
     assert games[0].away_score is None
     assert games[0].home_score is None
+
+
+def _final_payload_with_linescores() -> dict:
+    payload = _final_payload(away_score="95", home_score="107")
+    comp = payload["events"][0]["competitions"][0]["competitors"]
+    # home Atlanta Dream: 24,30,26,27 (H1=54); away Phoenix Mercury: 22,17,28,28 (H1=39)
+    comp[0]["linescores"] = [{"value": v} for v in (24, 30, 26, 27)]
+    comp[1]["linescores"] = [{"value": v} for v in (22, 17, 28, 28)]
+    return payload
+
+
+def test_final_game_captures_quarter_box_score() -> None:
+    game = parse_schedule(_final_payload_with_linescores())[0]
+    assert (game.home_q1, game.home_q2, game.home_q3, game.home_q4) == (24, 30, 26, 27)
+    assert (game.away_q1, game.away_q2, game.away_q3, game.away_q4) == (22, 17, 28, 28)
+
+
+def test_scheduled_game_has_no_quarter_scores() -> None:
+    game = parse_schedule(_payload())[0]
+    assert game.away_q1 is None and game.home_q4 is None

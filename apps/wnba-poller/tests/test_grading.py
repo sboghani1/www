@@ -173,3 +173,45 @@ class TestGradeLean:
         )
         assert graded["side"] is None
         assert graded["total"] is not None
+
+
+def test_grade_first_half_lean_totals_from_quarter_scores() -> None:
+    from wnba_poller.grading import grade_first_half_lean, period_score
+
+    result_row = {
+        "away_q1": 22, "away_q2": 17, "away_q3": 28, "away_q4": 28,
+        "home_q1": 24, "home_q2": 30, "home_q3": 26, "home_q4": 27,
+    }
+    assert period_score(result_row, "away", 1) == 22
+    assert period_score(result_row, "away", 2) == 39  # H1
+    assert period_score(result_row, "home", 2) == 54  # H1
+
+    game = {
+        "away_team": "Phoenix Mercury",
+        "home_team": "Atlanta Dream",
+        "latest_first_half_total": "91.5",
+        "latest_first_half_home_spread": "-8",
+    }
+    revision = {
+        "first_half_total_selection": "Under",
+        "first_half_side_selection": "Atlanta Dream",
+    }
+    out = grade_first_half_lean(
+        game=game, active_revision=revision, result_row=result_row
+    )
+    # H1 total = 39 + 54 = 93 > 91.5 -> Under WRONG
+    assert out["total"]["result"] == "wrong"
+    # Dream H1 by 15 (54-39), -8 line -> covers -> RIGHT
+    assert out["side"]["result"] == "right"
+    assert out["away_h1"] == 39 and out["home_h1"] == 54
+
+
+def test_grade_first_half_lean_skips_when_quarters_missing() -> None:
+    from wnba_poller.grading import grade_first_half_lean
+
+    out = grade_first_half_lean(
+        game={"away_team": "A", "home_team": "B"},
+        active_revision={"first_half_total_selection": "Under"},
+        result_row={"away_q1": "", "home_q1": ""},
+    )
+    assert out["total"] is None and out["away_h1"] is None

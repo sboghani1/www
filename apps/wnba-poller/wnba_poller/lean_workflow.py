@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
-from .grading import grade_lean
+from .grading import grade_first_half_lean, grade_lean
 from .lean_context import LeanContextStore, build_lean_context
 from .lean_revisions import (
     build_abort_receipt,
@@ -29,6 +29,24 @@ from .path210_ops import (
     validate_model_cache_rebuild,
     validate_resolution_change,
 )
+
+def _result_row_for(store: Any, espn_event_id: str) -> dict[str, Any] | None:
+    """The wnba_results row (quarter box score) for a game, or None if the
+    store has no results tab / no matching row / read fails."""
+    if not espn_event_id:
+        return None
+    reader = getattr(store, "read_results", None)
+    if reader is None:
+        return None
+    try:
+        rows = reader()
+    except Exception:
+        return None
+    for row in rows or []:
+        if str(row.get("espn_event_id") or "") == espn_event_id:
+            return row
+    return None
+
 
 REQUEST_HEADER = "WNBA_LEAN_REQUEST_V1"
 REQUEST_ACTION = "generate using standard template"
@@ -574,10 +592,35 @@ def execute_resolution(
             f"Total {graded['total']['selection']} ({graded['total']['line']}): "
             f"{graded['total']['result'].upper()}"
         )
+    # If this game's quarter box score is on record, deterministically grade any
+    # first-half leg too (and always stamp the H1 score for visibility).
+    fh_stamp = ""
+    result_row = _result_row_for(store, str(game.get("espn_event_id") or ""))
+    if result_row is not None:
+        fh = grade_first_half_lean(
+            game=game, active_revision=active, result_row=result_row
+        )
+        if fh["away_h1"] is not None and fh["home_h1"] is not None:
+            bits = [
+                f"H1 {game['away_team']} {fh['away_h1']}, "
+                f"{game['home_team']} {fh['home_h1']}"
+            ]
+            if fh["side"]:
+                bits.append(
+                    f"1H side {fh['side']['selection']} "
+                    f"({fh['side']['line']}): {fh['side']['result'].upper()}"
+                )
+            if fh["total"]:
+                bits.append(
+                    f"1H total {fh['total']['selection']} "
+                    f"({fh['total']['line']}): {fh['total']['result'].upper()}"
+                )
+            fh_stamp = " " + "; ".join(bits) + "."
     outcome_stamp = (
         f"RESOLVED -- Final {game['away_team']} {graded['away_score']}, "
         f"{game['home_team']} {graded['home_score']}. "
         + "; ".join(outcome_bits)
+        + fh_stamp
     )
     resolved_output = {**output, "summary": f"{output['summary']} | {outcome_stamp}"}
     normalized_output = validate_lean_output(
