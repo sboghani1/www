@@ -3,7 +3,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
-from receptionist.bot import Receptionist
+from receptionist.bot import Receptionist, session_topics_text
 from receptionist.config import Config, RepositoryConfig
 from receptionist.database import Database
 from receptionist.session_policy import (
@@ -116,6 +116,24 @@ def test_context_usage_includes_cached_input_tokens() -> None:
     assert window == 200_000
 
 
+def test_topics_text_shows_topics_and_context_window() -> None:
+    text = session_topics_text(
+        "workspace session",
+        {
+            "recent_topics": [
+                ["telegram", "receptionist", "session"],
+                ["context", "tokens", "rollover"],
+            ],
+            "successful_runs": 4,
+            "context_tokens": 150_000,
+            "context_window_tokens": 200_000,
+        },
+    )
+    assert "telegram · receptionist · session" in text
+    assert "Successful runs tracked: 4" in text
+    assert "150,000 / 200,000 tokens (75%)" in text
+
+
 def test_database_tracks_topics_and_latest_context(tmp_path: Path) -> None:
     database, session = _database_with_session(tmp_path)
     assert database.session_rollover_reason(
@@ -141,6 +159,9 @@ def test_database_tracks_topics_and_latest_context(tmp_path: Path) -> None:
     assert "165,000 input tokens" in str(
         database.session_rollover_reason(session["id"], "short follow up")
     )
+    context = database.get_session_context(session["id"])
+    assert context["context_tokens"] == 165_000
+    assert context["successful_runs"] == 3
 
 
 def test_rollover_suggestion_waits_for_user_choice(tmp_path: Path) -> None:

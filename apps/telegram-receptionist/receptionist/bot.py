@@ -69,6 +69,31 @@ def _wnba_matchup(game: dict) -> str:
     return f"{game.get('away_team', '')} @ {game.get('home_team', '')}"
 
 
+def session_topics_text(session_name: str, context: dict) -> str:
+    lines = [f"🧭 Current session: {session_name}", "", "Recent topics"]
+    topics = context["recent_topics"]
+    if topics:
+        for index, terms in enumerate(topics, start=1):
+            lines.append(f"{index}. {' · '.join(terms)}")
+    else:
+        lines.append("(none recorded yet)")
+
+    context_tokens = context["context_tokens"]
+    context_window_tokens = context["context_window_tokens"]
+    lines.extend(["", f"Successful runs tracked: {context['successful_runs']}"])
+    if context_tokens is None:
+        lines.append("Active context: waiting for Claude usage data")
+    elif context_window_tokens:
+        percent = round(100 * context_tokens / context_window_tokens)
+        lines.append(
+            f"Active context: {context_tokens:,} / "
+            f"{context_window_tokens:,} tokens ({percent}%)"
+        )
+    else:
+        lines.append(f"Active context: approximately {context_tokens:,} tokens")
+    return "\n".join(lines)
+
+
 WNBA_GAMES_PAGE_SIZE = 5
 
 
@@ -495,6 +520,7 @@ class Receptionist:
             "/sessions — list conversations\n"
             "/switch <id-prefix> — switch conversation\n"
             "/reset — archive this conversation and start fresh\n"
+            "/topics — show recent topics and active context usage\n"
             "/status — show queue and last run\n"
             "/stop — stop the active run\n"
             "/recover — reconcile a stuck run and retry Telegram delivery\n"
@@ -593,6 +619,22 @@ class Receptionist:
             f"Model: {self.config.model or 'Claude Code default'}\n"
             f"Effort: {self.config.effort or 'Claude Code default'}\n"
             "Copilot and Codex adapters are planned but not enabled."
+        )
+
+    async def topics(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        state = self.database.get_user_state(update.effective_user.id)
+        session_id = state["active_session_id"]
+        if not session_id:
+            await update.message.reply_text("No active session.")
+            return
+        session_context = self.database.get_session_context(session_id)
+        await update.message.reply_text(
+            session_topics_text(
+                state["session_name"] or session_id[:8],
+                session_context,
+            )
         )
 
     async def verbose(
@@ -1819,6 +1861,7 @@ def build_application(config: Config) -> Application:
         ("sessions", receptionist.sessions),
         ("switch", receptionist.switch),
         ("reset", receptionist.reset),
+        ("topics", receptionist.topics),
         ("provider", receptionist.provider),
         ("verbose", receptionist.verbose),
         ("status", receptionist.status),

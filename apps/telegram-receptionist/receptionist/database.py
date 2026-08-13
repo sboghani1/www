@@ -594,6 +594,16 @@ class Database:
     def session_rollover_reason(
         self, session_id: str, prompt: str
     ) -> str | None:
+        context = self.get_session_context(session_id)
+        return assess_rollover(
+            prompt,
+            context["recent_topics"],
+            context["successful_runs"],
+            context["context_tokens"],
+            context["context_window_tokens"],
+        )
+
+    def get_session_context(self, session_id: str) -> dict[str, Any]:
         with self._connect() as connection:
             row = connection.execute(
                 """
@@ -604,7 +614,7 @@ class Database:
                 (session_id,),
             ).fetchone()
         if row is None:
-            return None
+            raise LookupError("session context not found")
         recent_topics = json.loads(row["recent_topics_json"])
         if not isinstance(recent_topics, list):
             recent_topics = []
@@ -613,13 +623,12 @@ class Database:
             for topic in recent_topics
             if isinstance(topic, list)
         ]
-        return assess_rollover(
-            prompt,
-            topics,
-            int(row["successful_runs"]),
-            row["context_tokens"],
-            row["context_window_tokens"],
-        )
+        return {
+            "recent_topics": topics,
+            "successful_runs": int(row["successful_runs"]),
+            "context_tokens": row["context_tokens"],
+            "context_window_tokens": row["context_window_tokens"],
+        }
 
     def create_pending_rollover(
         self,
