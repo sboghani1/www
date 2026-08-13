@@ -808,15 +808,22 @@ line movement: side: tempo +9 -> +10 (wings firmed); total: o185 -> o184; 1H tot
 context: wednesday. fade wings = back the toronto tempo +10 (road dog) on an extreme number, fading the wings firm; full UNDER 184 and a first-half UNDER 90.5 on fh_total_low_big. the WINGS WON 94-88, by only 6: toronto COVERED +10, so fading the wings was RIGHT -- big-favorite-doesn't-cover in extreme form (the tempo hang around a big number again, like +14.5 at the dream), a justified fade_line_movement win. the 182 total finished UNDER 184, so the full under was RIGHT. and the FIRST HALF was 82 (tempo 37, wings 45), UNDER 90.5, so the fh_total_low_big 1H under was ALSO RIGHT. lesson: a clean SWEEP -- extreme-number dog + full under + 1H under all cashed; fh_total_low now 3/4 on the first half. taking the big points on the punching-bag tempo keeps working.
 model_lean: side (small TORONTO TEMPO +10, faded the wings firm) -- HIT (tempo covered, wings by 6); full total (small UNDER 184) -- HIT (182); first-half total (small UNDER 90.5, fh_total_low_big) -- HIT (H1 82). net: TRIPLE HIT -- the standout, and the fh_total_low 1H under landed.
 
+112fadevalks
+wrong
+fade_favorite,situational_angle,total_under,fh_total_low_medium
+line movement: side: valks -7.5 -> -8 (firmed); total: o168 -> o167; 1H total 81
+context: wednesday. fade valks = back the chicago sky +8 (road dog) against a firm golden state valkyries -8, plus a full UNDER 167 and a first-half UNDER 81 on fh_total_low_medium. the VALKYRIES WON 91-71, by 20: they covered -8 with room to spare, so fading them was WRONG -- big-favorite-doesn't-cover is NOT automatic. a strong home valkyries side ran a weak road sky off the floor; the pattern needs a COMPETITIVE dog (the tempo), not a punching bag. the 162 total finished UNDER 167, so the full under was RIGHT. BUT the FIRST HALF was 83 (sky 40, valks 43), OVER 81, so the fh_total_low_medium 1H under was WRONG. lesson: only back the underdog on the number when the dog can hang around; and the fh-low MEDIUM divergence keeps missing (0/2 on the half) while the BIG divergence is 3/3 -- weight big, discount medium.
+model_lean: side (small CHICAGO SKY +8, faded the valkyries) -- MISS (valks by 20, covered easily); full total (small UNDER 167) -- HIT (162); first-half total (small UNDER 81, fh_total_low_medium) -- MISS (H1 83 over). net: side + 1H miss, full under hit -- a weak dog blew up the fade, and the medium fh divergence missed again.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 15 right / 18 wrong
-fade_favorite: 18 right / 14 wrong
+fade_favorite: 18 right / 15 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 40 right / 46 wrong
+situational_angle: 40 right / 47 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 16 right / 23 wrong
 back_favorite: 21 right / 32 wrong
@@ -827,9 +834,9 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 7 right / 2 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 16 right / 21 wrong
-total_under: 21 right / 24 wrong
+total_under: 21 right / 25 wrong
 fh_total_low_big: 1 right / 2 wrong
-fh_total_low_medium: 0 right / 1 wrong
+fh_total_low_medium: 0 right / 2 wrong
 fh_total_high_big: 0 right / 1 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
@@ -978,28 +985,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=92025da862cb0756a756006bc12a79e6 -->
-## WNBA Lean: Chicago Sky @ Golden State Valkyries
-- Event ID: `92025da862cb0756a756006bc12a79e6`
-- Revision: `baf975d5-bb17-4179-b460-ab9c51505eaa`
-- Status: `active`
-
-### Full game
-- **Side:** Chicago Sky (small)
-  - Evidence: FINAL: the line kept moving to the road dog Sky (Valkyries -9.5 -> -8.5 -> -8, ML shortening) -- sustained money on the dog, the log's best signal -- and laying -8 to blow out the Sky is the losing back_favorite shape. The thought also backed the Sky.; Multiple aligned reasons to take the points into tip.
-  - Watch: The Valkyries are a good home favorite, so the number is earned -- small.
-- **Total:** Under (small)
-  - Evidence: fh_total_low_medium (see 1H check); the full total is essentially flat near 167, so the fh divergence carries a small under.
-  - Watch: Small -- flat full total, unproven fh heuristic.
-
-### First half
-- **Total:** Under (small)
-  - Evidence: fh_total_low_medium: 1H total 81 is ~2.5 below half the full (167/2 = 83.5), a first-half under.
-  - Watch: New/unproven heuristic, small only.
-
-**Summary:** FINAL lean, minutes to tip. 1H check: total 81 vs half 83.5 = -2.5 -> fh_total_low_medium (under); spread 1H +5 vs half +4.0 = +1.0 noise. Side: small Chicago Sky +8 -- the line kept moving to the road dog (Valkyries -9.5 -> -8), laying -8 to blow out the Sky is the losing back_favorite shape, and the thought agrees; small (Valkyries a good home team). Total: small Under (flat full total) on fh_total_low_medium, plus a small first-half Under.
-<!-- WNBA_LEAN_EVENT_END event_id=92025da862cb0756a756006bc12a79e6 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=62ed8d04c26de1f3164b3c15775a52e6 -->
 ## WNBA Lean: Minnesota Lynx @ Portland Fire
