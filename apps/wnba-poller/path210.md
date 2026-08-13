@@ -1040,21 +1040,21 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=b7f37fe3659219219e03ac3a2ceaea8d -->
 ## WNBA Lean: Washington Mystics @ Las Vegas Aces
 - Event ID: `b7f37fe3659219219e03ac3a2ceaea8d`
-- Revision: `4e4ceb8f-1e9d-49d9-b285-6eaaf563e41c`
+- Revision: `2a02587e-6c5a-4dc7-8778-a0f147c895fb`
 - Status: `active`
 
 ### Full game
 - **Side:** Washington Mystics (moderate)
-  - Evidence: CORRECTED DIRECTION: line moved Aces -7 -> -6 (Mystics +7 -> +6) = the favorite's lay SHRANK = money TOWARD the Mystics dog. follow_line_movement (log's strongest signal) points at MYSTICS +6.; fade_favorite 19/15 and the big-favorite-doesn't-cover pattern also back the +points dog.; The 'strong Aces bury weak Mystics' narrative points AGAINST the line move -- per path210 that's a sign the narrative is the wrong side, so trust the line and take the Mystics.
-  - Watch: Only a 1-pt move (7 -> 6); modest signal, not a steam move.; If Vegas jumps out early, a live Aces number could be the better spot -- watch first-half swings.
-- **Total:** Under (small)
-  - Evidence: 1H total 81.5 vs half 85.25 = -3.75 -> fh_total_low_BIG (under) -- the only fh signal carrying weight (3/3 on the half last batch); this is the primary total rationale.; Low 170.5 total, essentially flat (170 -> 170.5).
-  - Watch: With the line pointing to a COMPETITIVE game (Mystics +6), the blowout/garbage-time stranding angle is weaker -- lean on fh_total_low_big, not a blowout, hence only small.
+  - Evidence: Sustained move Aces -7 -> -5.5 (Mystics +7 -> +5.5) = the favorite's lay keeps SHRINKING = money steadily TOWARD the Mystics dog; a full 1.5pt follow_line_movement, the log's strongest signal.; fade_favorite 19/15 and big-favorite-doesn't-cover reinforce the +points dog.; The 'strong Aces bury weak Mystics' narrative points AGAINST the move -- trust the line.
+  - Watch: UPDATED, not final: 2+ hours to tip, line still drifting -- will finalize near tip.; Live +5.5 Mystics hedge worth watching if Vegas starts fast.
+- **Total:** Under (moderate)
+  - Evidence: 1H total 81 vs half 85.25 = -4.25 -> fh_total_low_BIG got BIGGER -- the only fh signal carrying weight (3/3 on the half last batch); primary total rationale.; Low 170.5 total, roughly flat (170 -> 170.5).
+  - Watch: fh_total_low_big is ~1/4 on the FULL game -- the 1H under is the stronger leg.
 
 ### First half
 - **Total:** Under (small)
-  - Evidence: fh_total_low_BIG (81.5 vs 85.25, -3.75): the real signal -- 3/3 on the first half last batch. Standout leg of the slate.
+  - Evidence: fh_total_low_BIG (81 vs 85.25, -4.25): the real signal -- 3/3 on the first half last batch, and the divergence widened. Standout leg of the slate.
   - Watch: Low 1H total can mean a back-loaded game rather than a true under -- primary risk on this leg.
 
-**Summary:** Washington Mystics @ Las Vegas Aces -- moderate MYSTICS +6 (CORRECTED: line moved Aces -7 -> -6, i.e. the favorite's lay SHRANK = money moved TOWARD the Mystics dog; follow_line_movement + fade_favorite + big-fav-doesn't-cover all align). Small UNDER 170.5 and small 1H UNDER 81.5. 1H check: total 81.5 vs half 85.25 = -3.75 -> fh_total_low_BIG (under -- 3/3 on the half recently, the one fh signal that's real); spread 1H +3 vs half +3 = exactly half, noise. Fixes an earlier sign-flip that wrongly read the move as toward the Aces.
+**Summary:** UPDATED (not final; ~2h to tip) -- Washington Mystics @ Las Vegas Aces: moderate MYSTICS +5.5 (line keeps sliding +7 -> +5.5 TOWARD the Mystics = sustained follow_line_movement + fade_favorite; the card's strongest side). Moderate UNDER 170.5 and small 1H UNDER 81.5. 1H check: total 81 vs half 85.25 = -4.25 -> fh_total_low_BIG (under -- the one real fh signal, now wider); 1H spread +3 vs half +2.75 = noise. Will finalize near tip.
 <!-- WNBA_LEAN_EVENT_END event_id=b7f37fe3659219219e03ac3a2ceaea8d -->
