@@ -801,17 +801,24 @@ line movement: side: mercury -1.5 -> sparks -2 (favorite flip); total: o179.5 ro
 context: tuesday. fade mercury = back the los angeles sparks -2 (new home favorite) following a FAVORITE FLIP (mercury -1.5 -> sparks -2); full total a watch OVER, and a first-half OVER on fh_total_high_big (1H 93, +3.5 above half). the MERCURY WON 94-87, by 7: the flip FAILED, so backing the sparks was WRONG -- an entry-92 redux (a flip that lost), and the mercury beat a fade again (79/87 pattern the watch flagged). the 181 total finished OVER 179, so the full over was RIGHT. BUT the FIRST HALF was 91 (mercury 44, sparks 47), UNDER the 92.5 line, so the fh_total_high_big 1H over was WRONG. lesson: the MIRROR of the fh-low games -- fh_total_high did NOT predict a high half (91) even though the full went over; the fh divergence is noisy (fh-low 2/3 on the half, fh-high 0/1). and a favorite flip failed again -- respect a fade-beating team over the flip.
 model_lean: side (small LA SPARKS -2, followed the flip) -- MISS (mercury won by 7, flip failed); full total (watch OVER) -- HIT (181 over); first-half total (small OVER 92.5, fh_total_high_big) -- MISS (H1 91 under). net: side + 1H miss, full over hit -- fh-high missed the half.
 
+111fadewings
+right
+fade_favorite,fade_line_movement,situational_angle,total_under,fh_total_low_big
+line movement: side: tempo +9 -> +10 (wings firmed); total: o185 -> o184; 1H total 90.5
+context: wednesday. fade wings = back the toronto tempo +10 (road dog) on an extreme number, fading the wings firm; full UNDER 184 and a first-half UNDER 90.5 on fh_total_low_big. the WINGS WON 94-88, by only 6: toronto COVERED +10, so fading the wings was RIGHT -- big-favorite-doesn't-cover in extreme form (the tempo hang around a big number again, like +14.5 at the dream), a justified fade_line_movement win. the 182 total finished UNDER 184, so the full under was RIGHT. and the FIRST HALF was 82 (tempo 37, wings 45), UNDER 90.5, so the fh_total_low_big 1H under was ALSO RIGHT. lesson: a clean SWEEP -- extreme-number dog + full under + 1H under all cashed; fh_total_low now 3/4 on the first half. taking the big points on the punching-bag tempo keeps working.
+model_lean: side (small TORONTO TEMPO +10, faded the wings firm) -- HIT (tempo covered, wings by 6); full total (small UNDER 184) -- HIT (182); first-half total (small UNDER 90.5, fh_total_low_big) -- HIT (H1 82). net: TRIPLE HIT -- the standout, and the fh_total_low 1H under landed.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 15 right / 18 wrong
-fade_favorite: 17 right / 14 wrong
+fade_favorite: 18 right / 14 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 39 right / 46 wrong
+situational_angle: 40 right / 46 wrong
 decision_day_before: 1 right / 0 wrong
-fade_line_movement: 15 right / 23 wrong
+fade_line_movement: 16 right / 23 wrong
 back_favorite: 21 right / 32 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 8 right / 7 wrong
@@ -820,8 +827,8 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 7 right / 2 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 16 right / 21 wrong
-total_under: 20 right / 24 wrong
-fh_total_low_big: 0 right / 2 wrong
+total_under: 21 right / 24 wrong
+fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 0 right / 1 wrong
 fh_total_high_big: 0 right / 1 wrong
 fh_total_high_medium: 0 right / 0 wrong
@@ -971,28 +978,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=744d7516c6ce883856e697bfe904153d -->
-## WNBA Lean: Toronto Tempo @ Dallas Wings
-- Event ID: `744d7516c6ce883856e697bfe904153d`
-- Revision: `f106bc57-96f3-40dc-9aea-456dba889dbf`
-- Status: `active`
-
-### Full game
-- **Side:** Toronto Tempo (small)
-  - Evidence: Take the big points: -10 is an extreme number for a non-elite home favorite, and the punching-bag Tempo just covered +14.5 at the Dream two nights ago (lost by only 12) -- big-favorite-doesn't-cover is the log's recurring lesson, and 74fadelynx shows even elite teams miss extreme numbers.; Counter noted below -- the line firmed onto the Wings, so this is a small, deliberate fade of that firm on the extreme-number/recent-Tempo-cover angle.
-  - Watch: Line firmed toward the Wings (-9 -> -10, Tempo ML +324 -> +383) = follow_line_movement pointing the other way; and the Tempo DO get blown out by elite teams (91 by 17, 81 by 32) -- so a Wings cover is live. Small.; Initial/preliminary read; revisit near tip.
-- **Total:** Under (small)
-  - Evidence: Aligned under signals: the full total eased mildly (185 -> 184) and the 1H total is a big divergence down (fh_total_low_big, see 1H check), the market pricing a slow first half. All-star over-tilt retired.
-  - Watch: Small -- the full ease is mild and the fh heuristic is new/unproven (0/2 so far).
-
-### First half
-- **Total:** Under (small)
-  - Evidence: fh_total_low_big: 1H total 88.5 is ~3.5 below half the full total (184/2 = 92.0), a first-half under.
-  - Watch: New/unproven heuristic, small only.
-
-**Summary:** Initial lean, revisit near tip. 1H check: total 88.5 vs half 92.0 = -3.5 -> fh_total_low_big (under); spread 1H +6 vs half +5.0 = +1.0 noise. Side: small Toronto Tempo +10 -- extreme number for a non-elite Wings, and the Tempo just covered +14.5 at the Dream (lost by 12); a deliberate small fade of the Wings firm (-9 -> -10) on big-fav-doesn't-cover, tempered because the line firmed to the Wings and elite teams have blown the Tempo out (91,81). Total: small Under -- mild ease (185->184) plus fh_total_low_big both point under; also a small first-half Under. Retired over-tilt.
-<!-- WNBA_LEAN_EVENT_END event_id=744d7516c6ce883856e697bfe904153d -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=92025da862cb0756a756006bc12a79e6 -->
 ## WNBA Lean: Chicago Sky @ Golden State Valkyries
