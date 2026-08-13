@@ -773,15 +773,22 @@ line movement: side: tempo +12 -> +15 (dream firmed); total: o185 -> o187 (rose)
 context: monday. fade tempo = back the atlanta dream -15 (small) following a clean firm onto the dream, tempered by the extreme number; total small UNDER 187 plus a first-half UNDER on fh_total_low_medium (1H total 91.5, ~2 below half). the DREAM WON 107-95, by 12: atlanta did NOT cover -15 (tempo +15 covered), so backing the dream was WRONG -- big-favorite-doesn't-cover in extreme form again, the exact watch the lean flagged. the 202 total blew OVER 187, so the under was WRONG. FIRST HALF (box score): dream 54, tempo 39 -> H1 total 93, OVER the 91.5 line, so the fh_total_low_medium under was ALSO WRONG. lesson: fh_total_low_medium is 0/1 -- the low 1H total did NOT predict a low half (93) or a low game (202); the new heuristic is not validating early. following a firm onto an extreme -15 lost.
 model_lean: side (small ATLANTA DREAM -15, followed the firm) -- MISS (dream won by 12, tempo +15 covered); total (small UNDER 187) -- MISS (202 over); first-half total (small UNDER 91.5, fh_total_low_medium) -- MISS (H1=93 over). net: TRIPLE MISS -- extreme-number fade of the dog lost, fh_total_low missed on both the half (93) and the game (202).
 
+107fadestorm
+wrong
+follow_line_movement,motivated_underdog,situational_angle,total_under,fh_total_low_big
+line movement: side: sky -1.5 -> -2.5 (firmed); total: o178 -> o179; 1H total 87
+context: monday. fade storm = back the chicago sky -2.5 (road favorite) following the firm, with a full under 179 and a first-half under 87 on fh_total_low_big. the STORM WON 97-88, by 9: seattle (a home dog on an 11-game skid) won OUTRIGHT, so backing the sky was WRONG -- the motivated_underdog desperation spot the lean's own watch flagged; follow_line_movement onto the sky lost. the 185 total finished OVER 179, so the full under was WRONG. BUT the FIRST HALF was low: 80 (sky 33, storm 47) UNDER the 87 line, so the fh_total_low_big 1H under was RIGHT. lesson: fh_total_low predicts the FIRST HALF (now 1/2 on the half) but NOT the full game (0/2 full) -- the 2H blew up (105) here; weight fh_total_low toward the first-half bet, not the full total. also a motivated_underdog win off a long skid.
+model_lean: side (small CHICAGO SKY -2.5, followed the firm) -- MISS (storm won outright, motivated_underdog); full total (small UNDER 179) -- MISS (185 over); first-half total (small UNDER 87, fh_total_low_big) -- HIT (H1 80). net: side + full miss, but the 1H UNDER hit -- fh_total_low is a first-half signal, not full-game.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 15 right / 14 wrong
+follow_line_movement: 15 right / 15 wrong
 fade_favorite: 17 right / 12 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 39 right / 42 wrong
+situational_angle: 39 right / 43 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 15 right / 23 wrong
 back_favorite: 21 right / 31 wrong
@@ -789,11 +796,11 @@ chased_better_payout: 0 right / 1 wrong
 line_stable: 8 right / 7 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 7 right / 1 wrong
+motivated_underdog: 7 right / 2 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 16 right / 20 wrong
-total_under: 20 right / 22 wrong
-fh_total_low_big: 0 right / 0 wrong
+total_under: 20 right / 23 wrong
+fh_total_low_big: 0 right / 1 wrong
 fh_total_low_medium: 0 right / 1 wrong
 fh_total_high_big: 0 right / 0 wrong
 fh_total_high_medium: 0 right / 0 wrong
@@ -943,28 +950,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=381926a79915a74b2c089625ca320d82 -->
-## WNBA Lean: Chicago Sky @ Seattle Storm
-- Event ID: `381926a79915a74b2c089625ca320d82`
-- Revision: `ae311984-0d66-4c24-bc80-80585bfdf220`
-- Status: `active`
-
-### Full game
-- **Side:** Chicago Sky (small)
-  - Evidence: Line direction (the log's best signal) firmed toward the Sky: the road favorite went Sky -1.5 -> -2.5 and the ML shortened -117 -> -140, sustained money onto Chicago. The recorded thought backs the Storm to 'end their losing streak at home' -- a narrative that FIGHTS the line, which the log flags as usually wrong (trust the line over the story).; It is a near-pickem between two poor teams (Sky 12-20, Storm 6-28), so the edge is thin -- but the money is on the Sky.
-  - Watch: The Storm are a HOME dog on an 11-game losing streak (6-28) -- a classic live motivated_underdog/desperation spot (84fadestorm resolved wrong, i.e. the Storm beat the fade), so a get-well upset is real; this is why the side is only small.; -2.5 is a coin-flip number; a single late move either way can flip the value.
-- **Total:** Under (small)
-  - Evidence: Supported by the NEW first-half divergence signal (fh_total_low_big): the first-half total (86.5) is a full ~3 points BELOW half the full-game total (179/2 = 89.5), so BetOnline is pricing a clearly below-average-pace first half -- a strong under lean.; Matchup backs it independently: two of the league's worst offenses (Sky 12-20, Storm 6-28) in a competitive (non-blowout) game, and the all-star over-tilt is retired.
-  - Watch: Kept SMALL on the full game because the full total actually ROSE mildly (177.5 -> 179) and the log says do not mechanically fade a rising total; the fh_total_low signal is also a NEW, unproven heuristic still building a sample.; If either bad offense gets hot from three, a 179 in a competitive game clears easily.
-
-### First half
-- **Total:** Under (moderate)
-  - Evidence: This is where the fh_total_low_big signal applies most directly: the first-half total (86.5) is ~3 points below half the full total (89.5), the market itself pricing a slow first half between two weak offenses -- a moderate first-half under.
-  - Watch: The fh_total divergence heuristic is new and unproven, so even the strongest (big) reading is capped at moderate while the fh_total tags accumulate resolved examples.
-
-**Summary:** Model lean. Side: small Chicago Sky -2.5 -- the road favorite firmed (-1.5 -> -2.5, ML -117 -> -140), and the thought's 'Storm end the streak at home' narrative fights that line; kept small because Seattle is a live home dog on an 11-game skid (motivated_underdog; 84fadestorm) in a near-pickem. Total: small full-game UNDER 179 plus a MODERATE first-half UNDER 86.5, both on the new fh_total_low_big signal -- the 1H total (86.5) is a full ~3 points below half the full total (89.5), the market pricing a slow first half, reinforced by two of the league's worst offenses and the retired over-tilt; the full-game leg is only small because the full total rose mildly and the fh heuristic is unproven. First-half spread gives no side signal (Sky -1 vs half of -1.25 = noise).
-<!-- WNBA_LEAN_EVENT_END event_id=381926a79915a74b2c089625ca320d82 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=7f6be8b73fe0d176884f6aee616e3006 -->
 ## WNBA Lean: New York Liberty @ Indiana Fever
