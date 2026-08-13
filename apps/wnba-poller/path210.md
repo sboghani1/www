@@ -1036,3 +1036,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Los Angeles Sparks @ New York Liberty -- small SPARKS +8.5 (default to the +points dog; but the line is dead flat = no signal, and entry 93 saw this Liberty cover a similar number vs a weak dog, so near a pass). Small UNDER 186.5 on a slight down-tick + fh-low. 1H check: total 90.5 vs half 93.25 = -2.75 -> fh_total_low_medium (under, discounted 0/2); spread 1H +5 vs half +4.25 = noise. Low conviction both markets.
 <!-- WNBA_LEAN_EVENT_END event_id=adc6dd060846838773f87fb71bbbad5d -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=b7f37fe3659219219e03ac3a2ceaea8d -->
+## WNBA Lean: Washington Mystics @ Las Vegas Aces
+- Event ID: `b7f37fe3659219219e03ac3a2ceaea8d`
+- Revision: `3b914511-9a23-4da7-a329-7048004d0cb0`
+- Status: `active`
+
+### Full game
+- **Side:** Las Vegas Aces (moderate)
+  - Evidence: Line moved Mystics +7 -> +6, i.e. TOWARD the Aces -- follow_line_movement, the log's strongest signal, points at Aces -6.; Aces are strong at home and -6 is a very coverable number vs a weak Mystics dog.; Clean version of strong-home-favorite-buries-weak-dog (Valkyries over Sky) WITH the line confirming.
+  - Watch: back_favorite is only 21/32 -- don't overweight; a live +6 Mystics hedge is worth watching if Vegas starts slow.
+- **Total:** Under (moderate)
+  - Evidence: 1H total 81.5 vs half 85.25 = -3.75 -> fh_total_low_BIG (under) -- the only fh signal carrying weight (3/3 on the half last batch).; Low 170.5 total + likely Aces blowout => garbage-time stranding risk favors the under.; Total basically flat (170 -> 170.5).
+  - Watch: fh_total_low_big is ~1/4 on the FULL game -- it predicts the half, not always the full; the 1H under is the stronger leg.
+
+### First half
+- **Total:** Under (small)
+  - Evidence: fh_total_low_BIG (81.5 vs 85.25, -3.75): the real signal -- 3/3 on the first half last batch. Standout leg of the slate.
+  - Watch: Low 1H total can mean a back-loaded game rather than a true under -- primary risk on this leg.
+
+**Summary:** Washington Mystics @ Las Vegas Aces -- moderate ACES -6 (line moved +7 -> +6 TOWARD Vegas = follow_line_movement, the log's best signal; strong home fav, coverable number, weak dog). Moderate UNDER 170.5, and a small 1H UNDER 81.5 as the standout leg. 1H check: total 81.5 vs half 85.25 = -3.75 -> fh_total_low_BIG (under -- 3/3 on the half recently, the one fh signal that's real); spread 1H +3 vs half +3 = exactly half, noise. Highest-conviction game on the card.
+<!-- WNBA_LEAN_EVENT_END event_id=b7f37fe3659219219e03ac3a2ceaea8d -->
