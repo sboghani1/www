@@ -1018,23 +1018,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=adc6dd060846838773f87fb71bbbad5d -->
 ## WNBA Lean: Los Angeles Sparks @ New York Liberty
 - Event ID: `adc6dd060846838773f87fb71bbbad5d`
-- Revision: `fe54067f-7921-4606-a7da-0c8182c901aa`
+- Revision: `006a225d-e004-41bd-a909-ca214f460f65`
 - Status: `active`
 
 ### Full game
 - **Side:** Los Angeles Sparks (small)
-  - Evidence: Road dog +8.5 -- default to the +points dog on a big number (fade_favorite 19/15).; Line is DEAD FLAT (+8.5 open and close) = no market signal either way, low conviction.
-  - Watch: Counter-precedent entry 93: Storm +7 vs this Liberty and Liberty won by 12 (elite home fav covered a big number vs a weak dog) -- keep tiny / near a pass.
+  - Evidence: FINAL: line moved Liberty -8.5 -> -8 (Sparks +8.5 -> +8) = the favorite's lay SHRANK = money moved TOWARD the Sparks dog; follow_line_movement now backs the +points side.; fade_favorite 19/15 and big-favorite-doesn't-cover also favor the dog on a big number.
+  - Watch: Counter-precedent entry 93: this Liberty covered +7 vs a weak dog by 12; only a 0.5 move, so keep it small / near a pass.
 - **Total:** Under (small)
-  - Evidence: Total ticked DOWN 187 -> 186.5 (mild under money).; 1H total 90.5 vs half 93.25 = -2.75 -> fh_total_low_medium (under).
-  - Watch: 186.5 is high and Liberty games have gone over (entry 38); clean over prior 10/12 -- keep the under small.
+  - Evidence: Total dead flat at 186.5 (187 open) -- thin under signal.; 1H total 91 vs half 93.25 = -2.25 -> fh_total_low_medium (under).
+  - Watch: 186.5 is high and Liberty games have gone over; flat total = weak conviction, keep small.
 
 ### First half
 - **Total:** Under (watch)
-  - Evidence: fh_total_low_medium (90.5 vs 93.25, -2.75): medium divergence, 0/2 on the half -- watch only.
-  - Watch: Medium fh divergence unproven (0/2); flag, don't bet.
+  - Evidence: fh_total_low_medium (91 vs 93.25, -2.25): medium divergence, 0/2 on the half -- watch only.
+  - Watch: Medium fh divergence unproven; flag, don't bet.
 
-**Summary:** Los Angeles Sparks @ New York Liberty -- small SPARKS +8.5 (default to the +points dog; but the line is dead flat = no signal, and entry 93 saw this Liberty cover a similar number vs a weak dog, so near a pass). Small UNDER 186.5 on a slight down-tick + fh-low. 1H check: total 90.5 vs half 93.25 = -2.75 -> fh_total_low_medium (under, discounted 0/2); spread 1H +5 vs half +4.25 = noise. Low conviction both markets.
+**Summary:** FINAL -- Los Angeles Sparks @ New York Liberty: small SPARKS +8 (line moved +8.5 -> +8, i.e. TOWARD the Sparks dog = follow_line_movement + fade_favorite; kept small vs the entry-93 Liberty-covers precedent). Small UNDER 186.5 (flat total + fh-low). 1H check: total 91 vs half 93.25 = -2.25 -> fh_total_low_medium (under, discounted); 1H spread +5 vs half +4 = noise. Low conviction.
 <!-- WNBA_LEAN_EVENT_END event_id=adc6dd060846838773f87fb71bbbad5d -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=b7f37fe3659219219e03ac3a2ceaea8d -->
