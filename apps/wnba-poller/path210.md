@@ -787,15 +787,22 @@ line movement: side: liberty +4.5 -> +3 (money to the liberty); total: o~190 -> 
 context: tuesday. fade fever = back the new york liberty +3 (road dog) following a net line move onto the liberty, with a watch under. the FEVER WON 106-92, by 14: indiana (better by record and at home) DEMOLISHED the liberty, so backing the liberty was WRONG -- the line move toward the liberty was a HEAD-FAKE and the model's own caveat (fever better by record + home) was the right read; follow_line_movement lost. the 198 total blew OVER, so the under was WRONG. lesson: following a line move AGAINST a clearly-better home team burned; another over beating an under; the thought (liberty wins) was also very wrong.
 model_lean: side (small NY LIBERTY +3, followed the move to the dog) -- MISS (fever won by 14); total (watch UNDER) -- MISS (198 over). net: double miss -- follow_line_movement was a head-fake vs a better home team (the model's own hedge nailed it), another over.
 
+109fadeaces
+wrong
+fade_favorite,follow_line_movement,situational_angle,fh_total_low_big
+line movement: side: aces -7.5 -> -6.5 (money to the mystics); total: o168.5 -> o171.5 (rose); 1H total 83
+context: tuesday. fade aces = back the washington mystics +6.5 (road dog) following a line move onto the dog, with the full total a NO-POSITION watch (labeled over) and the real total play a first-half UNDER on fh_total_low_big. the ACES WON 86-76, by 10: las vegas COVERED -6.5, so backing the mystics was WRONG -- a big-favorite-COVERS counter-case (the aces did blow out the dog), and following the line to the mystics lost. the full total finished 162 UNDER, so the labeled full over was wrong (a non-position). BUT the FIRST HALF was low: 82 (41-41) UNDER the 83 line, so the fh_total_low_big 1H under was RIGHT. lesson: fh_total_low is now 2/3 on the actual first half (right in 9 and 11) but 0/3 on the full game -- bet the 1H, not the full total. and big favorites CAN cover the mid-size number.
+model_lean: side (small WASHINGTON MYSTICS +6.5) -- MISS (aces won by 10, covered -6.5); full total (watch OVER, non-position) -- MISS (162 under); first-half total (small UNDER 83, fh_total_low_big) -- HIT (H1 82). net: side + full miss, 1H under HIT -- fh_total_low now 2/3 on the half, 0/3 full.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 15 right / 16 wrong
-fade_favorite: 17 right / 13 wrong
+follow_line_movement: 15 right / 17 wrong
+fade_favorite: 17 right / 14 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 39 right / 44 wrong
+situational_angle: 39 right / 45 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 15 right / 23 wrong
 back_favorite: 21 right / 31 wrong
@@ -807,7 +814,7 @@ motivated_underdog: 7 right / 2 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 16 right / 20 wrong
 total_under: 20 right / 24 wrong
-fh_total_low_big: 0 right / 1 wrong
+fh_total_low_big: 0 right / 2 wrong
 fh_total_low_medium: 0 right / 1 wrong
 fh_total_high_big: 0 right / 0 wrong
 fh_total_high_medium: 0 right / 0 wrong
@@ -957,28 +964,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=d2ac2c666293e102417b78a5093d2aec -->
-## WNBA Lean: Washington Mystics @ Las Vegas Aces
-- Event ID: `d2ac2c666293e102417b78a5093d2aec`
-- Revision: `d0943f26-69c9-4699-90fa-b0b04a0aa0de`
-- Status: `active`
-
-### Full game
-- **Side:** Washington Mystics (small)
-  - Evidence: Line direction moved toward the road dog Mystics: the Aces number came down from -7.5 (held ~24h) to -6.5 at close and the Mystics ML shortened from +296 to +230 -- money on the dog getting points, the log's best signal.; Precedent backs the dog too: the Mystics have BEATEN fades recently (83fademystics and 97fademystics both resolved wrong), and laying a big number on a favorite to 'blow out an average team' is the log's losing shape (back_favorite 19/28, overconfidence 22/29) -- which is exactly the thought's Aces -6.5 blowout read.
-  - Watch: The Aces are a strong home favorite (ML -280) and the spread round-tripped (+7.5 -> +8.5 -> +6 -> +6.5), so the dog move was not one-directional -- small, not moderate.; Initial/preliminary read ~5h to tip; revisit near tip.
-- **Total:** Over (watch)
-  - Evidence: CONFLICTING total signals, so no full-game position: the full total ROSE a net ~3 (168.5 -> 171.5) and the log says do NOT fade a rising total (over), but the first-half total is a big divergence the other way (fh_total_low_big, see 1H check) pointing under. With the fh heuristic unproven, I take no side on the full game.
-  - Watch: Revisit if the full total moves decisively; the 1H under leg below is where the divergence is actually played.
-
-### First half
-- **Total:** Under (small)
-  - Evidence: fh_total_low_big: the first-half total (81.5) is ~4.25 points BELOW half the full total (171.5/2 = 85.75), the market pricing a clearly slow first half -- a first-half under.
-  - Watch: New/unproven heuristic (and it directly contradicts the rising full-game total here), so small only.
-
-**Summary:** Initial (preliminary) lean, revisit near tip. 1H check: total 81.5 vs half 85.75 = -4.25 -> fh_total_low_big (under); spread 1H +3.5 vs half +3.25 = +0.25 noise. Side: small Washington Mystics +6.5 -- the line moved toward the road dog (Aces -7.5 -> -6.5, Mystics ML +296 -> +230), the Mystics have beaten fades lately (83/97 fademystics wrong), and laying -6.5 to 'blow out an average team' (the thought's read) is the losing back_favorite/overconfidence shape; small because the Aces are a strong home favorite and the number round-tripped. Total: CONFLICT -- the full total rose ~3 (do not fade a rising total -> over) but the 1H total is fh_total_low_big (under), so the full-game total is a watch/no-position while the fh divergence is played as a small FIRST-HALF under. No full-game total position.
-<!-- WNBA_LEAN_EVENT_END event_id=d2ac2c666293e102417b78a5093d2aec -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=38b0b03d1b7fb6593df20834189cb081 -->
 ## WNBA Lean: Phoenix Mercury @ Los Angeles Sparks
