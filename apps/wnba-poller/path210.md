@@ -993,3 +993,24 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
 
+<!-- WNBA_LEAN_EVENT_START event_id=9a2fa5d20edb2bc7e2ce1298cb3d5348 -->
+## WNBA Lean: Atlanta Dream @ Connecticut Sun
+- Event ID: `9a2fa5d20edb2bc7e2ce1298cb3d5348`
+- Revision: `3c3f2c56-6a5d-417e-a79d-800c1b0cf6a4`
+- Status: `active`
+
+### Full game
+- **Side:** Connecticut Sun (small)
+  - Evidence: Dream are a -10 ROAD favorite; big-road-favorite-doesn't-cover is a recurring winning shape (fadestorm/fadesky/fadesparks/fademercury).; Home dog +10; fade_favorite 19/15 in the WNBA-only cache.; Line firmed Dream -9.5 -> -10 (mild move TOWARD the favorite) -- a caution against the dog, so keep it small.
+  - Watch: Sun are weak; a strong Dream side could bury a weak home dog (Valkyries-over-Sky shape) -- do not upsize.
+- **Total:** Under (small)
+  - Evidence: Total nudged 173.5 -> 174, essentially flat = no directional signal.; Big road favorite (-10) => blowout/garbage-time stranding risk on a modest 174 total favors the under.; 1H total 84.5 vs half 87.0 = -2.5 -> fh_total_low_medium (under-leaning, MEDIUM divergence 0/2 so discounted).
+  - Watch: Clean post-window total prior favors overs (10/12) -- keep the under small.
+
+### First half
+- **Total:** Under (watch)
+  - Evidence: fh_total_low_medium (84.5 vs 87.0, -2.5): medium divergence, 0/2 on the half so far -- watch only.
+  - Watch: Medium fh divergence is unproven (0/2); do not bet the 1H under, just flag it.
+
+**Summary:** Atlanta Dream @ Connecticut Sun -- small SUN +10 (fade the big road favorite; home dog on a big number; log's big-favorite-doesn't-cover pattern), tempered because the Sun are weak and could get run off the floor. Small UNDER 174 on blowout stranding risk. 1H check: total 84.5 vs half 87.0 = -2.5 -> fh_total_low_medium (under, discounted 0/2); spread 1H -6 vs half -5 = ~1pt, noise. Weakest-conviction slate game.
+<!-- WNBA_LEAN_EVENT_END event_id=9a2fa5d20edb2bc7e2ce1298cb3d5348 -->
