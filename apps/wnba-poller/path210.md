@@ -766,18 +766,25 @@ line movement: side: tempo +2 -> +2.5 (fire firmed); total: o187.5 -> o186.5 (ea
 context: thursday. fade tempo = back the home portland fire -2.5 (small) on a modest, non-reverting firm (tempo +2 -> +2.5) and the log's rule to trust the line over a narrative -- the one recorded thought backed the tempo 'as the better team' AGAINST that move. the FIRE WON 97-83, by 14: portland covered -2.5 comfortably, so fading the tempo was RIGHT on the side; the 180 total finished UNDER 186.5, so the watch under was ALSO right. lesson: a follow_line_movement / trust-the-line-over-the-narrative WIN (the tempo thought lost), and the third straight under win -- unders 3/3 vs overs 0/4 in this batch, the post-tilt default under is holding.
 model_lean: side (small PORTLAND FIRE -2.5, followed the firm/trusted the line) -- HIT (fire won by 14); total (watch UNDER 186.5) -- HIT (180 under). net: DOUBLE HIT -- follow_line_movement over a contrary thought + under.
 
+106fadetempo
+wrong
+back_favorite,follow_line_movement,situational_angle,total_under,fh_total_low_medium
+line movement: side: tempo +12 -> +15 (dream firmed); total: o185 -> o187 (rose); 1H total 91.5
+context: monday. fade tempo = back the atlanta dream -15 (small) following a clean firm onto the dream, tempered by the extreme number; total small UNDER 187 plus a first-half UNDER on fh_total_low_medium (1H total 91.5, ~2 below half). the DREAM WON 107-95, by 12: atlanta did NOT cover -15 (tempo +15 covered), so backing the dream was WRONG -- big-favorite-doesn't-cover in extreme form again, the exact watch the lean flagged. the 202 total blew OVER 187, so the under was WRONG. FIRST HALF (box score): dream 54, tempo 39 -> H1 total 93, OVER the 91.5 line, so the fh_total_low_medium under was ALSO WRONG. lesson: fh_total_low_medium is 0/1 -- the low 1H total did NOT predict a low half (93) or a low game (202); the new heuristic is not validating early. following a firm onto an extreme -15 lost.
+model_lean: side (small ATLANTA DREAM -15, followed the firm) -- MISS (dream won by 12, tempo +15 covered); total (small UNDER 187) -- MISS (202 over); first-half total (small UNDER 91.5, fh_total_low_medium) -- MISS (H1=93 over). net: TRIPLE MISS -- extreme-number fade of the dog lost, fh_total_low missed on both the half (93) and the game (202).
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 15 right / 13 wrong
+follow_line_movement: 15 right / 14 wrong
 fade_favorite: 17 right / 12 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 39 right / 41 wrong
+situational_angle: 39 right / 42 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 15 right / 23 wrong
-back_favorite: 21 right / 30 wrong
+back_favorite: 21 right / 31 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 8 right / 7 wrong
 overcaution: 0 right / 1 wrong
@@ -785,9 +792,9 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 7 right / 1 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 16 right / 20 wrong
-total_under: 20 right / 21 wrong
+total_under: 20 right / 22 wrong
 fh_total_low_big: 0 right / 0 wrong
-fh_total_low_medium: 0 right / 0 wrong
+fh_total_low_medium: 0 right / 1 wrong
 fh_total_high_big: 0 right / 0 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
@@ -936,28 +943,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=92e369aa70824ac85f725db03a3a2be0 -->
-## WNBA Lean: Toronto Tempo @ Atlanta Dream
-- Event ID: `92e369aa70824ac85f725db03a3a2be0`
-- Revision: `fa177078-ac59-44cf-aad3-cb9d98c431eb`
-- Status: `active`
-
-### Full game
-- **Side:** Atlanta Dream (small)
-  - Evidence: Unchanged from the prior read: line direction firmed a clean net ~2.5-3 points ONTO the Dream (Tempo +12 open -> +15 latest, dog ML lengthening), the log's most reliable signal, and a favorite firming a big number vs the punching-bag Toronto Tempo has blown them out and covered before (91fadetempo won by 17; 81fadelynx by 32).; Tempered to small: -14.5/-15 is extreme and the Dream are strong-not-elite (a tier below the Valkyries/Lynx who did those blowouts); 74fadelynx shows even an elite favorite can miss an extreme number, so the Tempo getting the points is live.
-  - Watch: If the number keeps climbing toward tip the follow-the-firm case strengthens; if it eases back off +15 the extreme-number caution grows.; No first-half SPREAD signal to change the side: the 1H spread (Tempo +8) is within half a point of half the full spread (7.5), so the market prices the Dream's edge split evenly across halves -- no front/back-loaded tell.
-- **Total:** Under (small)
-  - Evidence: NEW first-half divergence signal (fh_total_low_medium): the first-half total (91.5) sits ~2 points BELOW half the full-game total (187/2 = 93.5), so BetOnline is pricing a slower, lower-scoring first half than a straight split -- a medium lean toward the UNDER.; Supporting: a likely lopsided game (-14.5/-15) carries real WNBA garbage-time under-stranding risk on a 187, and the all-star over-tilt is retired so there is no seasonal reason to chase the over. This tips the total, which was a two-way watch, to a small under.
-  - Watch: Counter-signal kept it SMALL: the full-game total actually ROSE ~2 (185 -> 187), and the log says do not mechanically fade a rising total; the fh_total_low_medium read is a NEW, unproven heuristic being tracked, not yet a strong prior.; If the first half is genuinely slow but the game stays competitive the full total can still clear -- a low 1H total can mean a back-loaded game rather than a true under.
-
-### First half
-- **Total:** Under (small)
-  - Evidence: The first-half total (91.5) is set ~2 points below half the full-game total (93.5), the fh_total_low_medium divergence -- the market itself is pricing a below-average-pace first half, which directly supports a first-half under.
-  - Watch: This is a NEW heuristic with no resolved track record yet; treat as a small, exploratory lean while the fh_total tags accumulate a sample.
-
-**Summary:** Revised to apply the new first-half divergence rule. Side UNCHANGED: small Atlanta Dream -14.5/-15 -- the line firmed onto the Dream and a firmed big favorite has blown out the punching-bag Tempo before (91, 81), tempered small by the extreme number (74fadelynx). Total moves from watch to small UNDER: the first-half total (91.5) is ~2 points below half the full total (93.5) = fh_total_low_medium, the market pricing a slow first half, which combines with garbage-time stranding risk on a likely blowout and the retired over-tilt to tip the two-way total toward the under; kept small because the full total actually rose ~2 (do not fade a rising total) and this fh heuristic is new/unproven. Added a small first-half Under on the same fh_total_low_medium signal. First-half SPREAD gives no side signal (1H Tempo +8 vs half of 7.5 = +0.5, noise).
-<!-- WNBA_LEAN_EVENT_END event_id=92e369aa70824ac85f725db03a3a2be0 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=381926a79915a74b2c089625ca320d82 -->
 ## WNBA Lean: Chicago Sky @ Seattle Storm
