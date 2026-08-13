@@ -9,6 +9,11 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .config import RepositoryConfig
+from .session_policy import (
+    assess_rollover,
+    extract_topic_terms,
+    usage_context_tokens,
+)
 
 
 def utc_now() -> str:
@@ -99,6 +104,33 @@ class Database:
                     updated_at TEXT NOT NULL
                 );
 
+                CREATE TABLE IF NOT EXISTS session_context (
+                    session_id TEXT PRIMARY KEY REFERENCES sessions(id)
+                        ON DELETE CASCADE,
+                    recent_topics_json TEXT NOT NULL DEFAULT '[]',
+                    successful_runs INTEGER NOT NULL DEFAULT 0,
+                    context_tokens INTEGER,
+                    context_window_tokens INTEGER,
+                    updated_at TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS pending_session_rollovers (
+                    id TEXT PRIMARY KEY,
+                    telegram_user_id INTEGER NOT NULL,
+                    session_id TEXT NOT NULL REFERENCES sessions(id)
+                        ON DELETE CASCADE,
+                    telegram_chat_id INTEGER NOT NULL,
+                    exact_prompt TEXT NOT NULL,
+                    acknowledgement TEXT NOT NULL,
+                    reason TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
+
+                CREATE INDEX IF NOT EXISTS pending_rollovers_user_created
+                    ON pending_session_rollovers(
+                        telegram_user_id, created_at
+                    );
+
                 CREATE TABLE IF NOT EXISTS deployments_seen (
                     deployment_id TEXT PRIMARY KEY,
                     seen_at TEXT NOT NULL
@@ -139,6 +171,12 @@ class Database:
             )
             self._ensure_run_columns(connection)
             self._ensure_deployment_columns(connection)
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO session_context(session_id, updated_at)
+                SELECT id, updated_at FROM sessions
+                """
+            )
             connection.execute("UPDATE repositories SET enabled=0")
             for repository in configured:
                 connection.execute(
@@ -412,6 +450,13 @@ class Database:
                 """,
                 (session_id, now, user_id),
             )
+            connection.execute(
+                """
+                INSERT INTO session_context(session_id, updated_at)
+                VALUES (?, ?)
+                """,
+                (session_id, now),
+            )
             connection.commit()
         return self.get_session(session_id)
 
@@ -511,8 +556,143 @@ class Database:
                 """,
                 (run_id, session_id, chat_id, exact_prompt, utc_now()),
             )
+            self._record_session_topic(connection, session_id, exact_prompt)
             connection.commit()
         return self.get_run(run_id)
+
+    @staticmethod
+    def _record_session_topic(
+        connection: sqlite3.Connection, session_id: str, prompt: str
+    ) -> None:
+        terms = extract_topic_terms(prompt)
+        if not terms:
+            return
+        row = connection.execute(
+            """
+            SELECT recent_topics_json FROM session_context
+            WHERE session_id=?
+            """,
+            (session_id,),
+        ).fetchone()
+        recent_topics = json.loads(row["recent_topics_json"]) if row else []
+        if not isinstance(recent_topics, list):
+            recent_topics = []
+        recent_topics.append(terms)
+        recent_topics = recent_topics[-8:]
+        connection.execute(
+            """
+            INSERT INTO session_context(
+                session_id, recent_topics_json, updated_at
+            ) VALUES (?, ?, ?)
+            ON CONFLICT(session_id) DO UPDATE SET
+                recent_topics_json=excluded.recent_topics_json,
+                updated_at=excluded.updated_at
+            """,
+            (session_id, json.dumps(recent_topics), utc_now()),
+        )
+
+    def session_rollover_reason(
+        self, session_id: str, prompt: str
+    ) -> str | None:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT recent_topics_json, successful_runs, context_tokens,
+                       context_window_tokens
+                FROM session_context WHERE session_id=?
+                """,
+                (session_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        recent_topics = json.loads(row["recent_topics_json"])
+        if not isinstance(recent_topics, list):
+            recent_topics = []
+        topics = [
+            [str(term) for term in topic if isinstance(term, str)]
+            for topic in recent_topics
+            if isinstance(topic, list)
+        ]
+        return assess_rollover(
+            prompt,
+            topics,
+            int(row["successful_runs"]),
+            row["context_tokens"],
+            row["context_window_tokens"],
+        )
+
+    def create_pending_rollover(
+        self,
+        *,
+        user_id: int,
+        session_id: str,
+        chat_id: int,
+        prompt: str,
+        acknowledgement: str,
+        reason: str,
+    ) -> dict[str, Any]:
+        pending_id = str(uuid.uuid4())
+        now = datetime.now(UTC)
+        with self._connect() as connection:
+            connection.execute(
+                "DELETE FROM pending_session_rollovers WHERE created_at < ?",
+                ((now - timedelta(days=1)).isoformat(),),
+            )
+            connection.execute(
+                """
+                INSERT INTO pending_session_rollovers(
+                    id, telegram_user_id, session_id, telegram_chat_id,
+                    exact_prompt, acknowledgement, reason, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    pending_id,
+                    user_id,
+                    session_id,
+                    chat_id,
+                    prompt,
+                    acknowledgement,
+                    reason,
+                    now.isoformat(),
+                ),
+            )
+            connection.commit()
+        return self.get_pending_rollover(user_id, pending_id)
+
+    def get_pending_rollover(
+        self, user_id: int, pending_id: str
+    ) -> dict[str, Any]:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT * FROM pending_session_rollovers
+                WHERE id=? AND telegram_user_id=?
+                """,
+                (pending_id, user_id),
+            ).fetchone()
+        if row is None:
+            raise LookupError("session suggestion is no longer available")
+        return dict(row)
+
+    def consume_pending_rollover(
+        self, user_id: int, pending_id: str
+    ) -> dict[str, Any]:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT * FROM pending_session_rollovers
+                WHERE id=? AND telegram_user_id=?
+                """,
+                (pending_id, user_id),
+            ).fetchone()
+            if row is None:
+                raise LookupError("session suggestion is no longer available")
+            connection.execute(
+                "DELETE FROM pending_session_rollovers WHERE id=?",
+                (pending_id,),
+            )
+            connection.commit()
+        return dict(row)
 
     def get_run(self, run_id: str) -> dict[str, Any]:
         with self._connect() as connection:
@@ -620,6 +800,11 @@ class Database:
         payload: dict[str, Any],
     ) -> None:
         now = utc_now()
+        context_tokens, context_window_tokens = (
+            usage_context_tokens(payload)
+            if normalized_type == "assistant"
+            else (None, None)
+        )
         with self._connect() as connection:
             connection.execute(
                 """
@@ -641,6 +826,34 @@ class Database:
                 "UPDATE runs SET last_event_at=? WHERE id=?",
                 (now, run_id),
             )
+            if context_tokens is not None or context_window_tokens is not None:
+                run = connection.execute(
+                    "SELECT session_id FROM runs WHERE id=?", (run_id,)
+                ).fetchone()
+                if run:
+                    connection.execute(
+                        """
+                        INSERT INTO session_context(
+                            session_id, context_tokens,
+                            context_window_tokens, updated_at
+                        ) VALUES (?, ?, ?, ?)
+                        ON CONFLICT(session_id) DO UPDATE SET
+                            context_tokens=COALESCE(
+                                excluded.context_tokens, context_tokens
+                            ),
+                            context_window_tokens=COALESCE(
+                                excluded.context_window_tokens,
+                                context_window_tokens
+                            ),
+                            updated_at=excluded.updated_at
+                        """,
+                        (
+                            run["session_id"],
+                            context_tokens,
+                            context_window_tokens,
+                            now,
+                        ),
+                    )
             connection.commit()
 
     def update_provider_session(self, session_id: str, provider_session_id: str) -> None:
@@ -664,6 +877,7 @@ class Database:
         error: str | None,
         usage: dict[str, Any] | None = None,
     ) -> None:
+        _, context_window_tokens = usage_context_tokens(usage)
         with self._connect() as connection:
             run = connection.execute(
                 "SELECT session_id FROM runs WHERE id=?", (run_id,)
@@ -693,6 +907,30 @@ class Database:
                     WHERE id=?
                     """,
                     (utc_now(), utc_now(), run["session_id"]),
+                )
+                connection.execute(
+                    """
+                    INSERT INTO session_context(
+                        session_id, successful_runs, context_tokens,
+                        context_window_tokens, updated_at
+                    ) VALUES (?, ?, NULL, ?, ?)
+                    ON CONFLICT(session_id) DO UPDATE SET
+                        successful_runs=successful_runs + excluded.successful_runs,
+                        context_tokens=COALESCE(
+                            excluded.context_tokens, context_tokens
+                        ),
+                        context_window_tokens=COALESCE(
+                            excluded.context_window_tokens,
+                            context_window_tokens
+                        ),
+                        updated_at=excluded.updated_at
+                    """,
+                    (
+                        run["session_id"],
+                        int(status == "succeeded"),
+                        context_window_tokens,
+                        utc_now(),
+                    ),
                 )
             connection.commit()
 

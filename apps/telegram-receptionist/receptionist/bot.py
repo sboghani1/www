@@ -44,6 +44,9 @@ RECOVER_MENU_TEXT = "♻️ Recover"
 DIAGNOSE_DEPLOYMENT_MENU_TEXT = "/agent-try-recovery"
 WNBA_RESOLVE_MENU_TEXT = "🏁 Resolve WNBA"
 WNBA_STREAKS_MENU_TEXT = "📊 WNBA Streaks"
+SESSION_ROLLOVER_PATTERN = re.compile(
+    r"^session:(?:new|continue):[0-9a-f-]{36}$"
+)
 
 Handler = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
 MAX_CALLBACK_BYTES = 64
@@ -1126,6 +1129,60 @@ class Receptionist:
             )
             return
         session = self.database.get_or_create_active_session(user_id)
+        reason = (
+            self.database.session_rollover_reason(session["id"], prompt)
+            if session["provider_session_id"]
+            else None
+        )
+        if reason:
+            pending = self.database.create_pending_rollover(
+                user_id=user_id,
+                session_id=session["id"],
+                chat_id=chat_id,
+                prompt=prompt,
+                acknowledgement=acknowledgement,
+                reason=reason,
+            )
+            keyboard = InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "Start fresh",
+                            callback_data=f"session:new:{pending['id']}",
+                        ),
+                        InlineKeyboardButton(
+                            "Continue current",
+                            callback_data=(
+                                f"session:continue:{pending['id']}"
+                            ),
+                        ),
+                    ]
+                ]
+            )
+            await message.reply_text(
+                "🧭 A fresh session may be more efficient.\n"
+                f"{reason}\n\n"
+                "Start a new session for this message?",
+                reply_markup=keyboard,
+            )
+            return
+        await self._queue_prompt_in_session(
+            message,
+            session=session,
+            chat_id=chat_id,
+            prompt=prompt,
+            acknowledgement=acknowledgement,
+        )
+
+    async def _queue_prompt_in_session(
+        self,
+        message,
+        *,
+        session: dict,
+        chat_id: int,
+        prompt: str,
+        acknowledgement: str,
+    ) -> None:
         run = self.database.enqueue_run(session["id"], chat_id, prompt)
         position = self.database.queued_count()
         await message.reply_text(
@@ -1134,6 +1191,58 @@ class Receptionist:
         )
         assert self.runner is not None
         self.runner.notify()
+
+    async def session_rollover_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        query = update.callback_query
+        action, pending_id = str(query.data).split(":")[1:]
+        try:
+            pending = self.database.get_pending_rollover(
+                update.effective_user.id, pending_id
+            )
+        except LookupError as error:
+            await query.answer(str(error), alert=True)
+            return
+        if self._deployment_drain_path.exists():
+            await query.answer("Deployment is still completing.", alert=True)
+            return
+        if self.database.queued_count() >= self.config.max_queued_messages:
+            await query.answer("The queue is full.", alert=True)
+            return
+
+        state = self.database.get_user_state(update.effective_user.id)
+        if (
+            action == "continue"
+            and state["active_session_id"] != pending["session_id"]
+        ):
+            await query.answer(
+                "The active session changed; resend the message.", alert=True
+            )
+            return
+        try:
+            pending = self.database.consume_pending_rollover(
+                update.effective_user.id, pending_id
+            )
+        except LookupError as error:
+            await query.answer(str(error), alert=True)
+            return
+
+        if action == "new":
+            session = self.database.create_session(update.effective_user.id)
+            decision = f"Started fresh session {session['id'][:8]}."
+        else:
+            session = self.database.get_session(pending["session_id"])
+            decision = f"Continuing session {session['id'][:8]}."
+
+        await self._queue_prompt_in_session(
+            query.message,
+            session=session,
+            chat_id=pending["telegram_chat_id"],
+            prompt=pending["exact_prompt"],
+            acknowledgement=pending["acknowledgement"],
+        )
+        await query.answer(decision)
 
     async def _queue_wnba_action(
         self,
@@ -1746,6 +1855,12 @@ def build_application(config: Config) -> Application:
         CallbackQueryHandler(
             receptionist.authorized(receptionist.wnba_button),
             pattern=WNBA_CALLBACK_PATTERN,
+        )
+    )
+    application.add_handler(
+        CallbackQueryHandler(
+            receptionist.authorized(receptionist.session_rollover_button),
+            pattern=SESSION_ROLLOVER_PATTERN,
         )
     )
     application.add_handler(
