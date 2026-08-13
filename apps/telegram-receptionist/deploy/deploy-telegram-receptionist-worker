@@ -172,8 +172,14 @@ install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/request-receptionist-deploy" \
     /usr/local/bin/request-receptionist-deploy
 install -m 0755 -o root -g root \
+    "$release/$app_rel/deploy/request-telegram-intake-deploy" \
+    /usr/local/bin/request-telegram-intake-deploy
+install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/receptionist-deploy-executor" \
     /usr/local/libexec/receptionist-deploy-executor
+install -m 0755 -o root -g root \
+    "$release/$app_rel/deploy/deploy-telegram-intake-worker" \
+    /usr/local/libexec/deploy-telegram-intake-worker
 install -m 0755 -o root -g root \
     "$release_worker" "$installed_worker"
 install -m 0755 -o root -g root \

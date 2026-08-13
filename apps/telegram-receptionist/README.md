@@ -76,3 +76,8 @@ exact repository revision and root command when execution starts. A request:
 The agent user still has no direct root permission. Only the bot may invoke the
 fixed executor, and receptionist self-deployments drain active/queued runs before
 restarting the service.
+
+`request-telegram-intake-deploy` provides the same immutable-request path for
+the `telegram-channel-forwarder` NFL intake bot. Its fixed root worker only
+fast-forwards the production checkout to the request's exact revision and
+restarts `telegram-intake.service` once.

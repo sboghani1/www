@@ -116,6 +116,45 @@ def test_deployment_scripts_require_clean_pushed_revision() -> None:
         assert '"@{upstream}"' in script
 
 
+def test_intake_deployment_uses_fixed_revision_bound_worker() -> None:
+    deploy_dir = Path(__file__).resolve().parents[1] / "deploy"
+    requester = (deploy_dir / "request-telegram-intake-deploy").read_text(
+        encoding="utf-8"
+    )
+    worker = (deploy_dir / "deploy-telegram-intake-worker").read_text(
+        encoding="utf-8"
+    )
+    installer = (
+        deploy_dir / "deploy-telegram-receptionist-worker"
+    ).read_text(encoding="utf-8")
+    workspace_instructions = (deploy_dir / "workspace-CLAUDE.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert (
+        'REPOSITORY = "/home/receptionist/repos/telegram-channel-forwarder"'
+        in requester
+    )
+    assert "request-receptionist-deploy" in requester
+    assert "--revision {revision}" in requester
+    assert 'branch != "main"' in requester
+    assert "sudo" not in requester
+
+    assert 'service="telegram-intake.service"' in worker
+    assert "^[0-9a-f]{40}$" in worker
+    assert 'branch --show-current)" == "main"' in worker
+    assert 'rev-parse origin/main' in worker
+    assert "merge-base" in worker
+    assert 'merge --ff-only "$revision"' in worker
+    assert 'systemctl restart "$service"' in worker
+    assert "rm -rf" not in worker
+    assert "reset --hard" not in worker
+
+    assert "request-telegram-intake-deploy" in installer
+    assert "deploy-telegram-intake-worker" in installer
+    assert "request-telegram-intake-deploy --summary" in workspace_instructions
+
+
 def test_deployment_drain_blocks_new_prompts(tmp_path: Path) -> None:
     repo_root = tmp_path / "repos"
     repo_root.mkdir()

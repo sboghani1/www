@@ -38,6 +38,13 @@ This directory is the root of a private coding workspace.
   detached transient systemd unit so it runs outside that read-only namespace.
 - For the receptionist itself, the detached command is:
   `systemd-run --unit=telegram-receptionist-deploy-$(date +%s) --collect /usr/local/libexec/deploy-telegram-receptionist-worker`
+- For `telegram-channel-forwarder` changes that affect the NFL intake bot, run
+  its tests, commit and push a clean `main`, then queue the fixed deployment:
+  `request-telegram-intake-deploy --summary "<what changed>"`.
+  The requester binds the immutable workspace revision to a root worker that
+  only fast-forwards `/home/forwarder/app` to that exact revision and restarts
+  `telegram-intake.service` once. Do not SSH to root or run `git pull` and
+  `systemctl restart` directly.
 - Use the same pattern for other root installers, with a unique unit name and
   `--wait --pipe` when the deployment result must reflect installer success or
   failure and include its actual output.

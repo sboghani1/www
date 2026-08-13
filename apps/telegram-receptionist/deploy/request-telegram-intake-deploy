@@ -1,0 +1,57 @@
+#!/usr/bin/python3
+from __future__ import annotations
+
+import argparse
+import subprocess
+
+REPOSITORY = "/home/receptionist/repos/telegram-channel-forwarder"
+REQUESTER = "/usr/local/bin/request-receptionist-deploy"
+WORKER = "/usr/local/libexec/deploy-telegram-intake-worker"
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Queue an immutable Telegram NFL intake deployment."
+    )
+    parser.add_argument(
+        "--summary",
+        default="Deploy the Telegram NFL intake bot",
+    )
+    args = parser.parse_args()
+
+    branch = subprocess.run(
+        ["git", "-C", REPOSITORY, "branch", "--show-current"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    if branch != "main":
+        raise SystemExit("Forwarder workspace must be on main.")
+    revision = subprocess.run(
+        ["git", "-C", REPOSITORY, "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    command = (
+        "systemd-run "
+        "--unit=telegram-intake-deploy-$(date +%s) "
+        "--collect --wait --pipe "
+        f"{WORKER} --revision {revision}"
+    )
+    subprocess.run(
+        [
+            REQUESTER,
+            "--repo",
+            REPOSITORY,
+            "--summary",
+            args.summary,
+            "--command",
+            command,
+        ],
+        check=True,
+    )
+
+
+if __name__ == "__main__":
+    main()

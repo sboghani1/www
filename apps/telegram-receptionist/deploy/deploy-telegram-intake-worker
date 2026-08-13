@@ -1,0 +1,87 @@
+#!/bin/bash
+set -euo pipefail
+umask 022
+
+source_repo="/home/receptionist/repos/telegram-channel-forwarder"
+production_repo="/home/forwarder/app"
+service="telegram-intake.service"
+lock="/run/lock/telegram-intake-deploy.lock"
+revision=""
+
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        --revision)
+            [[ "$#" -ge 2 ]] || {
+                echo "--revision requires a value." >&2
+                exit 2
+            }
+            revision="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unsupported argument: $1" >&2
+            exit 2
+            ;;
+    esac
+done
+
+[[ "$revision" =~ ^[0-9a-f]{40}$ ]] || {
+    echo "Revision must be a full Git SHA." >&2
+    exit 2
+}
+
+exec 9>"$lock"
+flock -n 9 || {
+    echo "An intake deployment is already running." >&2
+    exit 1
+}
+
+as_agent() {
+    runuser -u receptionist-agent -- "$@"
+}
+
+as_forwarder() {
+    runuser -u forwarder -- "$@"
+}
+
+source_head="$(as_agent git -C "$source_repo" rev-parse HEAD)"
+[[ "$(as_agent git -C "$source_repo" branch --show-current)" == "main" ]] || {
+    echo "Forwarder workspace must be on main." >&2
+    exit 1
+}
+[[ "$source_head" == "$revision" ]] || {
+    echo "Workspace revision changed before deployment." >&2
+    exit 1
+}
+
+as_forwarder git -C "$production_repo" fetch --quiet origin main
+[[ "$(as_forwarder git -C "$production_repo" branch --show-current)" == "main" ]] || {
+    echo "Production checkout must be on main." >&2
+    exit 1
+}
+production_remote="$(
+    as_forwarder git -C "$production_repo" rev-parse origin/main
+)"
+[[ "$production_remote" == "$revision" ]] || {
+    echo "Production origin/main does not match the requested revision." >&2
+    exit 1
+}
+
+production_head="$(as_forwarder git -C "$production_repo" rev-parse HEAD)"
+if [[ "$production_head" != "$revision" ]]; then
+    as_forwarder git -C "$production_repo" merge-base \
+        --is-ancestor "$production_head" "$revision" || {
+        echo "Production checkout cannot fast-forward to the revision." >&2
+        exit 1
+    }
+    as_forwarder git -C "$production_repo" merge --ff-only "$revision"
+fi
+
+[[ "$(as_forwarder git -C "$production_repo" rev-parse HEAD)" == "$revision" ]] || {
+    echo "Production checkout did not reach the requested revision." >&2
+    exit 1
+}
+
+systemctl restart "$service"
+systemctl is-active --quiet "$service"
+echo "Telegram NFL intake deployed at $revision; $service is active."
