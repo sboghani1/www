@@ -1037,23 +1037,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=92025da862cb0756a756006bc12a79e6 -->
 ## WNBA Lean: Chicago Sky @ Golden State Valkyries
 - Event ID: `92025da862cb0756a756006bc12a79e6`
-- Revision: `aff8d152-82e8-45b4-a201-c18e2cfa1829`
+- Revision: `baf975d5-bb17-4179-b460-ab9c51505eaa`
 - Status: `active`
 
 ### Full game
 - **Side:** Chicago Sky (small)
-  - Evidence: Line moved toward the road dog Sky (Valkyries -9.5 -> -8.5, Sky ML +370 -> +316) -- money on the dog, the log's best signal -- and laying -8.5 on the home favorite to blow out the Sky is the losing back_favorite/overconfidence shape. The thought is also on the Sky +8.5.; Multiple aligned reasons to take the points here.
-  - Watch: The Valkyries are a good home favorite; the Sky are a weak team, so the number is earned -- small.; Initial/preliminary read; revisit near tip.
+  - Evidence: FINAL: the line kept moving to the road dog Sky (Valkyries -9.5 -> -8.5 -> -8, ML shortening) -- sustained money on the dog, the log's best signal -- and laying -8 to blow out the Sky is the losing back_favorite shape. The thought also backed the Sky.; Multiple aligned reasons to take the points into tip.
+  - Watch: The Valkyries are a good home favorite, so the number is earned -- small.
 - **Total:** Under (small)
-  - Evidence: The 1H total is a medium divergence down (fh_total_low_medium, see 1H check); the full total round-tripped to ~flat (165.5->168->166.5), so the fh read carries it to a small under.
-  - Watch: Small -- the full total round-tripped (mild +1 net) and the fh heuristic is unproven.
+  - Evidence: fh_total_low_medium (see 1H check); the full total is essentially flat near 167, so the fh divergence carries a small under.
+  - Watch: Small -- flat full total, unproven fh heuristic.
 
 ### First half
 - **Total:** Under (small)
-  - Evidence: fh_total_low_medium: 1H total 81 is ~2.25 below half the full (166.5/2 = 83.25), a first-half under.
+  - Evidence: fh_total_low_medium: 1H total 81 is ~2.5 below half the full (167/2 = 83.5), a first-half under.
   - Watch: New/unproven heuristic, small only.
 
-**Summary:** Initial lean, revisit near tip. 1H check: total 81 vs half 83.25 = -2.25 -> fh_total_low_medium (under); spread 1H +5 vs half +4.25 = +0.75 noise. Side: small Chicago Sky +8.5 -- the line moved to the road dog (Valkyries -9.5 -> -8.5, ML +370 -> +316), laying -8.5 to blow out the Sky is the losing back_favorite shape, and the thought agrees on the Sky. Small (Valkyries a good home team). Total: small Under on fh_total_low_medium with the full total round-tripped flat; also a small first-half Under.
+**Summary:** FINAL lean, minutes to tip. 1H check: total 81 vs half 83.5 = -2.5 -> fh_total_low_medium (under); spread 1H +5 vs half +4.0 = +1.0 noise. Side: small Chicago Sky +8 -- the line kept moving to the road dog (Valkyries -9.5 -> -8), laying -8 to blow out the Sky is the losing back_favorite shape, and the thought agrees; small (Valkyries a good home team). Total: small Under (flat full total) on fh_total_low_medium, plus a small first-half Under.
 <!-- WNBA_LEAN_EVENT_END event_id=92025da862cb0756a756006bc12a79e6 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=62ed8d04c26de1f3164b3c15775a52e6 -->
