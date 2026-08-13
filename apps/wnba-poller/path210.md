@@ -996,23 +996,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=9a2fa5d20edb2bc7e2ce1298cb3d5348 -->
 ## WNBA Lean: Atlanta Dream @ Connecticut Sun
 - Event ID: `9a2fa5d20edb2bc7e2ce1298cb3d5348`
-- Revision: `3c3f2c56-6a5d-417e-a79d-800c1b0cf6a4`
+- Revision: `fc3bb7ff-5a98-4000-ab8a-1159da070bcb`
 - Status: `active`
 
 ### Full game
 - **Side:** Connecticut Sun (small)
-  - Evidence: Dream are a -10 ROAD favorite; big-road-favorite-doesn't-cover is a recurring winning shape (fadestorm/fadesky/fadesparks/fademercury).; Home dog +10; fade_favorite 19/15 in the WNBA-only cache.; Line firmed Dream -9.5 -> -10 (mild move TOWARD the favorite) -- a caution against the dog, so keep it small.
-  - Watch: Sun are weak; a strong Dream side could bury a weak home dog (Valkyries-over-Sky shape) -- do not upsize.
+  - Evidence: FINAL (game has tipped): Dream stayed a -10 road favorite start to close; big-road-favorite-doesn't-cover is the recurring winning shape.; Home dog +10; fade_favorite 19/15.; Line held -9.5 -> -10 (no late move off the favorite).
+  - Watch: Sun are weak -- a strong Dream side can bury a weak home dog (Valkyries-over-Sky); stays small.
 - **Total:** Under (small)
-  - Evidence: Total nudged 173.5 -> 174, essentially flat = no directional signal.; Big road favorite (-10) => blowout/garbage-time stranding risk on a modest 174 total favors the under.; 1H total 84.5 vs half 87.0 = -2.5 -> fh_total_low_medium (under-leaning, MEDIUM divergence 0/2 so discounted).
-  - Watch: Clean post-window total prior favors overs (10/12) -- keep the under small.
+  - Evidence: Total drifted DOWN 173.5 -> 173 into tip -- mild under support.; Big road favorite (-10) => blowout/garbage-time stranding risk on a 173 total favors the under.; 1H total 84 vs half 86.5 = -2.5 -> fh_total_low_medium (under, discounted 0/2).
+  - Watch: Clean post-window total prior favors overs (10/12) -- keep small.
 
 ### First half
 - **Total:** Under (watch)
-  - Evidence: fh_total_low_medium (84.5 vs 87.0, -2.5): medium divergence, 0/2 on the half so far -- watch only.
-  - Watch: Medium fh divergence is unproven (0/2); do not bet the 1H under, just flag it.
+  - Evidence: fh_total_low_medium (84 vs 86.5, -2.5): medium divergence, 0/2 on the half -- watch only.
+  - Watch: Medium fh divergence unproven; flag, don't bet.
 
-**Summary:** Atlanta Dream @ Connecticut Sun -- small SUN +10 (fade the big road favorite; home dog on a big number; log's big-favorite-doesn't-cover pattern), tempered because the Sun are weak and could get run off the floor. Small UNDER 174 on blowout stranding risk. 1H check: total 84.5 vs half 87.0 = -2.5 -> fh_total_low_medium (under, discounted 0/2); spread 1H -6 vs half -5 = ~1pt, noise. Weakest-conviction slate game.
+**Summary:** FINAL (already tipped ~19:00 ET) -- Atlanta Dream @ Connecticut Sun: small SUN +10 (fade the big road favorite; home dog on a big number), tempered by the weak-dog blowout risk. Small UNDER 173 (drifted down + stranding risk). 1H check: total 84 vs half 86.5 = -2.5 -> fh_total_low_medium (under, discounted); 1H spread -5.5 vs half -5 = noise. Lowest-conviction game.
 <!-- WNBA_LEAN_EVENT_END event_id=9a2fa5d20edb2bc7e2ce1298cb3d5348 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=adc6dd060846838773f87fb71bbbad5d -->
