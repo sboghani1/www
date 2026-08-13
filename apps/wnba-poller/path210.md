@@ -1014,3 +1014,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Atlanta Dream @ Connecticut Sun -- small SUN +10 (fade the big road favorite; home dog on a big number; log's big-favorite-doesn't-cover pattern), tempered because the Sun are weak and could get run off the floor. Small UNDER 174 on blowout stranding risk. 1H check: total 84.5 vs half 87.0 = -2.5 -> fh_total_low_medium (under, discounted 0/2); spread 1H -6 vs half -5 = ~1pt, noise. Weakest-conviction slate game.
 <!-- WNBA_LEAN_EVENT_END event_id=9a2fa5d20edb2bc7e2ce1298cb3d5348 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=adc6dd060846838773f87fb71bbbad5d -->
+## WNBA Lean: Los Angeles Sparks @ New York Liberty
+- Event ID: `adc6dd060846838773f87fb71bbbad5d`
+- Revision: `fe54067f-7921-4606-a7da-0c8182c901aa`
+- Status: `active`
+
+### Full game
+- **Side:** Los Angeles Sparks (small)
+  - Evidence: Road dog +8.5 -- default to the +points dog on a big number (fade_favorite 19/15).; Line is DEAD FLAT (+8.5 open and close) = no market signal either way, low conviction.
+  - Watch: Counter-precedent entry 93: Storm +7 vs this Liberty and Liberty won by 12 (elite home fav covered a big number vs a weak dog) -- keep tiny / near a pass.
+- **Total:** Under (small)
+  - Evidence: Total ticked DOWN 187 -> 186.5 (mild under money).; 1H total 90.5 vs half 93.25 = -2.75 -> fh_total_low_medium (under).
+  - Watch: 186.5 is high and Liberty games have gone over (entry 38); clean over prior 10/12 -- keep the under small.
+
+### First half
+- **Total:** Under (watch)
+  - Evidence: fh_total_low_medium (90.5 vs 93.25, -2.75): medium divergence, 0/2 on the half -- watch only.
+  - Watch: Medium fh divergence unproven (0/2); flag, don't bet.
+
+**Summary:** Los Angeles Sparks @ New York Liberty -- small SPARKS +8.5 (default to the +points dog; but the line is dead flat = no signal, and entry 93 saw this Liberty cover a similar number vs a weak dog, so near a pass). Small UNDER 186.5 on a slight down-tick + fh-low. 1H check: total 90.5 vs half 93.25 = -2.75 -> fh_total_low_medium (under, discounted 0/2); spread 1H +5 vs half +4.25 = noise. Low conviction both markets.
+<!-- WNBA_LEAN_EVENT_END event_id=adc6dd060846838773f87fb71bbbad5d -->
