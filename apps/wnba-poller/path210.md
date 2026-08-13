@@ -759,18 +759,25 @@ line movement: side: sparks +15.5 -> +17 (lynx firmed to -17); total: o188.5 -> 
 context: thursday. fade lynx = back the los angeles sparks +17 (road dog) vs the lynx home favorite -17, an EXTREME number, taking the points anchored to 74fadelynx (lynx -16.5 won by only 7, dog covered) against the still-firming lynx line. the SPARKS WON 89-82, by 7 OUTRIGHT: los angeles not only covered +17, they won the game, so fading the lynx was RIGHT on the side; the 171 total finished UNDER 187, so the watch under was ALSO right. lesson: big-favorite-doesn't-cover in its most extreme form -- a -17 home favorite LOST outright; 74fadelynx nailed it, a justified fade_line_movement win (the extreme number was the real edge). the under also hit -- unders now 2/2 while the retired-tilt overs are 0/4.
 model_lean: side (small LA SPARKS +17, faded the extreme lynx number/firm) -- HIT BIG (sparks won outright by 7); total (watch UNDER 187) -- HIT (171 under). net: DOUBLE HIT -- big-favorite-doesn't-cover extreme form + under, the standout of the batch.
 
+105fadetempo
+right
+back_favorite,follow_line_movement,situational_angle,total_under,expired_allstar_over_tilt
+line movement: side: tempo +2 -> +2.5 (fire firmed); total: o187.5 -> o186.5 (eased)
+context: thursday. fade tempo = back the home portland fire -2.5 (small) on a modest, non-reverting firm (tempo +2 -> +2.5) and the log's rule to trust the line over a narrative -- the one recorded thought backed the tempo 'as the better team' AGAINST that move. the FIRE WON 97-83, by 14: portland covered -2.5 comfortably, so fading the tempo was RIGHT on the side; the 180 total finished UNDER 186.5, so the watch under was ALSO right. lesson: a follow_line_movement / trust-the-line-over-the-narrative WIN (the tempo thought lost), and the third straight under win -- unders 3/3 vs overs 0/4 in this batch, the post-tilt default under is holding.
+model_lean: side (small PORTLAND FIRE -2.5, followed the firm/trusted the line) -- HIT (fire won by 14); total (watch UNDER 186.5) -- HIT (180 under). net: DOUBLE HIT -- follow_line_movement over a contrary thought + under.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 14 right / 13 wrong
+follow_line_movement: 15 right / 13 wrong
 fade_favorite: 17 right / 12 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 38 right / 41 wrong
+situational_angle: 39 right / 41 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 15 right / 23 wrong
-back_favorite: 20 right / 30 wrong
+back_favorite: 21 right / 30 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 8 right / 7 wrong
 overcaution: 0 right / 1 wrong
@@ -778,14 +785,14 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 7 right / 1 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 16 right / 20 wrong
-total_under: 19 right / 21 wrong
+total_under: 20 right / 21 wrong
 fh_total_low_big: 0 right / 0 wrong
 fh_total_low_medium: 0 right / 0 wrong
 fh_total_high_big: 0 right / 0 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
 fh_spread_back: 0 right / 0 wrong
-expired_allstar_over_tilt: 18 right / 17 wrong
+expired_allstar_over_tilt: 19 right / 17 wrong
   (entries 67-95 -- decided during the now-retired all-star-break over-tilt window (it should have ended at the 6-game Wednesday 67-72). KEPT in every count above, tagged only so total records read clean:
    total_over:  15/18 including these  /  10/12 excluding these
    total_under: 17/20 including these  /  7/12 excluding these
@@ -913,23 +920,6 @@ recent-team audit: LOS ANGELES — entry 89, i backed fire at pick'em and MISSED
 <ins>total (o189.5): moderate OVER</ins> — the book is 14.5 points above your primary score and the total rose 187.5 -> 189.5 with over juice -115. the latest games involving these teams reached 207 (both), 222/168 for los angeles, and 207/167/182 for chicago. follow the high-scoring market; over is much cleaner than the side.
 net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 24h watch: SPREAD — sky -4.5 or higher confirms your side projection and upgrades chicago; a return to -2/pick'em shifts value toward sparks. TOTAL — holding 189.5 or rising through 191 confirms the over but creates chase risk; a drop to 186 or lower invalidates the rise and downgrades to PASS.
-
-<!-- WNBA_LEAN_EVENT_START event_id=2036e6c92c8c4e14b2b4727f482e74a9 -->
-## WNBA Lean: Toronto Tempo @ Portland Fire
-- Event ID: `2036e6c92c8c4e14b2b4727f482e74a9`
-- Revision: `ba0d8104-d6d9-4676-a988-4f5dc0c75b85`
-- Status: `active`
-
-### Full game
-- **Side:** Portland Fire (small)
-  - Evidence: The line has firmed modestly and consistently toward the home Fire (Tempo +2 open -> +2.5 latest, with the away moneyline drifting from +105 to +125), rather than round-tripping back to the open -- a real if small net move, and follow_line_movement is the log's best-performing factor.; The one recorded thought on this game backs Tempo outright as the 'better team' road dog -- but that pick is a pure narrative with no line support, and it points directly AGAINST the direction the market has actually moved, which this log's rules explicitly flag as a losing pattern (a narrative that disagrees with line movement should generally be faded, not followed).
-  - Watch: The number is tiny (2.5 points, effectively a coin-flip game) and has whipsawed between 2.5 and 3 rather than moving cleanly in one direction, so this is a real but weak signal -- keep it at small strength, not higher.; Portland Fire's strongest precedent in this log (72fadefire, 89fadefire) is specifically as a scrappy HOME UNDERDOG that covers; tonight Fire is the favorite, a different role than the one the precedent actually validates, so do not over-credit that history here.
-- **Total:** Under (watch)
-  - Evidence: The total has only eased 1 point (187.5 -> 186.5) across the full pregame window -- inside the log's own 'no-signal total' band, so this is not treated as a real directional read on its own, just a mild tilt to note.
-  - Watch: This is watch-strength only, effectively a monitoring flag: with a near-pickem game and no blowout/garbage-time dynamic expected, there is no separate structural reason to lean under beyond the marginal drift -- revisit only if the total moves further before tip.
-
-**Summary:** New lean on a near-pickem game. Side takes a small lean on the home Portland Fire: the spread has firmed modestly and without reverting (Tempo +2 -> +2.5), and the log's rules explicitly caution against following a narrative pick that runs against line direction -- which is exactly the shape of the one recorded thought here (Tempo backed outright as 'the better team' while the market has moved the other way). Kept to small strength because the number itself is tiny and has whipsawed between 2.5 and 3, and because Fire's best precedent in this log is specifically as a covering home DOG, not as a favorite, so that history doesn't fully transfer to tonight's role. Total stays at watch/near-pass strength: the 1-point net move is inside the log's no-signal band and there is no blowout dynamic here to add a separate under case. No first-half lean: the first-half spread and total have been completely flat (1.5/-1.5 and 91.5) across all 20 captures, with nothing to read.
-<!-- WNBA_LEAN_EVENT_END event_id=2036e6c92c8c4e14b2b4727f482e74a9 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=6d2f787ae472f15e9b403dc611d0a141 -->
 ## WNBA Lean: Las Vegas Aces @ Minnesota Lynx
