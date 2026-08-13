@@ -815,15 +815,22 @@ line movement: side: valks -7.5 -> -8 (firmed); total: o168 -> o167; 1H total 81
 context: wednesday. fade valks = back the chicago sky +8 (road dog) against a firm golden state valkyries -8, plus a full UNDER 167 and a first-half UNDER 81 on fh_total_low_medium. the VALKYRIES WON 91-71, by 20: they covered -8 with room to spare, so fading them was WRONG -- big-favorite-doesn't-cover is NOT automatic. a strong home valkyries side ran a weak road sky off the floor; the pattern needs a COMPETITIVE dog (the tempo), not a punching bag. the 162 total finished UNDER 167, so the full under was RIGHT. BUT the FIRST HALF was 83 (sky 40, valks 43), OVER 81, so the fh_total_low_medium 1H under was WRONG. lesson: only back the underdog on the number when the dog can hang around; and the fh-low MEDIUM divergence keeps missing (0/2 on the half) while the BIG divergence is 3/3 -- weight big, discount medium.
 model_lean: side (small CHICAGO SKY +8, faded the valkyries) -- MISS (valks by 20, covered easily); full total (small UNDER 167) -- HIT (162); first-half total (small UNDER 81, fh_total_low_medium) -- MISS (H1 83 over). net: side + 1H miss, full under hit -- a weak dog blew up the fade, and the medium fh divergence missed again.
 
+113backfire
+right
+fade_favorite,situational_angle,total_over,fh_total_high_big
+line movement: side: fire points steady; total: over drifted down; 1H total 97.5
+context: wednesday. back the fire = take the portland fire (home dog) getting points against a strong minnesota lynx, plus a full OVER and a first-half OVER 97.5 on fh_total_high. the LYNX WON 85-81, by only 4: the fire covered, so backing the home dog was RIGHT -- and via a huge comeback (down 57-33 at half, the fire won the 2nd half 48-28). the 166 total finished UNDER, so the full over was WRONG. and the FIRST HALF was 90 (lynx 57, fire 33), UNDER 97.5, so the fh_total_high 1H over was WRONG -- a high first-half line OVER-projected the half, then the game dried up (76 second-half points) to sink the full over too. lesson: the home dog on the number cashed, but fh_total_high missed AGAIN (0/2 on the half); across the batch only fh_total_low_BIG carries signal (3/3), while fh-high and fh-medium are a combined 0/4 -- weight big-low, discount the rest.
+model_lean: side (small PORTLAND FIRE, home dog on the number) -- HIT (lynx by 4, fire covered on a comeback); full total (small OVER) -- MISS (166 under); first-half total (small OVER 97.5, fh_total_high) -- MISS (H1 90 under). net: side hit, both overs missed -- a front-loaded half undershot a high line and the game died late.
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 15 right / 18 wrong
-fade_favorite: 18 right / 15 wrong
+fade_favorite: 19 right / 15 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 40 right / 47 wrong
+situational_angle: 41 right / 47 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 16 right / 23 wrong
 back_favorite: 21 right / 32 wrong
@@ -833,11 +840,11 @@ overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 7 right / 2 wrong
 overconfidence: 22 right / 29 wrong
-total_over: 16 right / 21 wrong
+total_over: 17 right / 21 wrong
 total_under: 21 right / 25 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 0 right / 2 wrong
-fh_total_high_big: 0 right / 1 wrong
+fh_total_high_big: 1 right / 1 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
 fh_spread_back: 0 right / 0 wrong
@@ -986,24 +993,3 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
 
-<!-- WNBA_LEAN_EVENT_START event_id=62ed8d04c26de1f3164b3c15775a52e6 -->
-## WNBA Lean: Minnesota Lynx @ Portland Fire
-- Event ID: `62ed8d04c26de1f3164b3c15775a52e6`
-- Revision: `988a191c-c38e-4a6a-9e5f-ce1b3d9a54b5`
-- Status: `active`
-
-### Full game
-- **Side:** Portland Fire (small)
-  - Evidence: FINAL: extreme -12.5 on a FLAT (round-tripped -12.5 -> -13.5 -> -12.5) full spread with no net follow signal; big-favorite-doesn't-cover (74fadelynx: elite Lynx -16.5 won by only 7; Fire covered in 72). Take the points, near-pass.; Low-conviction coin flip on an extreme number.
-  - Watch: The elite Lynx covered this exact -12.5 by beating the Tempo by 32 (81), and a fast-scoring game (see the strong 1H over signal) could let them run it up -- a blowout cover is very live; the thought is on the Lynx.; So the side is small and the real edge here is the total, not the side.
-- **Total:** Over (small)
-  - Evidence: The full total rose to 187, and the 1H total is now a BIG divergence up (fh_total_high_big, see 1H check) -- both point over.
-  - Watch: Small on the full game; the stronger over is the first-half leg below.
-
-### First half
-- **Total:** Over (moderate)
-  - Evidence: fh_total_high_big: 1H total 97.5 is ~4.0 ABOVE half the full (187/2 = 93.5) -- the market pricing a clearly fast first half, a moderate first-half over (upgraded from medium as the 1H number rose).
-  - Watch: New/unproven heuristic (fh over 1/? so far), capped at moderate.
-
-**Summary:** FINAL lean, minutes to tip. 1H check: total 97.5 vs half 93.5 = +4.0 -> fh_total_high_big (over); spread 1H -7.5 vs half -6.25 = -1.25 (borderline front-loaded, noise). Side: small Portland Fire +12.5 -- extreme number on a FLAT round-tripped spread (no follow signal), big-fav-doesn't-cover; near-pass and disagrees with a live Lynx blowout (81 covered this exact -12.5), so low conviction. Total: small full Over 187 plus a MODERATE first-half Over on fh_total_high_big (1H total rose to 97.5, +4 above half) -- the fast-pace signal is the real edge here.
-<!-- WNBA_LEAN_EVENT_END event_id=62ed8d04c26de1f3164b3c15775a52e6 -->
