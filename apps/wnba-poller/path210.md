@@ -1014,3 +1014,19 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
 
+<!-- WNBA_LEAN_EVENT_START event_id=39bf012a0015d3c6753cc0b21100866e -->
+## WNBA Lean: Dallas Wings @ Indiana Fever
+- Event ID: `39bf012a0015d3c6753cc0b21100866e`
+- Revision: `88bc9a68-db74-4ffd-8534-71901374cda1`
+- Status: `active`
+
+### Full game
+- **Side:** Indiana Fever (small)
+  - Evidence: Line steamed Wings +5.5 -> +8 (Fever -5.5 -> -8) = the favorite's lay GREW = 2.5pt of money TOWARD the Fever; follow_line_movement, the log's strongest signal.; Strong home Fever vs a weak Wings dog -- the strong-fav-covers-vs-weak-dog shape that hit tonight (Dream 104-69, Aces covered).
+  - Watch: -8 is a big number and big-favorite-doesn't-cover is the log's recurring counter; my convicted sides are 2/7, so kept to a 1-star lean.
+- **Total:** Under (small)
+  - Evidence: Total drifted DOWN 187.5 -> 186.5 (mild under money).; A likely Fever blowout of a weak Wings side => garbage-time stranding on a high total favors the under.; 1H total 90.5 vs half 93.25 = -2.75 -> fh_total_low_medium (under-leaning).
+  - Watch: 186.5 is high and the Fever play fast (Clark) -- keep it small.
+
+**Summary:** Dallas Wings @ Indiana Fever -- small FEVER -8 (line steamed +5.5 -> +8 TOWARD the Fever = follow_line_movement; strong home fav vs a weak dog, the pattern that covered tonight). Small UNDER 186.5 (down 187.5 -> 186.5 + blowout stranding). 1H check: total 90.5 vs half 93.25 = -2.75 -> fh_total_low_medium (under, but 0/2 so not posted as a leg); 1H spread -4.5 vs half -4 = noise. Low conviction -- laying 8 is big and my convicted sides have run cold. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=39bf012a0015d3c6753cc0b21100866e -->
