@@ -1034,21 +1034,21 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 ## WNBA Lean: Portland Fire @ Seattle Storm
 - Event ID: `6b4f25c1f4c4acebd21a5e1e465343c9`
-- Revision: `3a94898b-2594-4ced-8fb1-12be2cfa4a9a`
+- Revision: `a905f640-306c-4fc7-8dd4-d6e99486426e`
 - Status: `active`
 
 ### Full game
 - **Side:** Seattle Storm (small)
-  - Evidence: Line moved further Fire +2.5 -> +3.5 (Storm -2.5 -> -3.5) = a full 1pt of money onto the Storm favorite; follow_line_movement + home court.; Still a modest number, but the drift is consistently toward the Storm.
-  - Watch: The Fire have hung as a live dog (covered vs the Lynx) -- 1-star lean.; UPDATED, not final: ~4h to tip.
+  - Evidence: FINAL (pre-tip; ~2.5h out): line drifted +2.5 -> +3.5 and held = a full 1pt of money onto the Storm favorite; follow_line_movement + home court.; Modest number, but the drift was consistently toward the Storm.
+  - Watch: The Fire have hung as a live dog (covered vs the Lynx); still ~pick'em -- 1-star lean. Line could still move before 22:00.
 - **Total:** Under (small)
-  - Evidence: Total held at 179.5 (dropped 181.5 -> 179.5 = real under money, now steady).
+  - Evidence: Total held 179.5 (dropped 181.5 -> 179.5 = real under money).
   - Watch: The 1H points the other way (fast start) -- this under is a full-game/2nd-half read.
 
 ### First half
 - **Total:** Over (small)
-  - Evidence: 1H total 93.5 HELD vs half 89.75 = +3.75 -> fh_total_high_BIG (fast first half priced well above a straight split).
+  - Evidence: 1H total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (fast first half priced well above a straight split).
   - Watch: fh_total_high is 0/2 -- a flag, not a bet; fights the full-game under (fast 1H, slower 2H).
 
-**Summary:** UPDATED (not final; ~4h to tip) -- Portland Fire @ Seattle Storm: small STORM -3.5 (line drifted +2.5 -> +3.5, a full 1pt toward the Storm) and small UNDER 179.5 (held after the 181.5 -> 179.5 under move). 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over) held -- small 1H OVER as a flag (fh_total_high 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (pre-tip; ~2.5h to 22:00 ET) -- Portland Fire @ Seattle Storm: small STORM -3.5 (drifted +2.5 -> +3.5, a full 1pt toward the Storm) and small UNDER 179.5 (held after 181.5 -> 179.5). 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over) -- small 1H OVER as a flag (fh_total_high 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star; number may still move before tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
