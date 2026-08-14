@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
 from .grading import grade_first_half_lean, grade_lean
+from .star_record import build_star_grade
 from .lean_context import LeanContextStore, build_lean_context
 from .lean_revisions import (
     build_abort_receipt,
@@ -595,6 +596,7 @@ def execute_resolution(
     # If this game's quarter box score is on record, deterministically grade any
     # first-half leg too (and always stamp the H1 score for visibility).
     fh_stamp = ""
+    fh = None
     result_row = _result_row_for(store, str(game.get("espn_event_id") or ""))
     if result_row is not None:
         fh = grade_first_half_lean(
@@ -633,13 +635,22 @@ def execute_resolution(
     revision_id = revision_id_factory()
     entry_number = next_past_events_entry_number(before)
     entry_name = f"{entry_number}{entry_slug}"
+    # Deterministically stamp each leg's star (= its stored strength on a 1-3
+    # scale) and result onto model_lean, so the star record is captured by the
+    # resolver from state -- never dependent on the prose the model wrote.
+    star_grade = build_star_grade(active, graded, fh)
+    model_lean = (
+        f"{model_lean_text} | {star_grade}"
+        if star_grade and model_lean_text
+        else (star_grade or model_lean_text)
+    )
     entry_text = render_resolution_entry(
         entry_name=entry_name,
         result=primary_result,
         tags=tags,
         line_movement=line_movement,
         context=context_text,
-        model_lean=model_lean_text,
+        model_lean=model_lean,
     )
     after = apply_resolution_entry(
         before, event_id=str(game["event_id"]), entry_text=entry_text
