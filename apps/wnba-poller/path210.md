@@ -822,15 +822,22 @@ line movement: side: fire points steady; total: over drifted down; 1H total 97.5
 context: wednesday. back the fire = take the portland fire (home dog) getting points against a strong minnesota lynx, plus a full OVER and a first-half OVER 97.5 on fh_total_high. the LYNX WON 85-81, by only 4: the fire covered, so backing the home dog was RIGHT -- and via a huge comeback (down 57-33 at half, the fire won the 2nd half 48-28). the 166 total finished UNDER, so the full over was WRONG. and the FIRST HALF was 90 (lynx 57, fire 33), UNDER 97.5, so the fh_total_high 1H over was WRONG -- a high first-half line OVER-projected the half, then the game dried up (76 second-half points) to sink the full over too. lesson: the home dog on the number cashed, but fh_total_high missed AGAIN (0/2 on the half); across the batch only fh_total_low_BIG carries signal (3/3), while fh-high and fh-medium are a combined 0/4 -- weight big-low, discount the rest.
 model_lean: side (small PORTLAND FIRE, home dog on the number) -- HIT (lynx by 4, fire covered on a comeback); full total (small OVER) -- MISS (166 under); first-half total (small OVER 97.5, fh_total_high) -- MISS (H1 90 under). net: side hit, both overs missed -- a front-loaded half undershot a high line and the game died late. | stars: side=1:right, total=2:wrong, fh_total=3:wrong
 
+114fadedream
+wrong
+fade_favorite,situational_angle,total_under,fh_total_low_medium
+line movement: side: dream -9.5 -> -10; total: 173.5 -> 173; 1H total 84.5 -> 84
+context: thursday. fade dream = back the connecticut sun +10 (home dog) vs a big road favorite atlanta dream -10; small under 173; a watch 1H under (fh_total_low_medium, 84 vs half 86.5). the DREAM WON 104-69, by 35: a total BLOWOUT -- backing the sun was WRONG, the weak-dog-buried pattern again (sky/valkyries 112, sparks... ) -- a big road favorite DID cover a big number vs a punching-bag home dog. the 173 total landed EXACTLY on the line -> PUSH (garbage time capped a blowout). BUT the first half was 83, UNDER 84, so the fh_total_low_medium 1H under was RIGHT. lesson: do NOT back a weak home dog on a big number just to fade the favorite -- the dog must be competitive; and even a 35-point blowout can push/under a low total. fh-low medium finally hit the half here.
+model_lean: side (small CONNECTICUT SUN +10, faded the big road favorite) -- MISS (dream by 35, blowout); full total (small UNDER 173) -- PUSH (173 exact); first-half total (watch UNDER 84, fh_total_low_medium) -- HIT (H1 83). net: side blown out, total pushed, 1H under hit. | stars: side=1:wrong, total=1:push, fh_total=0:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 15 right / 18 wrong
-fade_favorite: 19 right / 15 wrong
+fade_favorite: 19 right / 16 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 41 right / 47 wrong
+situational_angle: 41 right / 48 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 16 right / 23 wrong
 back_favorite: 21 right / 32 wrong
@@ -841,9 +848,9 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 7 right / 2 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 17 right / 21 wrong
-total_under: 21 right / 25 wrong
+total_under: 21 right / 26 wrong
 fh_total_low_big: 1 right / 2 wrong
-fh_total_low_medium: 0 right / 2 wrong
+fh_total_low_medium: 0 right / 3 wrong
 fh_total_high_big: 1 right / 1 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
@@ -992,28 +999,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=9a2fa5d20edb2bc7e2ce1298cb3d5348 -->
-## WNBA Lean: Atlanta Dream @ Connecticut Sun
-- Event ID: `9a2fa5d20edb2bc7e2ce1298cb3d5348`
-- Revision: `fc3bb7ff-5a98-4000-ab8a-1159da070bcb`
-- Status: `active`
-
-### Full game
-- **Side:** Connecticut Sun (small)
-  - Evidence: FINAL (game has tipped): Dream stayed a -10 road favorite start to close; big-road-favorite-doesn't-cover is the recurring winning shape.; Home dog +10; fade_favorite 19/15.; Line held -9.5 -> -10 (no late move off the favorite).
-  - Watch: Sun are weak -- a strong Dream side can bury a weak home dog (Valkyries-over-Sky); stays small.
-- **Total:** Under (small)
-  - Evidence: Total drifted DOWN 173.5 -> 173 into tip -- mild under support.; Big road favorite (-10) => blowout/garbage-time stranding risk on a 173 total favors the under.; 1H total 84 vs half 86.5 = -2.5 -> fh_total_low_medium (under, discounted 0/2).
-  - Watch: Clean post-window total prior favors overs (10/12) -- keep small.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: fh_total_low_medium (84 vs 86.5, -2.5): medium divergence, 0/2 on the half -- watch only.
-  - Watch: Medium fh divergence unproven; flag, don't bet.
-
-**Summary:** FINAL (already tipped ~19:00 ET) -- Atlanta Dream @ Connecticut Sun: small SUN +10 (fade the big road favorite; home dog on a big number), tempered by the weak-dog blowout risk. Small UNDER 173 (drifted down + stranding risk). 1H check: total 84 vs half 86.5 = -2.5 -> fh_total_low_medium (under, discounted); 1H spread -5.5 vs half -5 = noise. Lowest-conviction game.
-<!-- WNBA_LEAN_EVENT_END event_id=9a2fa5d20edb2bc7e2ce1298cb3d5348 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=adc6dd060846838773f87fb71bbbad5d -->
 ## WNBA Lean: Los Angeles Sparks @ New York Liberty
