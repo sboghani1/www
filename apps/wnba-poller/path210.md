@@ -1017,18 +1017,18 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=39bf012a0015d3c6753cc0b21100866e -->
 ## WNBA Lean: Dallas Wings @ Indiana Fever
 - Event ID: `39bf012a0015d3c6753cc0b21100866e`
-- Revision: `88bc9a68-db74-4ffd-8534-71901374cda1`
+- Revision: `d59e097f-678e-4703-9410-34ba3d9cfbb7`
 - Status: `active`
 
 ### Full game
 - **Side:** Indiana Fever (small)
-  - Evidence: Line steamed Wings +5.5 -> +8 (Fever -5.5 -> -8) = the favorite's lay GREW = 2.5pt of money TOWARD the Fever; follow_line_movement, the log's strongest signal.; Strong home Fever vs a weak Wings dog -- the strong-fav-covers-vs-weak-dog shape that hit tonight (Dream 104-69, Aces covered).
-  - Watch: -8 is a big number and big-favorite-doesn't-cover is the log's recurring counter; my convicted sides are 2/7, so kept to a 1-star lean.
+  - Evidence: Fever -8 HELD (steamed +5.5 -> +8 earlier, no give-back) = the money-toward-the-favorite move stuck; follow_line_movement.; Strong home Fever vs a weak Wings dog.
+  - Watch: -8 is a big lay and big-favorite-doesn't-cover is the counter; convicted sides are cold -- 1-star lean.; UPDATED, not final: ~2h to tip.
 - **Total:** Under (small)
-  - Evidence: Total drifted DOWN 187.5 -> 186.5 (mild under money).; A likely Fever blowout of a weak Wings side => garbage-time stranding on a high total favors the under.; 1H total 90.5 vs half 93.25 = -2.75 -> fh_total_low_medium (under-leaning).
-  - Watch: 186.5 is high and the Fever play fast (Clark) -- keep it small.
+  - Evidence: Total slid further 187.5 -> 185.5 (down 2 now = steady under money).; Likely Fever blowout of a weak dog => garbage-time stranding favors the under.
+  - Watch: 185.5 still high (Fever pace) -- kept 1-star despite the added support.
 
-**Summary:** Dallas Wings @ Indiana Fever -- small FEVER -8 (line steamed +5.5 -> +8 TOWARD the Fever = follow_line_movement; strong home fav vs a weak dog, the pattern that covered tonight). Small UNDER 186.5 (down 187.5 -> 186.5 + blowout stranding). 1H check: total 90.5 vs half 93.25 = -2.75 -> fh_total_low_medium (under, but 0/2 so not posted as a leg); 1H spread -4.5 vs half -4 = noise. Low conviction -- laying 8 is big and my convicted sides have run cold. [stars: side=1, total=1]
+**Summary:** UPDATED (not final; ~2h to tip) -- Dallas Wings @ Indiana Fever: small FEVER -8 (the +8 steam held) and small UNDER 185.5 (down 2 from 187.5, strengthening). 1H check: total 92 vs half 92.75 = -0.75 = NOISE now -- the earlier fh_total_low collapsed as the 1H total rose 90.5 -> 92; no first-half leg. 1H spread -4.5 vs half -4 = noise. Both 1-star. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=39bf012a0015d3c6753cc0b21100866e -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
