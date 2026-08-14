@@ -19,7 +19,10 @@ from .service import (
     sync_schedule,
 )
 from .sheets import SheetsStore
+from .star_record import compute_star_record, format_star_record
 from .streaks import get_streaks
+
+_PACKAGED_PATH210 = Path(__file__).resolve().parent.parent / "path210.md"
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -122,6 +125,17 @@ def _parser() -> argparse.ArgumentParser:
         help="Report workbook health without contacting ESPN or The Odds API.",
     )
     status.add_argument("--json", action="store_true")
+    star_record = subparsers.add_parser(
+        "star-record",
+        help="Tally win/loss by star rating from resolved path210 leans.",
+    )
+    star_record.add_argument(
+        "--path210",
+        type=Path,
+        default=None,
+        help="path210.md to read (defaults to the packaged file).",
+    )
+    star_record.add_argument("--json", action="store_true")
     return parser
 
 
@@ -135,6 +149,16 @@ def _store(config: Config) -> SheetsStore:
 
 def _run(args: argparse.Namespace) -> int:
     now = datetime.now(timezone.utc)
+
+    if args.command == "star-record":
+        path210 = args.path210 or _PACKAGED_PATH210
+        record = compute_star_record(path210.read_text(encoding="utf-8"))
+        if getattr(args, "json", False):
+            print(json.dumps(record, ensure_ascii=False))
+        else:
+            print(format_star_record(record))
+        return 0
+
     require_odds = args.command == "poll-odds"
     config = Config.from_env(require_google=True, require_odds=require_odds)
     store = _store(config)
