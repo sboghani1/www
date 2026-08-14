@@ -10,7 +10,11 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
 from .grading import grade_first_half_lean, grade_lean
-from .star_record import build_star_grade
+from .star_record import (
+    build_star_grade,
+    format_stars_token,
+    strip_stars_token,
+)
 from .lean_context import LeanContextStore, build_lean_context
 from .lean_revisions import (
     build_abort_receipt,
@@ -189,6 +193,7 @@ def validate_lean_output(
     *,
     game: Mapping[str, Any],
     allowed_snapshot_ids: set[str],
+    require_stars: bool = False,
 ) -> dict[str, Any]:
     if not isinstance(output, Mapping):
         raise ValueError("lean output must be an object")
@@ -244,6 +249,36 @@ def validate_lean_output(
         for item in snapshot_ids
     ):
         raise ValueError("lean output references an unknown snapshot")
+    # Per-leg conviction stars (1-3), independent of strength/stake. Set at
+    # generation and persisted inside the summary as a [stars: ...] token so the
+    # resolver can read them deterministically without a Sheet-schema column.
+    bettable_legs = {"side", "total"}
+    if "side" in normalized["first_half"]:
+        bettable_legs.add("fh_side")
+    if "total" in normalized["first_half"]:
+        bettable_legs.add("fh_total")
+    stars_in = output.get("stars")
+    stars: dict[str, int] = {}
+    if stars_in is not None:
+        if not isinstance(stars_in, Mapping):
+            raise ValueError("stars must be an object")
+        for leg, value in stars_in.items():
+            if leg not in bettable_legs:
+                raise ValueError(f"stars references an unknown leg: {leg}")
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise ValueError(f"stars.{leg} must be an integer 1-3")
+            if not 1 <= value <= 3:
+                raise ValueError(f"stars.{leg} must be 1-3")
+            stars[leg] = value
+    if require_stars:
+        missing = sorted(bettable_legs - set(stars))
+        if missing:
+            raise ValueError(f"stars are required for: {', '.join(missing)}")
+    if stars:
+        # Refresh the token (drop any stale one from a reused summary).
+        summary = f"{strip_stars_token(summary)} {format_stars_token(stars)}".strip()
+        if len(summary) > 2000:
+            raise ValueError("summary is too long")
     normalized["summary"] = summary
     normalized["source_snapshot_ids"] = list(snapshot_ids)
     return normalized
@@ -436,10 +471,13 @@ def execute_revision(
     if operation == "delete":
         normalized_output = None
     else:
+        # Fresh leans (create/revise) must carry conviction stars; undo/restore
+        # reuses a stored revision whose summary already holds them.
         normalized_output = validate_lean_output(
             effective_output,
             game=game,
             allowed_snapshot_ids=set(context["snapshot_ids"]),
+            require_stars=operation in {"create", "revise"},
         )
 
     base_sha = publisher.precondition()

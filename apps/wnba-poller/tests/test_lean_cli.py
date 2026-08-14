@@ -38,6 +38,7 @@ VALID_OUTPUT: dict[str, Any] = {
     "first_half": {},
     "summary": "Aces favored with room to grow.",
     "source_snapshot_ids": ["evt-1:2026-08-09T12:00:00Z:betonlineag"],
+    "stars": {"side": 2, "total": 1},
 }
 
 

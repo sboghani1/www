@@ -1,15 +1,15 @@
-"""Deterministic star ratings for resolved leans, and their win/loss record.
+"""Star ratings for leans, and their win/loss record.
 
-A "star" (1-3) is just the leg's pre-game *strength* rendered on a 1-3 scale --
-one conviction scale, not a second one to keep in sync. Because strength is a
-required, stored field on every revision, the star is a pure function of state:
-at resolution ``build_star_grade`` stamps a machine-readable fragment onto the
-entry's ``model_lean`` line, e.g.::
-
-    ... | stars: side=1:wrong, total=1:right, fh_total=1:wrong
-
-so nothing depends on remembering to hand-write a rating. ``star-record`` then
-tallies right/wrong per tier straight from those fragments.
+A "star" (1-3) is a per-leg pre-game CONVICTION set at generation, deliberately
+independent of *strength* (stake/aggressiveness) -- a leg can be sized "small"
+yet carry a 2-star signal (e.g. a convicted fade of a firm line). To keep it
+deterministic without a Sheet-schema change, generation embeds the stars in the
+revision's stored ``summary`` as a ``[stars: side=2, total=1, fh_total=2]``
+token; at resolution ``build_star_grade`` reads them back from that stored state
+(falling back to strength for pre-feature leans) and stamps a machine-readable
+``... | stars: side=2:wrong, total=1:right`` fragment onto the entry's
+``model_lean``. ``star-record`` then tallies right/wrong per tier from those
+fragments -- capture never depends on remembering to hand-write anything.
 """
 
 from __future__ import annotations
@@ -17,12 +17,21 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping
 
-# strength -> stars. "watch"/"pass" are non-bets (0 = unrated, never tallied).
+# Fallback only: strength -> stars for leans made before stars were captured.
 STRENGTH_STARS = {"strong": 3, "moderate": 2, "small": 1, "watch": 0, "pass": 0}
 STAR_TIERS = (1, 2, 3)
+STAR_LEGS = ("side", "total", "fh_side", "fh_total")
+_STRENGTH_FIELD = {
+    "side": "full_game_side_strength",
+    "total": "full_game_total_strength",
+    "fh_side": "first_half_side_strength",
+    "fh_total": "first_half_total_strength",
+}
 
 _STARS_FRAGMENT = re.compile(r"stars:\s*(.+)$")
 _LEG = re.compile(r"([a-z_]+)=([0-3]):(right|wrong|push)")
+_SUMMARY_TOKEN = re.compile(r"\[stars:\s*([^\]]*)\]")
+_SUMMARY_LEG = re.compile(r"([a-z_]+)=([1-3])")
 
 
 def strength_to_stars(strength: Any) -> int:
@@ -30,30 +39,54 @@ def strength_to_stars(strength: Any) -> int:
     return STRENGTH_STARS.get(str(strength or "").strip().lower(), 0)
 
 
+def format_stars_token(stars: Mapping[str, int]) -> str:
+    """Render the ``[stars: ...]`` token embedded in a revision summary."""
+    terms = [f"{leg}={stars[leg]}" for leg in STAR_LEGS if leg in stars]
+    return f"[stars: {', '.join(terms)}]" if terms else ""
+
+
+def stars_from_summary(summary: str) -> dict[str, int]:
+    """Parse the ``[stars: ...]`` token from a stored summary, if present."""
+    match = _SUMMARY_TOKEN.search(summary or "")
+    if match is None:
+        return {}
+    return {leg: int(val) for leg, val in _SUMMARY_LEG.findall(match.group(1))}
+
+
+def strip_stars_token(summary: str) -> str:
+    """Remove any ``[stars: ...]`` token so a fresh one can be embedded."""
+    return _SUMMARY_TOKEN.sub("", summary or "").strip()
+
+
 def build_star_grade(
     active: Mapping[str, Any],
     graded: Mapping[str, Any],
     fh: Mapping[str, Any] | None,
 ) -> str:
-    """Deterministic ``stars: ...`` fragment from stored leg strengths + grades.
+    """``stars: ...`` fragment for model_lean from the generation-time stars.
 
-    One ``<leg>=<stars>:<result>`` term per graded leg (side/total/fh_side/
-    fh_total); returns "" when nothing graded. Written by the resolver, so the
-    star record can never silently miss a resolved leg.
+    Prefers the per-leg conviction stored in the revision summary token; falls
+    back to strength for leans made before stars were captured. One
+    ``<leg>=<stars>:<result>`` term per graded leg; "" when nothing graded.
     """
+    summary_stars = stars_from_summary(str(active.get("summary") or ""))
+
+    def leg_stars(leg: str) -> int:
+        if leg in summary_stars:
+            return summary_stars[leg]
+        return strength_to_stars(active.get(_STRENGTH_FIELD[leg]))
+
     terms: list[str] = []
 
-    def add(leg: str, strength_field: str, graded_leg: Any) -> None:
-        if not graded_leg:
-            return
-        stars = strength_to_stars(active.get(strength_field))
-        terms.append(f"{leg}={stars}:{graded_leg['result']}")
+    def add(leg: str, graded_leg: Any) -> None:
+        if graded_leg:
+            terms.append(f"{leg}={leg_stars(leg)}:{graded_leg['result']}")
 
-    add("side", "full_game_side_strength", graded.get("side"))
-    add("total", "full_game_total_strength", graded.get("total"))
+    add("side", graded.get("side"))
+    add("total", graded.get("total"))
     if fh:
-        add("fh_side", "first_half_side_strength", fh.get("side"))
-        add("fh_total", "first_half_total_strength", fh.get("total"))
+        add("fh_side", fh.get("side"))
+        add("fh_total", fh.get("total"))
     return "stars: " + ", ".join(terms) if terms else ""
 
 
@@ -121,9 +154,9 @@ def format_star_record(record: dict[str, Any]) -> str:
 
     rows = [
         f"Star record over {record['rated_legs']} rated legs "
-        "(right-wrong; star = leg strength, 3=strong/2=moderate/1=small):"
+        "(right-wrong; star = per-leg conviction, 3=top/2=real read/1=lean):"
     ]
-    labels = {1: "1 (small)", 2: "2 (mod)", 3: "3 (strong)"}
+    labels = {1: "1 (lean)", 2: "2 (read)", 3: "3 (top)"}
     for tier in STAR_TIERS:
         rows.append(line(labels[tier], record["tiers"][tier]))
     rows.append(line("overall", record["overall"]))
