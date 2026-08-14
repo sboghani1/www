@@ -836,15 +836,22 @@ line movement: side: sparks +8.5 -> +8 (toward the dog); total: 187 -> 186.5; 1H
 context: thursday. fade liberty = back the los angeles sparks +8 (road dog) as the line moved +8.5 -> +8 TOWARD the sparks (favorite's lay shrank = money to the dog, follow_line_movement); small under 186.5; watch 1H under (fh_total_low_medium). the LIBERTY WON 85-81, by only 4: the sparks COVERED +8, so fading the liberty was RIGHT -- following the move toward the dog worked, and an elite home favorite did NOT cover a big number vs a live dog (the entry-93 liberty-covers precedent did NOT repeat this time). the 166 total finished UNDER 186.5, and the first half 81 was UNDER 91, so BOTH unders (full + fh_total_low_medium) were RIGHT. lesson: a clean SWEEP -- follow the line toward the dog + full under + 1H under all cashed; a big home favorite off a firm line can still fail to cover a competitive dog, so trust the move over the 'elite team blows out' narrative.
 model_lean: side (small LOS ANGELES SPARKS +8, followed the move to the dog) -- HIT (liberty by 4, sparks covered); full total (small UNDER 186.5) -- HIT (166); first-half total (watch UNDER 91, fh_total_low_medium) -- HIT (H1 81). net: TRIPLE HIT. | stars: side=1:right, total=1:right, fh_total=0:right
 
+116fadeaces
+wrong
+fade_favorite,follow_line_movement,situational_angle,total_under,fh_total_low_medium
+line movement: side: mystics +7 -> +5.5 (toward the dog); total: 170 -> 170.5; 1H total 81 -> 83
+context: thursday. fade aces = back the washington mystics +5.5 (road dog) as the line slid +7 -> +5.5 TOWARD the mystics (follow_line_movement + fade_favorite, the card's strongest side, moderate); small under 170.5; watch 1H under (fh_total_low, big at first then softened to medium when the 1H total rose 81 -> 83). the ACES WON 83-76, by 7: vegas COVERED -5.5, so backing the mystics was WRONG -- following the money toward the dog FAILED, a strong home favorite covered a modest number vs a weak dog (weak-dog-buried again, 109fadeaces redux). BUT the total was a big under: 159 UNDER 170.5, and the first half 70 was WAY UNDER 83, so BOTH unders were RIGHT. lesson: follow_line_movement toward a dog is NOT automatic -- a strong home favorite over a weak dog can cover even as money comes to the dog; the low-total / fh-low read was the real edge tonight (full + 1H under both hit). moderate was my highest-conviction side and it lost -- 2-star sides keep underperforming the 1-star totals.
+model_lean: side (moderate WASHINGTON MYSTICS +5.5, followed the move to the dog) -- MISS (aces by 7, covered); full total (small UNDER 170.5) -- HIT (159); first-half total (watch UNDER 83, fh_total_low_medium) -- HIT (H1 70). net: side miss, both unders hit. | stars: side=2:wrong, total=1:right, fh_total=0:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 16 right / 18 wrong
-fade_favorite: 20 right / 16 wrong
+follow_line_movement: 16 right / 19 wrong
+fade_favorite: 20 right / 17 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 42 right / 48 wrong
+situational_angle: 42 right / 49 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 16 right / 23 wrong
 back_favorite: 21 right / 32 wrong
@@ -855,9 +862,9 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 7 right / 2 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 17 right / 21 wrong
-total_under: 22 right / 26 wrong
+total_under: 22 right / 27 wrong
 fh_total_low_big: 1 right / 2 wrong
-fh_total_low_medium: 1 right / 3 wrong
+fh_total_low_medium: 1 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
@@ -1007,24 +1014,3 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
 
-<!-- WNBA_LEAN_EVENT_START event_id=b7f37fe3659219219e03ac3a2ceaea8d -->
-## WNBA Lean: Washington Mystics @ Las Vegas Aces
-- Event ID: `b7f37fe3659219219e03ac3a2ceaea8d`
-- Revision: `cd572b46-f3cd-434a-803d-72a923f66e41`
-- Status: `active`
-
-### Full game
-- **Side:** Washington Mystics (moderate)
-  - Evidence: FINAL: the move Aces -7 -> -5.5 (Mystics +7 -> +5.5) HELD into tip = money settled TOWARD the Mystics dog; a 1.5pt follow_line_movement, the log's strongest signal.; fade_favorite 19/15 and big-favorite-doesn't-cover reinforce the +points dog.; The 'strong Aces bury weak Mystics' narrative points AGAINST the move -- trust the line.
-  - Watch: Live +5.5 Mystics hedge worth watching if Vegas starts fast.
-- **Total:** Under (small)
-  - Evidence: DOWNGRADED: the 1H total rose 81 -> 83, so the divergence shrank to -2.25 -> fh_total_low_MEDIUM (the noisy 0/2 category), no longer the big signal.; Full total flat at 170.5 -- thin standalone under.
-  - Watch: Without the big fh signal this is a weak under; kept small.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: fh_total_low_medium (83 vs 85.25, -2.25): medium divergence after the 1H line climbed 81 -> 83; 0/2 on the half -- watch only now, not the standout it was.
-  - Watch: Medium fh divergence unproven; flag, don't bet.
-
-**Summary:** FINAL -- Washington Mystics @ Las Vegas Aces: moderate MYSTICS +5.5 (the move +7 -> +5.5 TOWARD the Mystics held into tip = follow_line_movement + fade_favorite; the card's strongest side). Small UNDER 170.5 -- DOWNGRADED because the 1H total rose 81 -> 83, dropping the fh signal from big to medium. 1H check: total 83 vs half 85.25 = -2.25 -> fh_total_low_medium (under, discounted 0/2); 1H spread +3 vs half +2.75 = noise. Side is the play; total is thin.
-<!-- WNBA_LEAN_EVENT_END event_id=b7f37fe3659219219e03ac3a2ceaea8d -->
