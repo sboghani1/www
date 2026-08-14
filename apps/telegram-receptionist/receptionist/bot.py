@@ -44,6 +44,7 @@ RECOVER_MENU_TEXT = "♻️ Recover"
 DIAGNOSE_DEPLOYMENT_MENU_TEXT = "/agent-try-recovery"
 WNBA_RESOLVE_MENU_TEXT = "🏁 Resolve WNBA"
 WNBA_STREAKS_MENU_TEXT = "📊 WNBA Streaks"
+TOPICS_MENU_TEXT = "🧭 Topics & Context"
 SESSION_ROLLOVER_PATTERN = re.compile(
     r"^session:(?:new|continue):[0-9a-f-]{36}$"
 )
@@ -427,6 +428,7 @@ class Receptionist:
             [
                 [RECOVER_MENU_TEXT, DIAGNOSE_DEPLOYMENT_MENU_TEXT],
                 [WNBA_RESOLVE_MENU_TEXT, WNBA_STREAKS_MENU_TEXT],
+                [TOPICS_MENU_TEXT],
             ],
             resize_keyboard=True,
             is_persistent=True,
@@ -1932,6 +1934,12 @@ def build_application(config: Config) -> Application:
         MessageHandler(
             filters.Regex(f"^{re.escape(WNBA_STREAKS_MENU_TEXT)}$"),
             receptionist.authorized(receptionist.wnba_streaks_menu_button),
+        )
+    )
+    application.add_handler(
+        MessageHandler(
+            filters.Regex(f"^{re.escape(TOPICS_MENU_TEXT)}$"),
+            receptionist.authorized(receptionist.topics),
         )
     )
     application.add_handler(
