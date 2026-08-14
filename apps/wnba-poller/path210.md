@@ -1030,3 +1030,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** Dallas Wings @ Indiana Fever -- small FEVER -8 (line steamed +5.5 -> +8 TOWARD the Fever = follow_line_movement; strong home fav vs a weak dog, the pattern that covered tonight). Small UNDER 186.5 (down 187.5 -> 186.5 + blowout stranding). 1H check: total 90.5 vs half 93.25 = -2.75 -> fh_total_low_medium (under, but 0/2 so not posted as a leg); 1H spread -4.5 vs half -4 = noise. Low conviction -- laying 8 is big and my convicted sides have run cold. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=39bf012a0015d3c6753cc0b21100866e -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
+## WNBA Lean: Portland Fire @ Seattle Storm
+- Event ID: `6b4f25c1f4c4acebd21a5e1e465343c9`
+- Revision: `4dc20456-09e5-4f9a-83c1-c5fc6134619b`
+- Status: `active`
+
+### Full game
+- **Side:** Seattle Storm (small)
+  - Evidence: Mild move Fire +2.5 -> +3 (Storm -2.5 -> -3) = a little money toward the Storm favorite; home court.; Near pick'em (ML Storm -140 / Fire +120) -- low conviction either way.
+  - Watch: The Fire have hung as a live dog lately (covered vs the Lynx); -3 is small, so this is barely off a pass.
+- **Total:** Under (small)
+  - Evidence: Total dropped 181.5 -> 179.5 (a real 2pt under move = money onto the under).
+  - Watch: The 1H total points the other way (fast start) -- the under is a full-game/second-half read, not a first-half one.
+
+### First half
+- **Total:** Over (small)
+  - Evidence: 1H total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over): the market prices a fast first half well above a straight split.
+  - Watch: fh_total_high is 0/2 in the log -- a flag, not a real bet; and it fights the full-game under (fast 1H, slower 2H).
+
+**Summary:** Portland Fire @ Seattle Storm -- small STORM -3 (mild move +2.5 -> +3 toward the Storm; near pick'em, low conviction). Small UNDER 179.5 (total dropped 181.5 -> 179.5, real under money). 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over) -- posting a small 1H OVER on the divergence, but fh_total_high is 0/2 so it's a flag; 1H spread -1.5 vs half -1.5 = on the number. Note the split: fast 1H (over) but lower full pace (under). [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
