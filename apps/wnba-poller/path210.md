@@ -1100,16 +1100,21 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=29cad233af7d231757747d62b5f9351e -->
 ## WNBA Lean: Minnesota Lynx @ Las Vegas Aces
 - Event ID: `29cad233af7d231757747d62b5f9351e`
-- Revision: `3be1814a-0d28-4033-a740-6d25dc571c9d`
+- Revision: `1b549c7f-8570-431f-8589-f0f46362b8b7`
 - Status: `active`
 
 ### Full game
 - **Side:** Las Vegas Aces (small)
-  - Evidence: Near-pick'em home dog: Aces +2 after Lynx firmed only 1.5 -> 2; fade_favorite (20-17) and motivated_underdog (7-2) are the log's stronger shapes vs back_favorite (21-32).; Agrees with your read of the Aces winning as a home dog getting points.
-  - Watch: Market ticked toward Lynx (Aces ML +100 -> +115, Lynx -120 -> -135); if Lynx firm past -3, downgrade Aces.; follow_line_movement mildly points to Lynx but is the weaker shape here (16-19).
+  - Evidence: Near-pick'em home dog: Aces +2 after Lynx firmed only 1.5 -> 2; fade_favorite (20-17) and motivated_underdog (7-2) beat back_favorite (21-32).; Agrees with your Aces-win read as a home dog getting points.
+  - Watch: Market ticked toward Lynx (Aces ML +100 -> +115); if Lynx firm past -3, downgrade Aces.; follow_line_movement mildly points to Lynx but is the weaker shape here (16-19).
 - **Total:** Over (small)
-  - Evidence: Full total flat at ~182 with an elevated first half (1H 95 vs ~91 straight split = fh_total_high); retired all-star tilt leaves overs the cleaner prior (total_over 10-2 excluding the tilt).
-  - Watch: Leans on the prior, not movement -- the number never moved; a drop under 180 kills it.
+  - Evidence: Full total flat at ~182; retired all-star tilt leaves overs the cleaner prior (total_over 10-2 excluding tilt).
+  - Watch: Leans on the prior, not movement -- number never moved; a drop under 180 kills it.
 
-**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Lynx @ Aces: small ACES +2 -- back the near-pick'em home dog (fade_favorite/motivated_underdog beat back_favorite in the log), agreeing with your Aces-win read; market ticked mildly to Lynx so it's capped small. Small OVER 182 on the elevated 1H (95) + retired over-tilt prior (overs 10-2). [stars: side=1, total=1]
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 95 vs 91 straight-half split = +4 -> fh_total_high_big, aligning with the full-game over.
+  - Watch: Flag not a bet (fh_total_high_big 1-1, tiny sample); 1H spread -0.5 vs -1 half-split = slight Aces tilt, noise, no fh_side.
+
+**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Lynx @ Aces: small ACES +2 (back near-pick'em home dog; capped small as market ticked to Lynx). Small OVER 182 (over-tilt prior 10-2). 1H: OVER 95 flag (fh_total_high_big +4 vs split, aligns with full over); 1H spread noise. Agrees with your Aces read. [stars] [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=29cad233af7d231757747d62b5f9351e -->
