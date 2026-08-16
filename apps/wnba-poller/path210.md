@@ -1069,3 +1069,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Liberty @ Sun: small SUN +8 -- fade the -8 lay (round-tripped 7.5->9->8; back_favorite 21-32), Liberty ML still the likely winner, so this is a cover-only stance. Small UNDER 171.5 (fell 176.5->171.5), capped by the retired over-tilt prior. Fades your 98-78 blowout on the side, agrees on the lower total. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=23fa20addebd0a27549bb5d96bf060d7 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=715e100a948c5cb2e5bb0c5f73ae4d19 -->
+## WNBA Lean: Los Angeles Sparks @ Washington Mystics
+- Event ID: `715e100a948c5cb2e5bb0c5f73ae4d19`
+- Revision: `740795c8-09d3-4f0c-a2f6-9391f8d9dfd6`
+- Status: `active`
+
+### Full game
+- **Side:** Washington Mystics (small)
+  - Evidence: Spread sat dead-flat at Mystics -6.5 across the whole window (line_stable 8-7, no side signal); Sparks dog ML drifted 215 -> 226 = mild money toward Mystics.; Aligns with your Mystics -6.5 read and expected number.
+  - Watch: No line-movement edge and laying -6.5 is the back_favorite shape (21-32) -- near-pass; any move off -6.5 toward Sparks flips to the dog.
+- **Total:** Under (watch)
+  - Evidence: Total round-tripped 174.5 -> 171 -> 172.5 (net -2, no durable direction).
+  - Watch: Flag not a bet -- flat/round-tripped total plus the retired over-tilt prior (overs 10-2 excluding tilt) argue against a committed under.
+
+**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Sparks @ Mystics: small MYSTICS -6.5 -- dead-flat line (line_stable) that agrees with your read, mild ML money toward Washington; near-pass since laying -6.5 is the underwater back_favorite shape. Total is a watch-only UNDER 172.5 (round-tripped 174.5->171->172.5, over-tilt retired). Agrees with your Mystics 88-81 side. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=715e100a948c5cb2e5bb0c5f73ae4d19 -->
