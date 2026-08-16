@@ -1095,3 +1095,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip, lines may still move). Sky @ Storm: small SKY -2.5 (clean one-directional firm -1.5->-2.5, follow_line_movement -- strongest side, 2-star conviction) agreeing with your Sky read. Small UNDER 176.5 (fell 179.5->176.5). 1H: UNDER 86.5 flag. Refine to final near tip. [stars: side=2, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=7748b7323012e52de45a2c18b561c590 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=873224496c331ddad2dc0cb9daf17ffb -->
+## WNBA Lean: Indiana Fever @ Atlanta Dream
+- Event ID: `873224496c331ddad2dc0cb9daf17ffb`
+- Revision: `b3c96dc0-11b5-4a29-be71-f2d075370b82`
+- Status: `active`
+
+### Full game
+- **Side:** Indiana Fever (small)
+  - Evidence: Dream's lay shrank -2.5 -> -1.5 (Fever +2.5 -> +1.5) = money toward the Fever road dog (follow_line_movement); market prices a near-pick'em, nowhere near your Dream -5.5.; fade_favorite is the stronger shape (21-18); a good Fever team getting points, fading your Dream-by-lots read.
+  - Watch: The move gave a little back late (peaked Dream -1, closed -1.5); if Dream re-firms past -3, flip toward Dream.; Near-pick'em -- cover risk both ways.
+- **Total:** Under (watch)
+  - Evidence: Total drifted 188.5 -> 187 after an early pop to 189.5 (mild net under on a high number).
+  - Watch: Only a slight edge; a move back above 189 flips it.
+
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 96.5 vs 93.5 straight-half split = +3 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread +0.5 ~ half the +1.5 line = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, lines may still move). Fever @ Dream: small FEVER +1.5 -- FADE your Dream side; the line moved toward the Fever dog (Dream -2.5->-1.5) and the market is nowhere near your Dream -5.5. Watch UNDER 187 (drifted from 188.5). 1H: OVER 96.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=873224496c331ddad2dc0cb9daf17ffb -->
