@@ -857,25 +857,32 @@ line movement: side: -6.5 flat (open -> close, unmoved); total: 174.5 (open), 17
 context: saturday. fade sparks = back the washington mystics -6.5 home favorite on a dead-flat line (line_stable, unmoved across the whole window) with mild ml money toward washington, aligning with the user's mystics read; sized small since laying -6.5 is the underwater back_favorite shape with no movement edge. total: watch under 172.5 (round-tripped 174.5 -> 171 -> 172.5). first-half under 83.5 posted as a fh_total_low flag. [generated post-tip from frozen pre-tip closing lines]
 model_lean: side back Mystics -6.5 (small); total under 172.5 (watch); 1H under 83.5 (watch flag) | stars: side=1:right, total=1:right, fh_total=1:right
 
+119fadelynx
+wrong
+fade_favorite, motivated_underdog, fade_line_movement, total_over
+line movement: side: Aces +1.5 -> +2 (Lynx firmed, Aces ML +100 -> +115); total: 182.5 (open), 183.5 (peak), 182 (close)
+context: saturday. fade lynx = back the las vegas aces +2 near-pick'em home dog, taking fade_favorite + motivated_underdog over the mild firm toward the lynx (aces ml +100 -> +115), aligning with the user's aces-win read; sized small since follow_line_movement pointed the other way. total: small over 182 on the retired over-tilt prior with a flat number. first-half over 95 posted as a fh_total_high_big flag. [generated post-tip from frozen pre-tip closing lines]
+model_lean: side back Aces +2 (small); total over 182 (small); 1H over 95 (watch flag) | stars: side=1:wrong, total=1:wrong, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 17 right / 19 wrong
-fade_favorite: 21 right / 17 wrong
+fade_favorite: 21 right / 18 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
 decision_day_before: 1 right / 0 wrong
-fade_line_movement: 17 right / 23 wrong
+fade_line_movement: 17 right / 24 wrong
 back_favorite: 22 right / 32 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 7 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 7 right / 2 wrong
+motivated_underdog: 7 right / 3 wrong
 overconfidence: 22 right / 29 wrong
-total_over: 17 right / 21 wrong
+total_over: 17 right / 22 wrong
 total_under: 24 right / 27 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
@@ -1067,24 +1074,3 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
-<!-- WNBA_LEAN_EVENT_START event_id=29cad233af7d231757747d62b5f9351e -->
-## WNBA Lean: Minnesota Lynx @ Las Vegas Aces
-- Event ID: `29cad233af7d231757747d62b5f9351e`
-- Revision: `a50a8af6-7f9e-48f9-9967-4df1ede847ab`
-- Status: `active`
-
-### Full game
-- **Side:** Las Vegas Aces (small)
-  - Evidence: Near-pick'em home dog: Aces +2 after Lynx firmed only 1.5 -> 2; fade_favorite (20-17) and motivated_underdog (7-2) beat back_favorite (21-32).; Agrees with your Aces-win read as a home dog getting points.
-  - Watch: Market ticked toward Lynx (Aces ML +100 -> +115); if Lynx firm past -3, downgrade Aces.; follow_line_movement mildly points to Lynx but is the weaker shape here (16-19).
-- **Total:** Over (small)
-  - Evidence: Full total flat at ~182; retired all-star tilt leaves overs the cleaner prior (total_over 10-2 excluding tilt).
-  - Watch: Leans on the prior, not movement -- number never moved; a drop under 180 kills it.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 95 vs 91 straight-half split = +4 -> fh_total_high_big, aligning with the full-game over.
-  - Watch: Flag not a bet (fh_total_high_big 1-1, tiny sample); 1H spread -0.5 vs -1 half-split = slight Aces tilt, noise, no fh_side.
-
-**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Lynx @ Aces: small ACES +2 (back near-pick'em home dog; capped small as market ticked to Lynx). Small OVER 182 (over-tilt prior 10-2). 1H: OVER 95 flag (fh_total_high_big +4 vs split, aligns with full over); 1H spread noise. Agrees with your Aces read. [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=29cad233af7d231757747d62b5f9351e -->
