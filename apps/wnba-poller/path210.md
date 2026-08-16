@@ -843,17 +843,24 @@ line movement: side: mystics +7 -> +5.5 (toward the dog); total: 170 -> 170.5; 1
 context: thursday. fade aces = back the washington mystics +5.5 (road dog) as the line slid +7 -> +5.5 TOWARD the mystics (follow_line_movement + fade_favorite, the card's strongest side, moderate); small under 170.5; watch 1H under (fh_total_low, big at first then softened to medium when the 1H total rose 81 -> 83). the ACES WON 83-76, by 7: vegas COVERED -5.5, so backing the mystics was WRONG -- following the money toward the dog FAILED, a strong home favorite covered a modest number vs a weak dog (weak-dog-buried again, 109fadeaces redux). BUT the total was a big under: 159 UNDER 170.5, and the first half 70 was WAY UNDER 83, so BOTH unders were RIGHT. lesson: follow_line_movement toward a dog is NOT automatic -- a strong home favorite over a weak dog can cover even as money comes to the dog; the low-total / fh-low read was the real edge tonight (full + 1H under both hit). moderate was my highest-conviction side and it lost -- 2-star sides keep underperforming the 1-star totals.
 model_lean: side (moderate WASHINGTON MYSTICS +5.5, followed the move to the dog) -- MISS (aces by 7, covered); full total (small UNDER 170.5) -- HIT (159); first-half total (watch UNDER 83, fh_total_low_medium) -- HIT (H1 70). net: side miss, both unders hit. | stars: side=2:wrong, total=1:right, fh_total=0:right
 
+117fadeliberty
+right
+fade_favorite, fade_line_movement, follow_line_movement, total_under
+line movement: side: -7.5 (35h), -8, -9 (peak), -8 (close); total: 176.5 (open), 171.5 (close)
+context: saturday. fade liberty = back the connecticut sun +8 home dog, fading a -8 lay that firmed 7.5 -> 8 but round-tripped through a -9 peak and gave it back (no clean confirmation); back_favorite is the log's weakest side shape and fade_favorite the stronger one, and the ~20-point user blowout read fit the overconfidence pattern. total: under 171.5 following a steady 176.5 -> 171.5 drop. first-half over 89 posted only as a flag. [generated post-tip from frozen pre-tip closing lines]
+model_lean: side fade Liberty -> Sun +8 (small); total under 171.5 (small); 1H over 89 (watch flag) | stars: side=1:right, total=1:right, fh_total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 16 right / 19 wrong
-fade_favorite: 20 right / 17 wrong
+follow_line_movement: 17 right / 19 wrong
+fade_favorite: 21 right / 17 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
 decision_day_before: 1 right / 0 wrong
-fade_line_movement: 16 right / 23 wrong
+fade_line_movement: 17 right / 23 wrong
 back_favorite: 21 right / 32 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 8 right / 7 wrong
@@ -862,7 +869,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 7 right / 2 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 17 right / 21 wrong
-total_under: 22 right / 27 wrong
+total_under: 23 right / 27 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 1 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1052,28 +1059,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=23fa20addebd0a27549bb5d96bf060d7 -->
-## WNBA Lean: New York Liberty @ Connecticut Sun
-- Event ID: `23fa20addebd0a27549bb5d96bf060d7`
-- Revision: `1a507edb-c3c2-40b4-82f1-085d84a1ab09`
-- Status: `active`
-
-### Full game
-- **Side:** Connecticut Sun (small)
-  - Evidence: Liberty spread firmed 7.5 -> 8 but round-tripped through a -9 peak and gave it back into tip -- no clean confirmation; laying a -8 favorite is the log's weakest side shape (back_favorite 21-32).; fade_favorite is the stronger historical shape (20-17) and -8 is a big lay where big-favorites-don't-cover recurs; your 98-78 (~20pt) read is the overconfidence pattern.
-  - Watch: Liberty ML firmed -340 -> -395 and is the likely straight-up winner -- Sun +8 is a cover-only stance.; A clean re-firm past -9 without give-back would flip this to backing Liberty.
-- **Total:** Under (small)
-  - Evidence: Total fell one-directionally 176.5 -> 171.5 into tip (net -5, steady under money).
-  - Watch: Retired over-tilt leaves fresh unders the weaker prior (total_under 7-5 vs total_over 10-2 excluding tilt); number bounced 169.5 -> 171.5 at close, keep small.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 89 vs 85.75 straight-half split = +3.25 -> fh_total_high (medium).
-  - Watch: Flag not a bet -- fights the full-game under; 1H spread -4 = exactly half the -8 line = noise, no fh_side.
-
-**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Liberty @ Sun: small SUN +8 (fade the -8 lay; Liberty ML likely winner = cover-only). Small UNDER 171.5 (fell 176.5->171.5). 1H: OVER 89 flag (fh_total_high +3.25 vs split, fights full under); 1H spread noise. Fades your 98-78 on side. [stars] [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=23fa20addebd0a27549bb5d96bf060d7 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=715e100a948c5cb2e5bb0c5f73ae4d19 -->
 ## WNBA Lean: Los Angeles Sparks @ Washington Mystics
