@@ -1074,3 +1074,24 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
+<!-- WNBA_LEAN_EVENT_START event_id=7748b7323012e52de45a2c18b561c590 -->
+## WNBA Lean: Chicago Sky @ Seattle Storm
+- Event ID: `7748b7323012e52de45a2c18b561c590`
+- Revision: `5e904b1d-2af2-44b8-851e-be06ecfd692c`
+- Status: `active`
+
+### Full game
+- **Side:** Chicago Sky (small)
+  - Evidence: Sky (road favorite) firmed cleanly one-directionally -1.5 -> -2 -> -2.5, ML -142 = steady money onto the favorite (follow_line_movement); cleanest side signal on the slate.; Agrees with your Sky-to-win read -- though the market has Sky as the road favorite, not Storm -1.5.
+  - Watch: Road favorites are shaky and Sky is the weaker 'bad' team; a reversal toward pick'em downgrades it.; back_favorite is underwater in the log (22-32), so sized small despite the clean firm.
+- **Total:** Under (small)
+  - Evidence: Total fell one-directionally 179.5 -> 176.5 (net -3, steady under money).
+  - Watch: total_under is ~coin-flip (24-27); a bounce back over 178 flips it.
+
+### First half
+- **Total:** Under (watch)
+  - Evidence: 1H total 86.5 vs 88.25 straight-half split = -1.75 -> fh_total_low.
+  - Watch: Flag not a bet (fh_total_low_medium 2-4); 1H spread -1 ~ half the -2.5 line = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, lines may still move). Sky @ Storm: small SKY -2.5 (clean one-directional firm -1.5->-2.5, follow_line_movement -- strongest side, 2-star conviction) agreeing with your Sky read. Small UNDER 176.5 (fell 179.5->176.5). 1H: UNDER 86.5 flag. Refine to final near tip. [stars: side=2, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=7748b7323012e52de45a2c18b561c590 -->
