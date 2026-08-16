@@ -1086,3 +1086,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Sparks @ Mystics: small MYSTICS -6.5 -- dead-flat line (line_stable) that agrees with your read, mild ML money toward Washington; near-pass since laying -6.5 is the underwater back_favorite shape. Total is a watch-only UNDER 172.5 (round-tripped 174.5->171->172.5, over-tilt retired). Agrees with your Mystics 88-81 side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=715e100a948c5cb2e5bb0c5f73ae4d19 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=29cad233af7d231757747d62b5f9351e -->
+## WNBA Lean: Minnesota Lynx @ Las Vegas Aces
+- Event ID: `29cad233af7d231757747d62b5f9351e`
+- Revision: `3be1814a-0d28-4033-a740-6d25dc571c9d`
+- Status: `active`
+
+### Full game
+- **Side:** Las Vegas Aces (small)
+  - Evidence: Near-pick'em home dog: Aces +2 after Lynx firmed only 1.5 -> 2; fade_favorite (20-17) and motivated_underdog (7-2) are the log's stronger shapes vs back_favorite (21-32).; Agrees with your read of the Aces winning as a home dog getting points.
+  - Watch: Market ticked toward Lynx (Aces ML +100 -> +115, Lynx -120 -> -135); if Lynx firm past -3, downgrade Aces.; follow_line_movement mildly points to Lynx but is the weaker shape here (16-19).
+- **Total:** Over (small)
+  - Evidence: Full total flat at ~182 with an elevated first half (1H 95 vs ~91 straight split = fh_total_high); retired all-star tilt leaves overs the cleaner prior (total_over 10-2 excluding the tilt).
+  - Watch: Leans on the prior, not movement -- the number never moved; a drop under 180 kills it.
+
+**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Lynx @ Aces: small ACES +2 -- back the near-pick'em home dog (fade_favorite/motivated_underdog beat back_favorite in the log), agreeing with your Aces-win read; market ticked mildly to Lynx so it's capped small. Small OVER 182 on the elevated 1H (95) + retired over-tilt prior (overs 10-2). [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=29cad233af7d231757747d62b5f9351e -->
