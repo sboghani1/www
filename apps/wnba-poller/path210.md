@@ -1056,18 +1056,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=23fa20addebd0a27549bb5d96bf060d7 -->
 ## WNBA Lean: New York Liberty @ Connecticut Sun
 - Event ID: `23fa20addebd0a27549bb5d96bf060d7`
-- Revision: `be97771c-9579-43ba-8d58-2b5a7a6a1169`
+- Revision: `1a507edb-c3c2-40b4-82f1-085d84a1ab09`
 - Status: `active`
 
 ### Full game
 - **Side:** Connecticut Sun (small)
   - Evidence: Liberty spread firmed 7.5 -> 8 but round-tripped through a -9 peak and gave it back into tip -- no clean confirmation; laying a -8 favorite is the log's weakest side shape (back_favorite 21-32).; fade_favorite is the stronger historical shape (20-17) and -8 is a big lay where big-favorites-don't-cover recurs; your 98-78 (~20pt) read is the overconfidence pattern.
-  - Watch: Liberty ML firmed -340 -> -395 and is the likely straight-up winner -- Sun +8 is a cover-only stance, not a Sun ML call.; A clean re-firm past -9 without give-back would flip this to backing Liberty.
+  - Watch: Liberty ML firmed -340 -> -395 and is the likely straight-up winner -- Sun +8 is a cover-only stance.; A clean re-firm past -9 without give-back would flip this to backing Liberty.
 - **Total:** Under (small)
   - Evidence: Total fell one-directionally 176.5 -> 171.5 into tip (net -5, steady under money).
-  - Watch: Retired all-star over-tilt leaves fresh unders the weaker prior (total_under 7-5 vs total_over 10-2 excluding the tilt); number bounced 169.5 -> 171.5 at close, so keep it small.
+  - Watch: Retired over-tilt leaves fresh unders the weaker prior (total_under 7-5 vs total_over 10-2 excluding tilt); number bounced 169.5 -> 171.5 at close, keep small.
 
-**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Liberty @ Sun: small SUN +8 -- fade the -8 lay (round-tripped 7.5->9->8; back_favorite 21-32), Liberty ML still the likely winner, so this is a cover-only stance. Small UNDER 171.5 (fell 176.5->171.5), capped by the retired over-tilt prior. Fades your 98-78 blowout on the side, agrees on the lower total. [stars: side=1, total=1]
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 89 vs 85.75 straight-half split = +3.25 -> fh_total_high (medium).
+  - Watch: Flag not a bet -- fights the full-game under; 1H spread -4 = exactly half the -8 line = noise, no fh_side.
+
+**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Liberty @ Sun: small SUN +8 (fade the -8 lay; Liberty ML likely winner = cover-only). Small UNDER 171.5 (fell 176.5->171.5). 1H: OVER 89 flag (fh_total_high +3.25 vs split, fights full under); 1H spread noise. Fades your 98-78 on side. [stars] [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=23fa20addebd0a27549bb5d96bf060d7 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=715e100a948c5cb2e5bb0c5f73ae4d19 -->
