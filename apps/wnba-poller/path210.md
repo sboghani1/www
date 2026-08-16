@@ -1117,3 +1117,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip, lines may still move). Fever @ Dream: small FEVER +1.5 -- FADE your Dream side; the line moved toward the Fever dog (Dream -2.5->-1.5) and the market is nowhere near your Dream -5.5. Watch UNDER 187 (drifted from 188.5). 1H: OVER 96.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=873224496c331ddad2dc0cb9daf17ffb -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=7f616c3e2ee934da2bb1cafe7c814f6c -->
+## WNBA Lean: Portland Fire @ Phoenix Mercury
+- Event ID: `7f616c3e2ee934da2bb1cafe7c814f6c`
+- Revision: `0becf069-a4b8-401d-a0a4-e657f482c7c1`
+- Status: `active`
+
+### Full game
+- **Side:** Portland Fire (small)
+  - Evidence: Near-flat line with a slight drift to the Fire dog (Mercury -5.5 -> -5, lay shrank = money toward the dog); laying -5 is the underwater back_favorite shape (22-32).; Fades your Mercury side; big-favorite-doesn't-cover caution on a -5 number -- take the expansion dog's points.
+  - Watch: Line is nearly stable (5.5->5->5.5->5) so this is near-pass; a firm to Mercury -6.5+ flips to backing Mercury.; Fire is a weak expansion team -- cover-only, not a Fire ML call.
+- **Total:** Over (small)
+  - Evidence: Total rose 176.5 -> 178 with over juice -113 (mild over money).
+  - Watch: Modest move; a drop back under 176 flips it.
+
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 91.5 vs 89 straight-half split = +2.5 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread +2.5 = exactly half the +5 line = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, lines may still move). Fire @ Mercury: small FIRE +5 -- FADE your Mercury side; near-flat line drifted slightly to the Fire dog and laying -5 is the underwater back_favorite shape (cover-only). Small OVER 178 (rose from 176.5). 1H: OVER 91.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=7f616c3e2ee934da2bb1cafe7c814f6c -->
