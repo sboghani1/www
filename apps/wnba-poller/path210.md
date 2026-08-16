@@ -1078,7 +1078,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=715e100a948c5cb2e5bb0c5f73ae4d19 -->
 ## WNBA Lean: Los Angeles Sparks @ Washington Mystics
 - Event ID: `715e100a948c5cb2e5bb0c5f73ae4d19`
-- Revision: `1e255ef8-d769-4f02-95ed-57e4adf1e95d`
+- Revision: `4ded251d-64d7-42ea-abb2-9888e5499255`
 - Status: `active`
 
 ### Full game
@@ -1094,7 +1094,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
   - Evidence: 1H total 83.5 vs 86.25 straight-half split = -2.75 -> fh_total_low (medium).
   - Watch: Flag not a bet -- fh_total_low_medium is 1-4 in the log; 1H spread +3.5 ~ half the +6.5 line = noise, no fh_side.
 
-**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Sparks @ Mystics: small MYSTICS -6.5 (flat line agrees with your read; near-pass). Total watch UNDER 172.5 (round-tripped). 1H: UNDER 83.5 flag (fh_total_low medium, 1-4); 1H spread noise. Agrees with your Mystics 88-81. [stars] [stars: side=1, total=1, fh_total=1]
+**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Sparks @ Mystics: small MYSTICS -6.5 (flat line agrees with your read; near-pass). Total watch UNDER 172.5 (round-tripped). 1H: UNDER 83.5 flag (fh_total_low medium, 1-4); 1H spread noise. Agrees with your Mystics 88-81. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=715e100a948c5cb2e5bb0c5f73ae4d19 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=29cad233af7d231757747d62b5f9351e -->
