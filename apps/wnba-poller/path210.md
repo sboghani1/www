@@ -1100,7 +1100,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=29cad233af7d231757747d62b5f9351e -->
 ## WNBA Lean: Minnesota Lynx @ Las Vegas Aces
 - Event ID: `29cad233af7d231757747d62b5f9351e`
-- Revision: `1b549c7f-8570-431f-8589-f0f46362b8b7`
+- Revision: `a50a8af6-7f9e-48f9-9967-4df1ede847ab`
 - Status: `active`
 
 ### Full game
@@ -1116,5 +1116,5 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
   - Evidence: 1H total 95 vs 91 straight-half split = +4 -> fh_total_high_big, aligning with the full-game over.
   - Watch: Flag not a bet (fh_total_high_big 1-1, tiny sample); 1H spread -0.5 vs -1 half-split = slight Aces tilt, noise, no fh_side.
 
-**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Lynx @ Aces: small ACES +2 (back near-pick'em home dog; capped small as market ticked to Lynx). Small OVER 182 (over-tilt prior 10-2). 1H: OVER 95 flag (fh_total_high_big +4 vs split, aligns with full over); 1H spread noise. Agrees with your Aces read. [stars] [stars: side=1, total=1, fh_total=1]
+**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Lynx @ Aces: small ACES +2 (back near-pick'em home dog; capped small as market ticked to Lynx). Small OVER 182 (over-tilt prior 10-2). 1H: OVER 95 flag (fh_total_high_big +4 vs split, aligns with full over); 1H spread noise. Agrees with your Aces read. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=29cad233af7d231757747d62b5f9351e -->
