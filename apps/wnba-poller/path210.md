@@ -1099,23 +1099,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=873224496c331ddad2dc0cb9daf17ffb -->
 ## WNBA Lean: Indiana Fever @ Atlanta Dream
 - Event ID: `873224496c331ddad2dc0cb9daf17ffb`
-- Revision: `b3c96dc0-11b5-4a29-be71-f2d075370b82`
+- Revision: `02e22a63-c152-4d03-b6ba-b05392dbb2f3`
 - Status: `active`
 
 ### Full game
 - **Side:** Indiana Fever (small)
-  - Evidence: Dream's lay shrank -2.5 -> -1.5 (Fever +2.5 -> +1.5) = money toward the Fever road dog (follow_line_movement); market prices a near-pick'em, nowhere near your Dream -5.5.; fade_favorite is the stronger shape (21-18); a good Fever team getting points, fading your Dream-by-lots read.
-  - Watch: The move gave a little back late (peaked Dream -1, closed -1.5); if Dream re-firms past -3, flip toward Dream.; Near-pick'em -- cover risk both ways.
+  - Evidence: The line ran a full 2.5 pts onto the Fever dog into tip: Dream -2.5 -> PICK'EM (Fever +2.5 -> 0), a strong sustained follow_line_movement signal.; Fades your Dream -5.5 hard -- the market went the opposite direction, from a Dream favorite to a coin-flip; fade_favorite is the stronger shape (21-18).
+  - Watch: Now pick'em, so the points cushion is gone -- it's a straight coin-flip side lean; 2-star conviction on the move, small stake.; A sharp Dream re-firm off pick'em would be a warning, but the flow was one-way to Fever.
 - **Total:** Under (watch)
-  - Evidence: Total drifted 188.5 -> 187 after an early pop to 189.5 (mild net under on a high number).
-  - Watch: Only a slight edge; a move back above 189 flips it.
+  - Evidence: Total round-tripped 188.5 -> 187 -> 188 and closed flat at 188 (no durable direction).
+  - Watch: No edge -- near-pass; the earlier mild under evaporated back to the open.
 
 ### First half
 - **Total:** Over (watch)
-  - Evidence: 1H total 96.5 vs 93.5 straight-half split = +3 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread +0.5 ~ half the +1.5 line = noise, no fh_side.
+  - Evidence: 1H total rose 96.5 -> 97.5 vs 94 straight-half split = +3.5 -> fh_total_high (big).
+  - Watch: Flag not a bet; 1H spread went to 0 (pick'em) = noise, no fh_side.
 
-**Summary:** INITIAL lean (pre-tip, lines may still move). Fever @ Dream: small FEVER +1.5 -- FADE your Dream side; the line moved toward the Fever dog (Dream -2.5->-1.5) and the market is nowhere near your Dream -5.5. Watch UNDER 187 (drifted from 188.5). 1H: OVER 96.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (near tip, ~5:00 ET closing lines). Fever @ Dream: small FEVER pick'em (2-star) -- the line moved a full 2.5 pts onto the Fever dog (Dream -2.5 -> PICK'EM), a strong confirmed follow_line_movement signal that fades your Dream -5.5 hard. Total watch (flat at 188, no edge). 1H OVER 97.5 flag (fh_total_high_big). [stars: side=2, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=873224496c331ddad2dc0cb9daf17ffb -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=7f616c3e2ee934da2bb1cafe7c814f6c -->
