@@ -850,6 +850,13 @@ line movement: side: -7.5 (35h), -8, -9 (peak), -8 (close); total: 176.5 (open),
 context: saturday. fade liberty = back the connecticut sun +8 home dog, fading a -8 lay that firmed 7.5 -> 8 but round-tripped through a -9 peak and gave it back (no clean confirmation); back_favorite is the log's weakest side shape and fade_favorite the stronger one, and the ~20-point user blowout read fit the overconfidence pattern. total: under 171.5 following a steady 176.5 -> 171.5 drop. first-half over 89 posted only as a flag. [generated post-tip from frozen pre-tip closing lines]
 model_lean: side fade Liberty -> Sun +8 (small); total under 171.5 (small); 1H over 89 (watch flag) | stars: side=1:right, total=1:right, fh_total=1:wrong
 
+118fadesparks
+right
+back_favorite, line_stable, total_under, fh_total_low_medium
+line movement: side: -6.5 flat (open -> close, unmoved); total: 174.5 (open), 171 (low), 172.5 (close)
+context: saturday. fade sparks = back the washington mystics -6.5 home favorite on a dead-flat line (line_stable, unmoved across the whole window) with mild ml money toward washington, aligning with the user's mystics read; sized small since laying -6.5 is the underwater back_favorite shape with no movement edge. total: watch under 172.5 (round-tripped 174.5 -> 171 -> 172.5). first-half under 83.5 posted as a fh_total_low flag. [generated post-tip from frozen pre-tip closing lines]
+model_lean: side back Mystics -6.5 (small); total under 172.5 (watch); 1H under 83.5 (watch flag) | stars: side=1:right, total=1:right, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
@@ -861,17 +868,17 @@ fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 17 right / 23 wrong
-back_favorite: 21 right / 32 wrong
+back_favorite: 22 right / 32 wrong
 chased_better_payout: 0 right / 1 wrong
-line_stable: 8 right / 7 wrong
+line_stable: 9 right / 7 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 7 right / 2 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 17 right / 21 wrong
-total_under: 23 right / 27 wrong
+total_under: 24 right / 27 wrong
 fh_total_low_big: 1 right / 2 wrong
-fh_total_low_medium: 1 right / 4 wrong
+fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
 fh_total_high_medium: 0 right / 0 wrong
 fh_spread_front: 0 right / 0 wrong
@@ -1059,28 +1066,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=715e100a948c5cb2e5bb0c5f73ae4d19 -->
-## WNBA Lean: Los Angeles Sparks @ Washington Mystics
-- Event ID: `715e100a948c5cb2e5bb0c5f73ae4d19`
-- Revision: `4ded251d-64d7-42ea-abb2-9888e5499255`
-- Status: `active`
-
-### Full game
-- **Side:** Washington Mystics (small)
-  - Evidence: Spread dead-flat at Mystics -6.5 all window (line_stable 8-7, no side signal); Sparks dog ML drifted 215 -> 226 = mild money toward Mystics.; Aligns with your Mystics -6.5 read.
-  - Watch: No line-movement edge and laying -6.5 is the back_favorite shape (21-32) -- near-pass; a move off -6.5 toward Sparks flips to the dog.
-- **Total:** Under (watch)
-  - Evidence: Total round-tripped 174.5 -> 171 -> 172.5 (net -2, no durable direction).
-  - Watch: Flag not a bet -- flat/round-tripped total plus retired over-tilt prior (overs 10-2) argue against a committed under.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: 1H total 83.5 vs 86.25 straight-half split = -2.75 -> fh_total_low (medium).
-  - Watch: Flag not a bet -- fh_total_low_medium is 1-4 in the log; 1H spread +3.5 ~ half the +6.5 line = noise, no fh_side.
-
-**Summary:** POST-TIP generation (game already tipped; built only from frozen pre-tip closing lines, no live/final score seen). Sparks @ Mystics: small MYSTICS -6.5 (flat line agrees with your read; near-pass). Total watch UNDER 172.5 (round-tripped). 1H: UNDER 83.5 flag (fh_total_low medium, 1-4); 1H spread noise. Agrees with your Mystics 88-81. [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=715e100a948c5cb2e5bb0c5f73ae4d19 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=29cad233af7d231757747d62b5f9351e -->
 ## WNBA Lean: Minnesota Lynx @ Las Vegas Aces
