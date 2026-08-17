@@ -871,12 +871,19 @@ line movement: side: -1.5 (35h), -2, -2.5 (held to close), ML -142 -> -135; tota
 context: sunday. fade storm = back the chicago sky -2.5 road favorite following a clean one-directional firm -1.5 -> -2.5 that HELD into tip (follow_line_movement), aligning with the user's sky read; sized small at 2-star conviction against the underwater back_favorite shape. total: under 177.5 after a 179.5 -> 176.5 drop that bounced back to 177.5 (near-pass). first-half under 86.5 posted as a fh_total_low flag. [initial pre-tip, finalized near tip]
 model_lean: side back Sky -2.5 (small, 2-star); total under 177.5 (watch); 1H under 86.5 (watch flag) | stars: side=2:wrong, total=1:right, fh_total=1:right
 
+121fadedream
+right
+follow_line_movement, fade_favorite, motivated_underdog, total_under
+line movement: side: Fever +2.5 (open), +1.5, PICK'EM (close); Dream lay -2.5 -> 0; total: 188.5 (open), 189.5 (peak), 188 (close)
+context: sunday. fade dream = back the indiana fever road dog as the line ran a full 2.5 pts onto the fever (dream -2.5 -> pick'em, follow_line_movement), fading the user's dream -5.5 read; a good fever team getting to a coin-flip, fade_favorite + motivated_underdog. total: under 188 (round-tripped 188.5 -> 187 -> 188, near-pass). first-half over 97.5 posted as a fh_total_high_big flag. [initial pre-tip, finalized near tip at pick'em]
+model_lean: side back Fever pick'em (small, 2-star); total under 188 (watch); 1H over 97.5 (watch flag) | stars: side=2:right, total=1:right, fh_total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 17 right / 20 wrong
-fade_favorite: 21 right / 18 wrong
+follow_line_movement: 18 right / 20 wrong
+fade_favorite: 22 right / 18 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
@@ -887,10 +894,10 @@ chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 7 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 7 right / 3 wrong
+motivated_underdog: 8 right / 3 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 17 right / 22 wrong
-total_under: 24 right / 27 wrong
+total_under: 25 right / 27 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1080,28 +1087,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=873224496c331ddad2dc0cb9daf17ffb -->
-## WNBA Lean: Indiana Fever @ Atlanta Dream
-- Event ID: `873224496c331ddad2dc0cb9daf17ffb`
-- Revision: `02e22a63-c152-4d03-b6ba-b05392dbb2f3`
-- Status: `active`
-
-### Full game
-- **Side:** Indiana Fever (small)
-  - Evidence: The line ran a full 2.5 pts onto the Fever dog into tip: Dream -2.5 -> PICK'EM (Fever +2.5 -> 0), a strong sustained follow_line_movement signal.; Fades your Dream -5.5 hard -- the market went the opposite direction, from a Dream favorite to a coin-flip; fade_favorite is the stronger shape (21-18).
-  - Watch: Now pick'em, so the points cushion is gone -- it's a straight coin-flip side lean; 2-star conviction on the move, small stake.; A sharp Dream re-firm off pick'em would be a warning, but the flow was one-way to Fever.
-- **Total:** Under (watch)
-  - Evidence: Total round-tripped 188.5 -> 187 -> 188 and closed flat at 188 (no durable direction).
-  - Watch: No edge -- near-pass; the earlier mild under evaporated back to the open.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total rose 96.5 -> 97.5 vs 94 straight-half split = +3.5 -> fh_total_high (big).
-  - Watch: Flag not a bet; 1H spread went to 0 (pick'em) = noise, no fh_side.
-
-**Summary:** FINAL (near tip, ~5:00 ET closing lines). Fever @ Dream: small FEVER pick'em (2-star) -- the line moved a full 2.5 pts onto the Fever dog (Dream -2.5 -> PICK'EM), a strong confirmed follow_line_movement signal that fades your Dream -5.5 hard. Total watch (flat at 188, no edge). 1H OVER 97.5 flag (fh_total_high_big). [stars: side=2, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=873224496c331ddad2dc0cb9daf17ffb -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=7f616c3e2ee934da2bb1cafe7c814f6c -->
 ## WNBA Lean: Portland Fire @ Phoenix Mercury
