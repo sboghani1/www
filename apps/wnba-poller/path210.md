@@ -864,18 +864,25 @@ line movement: side: Aces +1.5 -> +2 (Lynx firmed, Aces ML +100 -> +115); total:
 context: saturday. fade lynx = back the las vegas aces +2 near-pick'em home dog, taking fade_favorite + motivated_underdog over the mild firm toward the lynx (aces ml +100 -> +115), aligning with the user's aces-win read; sized small since follow_line_movement pointed the other way. total: small over 182 on the retired over-tilt prior with a flat number. first-half over 95 posted as a fh_total_high_big flag. [generated post-tip from frozen pre-tip closing lines]
 model_lean: side back Aces +2 (small); total over 182 (small); 1H over 95 (watch flag) | stars: side=1:wrong, total=1:wrong, fh_total=1:right
 
+120fadestorm
+wrong
+follow_line_movement, back_favorite
+line movement: side: -1.5 (35h), -2, -2.5 (held to close), ML -142 -> -135; total: 179.5 (open), 176.5 (low), 177.5 (close)
+context: sunday. fade storm = back the chicago sky -2.5 road favorite following a clean one-directional firm -1.5 -> -2.5 that HELD into tip (follow_line_movement), aligning with the user's sky read; sized small at 2-star conviction against the underwater back_favorite shape. total: under 177.5 after a 179.5 -> 176.5 drop that bounced back to 177.5 (near-pass). first-half under 86.5 posted as a fh_total_low flag. [initial pre-tip, finalized near tip]
+model_lean: side back Sky -2.5 (small, 2-star); total under 177.5 (watch); 1H under 86.5 (watch flag) | stars: side=2:wrong, total=1:right, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 17 right / 19 wrong
+follow_line_movement: 17 right / 20 wrong
 fade_favorite: 21 right / 18 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 17 right / 24 wrong
-back_favorite: 22 right / 32 wrong
+back_favorite: 22 right / 33 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 7 wrong
 overcaution: 0 right / 1 wrong
@@ -1073,28 +1080,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=7748b7323012e52de45a2c18b561c590 -->
-## WNBA Lean: Chicago Sky @ Seattle Storm
-- Event ID: `7748b7323012e52de45a2c18b561c590`
-- Revision: `9e4b9ec4-3313-4450-ac8a-a86bb9db1fa9`
-- Status: `active`
-
-### Full game
-- **Side:** Chicago Sky (small)
-  - Evidence: The clean one-directional firm HELD into tip: -1.5 -> -2 -> -2.5 and stuck at -2.5 (ML -142 -> -135), confirming follow_line_movement -- strongest side on the slate.; Agrees with your Sky-to-win read (market has Sky as the road favorite).
-  - Watch: Sized small: road favorite, weaker 'bad' team, back_favorite underwater (22-32) -- 2-star conviction, small stake.; A late reversal toward pick'em would kill it, but the number held.
-- **Total:** Under (watch)
-  - Evidence: Total fell 179.5 -> 176.5 but BOUNCED back to 177.5 into tip (partial round-trip); net only -2 with the recent move up.
-  - Watch: Downgraded to near-pass -- the under lost steam off the 176.5 low; a push over 178.5 flips it.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: 1H total 86.5 vs 88.75 straight-half split = -2.25 -> fh_total_low (medium).
-  - Watch: Flag not a bet (fh_total_low_medium 2-4); 1H spread -1 ~ half the -2.5 line = noise, no fh_side.
-
-**Summary:** FINAL (near tip, ~5:00 ET closing lines). Sky @ Storm: small SKY -2.5 (2-star) -- the clean firm -1.5->-2.5 HELD into tip (follow_line_movement confirmed), agreeing with your Sky read. Total DOWNGRADED to watch UNDER 177.5 -- it bounced off the 176.5 low, near-pass now. 1H UNDER 86.5 flag. [stars: side=2, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=7748b7323012e52de45a2c18b561c590 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=873224496c331ddad2dc0cb9daf17ffb -->
 ## WNBA Lean: Indiana Fever @ Atlanta Dream
