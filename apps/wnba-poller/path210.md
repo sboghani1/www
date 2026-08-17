@@ -878,12 +878,19 @@ line movement: side: Fever +2.5 (open), +1.5, PICK'EM (close); Dream lay -2.5 ->
 context: sunday. fade dream = back the indiana fever road dog as the line ran a full 2.5 pts onto the fever (dream -2.5 -> pick'em, follow_line_movement), fading the user's dream -5.5 read; a good fever team getting to a coin-flip, fade_favorite + motivated_underdog. total: under 188 (round-tripped 188.5 -> 187 -> 188, near-pass). first-half over 97.5 posted as a fh_total_high_big flag. [initial pre-tip, finalized near tip at pick'em]
 model_lean: side back Fever pick'em (small, 2-star); total under 188 (watch); 1H over 97.5 (watch flag) | stars: side=2:right, total=1:right, fh_total=1:wrong
 
+122fademercury
+right
+fade_favorite, motivated_underdog, total_over
+line movement: side: Fire +5.5 (open), +5, +5.5, +5 (near-flat, slight drift to dog); Mercury lay -5.5 -> -5; total: 176.5 (open), 178 (close)
+context: sunday. fade mercury = back the portland fire +5 road dog on a near-flat line that drifted slightly to the dog (mercury lay -5.5 -> -5), fading the user's mercury -4.5 read; laying -5 was the underwater back_favorite shape so take the expansion dog's points (cover-only). total: over 178 following a 176.5 -> 178 rise. first-half over 91.5 posted as a fh_total_high flag. [initial pre-tip lean; final refinement blocked by the 12h staleness guard, resolved as-is]
+model_lean: side back Fire +5 (small); total over 178 (small); 1H over 91.5 (watch flag) | stars: side=1:right, total=1:wrong, fh_total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 18 right / 20 wrong
-fade_favorite: 22 right / 18 wrong
+fade_favorite: 23 right / 18 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
@@ -894,9 +901,9 @@ chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 7 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 8 right / 3 wrong
+motivated_underdog: 9 right / 3 wrong
 overconfidence: 22 right / 29 wrong
-total_over: 17 right / 22 wrong
+total_over: 18 right / 22 wrong
 total_under: 25 right / 27 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
@@ -1088,24 +1095,3 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
-<!-- WNBA_LEAN_EVENT_START event_id=7f616c3e2ee934da2bb1cafe7c814f6c -->
-## WNBA Lean: Portland Fire @ Phoenix Mercury
-- Event ID: `7f616c3e2ee934da2bb1cafe7c814f6c`
-- Revision: `0becf069-a4b8-401d-a0a4-e657f482c7c1`
-- Status: `active`
-
-### Full game
-- **Side:** Portland Fire (small)
-  - Evidence: Near-flat line with a slight drift to the Fire dog (Mercury -5.5 -> -5, lay shrank = money toward the dog); laying -5 is the underwater back_favorite shape (22-32).; Fades your Mercury side; big-favorite-doesn't-cover caution on a -5 number -- take the expansion dog's points.
-  - Watch: Line is nearly stable (5.5->5->5.5->5) so this is near-pass; a firm to Mercury -6.5+ flips to backing Mercury.; Fire is a weak expansion team -- cover-only, not a Fire ML call.
-- **Total:** Over (small)
-  - Evidence: Total rose 176.5 -> 178 with over juice -113 (mild over money).
-  - Watch: Modest move; a drop back under 176 flips it.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 91.5 vs 89 straight-half split = +2.5 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread +2.5 = exactly half the +5 line = noise, no fh_side.
-
-**Summary:** INITIAL lean (pre-tip, lines may still move). Fire @ Mercury: small FIRE +5 -- FADE your Mercury side; near-flat line drifted slightly to the Fire dog and laying -5 is the underwater back_favorite shape (cover-only). Small OVER 178 (rose from 176.5). 1H: OVER 91.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=7f616c3e2ee934da2bb1cafe7c814f6c -->
