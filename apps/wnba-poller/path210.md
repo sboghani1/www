@@ -1095,3 +1095,24 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
+<!-- WNBA_LEAN_EVENT_START event_id=f160b99581637ed10718a0bf90a33d38 -->
+## WNBA Lean: Dallas Wings @ Golden State Valkyries
+- Event ID: `f160b99581637ed10718a0bf90a33d38`
+- Revision: `ed638974-3631-44e6-a1a7-6ada5f3ee370`
+- Status: `active`
+
+### Full game
+- **Side:** Dallas Wings (small)
+  - Evidence: Flat/round-tripped side line: Wings +5.5 -> +6.5 -> +5.5 (net unchanged, line_stable); laying -5.5 is the underwater back_favorite shape (22-33), while fade_favorite (23-18) and motivated_underdog (9-3) are the stronger dog shapes.; Mild ML money toward the Wings dog (+226 -> +203); agrees with your Wings side directionally -- but the market has Wings as +5.5 ROAD DOGS, not the -1.5 favorites you expected.
+  - Watch: No line-movement edge (round-trip), so this is a priors-based fade of the favorite -- a firm to Valkyries -7+ flips toward backing Golden State.; Wings +5.5 is a cover lean, not the Wings-ML/favored call from your thought.
+- **Total:** Under (small)
+  - Evidence: Total eased 163.5 -> 161.5 (net -2, mild under) on an already-low number.
+  - Watch: Only a mild edge and it wobbled (161 low, 162.5 bounce); a move back over 163 flips it.
+
+### First half
+- **Total:** Under (watch)
+  - Evidence: 1H total 78.5 vs 80.75 straight-half split = -2.25 -> fh_total_low (medium).
+  - Watch: Flag not a bet (fh_total_low_medium 2-4); 1H spread +3.5 vs +2.75 half-split = ~noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, ~2h out, lines may move). Wings @ Valkyries: small WINGS +5.5 -- fade the underwater Valkyries -5.5 favorite on a flat/round-tripped line (5.5->6.5->5.5) with mild ML money toward the Wings dog; agrees with your Wings side directionally, but note the market has Wings as +5.5 ROAD DOGS, not -1.5 favorites. Small UNDER 161.5 (eased from 163.5, low number). 1H UNDER 78.5 flag (fh_total_low). Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=f160b99581637ed10718a0bf90a33d38 -->
