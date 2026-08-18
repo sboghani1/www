@@ -1123,3 +1123,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip, lines may move). Sparks @ Sun: small SPARKS -2.5 -- FADE your Sun side; line firmed cleanly onto the Sparks road favorite (-1.5->-2.5, follow_line_movement), and the market has SPARKS favored, not the Sun. Small UNDER 170.5 (fell 173.5). 1H UNDER 83.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=4182f31a2a8dbb90fbfd76b2b1cf0493 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=82e9dd1bf34357364d7cda4ebfacc413 -->
+## WNBA Lean: Indiana Fever @ Toronto Tempo
+- Event ID: `82e9dd1bf34357364d7cda4ebfacc413`
+- Revision: `3527f61d-c29e-4cc2-814c-ad8f4d40e81a`
+- Status: `active`
+
+### Full game
+- **Side:** Toronto Tempo (small)
+  - Evidence: -10 is a big lay where big-favorites-don't-cover recurs; take the home dog's points (fade_favorite 23-19, motivated_underdog 9-4).; Fades your Fever side; the Fever ML firmed to -500 (they should WIN) but that's a winner call, not a -10 cover.
+  - Watch: Wobbly spread -9.5 -> -10.5 -> -10; a clean firm to -12+ would be a warning the market prices a blowout.; Cover-only stance on the dog, not a Tempo ML.
+- **Total:** Under (small)
+  - Evidence: Total fell 193.5 -> 190.5 (net -3) off a high number.
+  - Watch: A bounce back over 192 weakens it.
+
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 97.5 vs 95.25 straight-half split = +2.25 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread -5.5 ~ half the -10 line = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, lines may move). Fever @ Tempo: small TEMPO +10 -- FADE your Fever side; -10 is a big lay where big-favorites-don't-cover, take the home dog's points even though the Fever ML firmed to -500 (winner, not cover). Small UNDER 190.5 (fell 193.5). 1H OVER 97.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=82e9dd1bf34357364d7cda4ebfacc413 -->
