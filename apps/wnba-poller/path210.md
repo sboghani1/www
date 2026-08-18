@@ -1102,3 +1102,24 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
+<!-- WNBA_LEAN_EVENT_START event_id=4182f31a2a8dbb90fbfd76b2b1cf0493 -->
+## WNBA Lean: Los Angeles Sparks @ Connecticut Sun
+- Event ID: `4182f31a2a8dbb90fbfd76b2b1cf0493`
+- Revision: `0a4684f0-a0d5-4af9-bb85-1323c2bb3904`
+- Status: `active`
+
+### Full game
+- **Side:** Los Angeles Sparks (small)
+  - Evidence: The line firmed cleanly onto the Sparks road favorite -1.5 -> -2.5 (ML -120 -> -145), a one-directional follow_line_movement signal.; Fades your Sun side -- the market has SPARKS -2.5, not the Sun as -2.5 favorites you had.
+  - Watch: back_favorite is underwater (22-33) so sized small; a reversal toward pick'em flips it.; Two weak teams -- a coin-flip cover.
+- **Total:** Under (small)
+  - Evidence: Total fell 173.5 -> 170.5 (net -3, under money) on a low number.
+  - Watch: Bounced off 169.5 -- a move back over 172 weakens it.
+
+### First half
+- **Total:** Under (watch)
+  - Evidence: 1H total 83.5 vs 85.25 straight-half split = -1.75 -> fh_total_low (medium).
+  - Watch: Flag not a bet (fh_total_low_medium 2-4); 1H spread -1 ~ half the -2.5 line = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, lines may move). Sparks @ Sun: small SPARKS -2.5 -- FADE your Sun side; line firmed cleanly onto the Sparks road favorite (-1.5->-2.5, follow_line_movement), and the market has SPARKS favored, not the Sun. Small UNDER 170.5 (fell 173.5). 1H UNDER 83.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=4182f31a2a8dbb90fbfd76b2b1cf0493 -->
