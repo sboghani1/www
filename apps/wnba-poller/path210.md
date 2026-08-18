@@ -1105,23 +1105,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=4182f31a2a8dbb90fbfd76b2b1cf0493 -->
 ## WNBA Lean: Los Angeles Sparks @ Connecticut Sun
 - Event ID: `4182f31a2a8dbb90fbfd76b2b1cf0493`
-- Revision: `0a4684f0-a0d5-4af9-bb85-1323c2bb3904`
+- Revision: `f14c653c-48e6-4e84-8b94-eb4514ab8691`
 - Status: `active`
 
 ### Full game
-- **Side:** Los Angeles Sparks (small)
-  - Evidence: The line firmed cleanly onto the Sparks road favorite -1.5 -> -2.5 (ML -120 -> -145), a one-directional follow_line_movement signal.; Fades your Sun side -- the market has SPARKS -2.5, not the Sun as -2.5 favorites you had.
-  - Watch: back_favorite is underwater (22-33) so sized small; a reversal toward pick'em flips it.; Two weak teams -- a coin-flip cover.
+- **Side:** Los Angeles Sparks (watch)
+  - Evidence: Net firm held direction (-1.5 -> -2 close) but the -2.5 peak GAVE BACK to -2 (partial round-trip), so the clean-firm rationale weakened to only +0.5 net.; Closing -2 is a better number than the -2.5 initially leaned; fades your Sun side.
+  - Watch: Downgraded to near-pass -- give-back to -2 plus underwater back_favorite (22-33); a re-firm to -3 would restore conviction.
 - **Total:** Under (small)
-  - Evidence: Total fell 173.5 -> 170.5 (net -3, under money) on a low number.
-  - Watch: Bounced off 169.5 -- a move back over 172 weakens it.
+  - Evidence: Total kept falling one-directional 173.5 -> 169.5 into tip (net -4, sustained under money) -- the stronger leg now.
+  - Watch: total_under is ~coin-flip (25-27); a bounce over 171 weakens it.
 
 ### First half
 - **Total:** Under (watch)
-  - Evidence: 1H total 83.5 vs 85.25 straight-half split = -1.75 -> fh_total_low (medium).
-  - Watch: Flag not a bet (fh_total_low_medium 2-4); 1H spread -1 ~ half the -2.5 line = noise, no fh_side.
+  - Evidence: 1H total 82.5 vs 84.75 straight-half split = -2.25 -> fh_total_low (medium).
+  - Watch: Flag not a bet (fh_total_low_medium 2-4); 1H spread -1 = half the -2 line = noise, no fh_side.
 
-**Summary:** INITIAL lean (pre-tip, lines may move). Sparks @ Sun: small SPARKS -2.5 -- FADE your Sun side; line firmed cleanly onto the Sparks road favorite (-1.5->-2.5, follow_line_movement), and the market has SPARKS favored, not the Sun. Small UNDER 170.5 (fell 173.5). 1H UNDER 83.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (near tip, ~7:00 ET closing lines). Sparks @ Sun: WATCH/near-pass SPARKS -2 -- the firm gave back off -2.5 to -2 (only +0.5 net now), side downgraded; small UNDER 169.5 is the stronger leg (fell 173.5->169.5). Fades your Sun side. H1: side -1 vs -1.25 split = noise (no lean) | total 82.5 vs 84.75 = -2.25 -> fh_total_low flag (watch). [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=4182f31a2a8dbb90fbfd76b2b1cf0493 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=82e9dd1bf34357364d7cda4ebfacc413 -->
