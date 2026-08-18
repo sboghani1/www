@@ -885,12 +885,19 @@ line movement: side: Fire +5.5 (open), +5, +5.5, +5 (near-flat, slight drift to 
 context: sunday. fade mercury = back the portland fire +5 road dog on a near-flat line that drifted slightly to the dog (mercury lay -5.5 -> -5), fading the user's mercury -4.5 read; laying -5 was the underwater back_favorite shape so take the expansion dog's points (cover-only). total: over 178 following a 176.5 -> 178 rise. first-half over 91.5 posted as a fh_total_high flag. [initial pre-tip lean; final refinement blocked by the 12h staleness guard, resolved as-is]
 model_lean: side back Fire +5 (small); total over 178 (small); 1H over 91.5 (watch flag) | stars: side=1:right, total=1:wrong, fh_total=1:wrong
 
+123fadevalkyries
+wrong
+fade_favorite, motivated_underdog, line_stable
+line movement: side: Wings +5.5 (open), +6.5 (peak), +5.5 (close) flat/round-trip; ML +226 -> +203; total: 163.5 (open), 161.5 (close)
+context: monday. fade valkyries = back the dallas wings +5.5 road dog, fading the underwater valkyries -5.5 favorite on a flat/round-tripped line (5.5 -> 6.5 -> 5.5, line_stable) with mild ml money to the wings dog, aligning with the user's wings side -- though the market had wings as +5.5 dogs, not the -1.5 favorites in the user's read. total: under 161.5 after a 163.5 -> 161.5 ease on a low number. first-half under 78.5 posted as a fh_total_low flag. [initial pre-tip lean, resolved as-is]
+model_lean: side back Wings +5.5 (small); total under 161.5 (small); 1H under 78.5 (watch flag) | stars: side=1:wrong, total=1:right, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 18 right / 20 wrong
-fade_favorite: 23 right / 18 wrong
+fade_favorite: 23 right / 19 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
@@ -898,10 +905,10 @@ decision_day_before: 1 right / 0 wrong
 fade_line_movement: 17 right / 24 wrong
 back_favorite: 22 right / 33 wrong
 chased_better_payout: 0 right / 1 wrong
-line_stable: 9 right / 7 wrong
+line_stable: 9 right / 8 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 9 right / 3 wrong
+motivated_underdog: 9 right / 4 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 18 right / 22 wrong
 total_under: 25 right / 27 wrong
@@ -1095,24 +1102,3 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
-<!-- WNBA_LEAN_EVENT_START event_id=f160b99581637ed10718a0bf90a33d38 -->
-## WNBA Lean: Dallas Wings @ Golden State Valkyries
-- Event ID: `f160b99581637ed10718a0bf90a33d38`
-- Revision: `ed638974-3631-44e6-a1a7-6ada5f3ee370`
-- Status: `active`
-
-### Full game
-- **Side:** Dallas Wings (small)
-  - Evidence: Flat/round-tripped side line: Wings +5.5 -> +6.5 -> +5.5 (net unchanged, line_stable); laying -5.5 is the underwater back_favorite shape (22-33), while fade_favorite (23-18) and motivated_underdog (9-3) are the stronger dog shapes.; Mild ML money toward the Wings dog (+226 -> +203); agrees with your Wings side directionally -- but the market has Wings as +5.5 ROAD DOGS, not the -1.5 favorites you expected.
-  - Watch: No line-movement edge (round-trip), so this is a priors-based fade of the favorite -- a firm to Valkyries -7+ flips toward backing Golden State.; Wings +5.5 is a cover lean, not the Wings-ML/favored call from your thought.
-- **Total:** Under (small)
-  - Evidence: Total eased 163.5 -> 161.5 (net -2, mild under) on an already-low number.
-  - Watch: Only a mild edge and it wobbled (161 low, 162.5 bounce); a move back over 163 flips it.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: 1H total 78.5 vs 80.75 straight-half split = -2.25 -> fh_total_low (medium).
-  - Watch: Flag not a bet (fh_total_low_medium 2-4); 1H spread +3.5 vs +2.75 half-split = ~noise, no fh_side.
-
-**Summary:** INITIAL lean (pre-tip, ~2h out, lines may move). Wings @ Valkyries: small WINGS +5.5 -- fade the underwater Valkyries -5.5 favorite on a flat/round-tripped line (5.5->6.5->5.5) with mild ML money toward the Wings dog; agrees with your Wings side directionally, but note the market has Wings as +5.5 ROAD DOGS, not -1.5 favorites. Small UNDER 161.5 (eased from 163.5, low number). 1H UNDER 78.5 flag (fh_total_low). Refine near tip. [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=f160b99581637ed10718a0bf90a33d38 -->
