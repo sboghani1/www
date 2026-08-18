@@ -1145,3 +1145,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip, lines may move). Fever @ Tempo: small TEMPO +10 -- FADE your Fever side; -10 is a big lay where big-favorites-don't-cover, take the home dog's points even though the Fever ML firmed to -500 (winner, not cover). Small UNDER 190.5 (fell 193.5). 1H OVER 97.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=82e9dd1bf34357364d7cda4ebfacc413 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=89ad79c1f38cc357b48573134ca858b7 -->
+## WNBA Lean: New York Liberty @ Chicago Sky
+- Event ID: `89ad79c1f38cc357b48573134ca858b7`
+- Revision: `cf2025ba-4b8c-487e-b7af-b1d5ce6a20b1`
+- Status: `active`
+
+### Full game
+- **Side:** Chicago Sky (small)
+  - Evidence: The Liberty lay shrank -4.5 -> -4 (favorite's lay shrinking = money toward the Sky dog); market lays only -4, nowhere near your Liberty -8.5.; Take the home dog points fading the favorite (fade_favorite 23-19); back_favorite is underwater (22-33).
+  - Watch: Near-flat/round-tripped line (-4.5->-3.5->-4) so near-pass; a firm to Liberty -6+ flips to backing New York.; Sky is a weak team -- cover-only.
+- **Total:** Under (small)
+  - Evidence: Total fell 182.5 -> 180 (net -2.5, mild under).
+  - Watch: Bounced off 179 -- a move back over 181 weakens it.
+
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 92.5 vs 90 straight-half split = +2.5 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread -2.5 ~ half the -4 line = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, lines may move). Liberty @ Sky: small SKY +4 -- FADE your Liberty side; the Liberty lay shrank -4.5->-4 (money to the Sky dog) and the market lays only -4, not your -8.5, so take the home dog points. Small UNDER 180 (fell 182.5). 1H OVER 92.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=89ad79c1f38cc357b48573134ca858b7 -->
