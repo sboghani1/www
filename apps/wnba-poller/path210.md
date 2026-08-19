@@ -1127,23 +1127,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=82e9dd1bf34357364d7cda4ebfacc413 -->
 ## WNBA Lean: Indiana Fever @ Toronto Tempo
 - Event ID: `82e9dd1bf34357364d7cda4ebfacc413`
-- Revision: `84cb3c95-1ce9-4529-8218-99652173686f`
+- Revision: `3527f61d-c29e-4cc2-814c-ad8f4d40e81a`
 - Status: `active`
 
 ### Full game
 - **Side:** Toronto Tempo (small)
-  - Evidence: Spread HELD at -10 into tip (Tempo +10 unchanged); -10 is a big lay where big-favorites-don't-cover -- take the home dog's points (fade_favorite 23-19, motivated_underdog 9-4).; Fades your Fever side.
-  - Watch: Caution: Fever ML firmed harder -500 -> -525 (more money they WIN) -- a warning for the cover, but the spread never pushed past -10 so the cover angle stands. Cover-only, not a Tempo ML.
+  - Evidence: -10 is a big lay where big-favorites-don't-cover recurs; take the home dog's points (fade_favorite 23-19, motivated_underdog 9-4).; Fades your Fever side; the Fever ML firmed to -500 (they should WIN) but that's a winner call, not a -10 cover.
+  - Watch: Wobbly spread -9.5 -> -10.5 -> -10; a clean firm to -12+ would be a warning the market prices a blowout.; Cover-only stance on the dog, not a Tempo ML.
 - **Total:** Under (small)
-  - Evidence: Total eased to 190 (from 193.5 open) into tip (under money on a high number).
-  - Watch: A bounce over 192 weakens it.
+  - Evidence: Total fell 193.5 -> 190.5 (net -3) off a high number.
+  - Watch: A bounce back over 192 weakens it.
 
 ### First half
 - **Total:** Over (watch)
-  - Evidence: 1H total 97.5 vs 95 straight-half split = +2.5 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread -6 vs half the -10 line (-5) = ~noise, no fh_side.
+  - Evidence: 1H total 97.5 vs 95.25 straight-half split = +2.25 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread -5.5 ~ half the -10 line = noise, no fh_side.
 
-**Summary:** FINAL (near tip, ~7:00 ET closing lines). Fever @ Tempo: small TEMPO +10 -- unchanged, spread HELD at -10 (big-favorites-don't-cover), fading your Fever side; small UNDER 190 (eased from 193.5). Caution: Fever ML firmed -500 -> -525 (should win, but not a -10 cover). H1: side -6 vs -5 split = ~noise (no lean) | total 97.5 vs 95 = +2.5 -> fh_total_high flag (watch). [stars: side=1, total=1, fh_total=1]
+**Summary:** INITIAL lean (pre-tip, lines may move). Fever @ Tempo: small TEMPO +10 -- FADE your Fever side; -10 is a big lay where big-favorites-don't-cover, take the home dog's points even though the Fever ML firmed to -500 (winner, not cover). Small UNDER 190.5 (fell 193.5). 1H OVER 97.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=82e9dd1bf34357364d7cda4ebfacc413 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=89ad79c1f38cc357b48573134ca858b7 -->
