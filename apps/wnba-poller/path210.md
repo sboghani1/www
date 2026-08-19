@@ -1149,23 +1149,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=89ad79c1f38cc357b48573134ca858b7 -->
 ## WNBA Lean: New York Liberty @ Chicago Sky
 - Event ID: `89ad79c1f38cc357b48573134ca858b7`
-- Revision: `cf2025ba-4b8c-487e-b7af-b1d5ce6a20b1`
+- Revision: `c4458170-7755-459a-be04-1d5f8384dc1f`
 - Status: `active`
 
 ### Full game
-- **Side:** Chicago Sky (small)
-  - Evidence: The Liberty lay shrank -4.5 -> -4 (favorite's lay shrinking = money toward the Sky dog); market lays only -4, nowhere near your Liberty -8.5.; Take the home dog points fading the favorite (fade_favorite 23-19); back_favorite is underwater (22-33).
-  - Watch: Near-flat/round-tripped line (-4.5->-3.5->-4) so near-pass; a firm to Liberty -6+ flips to backing New York.; Sky is a weak team -- cover-only.
+- **Side:** Chicago Sky (watch)
+  - Evidence: The dog-drift REVERSED into tip: the Liberty lay round-tripped -4.5 -> -4 -> -4.5 (closed back at the open) and the ML firmed -180 -> -190 onto Liberty -- late money is on the favorite, not the Sky dog.; Net-flat spread = no side edge; take the better Sky +4.5 number but this is near-pass now.
+  - Watch: Downgraded from the initial Sky lean -- the -4.5->-4 dog drift I leaned on gave it all back; a re-drift to Sky +5+ would revive it.
 - **Total:** Under (small)
-  - Evidence: Total fell 182.5 -> 180 (net -2.5, mild under).
-  - Watch: Bounced off 179 -- a move back over 181 weakens it.
+  - Evidence: Total fell 182.5 -> 180 (net -2.5, mild under), bounced 179 -> 180 at close.
+  - Watch: Mild edge; a move back over 181 weakens it.
 
 ### First half
 - **Total:** Over (watch)
-  - Evidence: 1H total 92.5 vs 90 straight-half split = +2.5 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread -2.5 ~ half the -4 line = noise, no fh_side.
+  - Evidence: 1H total 93 vs 90 straight-half split = +3 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread -2.5 ~ half the -4.5 line = noise, no fh_side.
 
-**Summary:** INITIAL lean (pre-tip, lines may move). Liberty @ Sky: small SKY +4 -- FADE your Liberty side; the Liberty lay shrank -4.5->-4 (money to the Sky dog) and the market lays only -4, not your -8.5, so take the home dog points. Small UNDER 180 (fell 182.5). 1H OVER 92.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (near tip closing lines). Liberty @ Sky: WATCH/near-pass SKY +4.5 -- DOWNGRADED: the dog-drift reversed, the Liberty lay round-tripped back to -4.5 and the ML firmed -180->-190 onto the favorite, so no side edge. Small UNDER 180 (fell 182.5, bounced late). Fades your Liberty side but at low conviction. H1: side -2.5 vs -2.25 split = noise (no lean) | total 93 vs 90 = +3 -> fh_total_high flag (watch). [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=89ad79c1f38cc357b48573134ca858b7 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=4f2f45c7a054f97a496a1edc30e4bd41 -->
