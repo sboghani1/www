@@ -1151,3 +1151,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip, lines may move). Tempo @ Mystics: small TEMPO +11 -- FADE your Mystics side; -11 is a big home lay where big-favorites-don't-cover (fade_favorite 26-19, motivated_underdog 12-4), take the dog's points even though the Mystics firm is clean (+9->+11). Total watch UNDER 170 (flat/low). H1: side +6.5 vs +5.5 split = ~noise (no lean) | total 83.5 vs 85 = -1.5 -> fh_total_low flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=c162d60ca8c8caf4195c3abf4566747a -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=09563bab4edf9cf2073ee946ad95d61b -->
+## WNBA Lean: Minnesota Lynx @ Golden State Valkyries
+- Event ID: `09563bab4edf9cf2073ee946ad95d61b`
+- Revision: `cf6bfc2c-eea7-4d00-831c-8b9cfc505c65`
+- Status: `active`
+
+### Full game
+- **Side:** Golden State Valkyries (small)
+  - Evidence: Near-flat/round-tripped side: Lynx -2.5 -> -1.5 -> -2 (lay shrank net toward the Valkyries dog); laying -2 is the underwater back_favorite shape (22-34), take the home dog's points (fade_favorite 26-19).; Fades your Lynx side.
+  - Watch: Round-tripped line = weak edge, near-pass; a re-firm to Lynx -3.5+ flips to backing Minnesota. Cover-only, not a Valkyries ML.
+- **Total:** Under (small)
+  - Evidence: Total fell one-directional 167.5 -> 164 (net -3.5, under money) on a low number.
+  - Watch: A bounce back over 166 weakens it.
+
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 85 vs 82 straight-half split = +3 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread -1 = half the -2 line = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, lines may move). Lynx @ Valkyries: small VALKYRIES +2 -- FADE your Lynx side; the Lynx lay shrank -2.5->-2 (toward the dog) and laying -2 is underwater back_favorite, take the home dog points (near-pass, round-tripped). Small UNDER 164 (fell 167.5). H1: side -1 vs -1 split = noise (no lean) | total 85 vs 82 = +3 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=09563bab4edf9cf2073ee946ad95d61b -->
