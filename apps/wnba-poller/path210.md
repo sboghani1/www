@@ -906,26 +906,33 @@ line movement: side: Fever -9.5 (open), -10.5 (peak), -10 (close) held; ML -385 
 context: tuesday. fade fever = back the toronto tempo +10 home dog off a big -10 lay (big-favorites-don't-cover), fade_favorite + motivated_underdog, fading the user's fever side; the fever ml firmed hard -385 -> -525 (they should win, but not a -10 cover). total: under 190 after a 193.5 -> 190 ease. first-half over 97.5 posted as a fh_total_high flag. [initial pre-tip, finalized near tip]
 model_lean: side back Tempo +10 (small); total under 190 (small); 1H over 97.5 (watch flag) | stars: side=1:right, total=1:wrong, fh_total=1:right
 
+126fadeliberty
+right
+fade_favorite, motivated_underdog, fade_line_movement, total_under
+line movement: side: Liberty -4.5 (open), -3.5 (dip), -4.5 (close) round-trip; ML -180 -> -190 late firm; total: 182.5 (open), 180 (close)
+context: tuesday. fade liberty = back the chicago sky +4.5 home dog; the dog-drift first leaned on reversed (liberty lay round-tripped -4.5 -> -4 -> -4.5, ml firmed -180 -> -190) so downgraded to near-pass, but held the sky side fading the favorite (fade_favorite, motivated_underdog, fade_line_movement). total: under 180 after a 182.5 -> 180 ease. first-half over 93 posted as a fh_total_high flag. [initial pre-tip, finalized near tip at near-pass]
+model_lean: side back Sky +4.5 (watch/near-pass); total under 180 (small); 1H over 93 (watch flag) | stars: side=1:right, total=1:right, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 18 right / 21 wrong
-fade_favorite: 24 right / 19 wrong
+fade_favorite: 25 right / 19 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
 decision_day_before: 1 right / 0 wrong
-fade_line_movement: 17 right / 24 wrong
+fade_line_movement: 18 right / 24 wrong
 back_favorite: 22 right / 34 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 8 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 10 right / 4 wrong
+motivated_underdog: 11 right / 4 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 18 right / 22 wrong
-total_under: 25 right / 27 wrong
+total_under: 26 right / 27 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1115,28 +1122,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=89ad79c1f38cc357b48573134ca858b7 -->
-## WNBA Lean: New York Liberty @ Chicago Sky
-- Event ID: `89ad79c1f38cc357b48573134ca858b7`
-- Revision: `c4458170-7755-459a-be04-1d5f8384dc1f`
-- Status: `active`
-
-### Full game
-- **Side:** Chicago Sky (watch)
-  - Evidence: The dog-drift REVERSED into tip: the Liberty lay round-tripped -4.5 -> -4 -> -4.5 (closed back at the open) and the ML firmed -180 -> -190 onto Liberty -- late money is on the favorite, not the Sky dog.; Net-flat spread = no side edge; take the better Sky +4.5 number but this is near-pass now.
-  - Watch: Downgraded from the initial Sky lean -- the -4.5->-4 dog drift I leaned on gave it all back; a re-drift to Sky +5+ would revive it.
-- **Total:** Under (small)
-  - Evidence: Total fell 182.5 -> 180 (net -2.5, mild under), bounced 179 -> 180 at close.
-  - Watch: Mild edge; a move back over 181 weakens it.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 93 vs 90 straight-half split = +3 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread -2.5 ~ half the -4.5 line = noise, no fh_side.
-
-**Summary:** FINAL (near tip closing lines). Liberty @ Sky: WATCH/near-pass SKY +4.5 -- DOWNGRADED: the dog-drift reversed, the Liberty lay round-tripped back to -4.5 and the ML firmed -180->-190 onto the favorite, so no side edge. Small UNDER 180 (fell 182.5, bounced late). Fades your Liberty side but at low conviction. H1: side -2.5 vs -2.25 split = noise (no lean) | total 93 vs 90 = +3 -> fh_total_high flag (watch). [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=89ad79c1f38cc357b48573134ca858b7 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=4f2f45c7a054f97a496a1edc30e4bd41 -->
 ## WNBA Lean: Atlanta Dream @ Las Vegas Aces
