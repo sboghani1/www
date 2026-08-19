@@ -892,18 +892,25 @@ line movement: side: Wings +5.5 (open), +6.5 (peak), +5.5 (close) flat/round-tri
 context: monday. fade valkyries = back the dallas wings +5.5 road dog, fading the underwater valkyries -5.5 favorite on a flat/round-tripped line (5.5 -> 6.5 -> 5.5, line_stable) with mild ml money to the wings dog, aligning with the user's wings side -- though the market had wings as +5.5 dogs, not the -1.5 favorites in the user's read. total: under 161.5 after a 163.5 -> 161.5 ease on a low number. first-half under 78.5 posted as a fh_total_low flag. [initial pre-tip lean, resolved as-is]
 model_lean: side back Wings +5.5 (small); total under 161.5 (small); 1H under 78.5 (watch flag) | stars: side=1:wrong, total=1:right, fh_total=1:right
 
+124fadesun
+wrong
+follow_line_movement, back_favorite
+line movement: side: Sparks -1.5 (open), -2.5 (peak), -2 (close) firm gave back; ML -120 -> -140; total: 173.5 (open), 169.5 (close)
+context: tuesday. fade sun = back the los angeles sparks road favorite following a firm -1.5 -> -2.5 that GAVE BACK to -2 at close (follow_line_movement, downgraded to near-pass on the give-back); back_favorite is underwater. total: under 169.5 after a steady 173.5 -> 169.5 drop. first-half under 82.5 posted as a fh_total_low flag. [initial pre-tip, finalized near tip]
+model_lean: side back Sparks -2 (watch/near-pass); total under 169.5 (small); 1H under 82.5 (watch flag) | stars: side=1:wrong, total=1:right, fh_total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 18 right / 20 wrong
+follow_line_movement: 18 right / 21 wrong
 fade_favorite: 23 right / 19 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 17 right / 24 wrong
-back_favorite: 22 right / 33 wrong
+back_favorite: 22 right / 34 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 8 wrong
 overcaution: 0 right / 1 wrong
@@ -1101,28 +1108,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=4182f31a2a8dbb90fbfd76b2b1cf0493 -->
-## WNBA Lean: Los Angeles Sparks @ Connecticut Sun
-- Event ID: `4182f31a2a8dbb90fbfd76b2b1cf0493`
-- Revision: `f14c653c-48e6-4e84-8b94-eb4514ab8691`
-- Status: `active`
-
-### Full game
-- **Side:** Los Angeles Sparks (watch)
-  - Evidence: Net firm held direction (-1.5 -> -2 close) but the -2.5 peak GAVE BACK to -2 (partial round-trip), so the clean-firm rationale weakened to only +0.5 net.; Closing -2 is a better number than the -2.5 initially leaned; fades your Sun side.
-  - Watch: Downgraded to near-pass -- give-back to -2 plus underwater back_favorite (22-33); a re-firm to -3 would restore conviction.
-- **Total:** Under (small)
-  - Evidence: Total kept falling one-directional 173.5 -> 169.5 into tip (net -4, sustained under money) -- the stronger leg now.
-  - Watch: total_under is ~coin-flip (25-27); a bounce over 171 weakens it.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: 1H total 82.5 vs 84.75 straight-half split = -2.25 -> fh_total_low (medium).
-  - Watch: Flag not a bet (fh_total_low_medium 2-4); 1H spread -1 = half the -2 line = noise, no fh_side.
-
-**Summary:** FINAL (near tip, ~7:00 ET closing lines). Sparks @ Sun: WATCH/near-pass SPARKS -2 -- the firm gave back off -2.5 to -2 (only +0.5 net now), side downgraded; small UNDER 169.5 is the stronger leg (fell 173.5->169.5). Fades your Sun side. H1: side -1 vs -1.25 split = noise (no lean) | total 82.5 vs 84.75 = -2.25 -> fh_total_low flag (watch). [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=4182f31a2a8dbb90fbfd76b2b1cf0493 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=82e9dd1bf34357364d7cda4ebfacc413 -->
 ## WNBA Lean: Indiana Fever @ Toronto Tempo
