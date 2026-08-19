@@ -913,12 +913,19 @@ line movement: side: Liberty -4.5 (open), -3.5 (dip), -4.5 (close) round-trip; M
 context: tuesday. fade liberty = back the chicago sky +4.5 home dog; the dog-drift first leaned on reversed (liberty lay round-tripped -4.5 -> -4 -> -4.5, ml firmed -180 -> -190) so downgraded to near-pass, but held the sky side fading the favorite (fade_favorite, motivated_underdog, fade_line_movement). total: under 180 after a 182.5 -> 180 ease. first-half over 93 posted as a fh_total_high flag. [initial pre-tip, finalized near tip at near-pass]
 model_lean: side back Sky +4.5 (watch/near-pass); total under 180 (small); 1H over 93 (watch flag) | stars: side=1:right, total=1:right, fh_total=1:right
 
+127fadeaces
+right
+fade_favorite, motivated_underdog
+line movement: side: Dream +3.5 (open), +5 (peak), +3 (dip), +3.5 (close) round-trip; Aces ML -165; total: 180.5 (open), 175.5 (low), 178.5 (close)
+context: tuesday. fade aces = back the atlanta dream +3.5 road dog on a near-flat/round-tripped line (dream +3.5 -> +5 -> +3 -> +3.5, net unchanged); laying -3.5 is the underwater back_favorite shape so take the road dog's points (fade_favorite, motivated_underdog), fading the user's aces side. total: watch under 178.5 (round-tripped, near-pass). first-half under 86.5 posted as a fh_total_low flag. [initial pre-tip, finalized near tip]
+model_lean: side back Dream +3.5 (small); total under 178.5 (watch); 1H under 86.5 (watch flag) | stars: side=1:right, total=1:wrong, fh_total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 18 right / 21 wrong
-fade_favorite: 25 right / 19 wrong
+fade_favorite: 26 right / 19 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
@@ -929,7 +936,7 @@ chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 8 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 11 right / 4 wrong
+motivated_underdog: 12 right / 4 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 18 right / 22 wrong
 total_under: 26 right / 27 wrong
@@ -1123,24 +1130,3 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
-<!-- WNBA_LEAN_EVENT_START event_id=4f2f45c7a054f97a496a1edc30e4bd41 -->
-## WNBA Lean: Atlanta Dream @ Las Vegas Aces
-- Event ID: `4f2f45c7a054f97a496a1edc30e4bd41`
-- Revision: `8ae61d66-44bb-492b-b302-86e870b30beb`
-- Status: `active`
-
-### Full game
-- **Side:** Atlanta Dream (small)
-  - Evidence: Near-flat/round-tripped side: Dream +3.5 -> +5 -> +3 -> +3.5 (net back to the open); laying -3.5 is the underwater back_favorite shape (22-33), take the road dog's points (fade_favorite 23-19).; Dream now getting +3.5 (a touch better than the +3 initially); fades your Aces side.
-  - Watch: Round-tripped line = no movement edge, near-pass; a firm to Aces -5+ flips to backing Vegas. Cover-only, not a Dream ML.
-- **Total:** Under (watch)
-  - Evidence: Total round-tripped 180.5 -> 175.5 -> 178.5 and closed back near the open (no durable direction).
-  - Watch: No edge -- near-pass; the mild under evaporated on the late bounce.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: 1H total 86.5 vs 89.25 straight-half split = -2.75 -> fh_total_low (medium).
-  - Watch: Flag not a bet; 1H spread +2 ~ half the +3.5 line = noise, no fh_side.
-
-**Summary:** FINAL (near tip closing lines). Dream @ Aces: small DREAM +3.5 -- fade your Aces side on a near-flat/round-tripped line (Aces -3.5 net unchanged), laying -3.5 is underwater back_favorite so take the road dog points (cover-only). Total watch UNDER 178.5 (round-tripped, near-pass). H1: side +2 vs +1.75 split = noise (no lean) | total 86.5 vs 89.25 = -2.75 -> fh_total_low flag (watch). [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=4f2f45c7a054f97a496a1edc30e4bd41 -->
