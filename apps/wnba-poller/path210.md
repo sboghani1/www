@@ -899,12 +899,19 @@ line movement: side: Sparks -1.5 (open), -2.5 (peak), -2 (close) firm gave back;
 context: tuesday. fade sun = back the los angeles sparks road favorite following a firm -1.5 -> -2.5 that GAVE BACK to -2 at close (follow_line_movement, downgraded to near-pass on the give-back); back_favorite is underwater. total: under 169.5 after a steady 173.5 -> 169.5 drop. first-half under 82.5 posted as a fh_total_low flag. [initial pre-tip, finalized near tip]
 model_lean: side back Sparks -2 (watch/near-pass); total under 169.5 (small); 1H under 82.5 (watch flag) | stars: side=1:wrong, total=1:right, fh_total=1:wrong
 
+125fadefever
+right
+fade_favorite, motivated_underdog
+line movement: side: Fever -9.5 (open), -10.5 (peak), -10 (close) held; ML -385 -> -525; total: 193.5 (open), 190 (close)
+context: tuesday. fade fever = back the toronto tempo +10 home dog off a big -10 lay (big-favorites-don't-cover), fade_favorite + motivated_underdog, fading the user's fever side; the fever ml firmed hard -385 -> -525 (they should win, but not a -10 cover). total: under 190 after a 193.5 -> 190 ease. first-half over 97.5 posted as a fh_total_high flag. [initial pre-tip, finalized near tip]
+model_lean: side back Tempo +10 (small); total under 190 (small); 1H over 97.5 (watch flag) | stars: side=1:right, total=1:wrong, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 18 right / 21 wrong
-fade_favorite: 23 right / 19 wrong
+fade_favorite: 24 right / 19 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
@@ -915,7 +922,7 @@ chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 8 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 9 right / 4 wrong
+motivated_underdog: 10 right / 4 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 18 right / 22 wrong
 total_under: 25 right / 27 wrong
@@ -1108,28 +1115,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=82e9dd1bf34357364d7cda4ebfacc413 -->
-## WNBA Lean: Indiana Fever @ Toronto Tempo
-- Event ID: `82e9dd1bf34357364d7cda4ebfacc413`
-- Revision: `ab1f6ab1-2b9a-49f2-afdc-dcd7650157b0`
-- Status: `active`
-
-### Full game
-- **Side:** Toronto Tempo (small)
-  - Evidence: Spread HELD at -10 into tip (Tempo +10 unchanged); -10 is a big lay where big-favorites-don't-cover -- take the home dog's points (fade_favorite 23-19, motivated_underdog 9-4).; Fades your Fever side.
-  - Watch: Caution: Fever ML firmed harder -500 -> -525 (more money they WIN) -- a warning for the cover, but the spread never pushed past -10 so the cover angle stands. Cover-only, not a Tempo ML.
-- **Total:** Under (small)
-  - Evidence: Total eased to 190 (from 193.5 open) into tip (under money on a high number).
-  - Watch: A bounce over 192 weakens it.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 97.5 vs 95 straight-half split = +2.5 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread -6 vs half the -10 line (-5) = ~noise, no fh_side.
-
-**Summary:** FINAL (near tip, ~7:00 ET closing lines). Fever @ Tempo: small TEMPO +10 -- unchanged, spread HELD at -10 (big-favorites-don't-cover), fading your Fever side; small UNDER 190 (eased from 193.5). Caution: Fever ML firmed -500 -> -525 (should win, but not a -10 cover). H1: side -6 vs -5 split = ~noise (no lean) | total 97.5 vs 95 = +2.5 -> fh_total_high flag (watch). [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=82e9dd1bf34357364d7cda4ebfacc413 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=89ad79c1f38cc357b48573134ca858b7 -->
 ## WNBA Lean: New York Liberty @ Chicago Sky
