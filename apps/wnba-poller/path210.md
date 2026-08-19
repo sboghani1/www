@@ -1171,21 +1171,21 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=4f2f45c7a054f97a496a1edc30e4bd41 -->
 ## WNBA Lean: Atlanta Dream @ Las Vegas Aces
 - Event ID: `4f2f45c7a054f97a496a1edc30e4bd41`
-- Revision: `ba8afb4f-117e-4689-8ff7-f2aa4ce73114`
+- Revision: `8ae61d66-44bb-492b-b302-86e870b30beb`
 - Status: `active`
 
 ### Full game
 - **Side:** Atlanta Dream (small)
-  - Evidence: The Aces lay round-tripped and shrank late -5 -> -3 (money back toward the Dream dog); market lays only -3, not your Aces -5.5.; Take the road dog points fading the favorite (fade_favorite 23-19); back_favorite underwater (22-33).
-  - Watch: Big round-trip (Aces -3.5 -> -5 -> -3) so near-pass; a re-firm to Aces -5+ flips to backing Vegas.; Cover-only stance, not a Dream ML.
+  - Evidence: Near-flat/round-tripped side: Dream +3.5 -> +5 -> +3 -> +3.5 (net back to the open); laying -3.5 is the underwater back_favorite shape (22-33), take the road dog's points (fade_favorite 23-19).; Dream now getting +3.5 (a touch better than the +3 initially); fades your Aces side.
+  - Watch: Round-tripped line = no movement edge, near-pass; a firm to Aces -5+ flips to backing Vegas. Cover-only, not a Dream ML.
 - **Total:** Under (watch)
-  - Evidence: Total round-tripped 180.5 -> 175.5 -> 178.5 and bounced back near the open (no durable direction).
+  - Evidence: Total round-tripped 180.5 -> 175.5 -> 178.5 and closed back near the open (no durable direction).
   - Watch: No edge -- near-pass; the mild under evaporated on the late bounce.
 
 ### First half
 - **Total:** Under (watch)
   - Evidence: 1H total 86.5 vs 89.25 straight-half split = -2.75 -> fh_total_low (medium).
-  - Watch: Flag not a bet; 1H spread +2 ~ half the +3 line = noise, no fh_side.
+  - Watch: Flag not a bet; 1H spread +2 ~ half the +3.5 line = noise, no fh_side.
 
-**Summary:** INITIAL lean (pre-tip, lines may move). Dream @ Aces: small DREAM +3 -- FADE your Aces side; the Aces lay round-tripped and shrank late -5->-3 (money to the Dream dog), market lays only -3 vs your -5.5. Total watch UNDER 178.5 (round-tripped, near-pass). 1H UNDER 86.5 flag. Refine near tip. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (near tip closing lines). Dream @ Aces: small DREAM +3.5 -- fade your Aces side on a near-flat/round-tripped line (Aces -3.5 net unchanged), laying -3.5 is underwater back_favorite so take the road dog points (cover-only). Total watch UNDER 178.5 (round-tripped, near-pass). H1: side +2 vs +1.75 split = noise (no lean) | total 86.5 vs 89.25 = -2.75 -> fh_total_low flag (watch). [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=4f2f45c7a054f97a496a1edc30e4bd41 -->
