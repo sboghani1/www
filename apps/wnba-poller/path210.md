@@ -1133,23 +1133,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=c162d60ca8c8caf4195c3abf4566747a -->
 ## WNBA Lean: Toronto Tempo @ Washington Mystics
 - Event ID: `c162d60ca8c8caf4195c3abf4566747a`
-- Revision: `b2b91200-e73f-4e3a-94a2-a4b590dcce62`
+- Revision: `8bf1c219-87f8-4d28-bdc5-819224eb2fe3`
 - Status: `active`
 
 ### Full game
-- **Side:** Toronto Tempo (small)
-  - Evidence: Mystics -11 is a big home lay firming cleanly (+9 -> +11, ML +350 -> +415) -- but big-favorites-don't-cover, and fade_favorite (26-19) + motivated_underdog (12-4) are the log's strongest shapes; the Tempo +10 home dog just covered last night.; Fades your Mystics side; the market lays -11, bigger than your -9.5.
-  - Watch: Counter: the firm onto Mystics is clean (follow_line_movement) -- a push past -12 would warn the market prices a true blowout.; Cover-only on the dog, not a Tempo ML; back_favorite is underwater (22-34).
-- **Total:** Under (watch)
-  - Evidence: Total is flat/low (170.5 -> 170, dipped to 168.5 and back) -- no durable direction.
-  - Watch: Near-pass; a break under 168 or over 172 would create an edge.
+- **Side:** Toronto Tempo (watch)
+  - Evidence: The Mystics lay FIRMED HARD +11 -> +13.5 into tip (ML +415 -> +624 on the dog) -- this triggered the blowout-warning watch: the market is validating a true blowout, undercutting the big-favorites-don't-cover fade.; Getting a bigger +13.5 cushion but low conviction; fades your Mystics side.
+  - Watch: Downgraded to near-pass on the hard firm; I won't flip to laying -13.5 either (back_favorite 22-34 is the worst shape). Cover-only.; fade_line_movement (18-24) is the weak side of fading a strong firm.
+- **Total:** Under (small)
+  - Evidence: Total eased 170.5 -> 168.5 into tip (dipped to 167), mild under on a low number.
+  - Watch: A bounce back over 170 weakens it.
 
 ### First half
 - **Total:** Under (watch)
-  - Evidence: 1H total 83.5 vs 85 straight-half split = -1.5 -> fh_total_low (small/medium).
-  - Watch: Flag not a bet; 1H spread +6.5 ~ half the +11 line (+5.5) = ~noise, no fh_side.
+  - Evidence: 1H total fell 83.5 -> 81 vs 84.25 straight-half split = -3.25 -> fh_total_low (medium).
+  - Watch: Flag not a bet; 1H spread +7.5 ~ half the +13.5 line (+6.75) = ~noise, no fh_side.
 
-**Summary:** INITIAL lean (pre-tip, lines may move). Tempo @ Mystics: small TEMPO +11 -- FADE your Mystics side; -11 is a big home lay where big-favorites-don't-cover (fade_favorite 26-19, motivated_underdog 12-4), take the dog's points even though the Mystics firm is clean (+9->+11). Total watch UNDER 170 (flat/low). H1: side +6.5 vs +5.5 split = ~noise (no lean) | total 83.5 vs 85 = -1.5 -> fh_total_low flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (near tip, ~7:30 ET closing lines). Tempo @ Mystics: WATCH/near-pass TEMPO +13.5 -- DOWNGRADED: the Mystics lay FIRMED HARD +11->+13.5 (ML +415->+624), triggering my blowout-warning watch -- the market is validating a true blowout, undercutting the fade. Bigger +13.5 cushion but low conviction; won't lay -13.5 either. Small UNDER 168.5 (eased from 170.5). Fades your Mystics side. H1: side +7.5 vs +6.75 split = ~noise (no lean) | total 81 vs 84.25 = -3.25 -> fh_total_low flag (watch). [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=c162d60ca8c8caf4195c3abf4566747a -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=09563bab4edf9cf2073ee946ad95d61b -->
