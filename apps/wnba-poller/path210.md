@@ -1144,3 +1144,24 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
+<!-- WNBA_LEAN_EVENT_START event_id=bc3ff76ba21ecf6ee8a5ac2067a5aa81 -->
+## WNBA Lean: Indiana Fever @ Dallas Wings
+- Event ID: `bc3ff76ba21ecf6ee8a5ac2067a5aa81`
+- Revision: `49a64395-f68d-4d94-9642-549a6282e8d3`
+- Status: `active`
+
+### Full game
+- **Side:** Dallas Wings (small)
+  - Evidence: Home dog Wings +3: the Fever lay firmed to -4.5 then gave it back to -3 into close (late money toward the Wings dog), and fade_favorite (27-20) beats back_favorite (22-34).; Agrees with your Wings side -- though the market has Wings as +3 home DOGS, not -3.5 favorites.
+  - Watch: Round-tripped (Fever -2.5 -> -4.5 -> -3), modest edge; a re-firm to Fever -5 flips to backing Indiana. Cover-only.
+- **Total:** Under (small)
+  - Evidence: Total eased 186.5 -> 185 (mild under) off a high number.
+  - Watch: Only a mild edge; a bounce over 186 weakens it.
+
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 95.5 vs 92.5 straight-half split = +3 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread -1.5 = half the -3 line = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, lines may move). Fever @ Wings: small WINGS +3 -- take the home dog fading the Fever favorite (late money drifted to the dog, -4.5->-3); agrees with your Wings side, though they're +3 DOGS not -3.5 favorites. Small UNDER 185 (eased from 186.5). H1: side -1.5 vs -1.5 split = noise (no lean) | total 95.5 vs 92.5 = +3 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=bc3ff76ba21ecf6ee8a5ac2067a5aa81 -->
