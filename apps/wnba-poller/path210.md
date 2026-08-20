@@ -920,17 +920,24 @@ line movement: side: Dream +3.5 (open), +5 (peak), +3 (dip), +3.5 (close) round-
 context: tuesday. fade aces = back the atlanta dream +3.5 road dog on a near-flat/round-tripped line (dream +3.5 -> +5 -> +3 -> +3.5, net unchanged); laying -3.5 is the underwater back_favorite shape so take the road dog's points (fade_favorite, motivated_underdog), fading the user's aces side. total: watch under 178.5 (round-tripped, near-pass). first-half under 86.5 posted as a fh_total_low flag. [initial pre-tip, finalized near tip]
 model_lean: side back Dream +3.5 (small); total under 178.5 (watch); 1H under 86.5 (watch flag) | stars: side=1:right, total=1:wrong, fh_total=1:wrong
 
+128fademystics
+right
+fade_favorite, fade_line_movement
+line movement: side: Tempo +9 (open), +11, +13.5 (close) hard firm onto Mystics; ML +350 -> +624; total: 170.5 (open), 168.5 (close)
+context: wednesday. fade mystics = back the toronto tempo +13.5 road dog off a big mystics lay that firmed HARD +11 -> +13.5 (big-favorites-don't-cover); downgraded to near-pass on the blowout-firm but held the dog cover, fading the user's mystics side (fade_favorite, fade_line_movement). total: under 168.5 (eased from 170.5). first-half under 81 posted as a fh_total_low flag. [initial pre-tip, finalized near tip]
+model_lean: side back Tempo +13.5 (watch/near-pass); total under 168.5 (small); 1H under 81 (watch flag) | stars: side=1:right, total=1:wrong, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 18 right / 21 wrong
-fade_favorite: 26 right / 19 wrong
+fade_favorite: 27 right / 19 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
 decision_day_before: 1 right / 0 wrong
-fade_line_movement: 18 right / 24 wrong
+fade_line_movement: 19 right / 24 wrong
 back_favorite: 22 right / 34 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 8 wrong
@@ -1129,28 +1136,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=c162d60ca8c8caf4195c3abf4566747a -->
-## WNBA Lean: Toronto Tempo @ Washington Mystics
-- Event ID: `c162d60ca8c8caf4195c3abf4566747a`
-- Revision: `8bf1c219-87f8-4d28-bdc5-819224eb2fe3`
-- Status: `active`
-
-### Full game
-- **Side:** Toronto Tempo (watch)
-  - Evidence: The Mystics lay FIRMED HARD +11 -> +13.5 into tip (ML +415 -> +624 on the dog) -- this triggered the blowout-warning watch: the market is validating a true blowout, undercutting the big-favorites-don't-cover fade.; Getting a bigger +13.5 cushion but low conviction; fades your Mystics side.
-  - Watch: Downgraded to near-pass on the hard firm; I won't flip to laying -13.5 either (back_favorite 22-34 is the worst shape). Cover-only.; fade_line_movement (18-24) is the weak side of fading a strong firm.
-- **Total:** Under (small)
-  - Evidence: Total eased 170.5 -> 168.5 into tip (dipped to 167), mild under on a low number.
-  - Watch: A bounce back over 170 weakens it.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: 1H total fell 83.5 -> 81 vs 84.25 straight-half split = -3.25 -> fh_total_low (medium).
-  - Watch: Flag not a bet; 1H spread +7.5 ~ half the +13.5 line (+6.75) = ~noise, no fh_side.
-
-**Summary:** FINAL (near tip, ~7:30 ET closing lines). Tempo @ Mystics: WATCH/near-pass TEMPO +13.5 -- DOWNGRADED: the Mystics lay FIRMED HARD +11->+13.5 (ML +415->+624), triggering my blowout-warning watch -- the market is validating a true blowout, undercutting the fade. Bigger +13.5 cushion but low conviction; won't lay -13.5 either. Small UNDER 168.5 (eased from 170.5). Fades your Mystics side. H1: side +7.5 vs +6.75 split = ~noise (no lean) | total 81 vs 84.25 = -3.25 -> fh_total_low flag (watch). [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=c162d60ca8c8caf4195c3abf4566747a -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=09563bab4edf9cf2073ee946ad95d61b -->
 ## WNBA Lean: Minnesota Lynx @ Golden State Valkyries
