@@ -1147,23 +1147,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=bc3ff76ba21ecf6ee8a5ac2067a5aa81 -->
 ## WNBA Lean: Indiana Fever @ Dallas Wings
 - Event ID: `bc3ff76ba21ecf6ee8a5ac2067a5aa81`
-- Revision: `49a64395-f68d-4d94-9642-549a6282e8d3`
+- Revision: `01d8d80a-5dc1-43a3-a94b-a63b70dee5e8`
 - Status: `active`
 
 ### Full game
-- **Side:** Dallas Wings (small)
-  - Evidence: Home dog Wings +3: the Fever lay firmed to -4.5 then gave it back to -3 into close (late money toward the Wings dog), and fade_favorite (27-20) beats back_favorite (22-34).; Agrees with your Wings side -- though the market has Wings as +3 home DOGS, not -3.5 favorites.
-  - Watch: Round-tripped (Fever -2.5 -> -4.5 -> -3), modest edge; a re-firm to Fever -5 flips to backing Indiana. Cover-only.
+- **Side:** Dallas Wings (watch)
+  - Evidence: The Fever favorite firmed net +1 into tip (-2.5 -> -3.5, ML -145 -> -157) despite oscillating through -4.5 and -3 -- mildly undercuts the fade-the-favorite read, though back_favorite (22-34) stays underwater.; Getting a better Wings +3.5 number; agrees with your Wings side, but the market closed Fever -3.5, so Wings are +3.5 DOGS -- your 3rd Wings-as-favorite flip (you had -3.5, a 7pt gap).
+  - Watch: Downgraded to near-pass on the net firm onto Fever; a push to Fever -5 would flip toward Indiana. Cover-only, not a Wings ML.
 - **Total:** Under (small)
-  - Evidence: Total eased 186.5 -> 185 (mild under) off a high number.
+  - Evidence: Total eased 186.5 -> 185 (mild under, dipped to 184 and back) off a high number.
   - Watch: Only a mild edge; a bounce over 186 weakens it.
 
 ### First half
 - **Total:** Over (watch)
   - Evidence: 1H total 95.5 vs 92.5 straight-half split = +3 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread -1.5 = half the -3 line = noise, no fh_side.
+  - Watch: Flag not a bet; 1H spread -1.5 ~ half the -3.5 line (-1.75) = noise, no fh_side.
 
-**Summary:** INITIAL lean (pre-tip, lines may move). Fever @ Wings: small WINGS +3 -- take the home dog fading the Fever favorite (late money drifted to the dog, -4.5->-3); agrees with your Wings side, though they're +3 DOGS not -3.5 favorites. Small UNDER 185 (eased from 186.5). H1: side -1.5 vs -1.5 split = noise (no lean) | total 95.5 vs 92.5 = +3 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (near tip, ~8:00 ET closing lines). Fever @ Wings: watch/near-pass WINGS +3.5 -- the Fever favorite firmed net +1 (-2.5->-3.5, ML -145->-157) despite oscillating through -4.5/-3, mildly undercutting the fade; better +3.5 number but low conviction. Small UNDER 185 (flat/mild). Agrees with your Wings side, but market closed Fever -3.5 = your 3rd Wings-as-favorite flip (you -3.5 vs mkt +3.5, 7pt gap). H1: side -1.5 vs -1.75 split = noise (no lean) | total 95.5 vs 92.5 = +3 -> fh_total_high flag (watch). [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=bc3ff76ba21ecf6ee8a5ac2067a5aa81 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=cdd0cd4e662b83ac6836cb4a84a152e3 -->
