@@ -1165,3 +1165,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip, lines may move). Fever @ Wings: small WINGS +3 -- take the home dog fading the Fever favorite (late money drifted to the dog, -4.5->-3); agrees with your Wings side, though they're +3 DOGS not -3.5 favorites. Small UNDER 185 (eased from 186.5). H1: side -1.5 vs -1.5 split = noise (no lean) | total 95.5 vs 92.5 = +3 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=bc3ff76ba21ecf6ee8a5ac2067a5aa81 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=cdd0cd4e662b83ac6836cb4a84a152e3 -->
+## WNBA Lean: Connecticut Sun @ Las Vegas Aces
+- Event ID: `cdd0cd4e662b83ac6836cb4a84a152e3`
+- Revision: `0cfa6b26-9c4b-4fa1-96af-472ee4252e28`
+- Status: `active`
+
+### Full game
+- **Side:** Connecticut Sun (small)
+  - Evidence: Aces -14 is a huge home lay firming (Sun +13.5 -> +14, peaked +15) -- big-favorites-don't-cover, take the dog's points (fade_favorite 27-20, motivated_underdog 12-4); Tempo +13.5 just covered a similar spot.; Fades your Aces side.
+  - Watch: Counter: the firm onto Aces is real -- a push past -15 with the ML firming would warn a true blowout. Cover-only, not a Sun ML; back_favorite underwater (22-34).
+- **Total:** Under (small)
+  - Evidence: Total fell 170.5 -> 168 (net -2.5), dipped to 165.5 and bounced -- mild under on a low number.
+  - Watch: Bounced off 165.5, so a move back over 169 weakens it.
+
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 86.5 vs 84 straight-half split = +2.5 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread +8.5 ~ half the +14 line (+7) = ~noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, lines may move). Sun @ Aces: small SUN +14 -- FADE your Aces side; -14 is a huge home lay where big-favorites-don't-cover (fade_favorite, motivated_underdog), take the dog's points. Small UNDER 168 (fell 170.5). H1: side +8.5 vs +7 split = ~noise (no lean) | total 86.5 vs 84 = +2.5 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=cdd0cd4e662b83ac6836cb4a84a152e3 -->
