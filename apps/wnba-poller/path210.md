@@ -1155,21 +1155,21 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=09563bab4edf9cf2073ee946ad95d61b -->
 ## WNBA Lean: Minnesota Lynx @ Golden State Valkyries
 - Event ID: `09563bab4edf9cf2073ee946ad95d61b`
-- Revision: `cf6bfc2c-eea7-4d00-831c-8b9cfc505c65`
+- Revision: `cd24ad21-ebc3-40e1-a50d-b05cfd3194a0`
 - Status: `active`
 
 ### Full game
-- **Side:** Golden State Valkyries (small)
-  - Evidence: Near-flat/round-tripped side: Lynx -2.5 -> -1.5 -> -2 (lay shrank net toward the Valkyries dog); laying -2 is the underwater back_favorite shape (22-34), take the home dog's points (fade_favorite 26-19).; Fades your Lynx side.
-  - Watch: Round-tripped line = weak edge, near-pass; a re-firm to Lynx -3.5+ flips to backing Minnesota. Cover-only, not a Valkyries ML.
-- **Total:** Under (small)
-  - Evidence: Total fell one-directional 167.5 -> 164 (net -3.5, under money) on a low number.
-  - Watch: A bounce back over 166 weakens it.
+- **Side:** Golden State Valkyries (watch)
+  - Evidence: Side round-tripped -2.5 -> -1.5 -> -3 -> -2 (net flat, closed Lynx -2 / Valkyries +2), ML flat around -135 -- no durable edge either way.; Fades your Lynx side but at near-pass conviction; laying -2 is the underwater back_favorite shape (22-34).
+  - Watch: Round-tripped = no movement signal; a late firm to Lynx -3.5 would flip to Minnesota. Cover-only, not a Valkyries ML.
+- **Total:** Under (moderate)
+  - Evidence: Total fell one-directional 167.5 -> 161.5 into tip (net -5.5), a clean sustained drop -- the strongest signal on the card; closed 162 after a half-point bounce.
+  - Watch: total_under is only ~coin-flip historically (26-27), hence sized moderate not strong; a bounce back over 164 would undercut it.
 
 ### First half
 - **Total:** Over (watch)
-  - Evidence: 1H total 85 vs 82 straight-half split = +3 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread -1 = half the -2 line = noise, no fh_side.
+  - Evidence: 1H total 84 vs 81 straight-half split = +3 -> fh_total_high (medium): market prices a fast first half despite the low full total (front-loaded pace).
+  - Watch: Flag not a bet, and it conflicts with the full-game under; 1H spread -1 = half the -2 line = noise, no fh_side.
 
-**Summary:** INITIAL lean (pre-tip, lines may move). Lynx @ Valkyries: small VALKYRIES +2 -- FADE your Lynx side; the Lynx lay shrank -2.5->-2 (toward the dog) and laying -2 is underwater back_favorite, take the home dog points (near-pass, round-tripped). Small UNDER 164 (fell 167.5). H1: side -1 vs -1 split = noise (no lean) | total 85 vs 82 = +3 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (near tip, ~10:10 ET closing lines). Lynx @ Valkyries: watch/near-pass VALKYRIES +2 -- the side round-tripped -2.5->-3->-2 (net flat, no edge), low conviction. The real lean is the total: moderate UNDER 162 (2-star) -- a clean sustained drop 167.5->161.5 (net -5.5), the strongest signal on the card. Fades your Lynx side; the under is the bet. H1: side -1 vs -1 split = noise (no lean) | total 84 vs 81 = +3 -> fh_total_high flag (watch, front-loaded pace conflicts with the full under). [stars: side=1, total=2, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=09563bab4edf9cf2073ee946ad95d61b -->
