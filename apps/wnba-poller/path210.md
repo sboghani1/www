@@ -1187,3 +1187,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip, lines may move). Sun @ Aces: small SUN +14 -- FADE your Aces side; -14 is a huge home lay where big-favorites-don't-cover (fade_favorite, motivated_underdog), take the dog's points. Small UNDER 168 (fell 170.5). H1: side +8.5 vs +7 split = ~noise (no lean) | total 86.5 vs 84 = +2.5 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=cdd0cd4e662b83ac6836cb4a84a152e3 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=1633124eeb20fd6dff51c151adeeb077 -->
+## WNBA Lean: Atlanta Dream @ Los Angeles Sparks
+- Event ID: `1633124eeb20fd6dff51c151adeeb077`
+- Revision: `b3a1cbf8-9bca-455b-aa09-017184861d6c`
+- Status: `active`
+
+### Full game
+- **Side:** Los Angeles Sparks (small)
+  - Evidence: Dream -9 is a big road lay firming (-8.5 -> -9, ML -375 -> -400) -- big-favorites-don't-cover, take the home dog's points (fade_favorite 27-20, motivated_underdog 12-4).; Fades your Dream side; the market lays -9, less than your -10.5.
+  - Watch: Cover-only on the dog, not a Sparks ML; a firm past -11 would warn a true blowout. back_favorite underwater (22-34).
+- **Total:** Under (small)
+  - Evidence: Total eased 182.5 -> 180.5 (net -2), dipped to 177.5 and bounced -- mild under.
+  - Watch: Bounced off 177.5; a move back over 182 weakens it.
+
+### First half
+- **Total:** Under (watch)
+  - Evidence: 1H total 89 vs 90.25 straight-half split = -1.25 -> fh_total_low (small).
+  - Watch: Flag not a bet; 1H spread -4.5 = half the -9 line = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, lines may move). Dream @ Sparks: small SPARKS +9 -- FADE your Dream side; -9 is a big road lay where big-favorites-don't-cover, take the home dog's points (fade_favorite, motivated_underdog). Small UNDER 180.5 (eased from 182.5). H1: side -4.5 vs -4.5 split = noise (no lean) | total 89 vs 90.25 = -1.25 -> fh_total_low flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=1633124eeb20fd6dff51c151adeeb077 -->
