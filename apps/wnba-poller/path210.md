@@ -1169,23 +1169,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=cdd0cd4e662b83ac6836cb4a84a152e3 -->
 ## WNBA Lean: Connecticut Sun @ Las Vegas Aces
 - Event ID: `cdd0cd4e662b83ac6836cb4a84a152e3`
-- Revision: `0cfa6b26-9c4b-4fa1-96af-472ee4252e28`
+- Revision: `48251c9d-2c19-49aa-ba93-80a7a09b4b18`
 - Status: `active`
 
 ### Full game
 - **Side:** Connecticut Sun (small)
-  - Evidence: Aces -14 is a huge home lay firming (Sun +13.5 -> +14, peaked +15) -- big-favorites-don't-cover, take the dog's points (fade_favorite 27-20, motivated_underdog 12-4); Tempo +13.5 just covered a similar spot.; Fades your Aces side.
-  - Watch: Counter: the firm onto Aces is real -- a push past -15 with the ML firming would warn a true blowout. Cover-only, not a Sun ML; back_favorite underwater (22-34).
-- **Total:** Under (small)
-  - Evidence: Total fell 170.5 -> 168 (net -2.5), dipped to 165.5 and bounced -- mild under on a low number.
-  - Watch: Bounced off 165.5, so a move back over 169 weakens it.
+  - Evidence: Aces -14.5 is a huge home lay that firmed further (Sun +13.5 -> +14.5, peaked +15; ML -1300) -- big-favorites-don't-cover, take the dog's big cushion (fade_favorite 27-20, motivated_underdog 12-4); Tempo +13.5 just covered an identical spot.; Fades your Aces side.
+  - Watch: It flirted with -15 (blowout-warning territory) but closed -14.5; a sustained push past -15 would warn a true blowout. Cover-only, not a Sun ML.
+- **Total:** Under (watch)
+  - Evidence: Total round-tripped 170.5 -> 165.5 -> 169 and closed near the open (late over drift) -- edge gone.
+  - Watch: Near-pass; the under evaporated on the bounce off 165.5.
 
 ### First half
 - **Total:** Over (watch)
-  - Evidence: 1H total 86.5 vs 84 straight-half split = +2.5 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread +8.5 ~ half the +14 line (+7) = ~noise, no fh_side.
+  - Evidence: 1H total 86.5 vs 84.5 straight-half split = +2 -> fh_total_high (small/medium).
+  - Watch: Flag not a bet; 1H spread +9 ~ half the +14.5 line (+7.25) = ~noise, no fh_side.
 
-**Summary:** INITIAL lean (pre-tip, lines may move). Sun @ Aces: small SUN +14 -- FADE your Aces side; -14 is a huge home lay where big-favorites-don't-cover (fade_favorite, motivated_underdog), take the dog's points. Small UNDER 168 (fell 170.5). H1: side +8.5 vs +7 split = ~noise (no lean) | total 86.5 vs 84 = +2.5 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (near tip, ~10:00 ET closing lines). Sun @ Aces: small SUN +14.5 -- FADE your Aces side; -14.5 is a huge lay that firmed further (flirted -15, ML -1300), but big-favorites-don't-cover -- take the dog's big cushion (Tempo +13.5 just covered). Total DOWNGRADED to watch UNDER 169 (round-tripped 165.5->169, edge gone). H1: side +9 vs +7.25 split = ~noise (no lean) | total 86.5 vs 84.5 = +2 -> fh_total_high flag (watch). [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=cdd0cd4e662b83ac6836cb4a84a152e3 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=1633124eeb20fd6dff51c151adeeb077 -->
