@@ -941,12 +941,19 @@ line movement: side: Fever -2.5 (open), -4.5 (peak), -3.5 (close) net firm onto 
 context: thursday. fade fever = back the dallas wings +3.5 home dog; the fever favorite firmed net +1 into tip (-2.5 -> -3.5) so downgraded to near-pass, but held the wings dog fading the favorite (fade_favorite, motivated_underdog). notable: the user had wings -3.5 (favored) while the market closed fever -3.5 -- a 7-point side-flip, the user's 3rd wings-as-favorite read. total: under 185 (eased from 186.5). first-half over 95.5 posted as a fh_total_high flag. [initial pre-tip, finalized near tip]
 model_lean: side back Wings +3.5 (watch/near-pass); total under 185 (small); 1H over 95.5 (watch flag) | stars: side=1:right, total=1:right, fh_total=1:wrong
 
+131fadeaces
+wrong
+fade_favorite, motivated_underdog, total_under
+line movement: side: Sun +13.5 (open), +15 (peak), +14.5 (close) firm onto Aces; ML Aces -1300; total: 170.5 (open), 165.5 (low), 169 (close)
+context: thursday. fade aces = back the connecticut sun +14.5 huge road dog off a -14.5 aces lay (big-favorites-don't-cover), fading the user's aces side; the aces firmed further into tip (flirted -15, ml -1300). total: under 169 (round-tripped 165.5 -> 169). first-half over 86.5 posted as a fh_total_high flag. [initial pre-tip, finalized near tip]
+model_lean: side back Sun +14.5 (small); total under 169 (watch); 1H over 86.5 (watch flag) | stars: side=1:wrong, total=1:wrong, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 18 right / 21 wrong
-fade_favorite: 28 right / 20 wrong
+fade_favorite: 28 right / 21 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
@@ -957,10 +964,10 @@ chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 9 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 13 right / 4 wrong
+motivated_underdog: 13 right / 5 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 18 right / 22 wrong
-total_under: 27 right / 27 wrong
+total_under: 27 right / 28 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1150,28 +1157,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=cdd0cd4e662b83ac6836cb4a84a152e3 -->
-## WNBA Lean: Connecticut Sun @ Las Vegas Aces
-- Event ID: `cdd0cd4e662b83ac6836cb4a84a152e3`
-- Revision: `48251c9d-2c19-49aa-ba93-80a7a09b4b18`
-- Status: `active`
-
-### Full game
-- **Side:** Connecticut Sun (small)
-  - Evidence: Aces -14.5 is a huge home lay that firmed further (Sun +13.5 -> +14.5, peaked +15; ML -1300) -- big-favorites-don't-cover, take the dog's big cushion (fade_favorite 27-20, motivated_underdog 12-4); Tempo +13.5 just covered an identical spot.; Fades your Aces side.
-  - Watch: It flirted with -15 (blowout-warning territory) but closed -14.5; a sustained push past -15 would warn a true blowout. Cover-only, not a Sun ML.
-- **Total:** Under (watch)
-  - Evidence: Total round-tripped 170.5 -> 165.5 -> 169 and closed near the open (late over drift) -- edge gone.
-  - Watch: Near-pass; the under evaporated on the bounce off 165.5.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 86.5 vs 84.5 straight-half split = +2 -> fh_total_high (small/medium).
-  - Watch: Flag not a bet; 1H spread +9 ~ half the +14.5 line (+7.25) = ~noise, no fh_side.
-
-**Summary:** FINAL (near tip, ~10:00 ET closing lines). Sun @ Aces: small SUN +14.5 -- FADE your Aces side; -14.5 is a huge lay that firmed further (flirted -15, ML -1300), but big-favorites-don't-cover -- take the dog's big cushion (Tempo +13.5 just covered). Total DOWNGRADED to watch UNDER 169 (round-tripped 165.5->169, edge gone). H1: side +9 vs +7.25 split = ~noise (no lean) | total 86.5 vs 84.5 = +2 -> fh_total_high flag (watch). [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=cdd0cd4e662b83ac6836cb4a84a152e3 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=1633124eeb20fd6dff51c151adeeb077 -->
 ## WNBA Lean: Atlanta Dream @ Los Angeles Sparks
