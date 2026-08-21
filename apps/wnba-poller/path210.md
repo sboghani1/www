@@ -1165,3 +1165,24 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
+<!-- WNBA_LEAN_EVENT_START event_id=6beeb0d93ae359986dfe8ecdffc4c85e -->
+## WNBA Lean: Minnesota Lynx @ Washington Mystics
+- Event ID: `6beeb0d93ae359986dfe8ecdffc4c85e`
+- Revision: `f00203f6-0adc-48c0-8ce7-0989ef6b7a1a`
+- Status: `active`
+
+### Full game
+- **Side:** Washington Mystics (small)
+  - Evidence: The Lynx lay SHRANK hard -5 -> -2.5 (ML -200 -> -142) -- a clean 2.5-pt one-directional move to the Mystics home dog (follow_line_movement); fade_favorite (28-22) over back_favorite (22-34).; Fades your Lynx side; you have Lynx -8.5 but the market only lays -2.5 and shrinking (6-pt gap).
+  - Watch: Now near-pickem so smaller value; a re-firm to Lynx -4+ flips back to Minnesota. Cover-only.
+- **Total:** Under (watch)
+  - Evidence: Total round-tripped 164.5 -> 161.5 -> 164 (net flat) on a low number -- no edge.
+  - Watch: Near-pass; a break under 161 or over 165 would matter.
+
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 84.5 vs 82 straight-half split = +2.5 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread -1 ~ half the -2.5 line = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, lines may move). Lynx @ Mystics: small MYSTICS +2.5 -- FADE your Lynx side; the Lynx lay shrank hard -5->-2.5 (clean money to the Mystics dog, follow_line_movement). You have Lynx -8.5 vs market -2.5 (6-pt gap). Total watch UNDER 164 (flat/low). H1: side -1 vs -1.25 split = noise (no lean) | total 84.5 vs 82 = +2.5 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=6beeb0d93ae359986dfe8ecdffc4c85e -->
