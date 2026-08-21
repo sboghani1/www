@@ -948,12 +948,19 @@ line movement: side: Sun +13.5 (open), +15 (peak), +14.5 (close) firm onto Aces;
 context: thursday. fade aces = back the connecticut sun +14.5 huge road dog off a -14.5 aces lay (big-favorites-don't-cover), fading the user's aces side; the aces firmed further into tip (flirted -15, ml -1300). total: under 169 (round-tripped 165.5 -> 169). first-half over 86.5 posted as a fh_total_high flag. [initial pre-tip, finalized near tip]
 model_lean: side back Sun +14.5 (small); total under 169 (watch); 1H over 86.5 (watch flag) | stars: side=1:wrong, total=1:wrong, fh_total=1:right
 
+132fadedream
+wrong
+fade_favorite, motivated_underdog, total_under
+line movement: side: Dream -8.5 (open), -9.5 (peak), -8.5 (close) round-trip/flat; ML -375 -> -410; total: 182.5 (open), 177.5 (low), 180.5 (close)
+context: thursday. fade dream = back the los angeles sparks +8.5 home dog off a -8.5 dream road lay (big-favorites-don't-cover), fading the user's dream side; the line round-tripped to flat (-8.5 -> -9.5 -> -8.5). total: under 180.5 (bounced off 177.5). first-half under 88 posted as a fh_total_low flag. [initial pre-tip, finalized near tip]
+model_lean: side back Sparks +8.5 (small); total under 180.5 (small); 1H under 88 (watch flag) | stars: side=1:wrong, total=1:wrong, fh_total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 18 right / 21 wrong
-fade_favorite: 28 right / 21 wrong
+fade_favorite: 28 right / 22 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
@@ -964,10 +971,10 @@ chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 9 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 13 right / 5 wrong
+motivated_underdog: 13 right / 6 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 18 right / 22 wrong
-total_under: 27 right / 28 wrong
+total_under: 27 right / 29 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1158,24 +1165,3 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
-<!-- WNBA_LEAN_EVENT_START event_id=1633124eeb20fd6dff51c151adeeb077 -->
-## WNBA Lean: Atlanta Dream @ Los Angeles Sparks
-- Event ID: `1633124eeb20fd6dff51c151adeeb077`
-- Revision: `cdc78c35-c010-4b8f-b737-f1785ba563e9`
-- Status: `active`
-
-### Full game
-- **Side:** Los Angeles Sparks (small)
-  - Evidence: Dream -8.5 is a big road lay that round-tripped -8.5 -> -9.5 -> -8.5 (net flat) -- big-favorites-don't-cover, take the home dog's points (fade_favorite 27-20, motivated_underdog 12-4).; Fades your Dream side.
-  - Watch: Round-tripped/flat line = near-pass; a firm past -10 would warn a true blowout. Cover-only, not a Sparks ML.
-- **Total:** Under (small)
-  - Evidence: Total eased 182.5 -> 180.5 (net -2), dipped to 177.5 and bounced -- mild under.
-  - Watch: Bounced off 177.5; a move back over 182 weakens it.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: 1H total 88 vs 90.25 straight-half split = -2.25 -> fh_total_low (medium).
-  - Watch: Flag not a bet; 1H spread -5 ~ half the -8.5 line (-4.25) = noise, no fh_side.
-
-**Summary:** FINAL (near tip, ~10:00 ET closing lines). Dream @ Sparks: small SPARKS +8.5 -- FADE your Dream side; -8.5 is a big road lay that round-tripped to flat (-8.5->-9.5->-8.5), big-favorites-don't-cover, take the home dog's points. Small UNDER 180.5 (fell from 182.5, bounced off 177.5). H1: side -5 vs -4.25 split = noise (no lean) | total 88 vs 90.25 = -2.25 -> fh_total_low flag (watch). [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=1633124eeb20fd6dff51c151adeeb077 -->
