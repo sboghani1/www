@@ -934,12 +934,19 @@ line movement: side: Lynx -2.5 (open), -1.5, -3, -2 (close) round-trip/flat; ML 
 context: wednesday. fade lynx = back the golden state valkyries +2 home dog on a round-tripped/flat line (lynx -2.5 -> -3 -> -2, no edge, near-pass), fading the user's lynx side; the real lean was the total. total: moderate under 162 (2-star) off a clean sustained drop 167.5 -> 161.5. first-half over 84 posted as a fh_total_high flag (front-loaded pace, conflicted the full under). [initial pre-tip, finalized near tip]
 model_lean: side back Valkyries +2 (watch/near-pass); total under 162 (moderate, 2-star); 1H over 84 (watch flag) | stars: side=1:wrong, total=2:right, fh_total=1:wrong
 
+130fadefever
+right
+fade_favorite, motivated_underdog, total_under
+line movement: side: Fever -2.5 (open), -4.5 (peak), -3.5 (close) net firm onto Fever; ML -145 -> -157; total: 186.5 (open), 185 (close)
+context: thursday. fade fever = back the dallas wings +3.5 home dog; the fever favorite firmed net +1 into tip (-2.5 -> -3.5) so downgraded to near-pass, but held the wings dog fading the favorite (fade_favorite, motivated_underdog). notable: the user had wings -3.5 (favored) while the market closed fever -3.5 -- a 7-point side-flip, the user's 3rd wings-as-favorite read. total: under 185 (eased from 186.5). first-half over 95.5 posted as a fh_total_high flag. [initial pre-tip, finalized near tip]
+model_lean: side back Wings +3.5 (watch/near-pass); total under 185 (small); 1H over 95.5 (watch flag) | stars: side=1:right, total=1:right, fh_total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 18 right / 21 wrong
-fade_favorite: 27 right / 20 wrong
+fade_favorite: 28 right / 20 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
@@ -950,10 +957,10 @@ chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 9 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 12 right / 4 wrong
+motivated_underdog: 13 right / 4 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 18 right / 22 wrong
-total_under: 26 right / 27 wrong
+total_under: 27 right / 27 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1143,28 +1150,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=bc3ff76ba21ecf6ee8a5ac2067a5aa81 -->
-## WNBA Lean: Indiana Fever @ Dallas Wings
-- Event ID: `bc3ff76ba21ecf6ee8a5ac2067a5aa81`
-- Revision: `01d8d80a-5dc1-43a3-a94b-a63b70dee5e8`
-- Status: `active`
-
-### Full game
-- **Side:** Dallas Wings (watch)
-  - Evidence: The Fever favorite firmed net +1 into tip (-2.5 -> -3.5, ML -145 -> -157) despite oscillating through -4.5 and -3 -- mildly undercuts the fade-the-favorite read, though back_favorite (22-34) stays underwater.; Getting a better Wings +3.5 number; agrees with your Wings side, but the market closed Fever -3.5, so Wings are +3.5 DOGS -- your 3rd Wings-as-favorite flip (you had -3.5, a 7pt gap).
-  - Watch: Downgraded to near-pass on the net firm onto Fever; a push to Fever -5 would flip toward Indiana. Cover-only, not a Wings ML.
-- **Total:** Under (small)
-  - Evidence: Total eased 186.5 -> 185 (mild under, dipped to 184 and back) off a high number.
-  - Watch: Only a mild edge; a bounce over 186 weakens it.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 95.5 vs 92.5 straight-half split = +3 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread -1.5 ~ half the -3.5 line (-1.75) = noise, no fh_side.
-
-**Summary:** FINAL (near tip, ~8:00 ET closing lines). Fever @ Wings: watch/near-pass WINGS +3.5 -- the Fever favorite firmed net +1 (-2.5->-3.5, ML -145->-157) despite oscillating through -4.5/-3, mildly undercutting the fade; better +3.5 number but low conviction. Small UNDER 185 (flat/mild). Agrees with your Wings side, but market closed Fever -3.5 = your 3rd Wings-as-favorite flip (you -3.5 vs mkt +3.5, 7pt gap). H1: side -1.5 vs -1.75 split = noise (no lean) | total 95.5 vs 92.5 = +3 -> fh_total_high flag (watch). [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=bc3ff76ba21ecf6ee8a5ac2067a5aa81 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=cdd0cd4e662b83ac6836cb4a84a152e3 -->
 ## WNBA Lean: Connecticut Sun @ Las Vegas Aces
