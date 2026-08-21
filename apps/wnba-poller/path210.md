@@ -1186,3 +1186,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip, lines may move). Lynx @ Mystics: small MYSTICS +2.5 -- FADE your Lynx side; the Lynx lay shrank hard -5->-2.5 (clean money to the Mystics dog, follow_line_movement). You have Lynx -8.5 vs market -2.5 (6-pt gap). Total watch UNDER 164 (flat/low). H1: side -1 vs -1.25 split = noise (no lean) | total 84.5 vs 82 = +2.5 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6beeb0d93ae359986dfe8ecdffc4c85e -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=8643e7ef86c42f8f9cdded87326060fc -->
+## WNBA Lean: Golden State Valkyries @ Chicago Sky
+- Event ID: `8643e7ef86c42f8f9cdded87326060fc`
+- Revision: `fc27364f-0585-44fa-b0a8-6e0c3b8f49a5`
+- Status: `active`
+
+### Full game
+- **Side:** Golden State Valkyries (small)
+  - Evidence: The Valkyries road favorite firmed cleanly -5.5 -> -6.5 (ML -225 -> -260), a one-directional follow_line_movement signal.; Agrees with your Valkyries side (you had -5.5; market firmed to -6.5).
+  - Watch: Laying -6.5 on the road is the back_favorite shape (22-34), sized small; a reversal toward -4 flips to the Sky dog.
+- **Total:** Under (watch)
+  - Evidence: Total round-tripped 162.5 -> 161 -> 162.5 (net flat) on a low number.
+  - Watch: Near-pass; no durable direction.
+
+### First half
+- **Total:** Under (watch)
+  - Evidence: 1H total 78.5 vs 81.25 straight-half split = -2.75 -> fh_total_low (medium).
+  - Watch: Flag not a bet; 1H spread -3.5 ~ half the -6.5 line (-3.25) = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip, lines may move). Valkyries @ Sky: small VALKYRIES -6.5 -- follow the clean firm onto the road favorite (-5.5->-6.5, ML -225->-260); AGREES with your Valkyries side. Total watch UNDER 162.5 (flat/low). H1: side -3.5 vs -3.25 split = noise (no lean) | total 78.5 vs 81.25 = -2.75 -> fh_total_low flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=8643e7ef86c42f8f9cdded87326060fc -->
