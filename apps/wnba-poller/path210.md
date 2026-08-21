@@ -1208,25 +1208,3 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip, lines may move). Valkyries @ Sky: small VALKYRIES -6.5 -- follow the clean firm onto the road favorite (-5.5->-6.5, ML -225->-260); AGREES with your Valkyries side. Total watch UNDER 162.5 (flat/low). H1: side -3.5 vs -3.25 split = noise (no lean) | total 78.5 vs 81.25 = -2.75 -> fh_total_low flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=8643e7ef86c42f8f9cdded87326060fc -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=1f2c48caf3d22a1251ca3f5e66d77cc8 -->
-## WNBA Lean: Portland Fire @ Toronto Tempo
-- Event ID: `1f2c48caf3d22a1251ca3f5e66d77cc8`
-- Revision: `ba518aa6-70d8-4126-b04d-1d440bdc6c04`
-- Status: `active`
-
-### Full game
-- **Side:** Portland Fire (small)
-  - Evidence: The Fire road favorite firmed cleanly -1.5 -> -2.5 (ML -115 -> -145), a one-directional follow_line_movement signal.; Fades your Tempo side -- you have Tempo -2.5 (favored), but the market has Tempo +2.5 DOGS (a 5-pt side-flip); the money is on Fire.
-  - Watch: Near-pickem and laying -2.5 on a bad road team (back_favorite 22-34), sized small; a reversal to Tempo -1/pickem flips to the home dog.
-- **Total:** Under (small)
-  - Evidence: Total fell 186.5 -> 183 (net -3.5, under money) off a high number.
-  - Watch: A bounce back over 185 weakens it.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 95.5 vs 91.5 straight-half split = +4 -> fh_total_high (big).
-  - Watch: Flag not a bet; 1H spread -1 ~ half the -2.5 line = noise, no fh_side.
-
-**Summary:** INITIAL lean (pre-tip, lines may move). Fire @ Tempo: small FIRE -2.5 -- follow the clean firm onto the road favorite (-1.5->-2.5, ML -115->-145), fading your Tempo side; you have Tempo -2.5 but market has Tempo +2.5 DOGS (your latest side-flip). Small UNDER 183 (fell from 186.5). H1: side -1 vs -1.25 split = noise (no lean) | total 95.5 vs 91.5 = +4 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=1f2c48caf3d22a1251ca3f5e66d77cc8 -->
