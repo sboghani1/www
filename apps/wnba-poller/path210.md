@@ -1208,3 +1208,25 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip). Fever @ Liberty: small LIBERTY -2.5 -- follow the flip/firm onto the home favorite (Fever -1.5 -> Liberty -2.5), agreeing with your Liberty side. Watch UNDER 186.5 -- gap check: your 184 = only -2.5 vs line (weak -1..4 band, coin flip), no edge. H1: side +1.5 vs +1.25 split = noise (no lean) | total 96 vs 93.25 = +2.75 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=a05ae0cd5516fbbcdd9fda35e698f70d -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=d2c4b90e59812d0ba7bb21319e5c25a6 -->
+## WNBA Lean: Connecticut Sun @ Los Angeles Sparks
+- Event ID: `d2c4b90e59812d0ba7bb21319e5c25a6`
+- Revision: `67528f26-d7c4-4612-ae0a-172ed09eb664`
+- Status: `active`
+
+### Full game
+- **Side:** Los Angeles Sparks (small)
+  - Evidence: The Sparks home favorite firmed cleanly -3.5 -> -4.5 (Sun ML +130 -> +161), a follow_line_movement signal.; Agrees with your Sparks side (you had Sparks -3.5).
+  - Watch: Laying -4.5 is back_favorite (22-36), sized small; a reversal toward -3 flips to the Sun dog.
+- **Total:** Under (small)
+  - Evidence: Gap check: your implied total 163 = -6 vs the closing line 169 -- the -5..8 underestimate band has gone 3-1 (under 3/4), a genuine UNDER signal even though the line itself is flat (169.5 -> 169).
+  - Watch: Leans on your under-gap, not movement; a rise over 171 weakens it.
+
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 85.5 vs 84.5 straight-half split = +1 -> fh_total_high (small, near noise).
+  - Watch: Flag not a bet; 1H spread +2.5 ~ half the +4.5 line (+2.25) = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip). Sun @ Sparks: small SPARKS -4.5 -- follow the clean firm onto the home favorite (-3.5 -> -4.5), agreeing with your Sparks side. Small UNDER 169 -- gap check: your 163 = -6 vs line (underestimate -5..8 band 3-1, under 3/4), a real under signal on a flat total. H1: side +2.5 vs +2.25 split = noise (no lean) | total 85.5 vs 84.5 = +1 -> fh_total_high flag (watch, near-noise). Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=d2c4b90e59812d0ba7bb21319e5c25a6 -->
