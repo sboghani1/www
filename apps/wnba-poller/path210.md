@@ -963,18 +963,25 @@ line movement: side: Lynx -5 (open), -1.5 (close) lay collapsed to the Mystics d
 context: friday. fade lynx = back the washington mystics home dog after the lynx lay collapsed -5 -> -1.5 (clean money to the dog, follow_line_movement + fade_favorite), fading the user's lynx -8.5 read. total: under 166; user implied total 156 = -10 vs the line (under-gap flag). first-half over 85.5 posted as a fh_total_high flag. [initial pre-tip lean]
 model_lean: side back Mystics +2.5 (small); total under 166 (watch); 1H over 85.5 (watch flag) | stars: side=1:wrong, total=1:wrong, fh_total=1:right
 
+134fadesky
+wrong
+follow_line_movement, back_favorite
+line movement: side: Valkyries -5.5 (open), -6.5 (close) firm onto the favorite; ML -225 -> -265; total: 162.5 (open), 163.5 (close)
+context: friday. fade sky = back the golden state valkyries road favorite following a clean firm -5.5 -> -6.5 (follow_line_movement), agreeing with the user's valkyries side; laying -6.5 on the road is back_favorite. total: under 162.5; user implied total 152 = -11.5 vs the line (under-gap flag). first-half under 78.5 posted as a fh_total_low flag. [initial pre-tip lean]
+model_lean: side back Valkyries -6.5 (small); total under 162.5 (watch); 1H under 78.5 (watch flag) | stars: side=1:wrong, total=1:right, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 18 right / 22 wrong
+follow_line_movement: 18 right / 23 wrong
 fade_favorite: 28 right / 23 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 24 wrong
-back_favorite: 22 right / 34 wrong
+back_favorite: 22 right / 35 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 9 wrong
 overcaution: 0 right / 1 wrong
@@ -1172,28 +1179,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=8643e7ef86c42f8f9cdded87326060fc -->
-## WNBA Lean: Golden State Valkyries @ Chicago Sky
-- Event ID: `8643e7ef86c42f8f9cdded87326060fc`
-- Revision: `fc27364f-0585-44fa-b0a8-6e0c3b8f49a5`
-- Status: `active`
-
-### Full game
-- **Side:** Golden State Valkyries (small)
-  - Evidence: The Valkyries road favorite firmed cleanly -5.5 -> -6.5 (ML -225 -> -260), a one-directional follow_line_movement signal.; Agrees with your Valkyries side (you had -5.5; market firmed to -6.5).
-  - Watch: Laying -6.5 on the road is the back_favorite shape (22-34), sized small; a reversal toward -4 flips to the Sky dog.
-- **Total:** Under (watch)
-  - Evidence: Total round-tripped 162.5 -> 161 -> 162.5 (net flat) on a low number.
-  - Watch: Near-pass; no durable direction.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: 1H total 78.5 vs 81.25 straight-half split = -2.75 -> fh_total_low (medium).
-  - Watch: Flag not a bet; 1H spread -3.5 ~ half the -6.5 line (-3.25) = noise, no fh_side.
-
-**Summary:** INITIAL lean (pre-tip, lines may move). Valkyries @ Sky: small VALKYRIES -6.5 -- follow the clean firm onto the road favorite (-5.5->-6.5, ML -225->-260); AGREES with your Valkyries side. Total watch UNDER 162.5 (flat/low). H1: side -3.5 vs -3.25 split = noise (no lean) | total 78.5 vs 81.25 = -2.75 -> fh_total_low flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=8643e7ef86c42f8f9cdded87326060fc -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=1f2c48caf3d22a1251ca3f5e66d77cc8 -->
 ## WNBA Lean: Portland Fire @ Toronto Tempo
