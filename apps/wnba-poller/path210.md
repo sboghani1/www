@@ -1187,3 +1187,24 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
+<!-- WNBA_LEAN_EVENT_START event_id=a05ae0cd5516fbbcdd9fda35e698f70d -->
+## WNBA Lean: Indiana Fever @ New York Liberty
+- Event ID: `a05ae0cd5516fbbcdd9fda35e698f70d`
+- Revision: `49670d3f-2945-4ed7-b726-c18379f8ca46`
+- Status: `active`
+
+### Full game
+- **Side:** New York Liberty (small)
+  - Evidence: The line flipped/firmed onto Liberty: Fever -1.5 -> Liberty -2.5 (Fever +2.5), a clean move onto the home favorite (follow_line_movement).; Agrees with your Liberty side (you had Liberty -4.5; market -2.5).
+  - Watch: Favorite flip -- cap confidence per the log's flip caution; laying -2.5 is back_favorite (22-36). A reversal back toward Fever flips it.
+- **Total:** Under (watch)
+  - Evidence: Total flat-ish (187.5 -> 186.5); your implied total 184 = -2.5 vs the line -- the weak -1..4 under band (5-5 coin flip), no real gap edge.
+  - Watch: Near-pass; a break under 185 or over 188 would matter.
+
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 96 vs 93.25 straight-half split = +2.75 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread +1.5 ~ half the +2.5 line = noise, no fh_side.
+
+**Summary:** INITIAL lean (pre-tip). Fever @ Liberty: small LIBERTY -2.5 -- follow the flip/firm onto the home favorite (Fever -1.5 -> Liberty -2.5), agreeing with your Liberty side. Watch UNDER 186.5 -- gap check: your 184 = only -2.5 vs line (weak -1..4 band, coin flip), no edge. H1: side +1.5 vs +1.25 split = noise (no lean) | total 96 vs 93.25 = +2.75 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=a05ae0cd5516fbbcdd9fda35e698f70d -->
