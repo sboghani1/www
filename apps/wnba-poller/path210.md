@@ -970,18 +970,25 @@ line movement: side: Valkyries -5.5 (open), -6.5 (close) firm onto the favorite;
 context: friday. fade sky = back the golden state valkyries road favorite following a clean firm -5.5 -> -6.5 (follow_line_movement), agreeing with the user's valkyries side; laying -6.5 on the road is back_favorite. total: under 162.5; user implied total 152 = -11.5 vs the line (under-gap flag). first-half under 78.5 posted as a fh_total_low flag. [initial pre-tip lean]
 model_lean: side back Valkyries -6.5 (small); total under 162.5 (watch); 1H under 78.5 (watch flag) | stars: side=1:wrong, total=1:right, fh_total=1:right
 
+135fadetempo
+wrong
+follow_line_movement, back_favorite
+line movement: side: Fire -1.5 (open), -2.5 (close) firm onto the road favorite; ML -145; total: 186.5 (open), 182.5 (close)
+context: friday. fade tempo = back the portland fire road favorite following a clean firm -1.5 -> -2.5 (follow_line_movement), fading the user's tempo side (side-flip: user tempo -2.5 vs market tempo +2.5); laying -2.5 on a bad road team is back_favorite. total: under 182.5 -- double under flag (line fell -4 AND user implied total 191 = +8.5 over the line, over-gap rule). first-half over 95.5 posted as a fh_total_high flag. [initial pre-tip, finalized near tip]
+model_lean: side back Fire -2.5 (small); total under 182.5 (small); 1H over 95.5 (watch flag) | stars: side=1:wrong, total=1:right, fh_total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 18 right / 23 wrong
+follow_line_movement: 18 right / 24 wrong
 fade_favorite: 28 right / 23 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 24 wrong
-back_favorite: 22 right / 35 wrong
+back_favorite: 22 right / 36 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 9 wrong
 overcaution: 0 right / 1 wrong
@@ -1180,24 +1187,3 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
-<!-- WNBA_LEAN_EVENT_START event_id=1f2c48caf3d22a1251ca3f5e66d77cc8 -->
-## WNBA Lean: Portland Fire @ Toronto Tempo
-- Event ID: `1f2c48caf3d22a1251ca3f5e66d77cc8`
-- Revision: `f561dd4e-f3e4-4170-80b4-25aaaf1ff15f`
-- Status: `active`
-
-### Full game
-- **Side:** Portland Fire (small)
-  - Evidence: The Fire road favorite firmed cleanly -1.5 -> -2.5 (peaked -3, ML -145) into tip -- follow_line_movement.; Fades your Tempo side; you have Tempo -2.5 but the market has Tempo +2.5 DOGS (a 5-pt side-flip).
-  - Watch: Near-pickem, laying -2.5 on a bad road team (back_favorite 22-34), sized small; a reversal to Tempo pickem flips to the home dog. Cover-only.
-- **Total:** Under (small)
-  - Evidence: Double under signal: total fell -4 (186.5 -> 182.5) AND your implied total (191) is +8.5 over the closing line -- both the line move and your over-prediction bias point UNDER (per the +/-6 gap rule; your >=+6 overestimate bucket has gone 1-8, under 8/9).
-  - Watch: +8.5 is the big-over band (not the +12 killer), and total_under is ~coin-flip overall (27-29); a bounce back over 184 weakens it.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 95.5 vs 91.25 straight-half split = +4.25 -> fh_total_high (big).
-  - Watch: Flag not a bet; 1H spread -1 ~ half the -2.5 line (-1.25) = noise, no fh_side.
-
-**Summary:** FINAL (near tip, ~10:00 ET closing lines). Fire @ Tempo: small FIRE -2.5 -- follow the clean firm onto the road favorite (-1.5->-2.5, ML -145), fading your Tempo side (side-flip: you Tempo -2.5 vs market Tempo +2.5). Small UNDER 182.5 -- DOUBLE under signal: total fell -4 from 186.5 AND your implied total 191 is +8.5 over the line (your over-bias -> under, 1-8/under 8-9). H1: side -1 vs -1.25 split = noise (no lean) | total 95.5 vs 91.25 = +4.25 -> fh_total_high flag (watch). [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=1f2c48caf3d22a1251ca3f5e66d77cc8 -->
