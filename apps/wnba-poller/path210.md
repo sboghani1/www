@@ -1190,23 +1190,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=a05ae0cd5516fbbcdd9fda35e698f70d -->
 ## WNBA Lean: Indiana Fever @ New York Liberty
 - Event ID: `a05ae0cd5516fbbcdd9fda35e698f70d`
-- Revision: `49670d3f-2945-4ed7-b726-c18379f8ca46`
+- Revision: `c1bdcac1-f29d-47fc-822e-80c686afab5c`
 - Status: `active`
 
 ### Full game
-- **Side:** New York Liberty (small)
-  - Evidence: The line flipped/firmed onto Liberty: Fever -1.5 -> Liberty -2.5 (Fever +2.5), a clean move onto the home favorite (follow_line_movement).; Agrees with your Liberty side (you had Liberty -4.5; market -2.5).
-  - Watch: Favorite flip -- cap confidence per the log's flip caution; laying -2.5 is back_favorite (22-36). A reversal back toward Fever flips it.
+- **Side:** New York Liberty (watch)
+  - Evidence: The net flip onto Liberty holds (Fever -1.5 open -> +1.5 close = Liberty became the favorite), but the LATE move softened back toward Fever (Liberty -3.5 peak -> -1.5 close, Fever ML +149 -> +105).; Near-pickem now (-1.5), so low conviction; better number than the initial -2.5, agrees with your Liberty side.
+  - Watch: Downgraded to near-pass on the late give-back; a re-firm past -3 would restore it. Cover-only, not a Liberty spread of conviction.
 - **Total:** Under (watch)
-  - Evidence: Total flat-ish (187.5 -> 186.5); your implied total 184 = -2.5 vs the line -- the weak -1..4 under band (5-5 coin flip), no real gap edge.
-  - Watch: Near-pass; a break under 185 or over 188 would matter.
+  - Evidence: Total flat (187.5 -> 187); gap check: your implied total 184 = -3 vs the line, the weak -1..4 band (5-5 coin flip) -- no edge.
+  - Watch: Near-pass; a break under 185 or over 189 would matter.
 
 ### First half
 - **Total:** Over (watch)
-  - Evidence: 1H total 96 vs 93.25 straight-half split = +2.75 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread +1.5 ~ half the +2.5 line = noise, no fh_side.
+  - Evidence: 1H total 97 vs 93.5 straight-half split = +3.5 -> fh_total_high (big).
+  - Watch: Flag not a bet; 1H spread +0.5 ~ half the +1.5 line = noise, no fh_side.
 
-**Summary:** INITIAL lean (pre-tip). Fever @ Liberty: small LIBERTY -2.5 -- follow the flip/firm onto the home favorite (Fever -1.5 -> Liberty -2.5), agreeing with your Liberty side. Watch UNDER 186.5 -- gap check: your 184 = only -2.5 vs line (weak -1..4 band, coin flip), no edge. H1: side +1.5 vs +1.25 split = noise (no lean) | total 96 vs 93.25 = +2.75 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (near tip, ~7:00 ET closing lines). Fever @ Liberty: watch/near-pass LIBERTY -1.5 -- the flip onto Liberty holds net (Fever -1.5 open -> +1.5 close) but the LATE move softened back to Fever (Liberty -3.5 peak -> -1.5 close, Fever ML +149 -> +105), so near-pickem, low conviction; better -1.5 number, agrees with your Liberty side. Watch UNDER 187 -- gap check: your 184 = -3 vs line (weak -1..4 band, coin flip, no edge). H1: side +0.5 vs +0.75 split = noise (no lean) | total 97 vs 93.5 = +3.5 -> fh_total_high flag (watch). [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=a05ae0cd5516fbbcdd9fda35e698f70d -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=d2c4b90e59812d0ba7bb21319e5c25a6 -->
