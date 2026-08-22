@@ -1213,21 +1213,21 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=1f2c48caf3d22a1251ca3f5e66d77cc8 -->
 ## WNBA Lean: Portland Fire @ Toronto Tempo
 - Event ID: `1f2c48caf3d22a1251ca3f5e66d77cc8`
-- Revision: `e98f23fd-3230-4d61-9503-af4b4311208e`
+- Revision: `f561dd4e-f3e4-4170-80b4-25aaaf1ff15f`
 - Status: `active`
 
 ### Full game
 - **Side:** Portland Fire (small)
-  - Evidence: The Fire road favorite firmed cleanly -1.5 -> -2.5 (ML -115 -> -145), a one-directional follow_line_movement signal.; Fades your Tempo side -- you have Tempo -2.5 (favored), but the market has Tempo +2.5 DOGS (a 5-pt side-flip); the money is on Fire.
-  - Watch: Near-pickem and laying -2.5 on a bad road team (back_favorite 22-34), sized small; a reversal to Tempo -1/pickem flips to the home dog.
+  - Evidence: The Fire road favorite firmed cleanly -1.5 -> -2.5 (peaked -3, ML -145) into tip -- follow_line_movement.; Fades your Tempo side; you have Tempo -2.5 but the market has Tempo +2.5 DOGS (a 5-pt side-flip).
+  - Watch: Near-pickem, laying -2.5 on a bad road team (back_favorite 22-34), sized small; a reversal to Tempo pickem flips to the home dog. Cover-only.
 - **Total:** Under (small)
-  - Evidence: Total fell 186.5 -> 183 (net -3.5, under money) off a high number.
-  - Watch: A bounce back over 185 weakens it.
+  - Evidence: Double under signal: total fell -4 (186.5 -> 182.5) AND your implied total (191) is +8.5 over the closing line -- both the line move and your over-prediction bias point UNDER (per the +/-6 gap rule; your >=+6 overestimate bucket has gone 1-8, under 8/9).
+  - Watch: +8.5 is the big-over band (not the +12 killer), and total_under is ~coin-flip overall (27-29); a bounce back over 184 weakens it.
 
 ### First half
 - **Total:** Over (watch)
-  - Evidence: 1H total 95.5 vs 91.5 straight-half split = +4 -> fh_total_high (big).
-  - Watch: Flag not a bet; 1H spread -1 ~ half the -2.5 line = noise, no fh_side.
+  - Evidence: 1H total 95.5 vs 91.25 straight-half split = +4.25 -> fh_total_high (big).
+  - Watch: Flag not a bet; 1H spread -1 ~ half the -2.5 line (-1.25) = noise, no fh_side.
 
-**Summary:** INITIAL lean (pre-tip, lines may move). Fire @ Tempo: small FIRE -2.5 -- follow the clean firm onto the road favorite (-1.5->-2.5, ML -115->-145), fading your Tempo side; you have Tempo -2.5 but market has Tempo +2.5 DOGS (your latest side-flip). Small UNDER 183 (fell from 186.5). H1: side -1 vs -1.25 split = noise (no lean) | total 95.5 vs 91.5 = +4 -> fh_total_high flag (watch). Refine near tip. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (near tip, ~10:00 ET closing lines). Fire @ Tempo: small FIRE -2.5 -- follow the clean firm onto the road favorite (-1.5->-2.5, ML -145), fading your Tempo side (side-flip: you Tempo -2.5 vs market Tempo +2.5). Small UNDER 182.5 -- DOUBLE under signal: total fell -4 from 186.5 AND your implied total 191 is +8.5 over the line (your over-bias -> under, 1-8/under 8-9). H1: side -1 vs -1.25 split = noise (no lean) | total 95.5 vs 91.25 = +4.25 -> fh_total_high flag (watch). [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=1f2c48caf3d22a1251ca3f5e66d77cc8 -->
