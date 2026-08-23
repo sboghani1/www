@@ -1234,15 +1234,15 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
 ## WNBA Lean: Indiana Fever @ Chicago Sky
 - Event ID: `bc3a81f7e77e90a0c34cd5cda709243d`
-- Revision: `4e64476f-7a27-4484-918f-131fae3ca56f`
+- Revision: `ff2f3be9-5a8a-4ede-a201-b7895b29e2c5`
 - Status: `active`
 
 ### Full game
 - **Side:** Indiana Fever (watch)
-  - Evidence: Fever lay EASED -4.5 -> -3 (money toward the Sky dog); follow-onto-Fever weakened, near-pickem now.; Still agrees with your Fever side but low conviction.
+  - Evidence: Fever lay EASED -4.5 -> -3 (money toward the Sky dog); follow-onto-Fever weakened, near-pickem.; Still agrees with your Fever side but low conviction.
   - Watch: Near-pass; a re-firm past -4 restores it, a move to Sky +points flips it.
 - **Total:** Under (small)
-  - Evidence: Your -25.5 total gap is an extreme underestimate -> under (-13+ band, under 1/2 [WL], tiny sample).
+  - Evidence: Asce -25.5 total gap is an extreme underestimate -> under (-13+ band, under 1/2 [WL], tiny sample).
   - Watch: 186.5 high/flat, extreme gap = over-shoot risk, keep small.
 
 ### First half
@@ -1250,7 +1250,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
   - Evidence: 1H total 96.5 vs 93.25 split = +3.25 -> fh_total_high (big).
   - Watch: Flag not a bet; 1H spread noise, no fh_side.
 
-**Summary:** UPDATED lean. Fever @ Sky: watch/near-pass FEVER -3 (lay eased -4.5->-3 toward Sky, weakened); small UNDER 186.5 (extreme underestimate). H1: total 96.5 vs 93.25 = +3.25 fh_total_high flag; side noise. | GAPS: score you Fever 86-75 Sky (161) vs BO 95-92 (186.5), total diff -25.5, bucket -13+ under 1/2 [WL]; spread Fever -5.5 vs -3 (-2.5); team fav Fever -8.8 / dog Sky -16.8. [stars: side=1, total=1, fh_total=1]
+**Summary:** UPDATED lean. Fever @ Sky: watch/near-pass FEVER -3 (lay eased toward Sky, weakened); small UNDER 186.5 (extreme underestimate). H1: total 96.5 vs 93.25 = +3.25 fh_total_high flag; side noise. | GAPS: Final score -- Asce: 161 (Fever 86, Sky 75) vs BO: 186.5 (95, 92) -> diff -25.5, bucket -13+ under 1/2 [WL]; spread Fever -5.5 vs -3 (-2.5); team fav Fever -8.8 / dog Sky -16.8. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=4329aee135ac130aa177b8dfb7b3ffac -->
