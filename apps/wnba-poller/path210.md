@@ -1233,18 +1233,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
 ## WNBA Lean: Indiana Fever @ Chicago Sky
 - Event ID: `bc3a81f7e77e90a0c34cd5cda709243d`
-- Revision: `5609c2c0-89e0-44b4-a903-e8d1d7da1a89`
+- Revision: `b89b8f1b-b29f-47d8-976e-d25cc63a2009`
 - Status: `active`
 
 ### Full game
-- **Side:** Indiana Fever (small)
-  - Evidence: The Fever ML firmed onto the road favorite (-142 -> -168) though the spread round-tripped -4.5 -> -2.5 -> -4.5 (net flat); mild follow onto Fever.; Agrees with your Fever side (you had Fever -5.5; market -4.5).
-  - Watch: Spread round-tripped so modest edge; laying -4.5 on the road is back_favorite (22-36). A firm to Sky +points flips it.
+- **Side:** Indiana Fever (watch)
+  - Evidence: The Fever favorite EASED -4.5 -> -3 (lay shrank toward the Sky dog); the follow-onto-Fever thesis weakened -- money drifting to Sky.; Still agrees with your Fever side but now near-pickem, low conviction.
+  - Watch: Downgraded to near-pass on the ease toward Sky; a re-firm past -4 restores it, a move to Sky +points flips it.
 - **Total:** Under (small)
-  - Evidence: Gap check: your implied total 161 = -26 UNDER the line 187 -- an extreme underestimate; the under-gap side leans under (~66-70%), though your under-side reads are softer than your over-side.
-  - Watch: 187 is a high, flat number and the -26 gap is extreme (possible over-shoot), so keep it small; a drop under 185 firms it.
+  - Evidence: Gap: your 161 = -25.5 under the flat line 186.5 -- extreme underestimate (under-gap leans under, softer side).
+  - Watch: 186.5 is high/flat and the gap is extreme (over-shoot risk), so small; a drop under 185 firms it.
 
-**Summary:** INITIAL lean (pre-tip, ~17h out). Fever @ Sky: small FEVER -4.5 -- follow the ML firm onto the road favorite (spread round-tripped to -4.5), agreeing with your Fever side. Small UNDER 187 -- gap check: your 161 = -26 under the line (extreme underestimate -> under, but softer under-side). 1H check: no first-half market posted yet. Refine near tip. [stars: side=1, total=1]
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 96.5 vs 93.25 straight-half split = +3.25 -> fh_total_high (big).
+  - Watch: Flag not a bet; 1H spread -1.5 = half the -3 line = noise, no fh_side.
+
+**Summary:** UPDATED lean (~5h out). Fever @ Sky: watch/near-pass FEVER -3 -- DOWNGRADED: the Fever lay eased -4.5 -> -3 (money toward Sky), weakening the follow; near-pickem now. Small UNDER 186.5 -- your 161 = -25.5 under the line (extreme underestimate -> under, softer side). H1 (now posted): side -1.5 vs -1.5 = noise (no lean) | total 96.5 vs 93.25 = +3.25 -> fh_total_high flag (watch). Refine at final. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=4329aee135ac130aa177b8dfb7b3ffac -->
