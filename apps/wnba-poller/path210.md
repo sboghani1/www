@@ -1211,18 +1211,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=df428ab65c7800c0b0bc4773de724cb3 -->
 ## WNBA Lean: Seattle Storm @ Dallas Wings
 - Event ID: `df428ab65c7800c0b0bc4773de724cb3`
-- Revision: `3dbf8626-8ca0-47ad-947d-8949b78d6de3`
+- Revision: `7ad3af8a-d763-47f4-b6e7-fdde86dd7b3c`
 - Status: `active`
 
 ### Full game
 - **Side:** Seattle Storm (small)
-  - Evidence: Wings firmed to a big -8.5 home lay (6.5 -> 8.5, ML -375) -- big-favorites-don't-cover; take the Storm dog's points (fade_favorite 28-23, motivated_underdog); back_favorite is 22-36.; Fades your Wings side (you had Wings -9.5).
-  - Watch: The firm onto Wings is clean, so a push past -10 with the ML firming warns a true blowout. Cover-only, not a Storm ML.
+  - Evidence: Wings held a big -8.5 home lay (peaked -9, back to -8.5) -- big-favorites-don't-cover, take the Storm dog (fade_favorite 28-24); back_favorite 22-36.; Fades your Wings side.
+  - Watch: Clean firm onto Wings held; a push past -10 warns a true blowout. Cover-only, not a Storm ML.
 - **Total:** Under (small)
-  - Evidence: Gap check: your implied total 184 = +11 OVER the flat line 173 -- your over-gap runs ~1-11 under at >=+5 (0-5 at +13); a strong UNDER signal (fade your over).
-  - Watch: Low total already (173); a rise over 175 weakens it.
+  - Evidence: Gap: your 184 = +8.5 over the line -- over-gap under band (1-5 at +5..8). BUT the line drifted UP 173 -> 175.5 (mild over movement, a counter).
+  - Watch: Gap says under, line movement says over -- capped small; a push over 177 flips it.
 
-**Summary:** INITIAL lean (pre-tip, lines may move; ~15h out). Storm @ Wings: small STORM +8.5 -- FADE your Wings side; -8.5 is a big home lay where big-favorites-don't-cover, take the dog. Small UNDER 173 -- gap check: your 184 = +11 over the line (over-gap -> under). 1H check: no first-half market posted yet. Refine near tip. [stars: side=1, total=1]
+### First half
+- **Total:** Over (watch)
+  - Evidence: 1H total 90 vs 87.75 straight-half split = +2.25 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread -4.5 ~ half the -8.5 line = noise, no fh_side.
+
+**Summary:** UPDATED lean (~2h out). Storm @ Wings: small STORM +8.5 -- fade the big Wings lay (held -8.5), FADE your Wings. Small UNDER 175.5 -- your +8.5 gap says under, but the line rose 173 -> 175.5 (mild over counter), so capped. H1 (now posted): side -4.5 vs -4.25 = noise (no lean) | total 90 vs 87.75 = +2.25 -> fh_total_high flag (watch). Refine at final. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=df428ab65c7800c0b0bc4773de724cb3 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
