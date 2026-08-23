@@ -1256,23 +1256,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=4329aee135ac130aa177b8dfb7b3ffac -->
 ## WNBA Lean: Washington Mystics @ Portland Fire
 - Event ID: `4329aee135ac130aa177b8dfb7b3ffac`
-- Revision: `f81b2ca9-91f4-4150-b25d-f8dff78343bb`
+- Revision: `06fcdf32-65b2-461e-bc9d-c2c818caab3b`
 - Status: `active`
 
 ### Full game
 - **Side:** Washington Mystics (small)
-  - Evidence: Mystics net firmed -3.5 -> -4 (round-tripped through -5; ML -160 -> -180), a mild follow onto the road favorite.; Agrees with your Mystics side.
+  - Evidence: Mystics net firmed -3.5 -> -4 (ML -160 -> -180), a mild follow onto the road favorite.; Agrees with your Mystics side.
   - Watch: Laying -4 on the road is back_favorite (22-36); a reversal toward -3 flips to the Fire dog.
 - **Total:** Under (watch)
-  - Evidence: Gap: your 166 = +1 vs the flat line 165 -- coin-flip zone, no gap edge; low total.
-  - Watch: Near-pass; a break under 162 or over 168 would matter.
+  - Evidence: Your +1 total gap = coin-flip zone (+1-4 band under 4/5 [LWWWW]), essentially no edge; low total.
+  - Watch: Near-pass; a break under 162 or over 168 matters.
 
 ### First half
 - **Total:** Under (watch)
-  - Evidence: 1H total 79 vs 82.5 straight-half split = -3.5 -> fh_total_low (big).
-  - Watch: Flag not a bet; 1H spread -2 = half the -4 line = noise, no fh_side.
+  - Evidence: 1H total 79 vs 82.5 split = -3.5 -> fh_total_low (big).
+  - Watch: Flag not a bet; 1H spread noise, no fh_side.
 
-**Summary:** UPDATED lean (~5h out). Mystics @ Fire: small MYSTICS -4 -- mild firm onto the road favorite (net -3.5 -> -4), agreeing with your Mystics side. Watch UNDER 165 -- your +1 gap is the coin-flip zone (no edge). H1 (now posted): side -2 vs -2 = noise (no lean) | total 79 vs 82.5 = -3.5 -> fh_total_low flag (watch). Refine at final. [stars: side=1, total=1, fh_total=1]
+**Summary:** UPDATED lean. Mystics @ Fire: small MYSTICS -4 (mild firm, agree you); watch UNDER 165 (gap +1, no edge). H1: total 79 vs 82.5 = -3.5 fh_total_low flag; side noise. | GAPS: score you Mystics 87-79 Fire (166) vs BO 84-80 (165), total diff +1.0, bucket +1-4 under 4/5 [LWWWW]; spread Mystics -3.5 vs -4 (+0.5); team fav Mystics +2.5 / dog Fire -1.5. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=4329aee135ac130aa177b8dfb7b3ffac -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=efc616f676575f27e95d18e9ea20a747 -->
