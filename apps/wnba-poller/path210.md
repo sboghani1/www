@@ -1286,3 +1286,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip, ~17h out). Fever @ Sky: small FEVER -4.5 -- follow the ML firm onto the road favorite (spread round-tripped to -4.5), agreeing with your Fever side. Small UNDER 187 -- gap check: your 161 = -26 under the line (extreme underestimate -> under, but softer under-side). 1H check: no first-half market posted yet. Refine near tip. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=4329aee135ac130aa177b8dfb7b3ffac -->
+## WNBA Lean: Washington Mystics @ Portland Fire
+- Event ID: `4329aee135ac130aa177b8dfb7b3ffac`
+- Revision: `91a91b0f-168b-446f-a7ba-3cefe4fa91b8`
+- Status: `active`
+
+### Full game
+- **Side:** Washington Mystics (small)
+  - Evidence: The Mystics road favorite firmed cleanly -3.5 -> -4.5 (ML -160 -> -192), a follow_line_movement signal.; Agrees with your Mystics side (you had Mystics -3.5).
+  - Watch: Laying -4.5 on the road is back_favorite (22-36), sized small; a reversal toward -3 flips to the Fire dog.
+- **Total:** Under (watch)
+  - Evidence: Gap check: your implied total 166 = +0.5 vs the line 165.5 -- dead in the coin-flip zone (no gap edge); total is flat/low.
+  - Watch: Near-pass; a break under 163 or over 168 would matter.
+
+**Summary:** INITIAL lean (pre-tip, ~17h out). Mystics @ Fire: small MYSTICS -4.5 -- follow the clean firm onto the road favorite (-3.5 -> -4.5), agreeing with your Mystics side. Watch UNDER 165.5 -- gap check: your 166 = +0.5 vs line (coin-flip zone, no edge). 1H check: no first-half market posted yet. Refine near tip. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=4329aee135ac130aa177b8dfb7b3ffac -->
