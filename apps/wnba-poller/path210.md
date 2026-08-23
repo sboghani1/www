@@ -984,18 +984,25 @@ line movement: side: Fever -1.5 (open), Liberty -1.5 (close) favorite flip onto 
 context: saturday. fade fever = back the new york liberty after the line flipped onto liberty (fever -1.5 open -> liberty -1.5 close, peaked -3.5 then softened late), a follow_line_movement / favorite-flip read, agreeing with the user's liberty side; near-pickem so low conviction. total: under 187 -- the gap was only -3 (weak coin-flip band, no edge). first-half over 97 posted as a fh_total_high flag. [initial pre-tip, finalized near tip]
 model_lean: side back Liberty -1.5 (watch/near-pass); total under 187 (watch); 1H over 97 (watch flag) | stars: side=1:right, total=1:wrong, fh_total=1:right
 
+137fadesun
+right
+follow_line_movement, back_favorite, total_under
+line movement: side: Sparks -3.5 (open), -5 (close) firm onto the favorite; Sun ML +130 -> +174; total: 169.5 (open), 171 (close)
+context: saturday. fade sun = back the los angeles sparks home favorite following a clean firm -3.5 -> -5 (follow_line_movement), agreeing with the user's sparks side. total: under 171 -- your implied total 163 = -8 under the line (underestimate -5..8 band). first-half over 85.5 posted as a fh_total_high flag. [initial pre-tip lean, resolved as-is]
+model_lean: side back Sparks -4.5 (small); total under 169 (small); 1H over 85.5 (watch flag) | stars: side=1:right, total=1:right, fh_total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 19 right / 24 wrong
+follow_line_movement: 20 right / 24 wrong
 fade_favorite: 28 right / 23 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 24 wrong
-back_favorite: 22 right / 36 wrong
+back_favorite: 23 right / 36 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 9 wrong
 overcaution: 0 right / 1 wrong
@@ -1003,7 +1010,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 6 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 18 right / 22 wrong
-total_under: 27 right / 30 wrong
+total_under: 28 right / 30 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1193,28 +1200,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=d2c4b90e59812d0ba7bb21319e5c25a6 -->
-## WNBA Lean: Connecticut Sun @ Los Angeles Sparks
-- Event ID: `d2c4b90e59812d0ba7bb21319e5c25a6`
-- Revision: `67528f26-d7c4-4612-ae0a-172ed09eb664`
-- Status: `active`
-
-### Full game
-- **Side:** Los Angeles Sparks (small)
-  - Evidence: The Sparks home favorite firmed cleanly -3.5 -> -4.5 (Sun ML +130 -> +161), a follow_line_movement signal.; Agrees with your Sparks side (you had Sparks -3.5).
-  - Watch: Laying -4.5 is back_favorite (22-36), sized small; a reversal toward -3 flips to the Sun dog.
-- **Total:** Under (small)
-  - Evidence: Gap check: your implied total 163 = -6 vs the closing line 169 -- the -5..8 underestimate band has gone 3-1 (under 3/4), a genuine UNDER signal even though the line itself is flat (169.5 -> 169).
-  - Watch: Leans on your under-gap, not movement; a rise over 171 weakens it.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 85.5 vs 84.5 straight-half split = +1 -> fh_total_high (small, near noise).
-  - Watch: Flag not a bet; 1H spread +2.5 ~ half the +4.5 line (+2.25) = noise, no fh_side.
-
-**Summary:** INITIAL lean (pre-tip). Sun @ Sparks: small SPARKS -4.5 -- follow the clean firm onto the home favorite (-3.5 -> -4.5), agreeing with your Sparks side. Small UNDER 169 -- gap check: your 163 = -6 vs line (underestimate -5..8 band 3-1, under 3/4), a real under signal on a flat total. H1: side +2.5 vs +2.25 split = noise (no lean) | total 85.5 vs 84.5 = +1 -> fh_total_high flag (watch, near-noise). Refine near tip. [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=d2c4b90e59812d0ba7bb21319e5c25a6 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=c51758bb72914739b6e6cc2d16ed0882 -->
 ## WNBA Lean: Atlanta Dream @ Phoenix Mercury
