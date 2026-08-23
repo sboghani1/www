@@ -977,11 +977,18 @@ line movement: side: Fire -1.5 (open), -2.5 (close) firm onto the road favorite;
 context: friday. fade tempo = back the portland fire road favorite following a clean firm -1.5 -> -2.5 (follow_line_movement), fading the user's tempo side (side-flip: user tempo -2.5 vs market tempo +2.5); laying -2.5 on a bad road team is back_favorite. total: under 182.5 -- double under flag (line fell -4 AND user implied total 191 = +8.5 over the line, over-gap rule). first-half over 95.5 posted as a fh_total_high flag. [initial pre-tip, finalized near tip]
 model_lean: side back Fire -2.5 (small); total under 182.5 (small); 1H over 95.5 (watch flag) | stars: side=1:wrong, total=1:right, fh_total=1:wrong
 
+136fadefever
+right
+follow_line_movement
+line movement: side: Fever -1.5 (open), Liberty -1.5 (close) favorite flip onto Liberty (peaked -3.5, softened late); total: 187.5 (open), 187 (close)
+context: saturday. fade fever = back the new york liberty after the line flipped onto liberty (fever -1.5 open -> liberty -1.5 close, peaked -3.5 then softened late), a follow_line_movement / favorite-flip read, agreeing with the user's liberty side; near-pickem so low conviction. total: under 187 -- the gap was only -3 (weak coin-flip band, no edge). first-half over 97 posted as a fh_total_high flag. [initial pre-tip, finalized near tip]
+model_lean: side back Liberty -1.5 (watch/near-pass); total under 187 (watch); 1H over 97 (watch flag) | stars: side=1:right, total=1:wrong, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 18 right / 24 wrong
+follow_line_movement: 19 right / 24 wrong
 fade_favorite: 28 right / 23 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
@@ -1186,28 +1193,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=a05ae0cd5516fbbcdd9fda35e698f70d -->
-## WNBA Lean: Indiana Fever @ New York Liberty
-- Event ID: `a05ae0cd5516fbbcdd9fda35e698f70d`
-- Revision: `c1bdcac1-f29d-47fc-822e-80c686afab5c`
-- Status: `active`
-
-### Full game
-- **Side:** New York Liberty (watch)
-  - Evidence: The net flip onto Liberty holds (Fever -1.5 open -> +1.5 close = Liberty became the favorite), but the LATE move softened back toward Fever (Liberty -3.5 peak -> -1.5 close, Fever ML +149 -> +105).; Near-pickem now (-1.5), so low conviction; better number than the initial -2.5, agrees with your Liberty side.
-  - Watch: Downgraded to near-pass on the late give-back; a re-firm past -3 would restore it. Cover-only, not a Liberty spread of conviction.
-- **Total:** Under (watch)
-  - Evidence: Total flat (187.5 -> 187); gap check: your implied total 184 = -3 vs the line, the weak -1..4 band (5-5 coin flip) -- no edge.
-  - Watch: Near-pass; a break under 185 or over 189 would matter.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 97 vs 93.5 straight-half split = +3.5 -> fh_total_high (big).
-  - Watch: Flag not a bet; 1H spread +0.5 ~ half the +1.5 line = noise, no fh_side.
-
-**Summary:** FINAL (near tip, ~7:00 ET closing lines). Fever @ Liberty: watch/near-pass LIBERTY -1.5 -- the flip onto Liberty holds net (Fever -1.5 open -> +1.5 close) but the LATE move softened back to Fever (Liberty -3.5 peak -> -1.5 close, Fever ML +149 -> +105), so near-pickem, low conviction; better -1.5 number, agrees with your Liberty side. Watch UNDER 187 -- gap check: your 184 = -3 vs line (weak -1..4 band, coin flip, no edge). H1: side +0.5 vs +0.75 split = noise (no lean) | total 97 vs 93.5 = +3.5 -> fh_total_high flag (watch). [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=a05ae0cd5516fbbcdd9fda35e698f70d -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=d2c4b90e59812d0ba7bb21319e5c25a6 -->
 ## WNBA Lean: Connecticut Sun @ Los Angeles Sparks
