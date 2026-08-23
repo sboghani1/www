@@ -1278,7 +1278,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=efc616f676575f27e95d18e9ea20a747 -->
 ## WNBA Lean: Las Vegas Aces @ Toronto Tempo
 - Event ID: `efc616f676575f27e95d18e9ea20a747`
-- Revision: `3fa07300-2de4-4454-ae25-5e3f234d6f66`
+- Revision: `f5a95c9c-968b-4c85-81a9-a8f84d2173df`
 - Status: `active`
 
 ### Full game
@@ -1286,7 +1286,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
   - Evidence: The huge Aces lay COLLAPSED -14.5 -> -10.5 (ML -1150 -> -550) -- money onto Tempo, confirming the fade (follow + fade_favorite).; Fades your Aces side.
   - Watch: Getting fewer points (+10.5) but the collapse validates the fade; cover-only.
 - **Total:** Under (small)
-  - Evidence: Your +14 total gap is the +13+ killer band (under 5/5 [WWWWW]), cleanest over-gap -> 2-star.; Bias read on a flat line; a +8.5 over-gap under lost last night, but +13+ is the strongest band.
+  - Evidence: Asce +14 total gap is the +13+ killer band (under 5/5 [WWWWW]), cleanest over-gap -> 2-star.; Flat line; a +8.5 over-gap under lost last night, but +13+ is the strongest band.
   - Watch: total_under overall ~coin-flip (28-31); a rise over 182 weakens it.
 
 ### First half
@@ -1294,5 +1294,5 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
   - Evidence: 1H total 88.5 vs 90 split = -1.5 -> fh_total_low (small).
   - Watch: Flag not a bet; 1H spread noise, no fh_side.
 
-**Summary:** UPDATED lean. Aces @ Tempo: small TEMPO +10.5 (Aces lay collapsed -14.5->-10.5, fade confirmed); small UNDER 180 2-STAR (+14 killer over-gap). H1: total 88.5 vs 90 = -1.5 fh_total_low flag; side noise. | GAPS: score you Aces 102-92 Tempo (194) vs BO 95-85 (180), total diff +14, bucket +13+ under 5/5 [WWWWW]; spread Aces -7.5 vs -10.5 (+3.0); team fav Aces +6.8 / dog Tempo +7.2. [stars: side=1, total=2, fh_total=1]
+**Summary:** UPDATED lean. Aces @ Tempo: small TEMPO +10.5 (Aces lay collapsed, fade confirmed); small UNDER 180 2-STAR (+14 killer over-gap). H1: total 88.5 vs 90 = -1.5 fh_total_low flag; side noise. | GAPS: Final score -- Asce: 194 (Aces 102, Tempo 92) vs BO: 180 (95, 85) -> diff +14, bucket +13+ under 5/5 [WWWWW]; spread Aces -7.5 vs -10.5 (+3.0); team fav Aces +6.8 / dog Tempo +7.2. [stars: side=1, total=2, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=efc616f676575f27e95d18e9ea20a747 -->
