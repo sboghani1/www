@@ -1255,18 +1255,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=4329aee135ac130aa177b8dfb7b3ffac -->
 ## WNBA Lean: Washington Mystics @ Portland Fire
 - Event ID: `4329aee135ac130aa177b8dfb7b3ffac`
-- Revision: `91a91b0f-168b-446f-a7ba-3cefe4fa91b8`
+- Revision: `f81b2ca9-91f4-4150-b25d-f8dff78343bb`
 - Status: `active`
 
 ### Full game
 - **Side:** Washington Mystics (small)
-  - Evidence: The Mystics road favorite firmed cleanly -3.5 -> -4.5 (ML -160 -> -192), a follow_line_movement signal.; Agrees with your Mystics side (you had Mystics -3.5).
-  - Watch: Laying -4.5 on the road is back_favorite (22-36), sized small; a reversal toward -3 flips to the Fire dog.
+  - Evidence: Mystics net firmed -3.5 -> -4 (round-tripped through -5; ML -160 -> -180), a mild follow onto the road favorite.; Agrees with your Mystics side.
+  - Watch: Laying -4 on the road is back_favorite (22-36); a reversal toward -3 flips to the Fire dog.
 - **Total:** Under (watch)
-  - Evidence: Gap check: your implied total 166 = +0.5 vs the line 165.5 -- dead in the coin-flip zone (no gap edge); total is flat/low.
-  - Watch: Near-pass; a break under 163 or over 168 would matter.
+  - Evidence: Gap: your 166 = +1 vs the flat line 165 -- coin-flip zone, no gap edge; low total.
+  - Watch: Near-pass; a break under 162 or over 168 would matter.
 
-**Summary:** INITIAL lean (pre-tip, ~17h out). Mystics @ Fire: small MYSTICS -4.5 -- follow the clean firm onto the road favorite (-3.5 -> -4.5), agreeing with your Mystics side. Watch UNDER 165.5 -- gap check: your 166 = +0.5 vs line (coin-flip zone, no edge). 1H check: no first-half market posted yet. Refine near tip. [stars: side=1, total=1]
+### First half
+- **Total:** Under (watch)
+  - Evidence: 1H total 79 vs 82.5 straight-half split = -3.5 -> fh_total_low (big).
+  - Watch: Flag not a bet; 1H spread -2 = half the -4 line = noise, no fh_side.
+
+**Summary:** UPDATED lean (~5h out). Mystics @ Fire: small MYSTICS -4 -- mild firm onto the road favorite (net -3.5 -> -4), agreeing with your Mystics side. Watch UNDER 165 -- your +1 gap is the coin-flip zone (no edge). H1 (now posted): side -2 vs -2 = noise (no lean) | total 79 vs 82.5 = -3.5 -> fh_total_low flag (watch). Refine at final. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=4329aee135ac130aa177b8dfb7b3ffac -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=efc616f676575f27e95d18e9ea20a747 -->
