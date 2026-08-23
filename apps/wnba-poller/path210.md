@@ -991,26 +991,33 @@ line movement: side: Sparks -3.5 (open), -5 (close) firm onto the favorite; Sun 
 context: saturday. fade sun = back the los angeles sparks home favorite following a clean firm -3.5 -> -5 (follow_line_movement), agreeing with the user's sparks side. total: under 171 -- your implied total 163 = -8 under the line (underestimate -5..8 band). first-half over 85.5 posted as a fh_total_high flag. [initial pre-tip lean, resolved as-is]
 model_lean: side back Sparks -4.5 (small); total under 169 (small); 1H over 85.5 (watch flag) | stars: side=1:right, total=1:right, fh_total=1:wrong
 
+138fadedream
+wrong
+fade_favorite, fade_line_movement, motivated_underdog, total_under
+line movement: side: Dream -5 (open), -8.5 (peak), -8 (close) strong firm onto Dream; ML -205 -> -350; total: 176.5 (open), 177 (close)
+context: saturday. fade dream = back the phoenix mercury +8 home dog off a big dream road lay, fading the strong firm onto dream (-5 -> -8, ml -350) on fade_favorite / big-favorites-don't-cover -- bumped off pass on the user's spread-gap bucket (their +1..4 favorite bucket had covered just 1-7). total: under 177, 2-star -- user implied total 185 = +8 over the flat line (over-gap under bucket). first-half under 85.5 posted as a fh_total_low flag. [initial pre-tip, finalized near tip with the side bumped off pass]
+model_lean: side back Mercury +8 (small); total under 177 (small, 2-star); 1H under 85.5 (watch flag) | stars: side=1:wrong, total=2:wrong, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 20 right / 24 wrong
-fade_favorite: 28 right / 23 wrong
+fade_favorite: 28 right / 24 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 42 right / 49 wrong
 decision_day_before: 1 right / 0 wrong
-fade_line_movement: 19 right / 24 wrong
+fade_line_movement: 19 right / 25 wrong
 back_favorite: 23 right / 36 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 9 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
-motivated_underdog: 13 right / 6 wrong
+motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 29 wrong
 total_over: 18 right / 22 wrong
-total_under: 28 right / 30 wrong
+total_under: 28 right / 31 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1200,28 +1207,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=c51758bb72914739b6e6cc2d16ed0882 -->
-## WNBA Lean: Atlanta Dream @ Phoenix Mercury
-- Event ID: `c51758bb72914739b6e6cc2d16ed0882`
-- Revision: `9a7ccf67-083e-4780-aa14-d0e9e6e029f7`
-- Status: `active`
-
-### Full game
-- **Side:** Phoenix Mercury (small)
-  - Evidence: Upgraded off pass: your spread gap +4 (you had Dream -4.5, market -8) sits in your WORST side bucket -- when you underestimate your favorite by +1..4, your side has covered just 1-7 (12%), so fading you to the Mercury dog has been ~88% (small sample).; The Dream firm eased slightly at the close (-8.5 -> -8), helping the dog cushion; laying -8 is back_favorite (22-36) + big-favorites-don't-cover.
-  - Watch: Live counter: the firm onto Dream was strong (-5 -> -8) and Dream is hot (blew out Sparks by 36 two nights ago) -- hence 1-star, not more. Cover-only, not a Mercury ML.
-- **Total:** Under (small)
-  - Evidence: Your implied total 185 = +8 over the flat line 177 -- the +5..8 over-gap band is under 5/6 (over-side runs ~1-11 at >=+5); NO line-movement counter, so 2-star conviction, the firmer of the two plays.; Deliberate 2-star: the total has no counter-signal, unlike the side.
-  - Watch: total_under overall is ~coin-flip (27-30); a rise over 179 weakens it.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: 1H total 85.5 vs 88.5 straight-half split = -3 -> fh_total_low (medium).
-  - Watch: Flag not a bet; 1H spread ~ half the -8 line = noise, no fh_side.
-
-**Summary:** FINAL (updated, ~10:00 ET). Dream @ Mercury: TWO fades of your side. (1) small MERCURY +8 -- upgraded off pass: your spread gap +4 is your worst bucket (your side covers 1-7 / 12%, fade ~88%), and the Dream firm eased -8.5 -> -8 late; capped at 1-star by the strong firm + hot Dream (counter). (2) small UNDER 177, 2-STAR -- your implied total 185 = +8 over the flat line (+5..8 under 5/6, over-side ~1-11 at >=+5), no counter, the firmer play. NOTE: both fade a Dream blowout, so they're correlated -- one thesis, two expressions, not a clean parlay. H1: side noise | total 85.5 vs 88.5 = -3 -> fh_total_low flag (watch). [stars: side=1, total=2, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=c51758bb72914739b6e6cc2d16ed0882 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=df428ab65c7800c0b0bc4773de724cb3 -->
 ## WNBA Lean: Seattle Storm @ Dallas Wings
