@@ -1256,7 +1256,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=4329aee135ac130aa177b8dfb7b3ffac -->
 ## WNBA Lean: Washington Mystics @ Portland Fire
 - Event ID: `4329aee135ac130aa177b8dfb7b3ffac`
-- Revision: `06fcdf32-65b2-461e-bc9d-c2c818caab3b`
+- Revision: `dccf36d8-cb05-4d01-a8c7-b0207a63495e`
 - Status: `active`
 
 ### Full game
@@ -1264,7 +1264,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
   - Evidence: Mystics net firmed -3.5 -> -4 (ML -160 -> -180), a mild follow onto the road favorite.; Agrees with your Mystics side.
   - Watch: Laying -4 on the road is back_favorite (22-36); a reversal toward -3 flips to the Fire dog.
 - **Total:** Under (watch)
-  - Evidence: Your +1 total gap = coin-flip zone (+1-4 band under 4/5 [LWWWW]), essentially no edge; low total.
+  - Evidence: Asce +1 total gap = coin-flip zone (+1-4 band under 4/5 [LWWWW]), no edge; low total.
   - Watch: Near-pass; a break under 162 or over 168 matters.
 
 ### First half
@@ -1272,7 +1272,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
   - Evidence: 1H total 79 vs 82.5 split = -3.5 -> fh_total_low (big).
   - Watch: Flag not a bet; 1H spread noise, no fh_side.
 
-**Summary:** UPDATED lean. Mystics @ Fire: small MYSTICS -4 (mild firm, agree you); watch UNDER 165 (gap +1, no edge). H1: total 79 vs 82.5 = -3.5 fh_total_low flag; side noise. | GAPS: score you Mystics 87-79 Fire (166) vs BO 84-80 (165), total diff +1.0, bucket +1-4 under 4/5 [LWWWW]; spread Mystics -3.5 vs -4 (+0.5); team fav Mystics +2.5 / dog Fire -1.5. [stars: side=1, total=1, fh_total=1]
+**Summary:** UPDATED lean. Mystics @ Fire: small MYSTICS -4 (mild firm, agree you); watch UNDER 165 (gap +1, no edge). H1: total 79 vs 82.5 = -3.5 fh_total_low flag; side noise. | GAPS: Final score -- Asce: 166 (Mystics 87, Fire 79) vs BO: 165 (84, 80) -> diff +1.0, bucket +1-4 under 4/5 [LWWWW]; spread Mystics -3.5 vs -4 (+0.5); team fav Mystics +2.5 / dog Fire -1.5. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=4329aee135ac130aa177b8dfb7b3ffac -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=efc616f676575f27e95d18e9ea20a747 -->
