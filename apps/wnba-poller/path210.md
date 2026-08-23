@@ -1234,23 +1234,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
 ## WNBA Lean: Indiana Fever @ Chicago Sky
 - Event ID: `bc3a81f7e77e90a0c34cd5cda709243d`
-- Revision: `ff2f3be9-5a8a-4ede-a201-b7895b29e2c5`
+- Revision: `fb67de44-2aae-4eed-a27c-94a5465eccdc`
 - Status: `active`
 
 ### Full game
-- **Side:** Indiana Fever (watch)
-  - Evidence: Fever lay EASED -4.5 -> -3 (money toward the Sky dog); follow-onto-Fever weakened, near-pickem.; Still agrees with your Fever side but low conviction.
-  - Watch: Near-pass; a re-firm past -4 restores it, a move to Sky +points flips it.
-- **Total:** Under (small)
-  - Evidence: Asce -25.5 total gap is an extreme underestimate -> under (-13+ band, under 1/2 [WL], tiny sample).
-  - Watch: 186.5 high/flat, extreme gap = over-shoot risk, keep small.
+- **Side:** Chicago Sky (small)
+  - Evidence: The Fever favorite EASED all the way -4.5 -> -2 into tip (sustained money to the Sky home dog) -- follow_line_movement now points to Sky; near-pickem.; Flips off your Fever side: the market moved 2.5 pts to the Sky dog, and laying Fever is the underwater back_favorite shape (22-36).
+  - Watch: Near-pickem (+2), low conviction; a re-firm to Fever -4 flips back. Cover-only, not a Sky ML.
+- **Total:** Under (watch)
+  - Evidence: Asce -26.5 total gap is an extreme underestimate, but the under-gap band (-13+) is only 1/2 [WL] (tiny) and 187.5 is high -- so watch, not a real under.
+  - Watch: Near-pass; a drop under 185 would firm it.
 
 ### First half
 - **Total:** Over (watch)
-  - Evidence: 1H total 96.5 vs 93.25 split = +3.25 -> fh_total_high (big).
-  - Watch: Flag not a bet; 1H spread noise, no fh_side.
+  - Evidence: 1H total 96.5 vs 93.75 straight-half split = +2.75 -> fh_total_high (medium).
+  - Watch: Flag not a bet; 1H spread -1 = half the -2 line = noise, no fh_side.
 
-**Summary:** UPDATED lean. Fever @ Sky: watch/near-pass FEVER -3 (lay eased toward Sky, weakened); small UNDER 186.5 (extreme underestimate). H1: total 96.5 vs 93.25 = +3.25 fh_total_high flag; side noise. | GAPS: Final score -- Asce: 161 (Fever 86, Sky 75) vs BO: 186.5 (95, 92) -> diff -25.5, bucket -13+ under 1/2 [WL]; spread Fever -5.5 vs -3 (-2.5); team fav Fever -8.8 / dog Sky -16.8. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (near tip ~7:00). Fever @ Sky: small SKY +2 -- FLIP off your Fever side; the Fever lay eased -4.5 -> -2 into tip (sustained money to the Sky home dog, follow_line_movement), near-pickem. Watch UNDER 187.5 -- your extreme -26.5 gap is on a tiny -13+ bucket (1/2 [WL]) and 187.5 is high, so near-pass not a real under. H1: total 96.5 vs 93.75 = +2.75 fh_total_high flag; side noise. | GAPS: Final score -- Asce: 161 (Fever 86, Sky 75) vs BO: 187.5 (95, 93) -> diff -26.5, bucket -13+ under 1/2 [WL]; spread Fever -5.5 vs -2 (-3.5); team fav Fever -8.75 / dog Sky -17.75. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=4329aee135ac130aa177b8dfb7b3ffac -->
