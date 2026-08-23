@@ -1234,21 +1234,21 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=c51758bb72914739b6e6cc2d16ed0882 -->
 ## WNBA Lean: Atlanta Dream @ Phoenix Mercury
 - Event ID: `c51758bb72914739b6e6cc2d16ed0882`
-- Revision: `c18e6539-52ba-4f61-92ff-e48188a9c38d`
+- Revision: `9a7ccf67-083e-4780-aa14-d0e9e6e029f7`
 - Status: `active`
 
 ### Full game
-- **Side:** Phoenix Mercury (watch)
-  - Evidence: The Dream firm ACCELERATED to a big -8.5 road lay (-5 -> -8.5, ML -205 -> -365) -- past my -8 flip trigger; a strong sustained follow_line_movement onto Dream.; Essentially a PASS: won't lay -8.5 on the road (back_favorite 22-36, big-favorites-don't-cover) but won't confidently fade a firm this strong either. Getting a +8.5 cushion, cover-only.
-  - Watch: If you want a side, Mercury +8.5 is the low-conviction dog cushion; the strong firm onto Dream is the real counter.
+- **Side:** Phoenix Mercury (small)
+  - Evidence: Upgraded off pass: your spread gap +4 (you had Dream -4.5, market -8) sits in your WORST side bucket -- when you underestimate your favorite by +1..4, your side has covered just 1-7 (12%), so fading you to the Mercury dog has been ~88% (small sample).; The Dream firm eased slightly at the close (-8.5 -> -8), helping the dog cushion; laying -8 is back_favorite (22-36) + big-favorites-don't-cover.
+  - Watch: Live counter: the firm onto Dream was strong (-5 -> -8) and Dream is hot (blew out Sparks by 36 two nights ago) -- hence 1-star, not more. Cover-only, not a Mercury ML.
 - **Total:** Under (small)
-  - Evidence: Your implied total 185 = +8.5 OVER the flat closing line 176.5 -- your over-gap bucket runs ~1-11 under at >=+5 (1-5 in the +5..8 band, 0-5 at +13); the sharpest signal on the card, hence 2-star conviction.; Total is flat (176.5), so this is a bias read not line movement -- sized small, conviction 2.
+  - Evidence: Your implied total 185 = +8 over the flat line 177 -- the +5..8 over-gap band is under 5/6 (over-side runs ~1-11 at >=+5); NO line-movement counter, so 2-star conviction, the firmer of the two plays.; Deliberate 2-star: the total has no counter-signal, unlike the side.
   - Watch: total_under overall is ~coin-flip (27-30); a rise over 179 weakens it.
 
 ### First half
 - **Total:** Under (watch)
-  - Evidence: 1H total 85.5 vs 88.25 straight-half split = -2.75 -> fh_total_low (medium).
-  - Watch: Flag not a bet; 1H spread -4 ~ half the -8.5 line (-4.25) = noise, no fh_side.
+  - Evidence: 1H total 85.5 vs 88.5 straight-half split = -3 -> fh_total_low (medium).
+  - Watch: Flag not a bet; 1H spread ~ half the -8 line = noise, no fh_side.
 
-**Summary:** FINAL (near tip, ~10:00 ET closing lines). Dream @ Mercury: watch/near-pass MERCURY +8.5 -- the Dream firm ACCELERATED to a big -8.5 road lay (-5->-8.5, ML -205->-365), past my -8 flip trigger, so the side is essentially a PASS (won't lay -8.5 road, won't fade a firm this strong). THE LEAN IS THE TOTAL: small UNDER 176.5, 2-STAR -- your implied total 185 = +8.5 over the flat line (over-gap 1-5/under 5-6, over-side ~1-11 at >=+5), the sharpest signal on the board; fades your Dream side + over. H1: side -4 vs -4.25 split = noise (no lean) | total 85.5 vs 88.25 = -2.75 -> fh_total_low flag (watch). [stars: side=1, total=2, fh_total=1]
+**Summary:** FINAL (updated, ~10:00 ET). Dream @ Mercury: TWO fades of your side. (1) small MERCURY +8 -- upgraded off pass: your spread gap +4 is your worst bucket (your side covers 1-7 / 12%, fade ~88%), and the Dream firm eased -8.5 -> -8 late; capped at 1-star by the strong firm + hot Dream (counter). (2) small UNDER 177, 2-STAR -- your implied total 185 = +8 over the flat line (+5..8 under 5/6, over-side ~1-11 at >=+5), no counter, the firmer play. NOTE: both fade a Dream blowout, so they're correlated -- one thesis, two expressions, not a clean parlay. H1: side noise | total 85.5 vs 88.5 = -3 -> fh_total_low flag (watch). [stars: side=1, total=2, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=c51758bb72914739b6e6cc2d16ed0882 -->
