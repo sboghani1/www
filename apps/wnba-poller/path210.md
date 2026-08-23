@@ -1269,3 +1269,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip, lines may move; ~15h out). Storm @ Wings: small STORM +8.5 -- FADE your Wings side; -8.5 is a big home lay where big-favorites-don't-cover, take the dog. Small UNDER 173 -- gap check: your 184 = +11 over the line (over-gap -> under). 1H check: no first-half market posted yet. Refine near tip. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=df428ab65c7800c0b0bc4773de724cb3 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
+## WNBA Lean: Indiana Fever @ Chicago Sky
+- Event ID: `bc3a81f7e77e90a0c34cd5cda709243d`
+- Revision: `5609c2c0-89e0-44b4-a903-e8d1d7da1a89`
+- Status: `active`
+
+### Full game
+- **Side:** Indiana Fever (small)
+  - Evidence: The Fever ML firmed onto the road favorite (-142 -> -168) though the spread round-tripped -4.5 -> -2.5 -> -4.5 (net flat); mild follow onto Fever.; Agrees with your Fever side (you had Fever -5.5; market -4.5).
+  - Watch: Spread round-tripped so modest edge; laying -4.5 on the road is back_favorite (22-36). A firm to Sky +points flips it.
+- **Total:** Under (small)
+  - Evidence: Gap check: your implied total 161 = -26 UNDER the line 187 -- an extreme underestimate; the under-gap side leans under (~66-70%), though your under-side reads are softer than your over-side.
+  - Watch: 187 is a high, flat number and the -26 gap is extreme (possible over-shoot), so keep it small; a drop under 185 firms it.
+
+**Summary:** INITIAL lean (pre-tip, ~17h out). Fever @ Sky: small FEVER -4.5 -- follow the ML firm onto the road favorite (spread round-tripped to -4.5), agreeing with your Fever side. Small UNDER 187 -- gap check: your 161 = -26 under the line (extreme underestimate -> under, but softer under-side). 1H check: no first-half market posted yet. Refine near tip. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
