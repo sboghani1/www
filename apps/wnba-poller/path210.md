@@ -1303,3 +1303,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL lean (pre-tip, ~17h out). Mystics @ Fire: small MYSTICS -4.5 -- follow the clean firm onto the road favorite (-3.5 -> -4.5), agreeing with your Mystics side. Watch UNDER 165.5 -- gap check: your 166 = +0.5 vs line (coin-flip zone, no edge). 1H check: no first-half market posted yet. Refine near tip. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=4329aee135ac130aa177b8dfb7b3ffac -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=efc616f676575f27e95d18e9ea20a747 -->
+## WNBA Lean: Las Vegas Aces @ Toronto Tempo
+- Event ID: `efc616f676575f27e95d18e9ea20a747`
+- Revision: `daa90633-9753-40aa-8229-499b2bcfdce6`
+- Status: `active`
+
+### Full game
+- **Side:** Toronto Tempo (small)
+  - Evidence: Aces firmed to a HUGE -14 road lay (-11.5 -> -14, ML -1175) -- big-favorites-don't-cover; take the Tempo dog's big cushion (fade_favorite 28-23, motivated_underdog); back_favorite 22-36.; Fades your Aces side (you had Aces -7.5; the market lays -14, a 6.5-pt bigger lay).
+  - Watch: Counter: the Aces covered -14.5 (won by 23) just two nights ago and the firm is strong -- hence 1-star. Cover-only, not a Tempo ML.
+- **Total:** Under (small)
+  - Evidence: Gap check: your implied total 194 = +14 OVER the line 180 -- the +13+ killer band (0-5, under 5/5), your cleanest over-gap; AND the line fell -3.5 (183.5 -> 180). Double under signal -> 2-star.; Both your over-bias and the line movement point under.
+  - Watch: total_under overall is ~coin-flip (27-30); a bounce back over 182 weakens it.
+
+**Summary:** INITIAL lean (pre-tip, ~17h out). Aces @ Tempo: small TEMPO +14 -- FADE your Aces side; -14 is a huge lay where big-favorites-don't-cover, take the dog's cushion (but Aces covered -14.5 two nights ago, so 1-star). Small UNDER 180, 2-STAR -- gap check: your 194 = +14 over (the +13+ killer band, 0-5 under 5/5) AND the line fell -3.5: double under. 1H check: no first-half market posted yet. Refine near tip. [stars: side=1, total=2]
+<!-- WNBA_LEAN_EVENT_END event_id=efc616f676575f27e95d18e9ea20a747 -->
