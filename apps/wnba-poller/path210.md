@@ -1212,23 +1212,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=df428ab65c7800c0b0bc4773de724cb3 -->
 ## WNBA Lean: Seattle Storm @ Dallas Wings
 - Event ID: `df428ab65c7800c0b0bc4773de724cb3`
-- Revision: `9c89e86d-4950-4ae6-b47d-5da3d7916e56`
+- Revision: `15c4ca34-364d-49e6-a868-be173ed76a26`
 - Status: `active`
 
 ### Full game
 - **Side:** Seattle Storm (small)
-  - Evidence: Wings held a big -8.5 home lay -- big-favorites-don't-cover, take the Storm dog (fade_favorite); back_favorite 22-36.; Fades your Wings side.
-  - Watch: Push past -10 warns a true blowout. Cover-only.
-- **Total:** Under (small)
-  - Evidence: Asce +8.5 total gap -> under (+5-8 band, under 5/7 [WWWWLWL]); but the line drifted UP 173 -> 175.5 (mild over counter).
-  - Watch: Gap says under, line rise says over -- capped small.
+  - Evidence: Wings held a big -8.5 home lay -- big-favorites-don't-cover, take the Storm dog (fade_favorite 28-24); back_favorite 22-36.; Fades your Wings side.
+  - Watch: A push past -10 warns a true blowout. Cover-only, not a Storm ML.
+- **Total:** Under (watch)
+  - Evidence: Asce +8.5 total gap -> under (+5-8 band, under 5/7 [WWWWLWL], recently cooled).; Counters: line rose 173 -> 175.5 and the 1H is priced high (front-loaded), so downgraded to watch.
+  - Watch: Near-pass; a drop back under 174 would firm the under.
 
 ### First half
 - **Total:** Over (watch)
-  - Evidence: 1H total 90 vs 87.75 split = +2.25 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread noise, no fh_side.
+  - Evidence: 1H total 91.5 vs 87.75 straight-half split = +3.75 -> fh_total_high_big.
+  - Watch: Flag not a bet (fh_total_high_big 1-1); fights the full-game under; 1H spread noise, no fh_side.
 
-**Summary:** UPDATED lean. Storm @ Wings: small STORM +8.5 (fade the big Wings lay); small UNDER 175.5 (gap says under, line rose so capped). H1: total 90 vs 87.75 = +2.25 fh_total_high flag; side noise. | GAPS: Final score -- Asce: 184 (Storm 86, Wings 98) vs BO: 175.5 (84, 92) -> diff +8.5, bucket +5-8 under 5/7 [WWWWLWL]; spread Wings -9.5 vs -8.5 (-1.0); team fav Wings +6.0 / dog Storm +2.5. [stars: side=1, total=1, fh_total=1]
+**Summary:** FINAL (near tip ~4:00). Storm @ Wings: small STORM +8.5 -- fade the big Wings lay (-8.5, big-favorites-don't-cover). UNDER 175.5 capped to watch/small -- your +8.5 gap says under (+5-8 under 5/7 [WWWWLWL], cooled) BUT the line rose 173->175.5 AND the 1H is priced high (front-loaded). H1: total 91.5 vs 87.75 split = +3.75 -> fh_total_high_big flag (1-1 record, over, fights the full under); 1H spread +4.5 vs +4.25 = noise. | GAPS: Final score -- Asce: 184 (Storm 86, Wings 98) vs BO: 175.5 (84, 92) -> diff +8.5, bucket +5-8 under 5/7 [WWWWLWL]; spread Wings -9.5 vs -8.5 (-1.0); team fav Wings +6.0 / dog Storm +2.5. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=df428ab65c7800c0b0bc4773de724cb3 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
