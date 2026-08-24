@@ -1020,12 +1020,19 @@ line movement: mystics (road fav) spread: -3.5 (open) -> -4.5 (close, firmed ont
 context: sunday. fade fire = back the washington mystics (road favorite) to win, your score mystics 87-79 (mystics by 8). the mystics lay FIRMED -3.5 -> -4.5 into tip (mild money onto the road favorite, follow_line_movement) and the total sat flat ~166-167. the model agreed on the side -- small MYSTICS -4.5 -- and called the total a near-pass watch under with a watch 1H under. FINAL: washington mystics 105, portland fire 100 -- the mystics won by 5.
 model_lean: side (small MYSTICS -4.5, agree road favorite); total (watch/PASS UNDER 167); 1H (watch UNDER 81) | stars: side=1:right, total=1:wrong, fh_total=1:wrong
 
+142fadetempo
+right
+fade_favorite,follow_line_movement,total_under
+line movement: aces (road fav) spread: -11.5 (open) -> -14.5 (peak) -> -13.5 (close, big blowout lay held near peak); total: o183.5 -> 180.5 (close, -3)
+context: sunday. fade tempo = back the las vegas aces (road favorite) to blow out the expansion tempo, your score aces 102-92 (aces by 10). the huge aces lay ran -11.5 -> -14.5 before settling -13.5 (the number stayed a big blowout lay), while the total dropped 183.5 -> 180.5. the model faded the big favorite for the points -- small TEMPO +13.5 -- and leaned a small/2-star UNDER 180.5 driven by your +13+ over-gap (the killer band). FINAL: las vegas aces 88, toronto tempo 78 -- the aces won by 10.
+model_lean: side (small TEMPO +13.5, fade the big aces lay); total (small/2-star UNDER 180.5, +13+ over-gap band); 1H (watch UNDER 88.5) | stars: side=1:right, total=2:right, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 21 right / 25 wrong
-fade_favorite: 28 right / 26 wrong
+follow_line_movement: 22 right / 25 wrong
+fade_favorite: 29 right / 26 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 43 right / 51 wrong
@@ -1039,7 +1046,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 28 right / 32 wrong
+total_under: 29 right / 32 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1230,24 +1237,3 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
-<!-- WNBA_LEAN_EVENT_START event_id=efc616f676575f27e95d18e9ea20a747 -->
-## WNBA Lean: Las Vegas Aces @ Toronto Tempo
-- Event ID: `efc616f676575f27e95d18e9ea20a747`
-- Revision: `b8a24765-f555-4cdb-a730-b39ce6b447c1`
-- Status: `active`
-
-### Full game
-- **Side:** Toronto Tempo (small)
-  - Evidence: The huge Aces lay collapsed from -14.5 and settled -11 (Tempo +11) -- money onto the Tempo dog; take the points (fade_favorite 28-24, big-favorites-don't-cover).; Fades your Aces side.
-  - Watch: Cover-only, not a Tempo ML; a re-firm past -13 warns a blowout.
-- **Total:** Under (small)
-  - Evidence: Asce +14 total gap is the +13+ killer band (under 5/5 [WWWWW]), cleanest over-gap -> 2-star.; Flat line (bias read); a +8.5 over-gap under lost 2 nights ago, but +13+ is the strongest band.
-  - Watch: total_under overall ~coin-flip (28-31); a rise over 182 weakens it.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: 1H total 88.5 vs 90 straight-half split = -1.5 -> fh_total_low (medium).
-  - Watch: Flag not a bet; 1H spread noise, no fh_side.
-
-**Summary:** FINAL (near tip ~7:00). Aces @ Tempo: small TEMPO +11 -- fade the Aces (lay collapsed -14.5 -> -11, money to Tempo). Small UNDER 180, 2-STAR -- your +14 gap is the +13+ killer band (under 5/5 [WWWWW]), cleanest over-gap. H1: total 88.5 vs 90 = -1.5 fh_total_low flag; side noise. | GAPS: Final score -- Asce: 194 (Aces 102, Tempo 92) vs BO: 180 (96, 85) -> diff +14, bucket +13+ under 5/5 [WWWWW]; spread Aces -7.5 vs -11 (+3.5); team fav Aces +6.5 / dog Tempo +7.5. [stars: side=1, total=2, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=efc616f676575f27e95d18e9ea20a747 -->
