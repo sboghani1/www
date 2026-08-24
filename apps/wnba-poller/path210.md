@@ -1215,18 +1215,18 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=409b5df2946c7913e77a1c509e505fdb -->
 ## WNBA Lean: Golden State Valkyries @ Minnesota Lynx
 - Event ID: `409b5df2946c7913e77a1c509e505fdb`
-- Revision: `fdcf63c1-7457-4dd3-9d8a-3e49f660c2be`
+- Revision: `f98b5a88-1120-4f2c-be63-48f2be5feb3a`
 - Status: `active`
 
 ### Full game
 - **Side:** Golden State Valkyries (small)
-  - Evidence: Lynx lay EASED -6 -> -5 through the day (dipped -4.5) -- money onto the Valkyries dog; follow_line_movement points to the dog, the market never confirmed a Lynx blowout.; Your Lynx -9.5 / by-20 read is well past the market's modest -5; big-favorites-don't-cover and back_favorite is 25/37 underwater.
-  - Watch: The Lynx are a top home team and just crushed Toronto by 32; a re-firm past -6 flips this toward laying the Lynx.; Cover-only, not a GSV moneyline.
-- **Total:** Under (small)
-  - Evidence: Asce implied 152 vs 161 close = -9 gap (underestimate band, ~7-3 under per the bias table).; Low 161 total with blowout-strand risk if the Lynx pull away; line flat-to-soft (161 -> 158.5 -> 161).
-  - Watch: 161 is already low; a competitive game or fast Lynx pace clears it -- near-small.
+  - Evidence: Lynx lay net EASED -6 -> -5.5 into tip (money onto the Valkyries dog), with only a late half-point re-firm; the market never confirmed a blowout -- net follow_line_movement to the dog + fade_favorite.; Your Lynx -9.5 / by-20 read is way past the market's modest -5.5; back_favorite is 25/37 underwater.
+  - Watch: The Lynx are elite at home and just crushed Toronto by 32; the late tick back to -5.5 is a mild re-firm.; Cover-only, not a GSV moneyline; a push past -6.5 flips to laying Minnesota.
+- **Total:** Under (moderate)
+  - Evidence: Asce implied 152 vs 161.5 close = -9.5 gap, the -6..-12 band -- authoritative Sheet recompute has that band under 8/11 [WWWWLWWLLWW] (~73%), on top of a 64% baseline under rate (30/17, 48 games).; Low 161.5 total with blowout-strand risk if the Lynx pull away; total essentially flat (161 -> 162 -> 161.5).
+  - Watch: 161.5 is already low, limiting room; a competitive game or fast Lynx pace could clear it. A rise past 164 weakens it.
 
-**Summary:** INITIAL (tip 20:10 ET). GSV @ Lynx: small VALKYRIES +5 -- follow the line easing off the Lynx (-6 -> -5, money to the dog); big-favorites-don't-cover and your -9.5/by-20 blowout is unconfirmed. small UNDER 161 -- your -9 underestimate gap leans under and 161 is a low blowout-strand total. | GAPS: Final score -- Asce: 152 (Lynx 86, Valkyries 66) vs BO: 161 (Lynx 83, Valkyries 78) -> diff -9, bucket <=-6 underestimate (under ~7/10); spread Lynx -9.5 vs -5 (-4.5); team diffs Lynx +3 / Valkyries -12 (dog, noisy). H1: 1H total 78 vs 80.5 split = -2.5 fh_total_low flag; 1H spread -3 ~ half of -5 = noise. [stars: side=1, total=1]
+**Summary:** FINAL (~45min to 20:10 ET tip). GSV @ Lynx: small VALKYRIES +5.5 -- the Lynx lay net EASED -6 -> -5.5 (money to the dog, late half-pt re-firm); big-favorites-don't-cover and your Lynx -9.5/by-20 blowout is way past the market's modest -5.5. moderate UNDER 161.5 (conviction leg) -- your -9.5 under-gap is the -6..-12 band (authoritative recompute: under 8/11 [WWWWLWWLLWW], ~73%), reinforced by a 64% baseline under and a low blowout-strand total. | GAPS: Final score -- Asce: 152 (Lynx 86, Valkyries 66) vs BO: 161.5 (Lynx 83.5, Valkyries 78) -> diff -9.5, bucket -6..-12 under 8/11 [WWWWLWWLLWW]; spread Lynx -9.5 vs -5.5 (-4.0); team diffs Lynx +2.5 / Valkyries -12 (dog, noisy). H1: 1H total 78.5 vs 80.75 split = -2.25 fh_total_low_medium flag; 1H spread +3.5 vs -2.75 half = mild noise, no fh_side. [stars: side=1, total=2]
 <!-- WNBA_LEAN_EVENT_END event_id=409b5df2946c7913e77a1c509e505fdb -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=6be5d7c309d85e0d9d1c237ac81f414c -->
