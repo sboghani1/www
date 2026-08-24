@@ -999,15 +999,22 @@ line movement: side: Dream -5 (open), -8.5 (peak), -8 (close) strong firm onto D
 context: saturday. fade dream = back the phoenix mercury +8 home dog off a big dream road lay, fading the strong firm onto dream (-5 -> -8, ml -350) on fade_favorite / big-favorites-don't-cover -- bumped off pass on the user's spread-gap bucket (their +1..4 favorite bucket had covered just 1-7). total: under 177, 2-star -- user implied total 185 = +8 over the flat line (over-gap under bucket). first-half under 85.5 posted as a fh_total_low flag. [initial pre-tip, finalized near tip with the side bumped off pass]
 model_lean: side back Mercury +8 (small); total under 177 (small, 2-star); 1H under 85.5 (watch flag) | stars: side=1:wrong, total=2:wrong, fh_total=1:right
 
+139fadestorm
+wrong
+fade_favorite,situational_angle,overconfidence
+line movement: wings (home fav) spread: -6.5 (open) -> -8.5 (close, firmed onto the favorite); total: o173.5 -> 175.5 (close, +2)
+context: sunday. fade storm = back the dallas wings (home favorite) to win big, your score wings 98-86 (wings by 12). the wings lay FIRMED -6.5 -> -8.5 into tip (money onto the home favorite) and the total ticked up 173.5 -> 175.5. the model published the other way on the side -- small STORM +8.5 on big-favorites-don't-cover (fade_favorite) -- plus a small UNDER 175.5 and a small 1H over. FINAL: dallas wings 92, seattle storm 70 -- the wings won by 22.
+model_lean: side (small STORM +8.5, fade the big wings favorite); total (small UNDER 175.5); 1H (small OVER 91.5) | stars: side=1:wrong, total=1:right, fh_total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 20 right / 24 wrong
-fade_favorite: 28 right / 24 wrong
+fade_favorite: 28 right / 25 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 42 right / 49 wrong
+situational_angle: 42 right / 50 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 25 wrong
 back_favorite: 23 right / 36 wrong
@@ -1016,7 +1023,7 @@ line_stable: 9 right / 9 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
-overconfidence: 22 right / 29 wrong
+overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
 total_under: 28 right / 31 wrong
 fh_total_low_big: 1 right / 2 wrong
@@ -1208,28 +1215,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=df428ab65c7800c0b0bc4773de724cb3 -->
-## WNBA Lean: Seattle Storm @ Dallas Wings
-- Event ID: `df428ab65c7800c0b0bc4773de724cb3`
-- Revision: `15c4ca34-364d-49e6-a868-be173ed76a26`
-- Status: `active`
-
-### Full game
-- **Side:** Seattle Storm (small)
-  - Evidence: Wings held a big -8.5 home lay -- big-favorites-don't-cover, take the Storm dog (fade_favorite 28-24); back_favorite 22-36.; Fades your Wings side.
-  - Watch: A push past -10 warns a true blowout. Cover-only, not a Storm ML.
-- **Total:** Under (watch)
-  - Evidence: Asce +8.5 total gap -> under (+5-8 band, under 5/7 [WWWWLWL], recently cooled).; Counters: line rose 173 -> 175.5 and the 1H is priced high (front-loaded), so downgraded to watch.
-  - Watch: Near-pass; a drop back under 174 would firm the under.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 91.5 vs 87.75 straight-half split = +3.75 -> fh_total_high_big.
-  - Watch: Flag not a bet (fh_total_high_big 1-1); fights the full-game under; 1H spread noise, no fh_side.
-
-**Summary:** FINAL (near tip ~4:00). Storm @ Wings: small STORM +8.5 -- fade the big Wings lay (-8.5, big-favorites-don't-cover). UNDER 175.5 capped to watch/small -- your +8.5 gap says under (+5-8 under 5/7 [WWWWLWL], cooled) BUT the line rose 173->175.5 AND the 1H is priced high (front-loaded). H1: total 91.5 vs 87.75 split = +3.75 -> fh_total_high_big flag (1-1 record, over, fights the full under); 1H spread +4.5 vs +4.25 = noise. | GAPS: Final score -- Asce: 184 (Storm 86, Wings 98) vs BO: 175.5 (84, 92) -> diff +8.5, bucket +5-8 under 5/7 [WWWWLWL]; spread Wings -9.5 vs -8.5 (-1.0); team fav Wings +6.0 / dog Storm +2.5. [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=df428ab65c7800c0b0bc4773de724cb3 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
 ## WNBA Lean: Indiana Fever @ Chicago Sky
