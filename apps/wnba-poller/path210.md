@@ -1013,18 +1013,25 @@ line movement: fever (road fav) spread: -4.5 (open) -> -2.0 (close, eased onto t
 context: sunday. fade sky = back the indiana fever (road favorite) to win, your score fever 86-75 (fever by 11). the fever lay EASED all the way -4.5 -> -2 into tip (sustained money to the sky home dog, follow_line_movement), and the total sat flat at 187.5. the model flipped with the market to small SKY +2 (near-pickem) plus a watch under 187.5 and a watch 1H over. FINAL: indiana fever 113, chicago sky 90 -- the fever won by 23.
 model_lean: side (small SKY +2, flip onto the home dog); total (watch UNDER 187.5); 1H (watch OVER 97) | stars: side=1:wrong, total=1:wrong, fh_total=1:right
 
+141fadefire
+right
+back_favorite,follow_line_movement,situational_angle
+line movement: mystics (road fav) spread: -3.5 (open) -> -4.5 (close, firmed onto the road favorite); total: o166.5 -> 167 (flat)
+context: sunday. fade fire = back the washington mystics (road favorite) to win, your score mystics 87-79 (mystics by 8). the mystics lay FIRMED -3.5 -> -4.5 into tip (mild money onto the road favorite, follow_line_movement) and the total sat flat ~166-167. the model agreed on the side -- small MYSTICS -4.5 -- and called the total a near-pass watch under with a watch 1H under. FINAL: washington mystics 105, portland fire 100 -- the mystics won by 5.
+model_lean: side (small MYSTICS -4.5, agree road favorite); total (watch/PASS UNDER 167); 1H (watch UNDER 81) | stars: side=1:right, total=1:wrong, fh_total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 20 right / 25 wrong
+follow_line_movement: 21 right / 25 wrong
 fade_favorite: 28 right / 26 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 42 right / 51 wrong
+situational_angle: 43 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 25 wrong
-back_favorite: 23 right / 36 wrong
+back_favorite: 24 right / 36 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 9 wrong
 overcaution: 0 right / 1 wrong
@@ -1222,28 +1229,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=4329aee135ac130aa177b8dfb7b3ffac -->
-## WNBA Lean: Washington Mystics @ Portland Fire
-- Event ID: `4329aee135ac130aa177b8dfb7b3ffac`
-- Revision: `7d6fbb2b-0096-4e41-9bbc-c12d482ae1e8`
-- Status: `active`
-
-### Full game
-- **Side:** Washington Mystics (small)
-  - Evidence: Mystics firmed to -4 and held (ML -180), a mild follow onto the road favorite.; Agrees with your Mystics side.
-  - Watch: Laying -4 on the road is back_favorite (22-36); a reversal toward -3 flips to the Fire dog.
-- **Total:** Under (watch)
-  - Evidence: Total is a PASS: your gap is ~0 (166 vs 166) and the -1-4 band actually leans OVER (under only 4/11 [LLLLWWWLLWL]), so no under edge.
-  - Watch: No directional edge; low total, nominal watch only.
-
-### First half
-- **Total:** Under (watch)
-  - Evidence: 1H total 79 vs 83 straight-half split = -4.0 -> fh_total_low_big.
-  - Watch: Flag not a bet (fh_total_low_big 1-2); 1H spread -2 = half the -4 line = noise, no fh_side.
-
-**Summary:** FINAL (near tip ~7:00). Mystics @ Fire: small MYSTICS -4 (mild firm, agree you). Total = PASS -- gap ~0 (166 vs 166) and the -1-4 bucket leans over (under 4/11 [LLLLWWWLLWL]), no under edge (nominal watch UNDER 166). H1: total 79 vs 83 = -4.0 fh_total_low_big flag (1-2 record); side noise. | GAPS: Final score -- Asce: 166 (Mystics 87, Fire 79) vs BO: 166 (85, 81) -> diff 0.0, bucket -1-4 under 4/11 [LLLLWWWLLWL]; spread Mystics -3.5 vs -4 (+0.5); team fav Mystics +2.0 / dog Fire -2.0. [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=4329aee135ac130aa177b8dfb7b3ffac -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=efc616f676575f27e95d18e9ea20a747 -->
 ## WNBA Lean: Las Vegas Aces @ Toronto Tempo
