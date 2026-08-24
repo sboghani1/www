@@ -1027,18 +1027,25 @@ line movement: aces (road fav) spread: -11.5 (open) -> -14.5 (peak) -> -13.5 (cl
 context: sunday. fade tempo = back the las vegas aces (road favorite) to blow out the expansion tempo, your score aces 102-92 (aces by 10). the huge aces lay ran -11.5 -> -14.5 before settling -13.5 (the number stayed a big blowout lay), while the total dropped 183.5 -> 180.5. the model faded the big favorite for the points -- small TEMPO +13.5 -- and leaned a small/2-star UNDER 180.5 driven by your +13+ over-gap (the killer band). FINAL: las vegas aces 88, toronto tempo 78 -- the aces won by 10.
 model_lean: side (small TEMPO +13.5, fade the big aces lay); total (small/2-star UNDER 180.5, +13+ over-gap band); 1H (watch UNDER 88.5) | stars: side=1:right, total=2:right, fh_total=1:right
 
+143fadefever
+right
+back_favorite,follow_line_movement,total_under
+line movement: fever (home fav) spread: -5.5 (open) -> -7.5 (close, firmed onto the favorite); total: o187.5 -> 185.5 (close, -2)
+context: friday (8-14, stale lean cleared via resolve). fade fever = back the dallas wings (road dog +5.5 -> +8) to keep it close, your side the wings spread. the fever (home favorite) lay FIRMED -5.5 -> -7.5 into tip (money onto the favorite, follow_line_movement) and the total eased 187.5 -> 185.5. the model backed the home favorite -- small FEVER -7.5 (strong-fav-vs-weak-dog) -- plus a small UNDER 185.5. FINAL: indiana fever 98, dallas wings 87 -- the fever won by 11.
+model_lean: side (small FEVER -7.5, back the home favorite); total (small UNDER 185.5) | stars: side=1:right, total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 22 right / 25 wrong
+follow_line_movement: 23 right / 25 wrong
 fade_favorite: 29 right / 26 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 43 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 25 wrong
-back_favorite: 24 right / 36 wrong
+back_favorite: 25 right / 36 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 9 wrong
 overcaution: 0 right / 1 wrong
@@ -1046,7 +1053,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 29 right / 32 wrong
+total_under: 30 right / 32 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1197,23 +1204,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=39bf012a0015d3c6753cc0b21100866e -->
-## WNBA Lean: Dallas Wings @ Indiana Fever
-- Event ID: `39bf012a0015d3c6753cc0b21100866e`
-- Revision: `efe0dd1f-f66c-4f44-9143-4b10faf27f33`
-- Status: `active`
-
-### Full game
-- **Side:** Indiana Fever (small)
-  - Evidence: FINAL: Fever closed -7.5 (steamed +5.5 -> -8, minor give-back to -7.5 late) = net ~2pt of money toward the favorite; follow_line_movement.; Strong home Fever vs a weak Wings dog -- the strong-fav-covers-vs-weak-dog shape.
-  - Watch: -7.5 is still a big lay and big-favorite-doesn't-cover is the counter; convicted sides cold -- 1-star lean.
-- **Total:** Under (small)
-  - Evidence: Total closed 185.5 (down 2 from 187.5 = steady under money).; Likely Fever blowout of a weak dog => garbage-time stranding favors the under.
-  - Watch: 185.5 still high (Fever pace).
-
-**Summary:** FINAL (tipped ~19:30 ET) -- Dallas Wings @ Indiana Fever: small FEVER -7.5 (steam held, minor give-back from -8) and small UNDER 185.5 (down 2 from 187.5). 1H check: total 90.5 vs half 92.75 = -2.25 -> fh_total_low_medium (under, but 0/2 so not posted); 1H spread -4 vs half -3.75 = noise. Both 1-star; low conviction on the big lay. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=39bf012a0015d3c6753cc0b21100866e -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 ## WNBA Lean: Portland Fire @ Seattle Storm
