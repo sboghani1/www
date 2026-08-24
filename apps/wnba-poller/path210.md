@@ -1228,3 +1228,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL (tip 20:10 ET). GSV @ Lynx: small VALKYRIES +5 -- follow the line easing off the Lynx (-6 -> -5, money to the dog); big-favorites-don't-cover and your -9.5/by-20 blowout is unconfirmed. small UNDER 161 -- your -9 underestimate gap leans under and 161 is a low blowout-strand total. | GAPS: Final score -- Asce: 152 (Lynx 86, Valkyries 66) vs BO: 161 (Lynx 83, Valkyries 78) -> diff -9, bucket <=-6 underestimate (under ~7/10); spread Lynx -9.5 vs -5 (-4.5); team diffs Lynx +3 / Valkyries -12 (dog, noisy). H1: 1H total 78 vs 80.5 split = -2.5 fh_total_low flag; 1H spread -3 ~ half of -5 = noise. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=409b5df2946c7913e77a1c509e505fdb -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=6be5d7c309d85e0d9d1c237ac81f414c -->
+## WNBA Lean: Atlanta Dream @ Los Angeles Sparks
+- Event ID: `6be5d7c309d85e0d9d1c237ac81f414c`
+- Revision: `51c81d5a-3716-466a-9dfd-f9a0b35360ba`
+- Status: `active`
+
+### Full game
+- **Side:** Atlanta Dream (small)
+  - Evidence: Dream lay FIRMED -9 -> -10.5 (money onto the road favorite) -- follow_line_movement onto the Dream, the market MORE bullish than your -8.5; a good Dream team vs an awful Sparks side.; Yesterday's lesson: do not reflexively fade a favorite the market is confirming (faded Wings -8.5 and Sky, both blew out).
+  - Watch: -10.5 on the ROAD is a big lay; big-favorites-don't-cover and Dream -12 won by only 9 vs the Storm (entry 84) is the direct counter.; An ease back under -9 flips this to the Sparks points. Cover-only, not a Dream moneyline.
+- **Total:** Under (watch)
+  - Evidence: Total eased 183 -> 181.5 (mild under money); blowout-strand risk if the Dream run away.; Asce implied 183 vs 181.5 = +1.5 gap (~0, no bias edge) and the -1-4 band actually leans over -- so watch, not a firm under.
+  - Watch: 181.5 is moderately high; a shootout or fast Dream pace clears it. Near-pass -- a drop under 179 would firm it.
+
+**Summary:** INITIAL (tip 22:00 ET). Dream @ Sparks: small DREAM -10.5 -- follow the line firming onto the road favorite (-9 -> -10.5) vs an overmatched Sparks; kept small on a big road lay (big-favorites-don't-cover; Dream -12 won by only 9 in entry 84). Watch UNDER 181.5 -- mild ease 183 -> 181.5 and blowout-strand, but your gap is ~0 (183 vs 181.5) and the -1-4 band leans over, so near-pass. | GAPS: Final score -- Asce: 183 (Dream 96, Sparks 87) vs BO: 181.5 (Dream 96, Sparks 85.5) -> diff +1.5, bucket -1-4 (no under edge, leans over); spread Dream -8.5 vs -10.5 (+2, market more bullish than you); team diffs Dream 0 / Sparks +1.5 (your read hugs the market). H1: 1H total 89 vs 90.75 split = -1.75 fh_total_low flag; 1H spread -6 vs half of -10.5 = mild noise. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=6be5d7c309d85e0d9d1c237ac81f414c -->
