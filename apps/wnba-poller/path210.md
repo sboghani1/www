@@ -1034,6 +1034,13 @@ line movement: fever (home fav) spread: -5.5 (open) -> -7.5 (close, firmed onto 
 context: friday (8-14, stale lean cleared via resolve). fade fever = back the dallas wings (road dog +5.5 -> +8) to keep it close, your side the wings spread. the fever (home favorite) lay FIRMED -5.5 -> -7.5 into tip (money onto the favorite, follow_line_movement) and the total eased 187.5 -> 185.5. the model backed the home favorite -- small FEVER -7.5 (strong-fav-vs-weak-dog) -- plus a small UNDER 185.5. FINAL: indiana fever 98, dallas wings 87 -- the fever won by 11.
 model_lean: side (small FEVER -7.5, back the home favorite); total (small UNDER 185.5) | stars: side=1:right, total=1:right
 
+144fadefire
+wrong
+back_favorite,line_stable
+line movement: storm (home fav) spread: -2.5 (open) -> -2.5 (close, flat; round-tripped through -3.5); total: 181.5 flat
+context: friday (8-14, stale lean cleared via resolve). fade fire = back the seattle storm (home favorite) to win, your side the storm spread. the storm number round-tripped -2.5 -> -3.5 -> -2.5 (line_stable, no net confirmation of a blowout) and the total sat flat at 181.5. the model backed the home favorite -- small STORM -2.5 -- plus a small UNDER 181.5 and a small 1H over. FINAL: portland fire 84, seattle storm 82 -- the fire won outright by 2.
+model_lean: side (small STORM -2.5, back the home favorite); total (small UNDER 181.5); 1H (small OVER 93.5) | stars: side=1:wrong, total=1:right, fh_total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
@@ -1045,9 +1052,9 @@ fade_consensus: 1 right / 0 wrong
 situational_angle: 43 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 25 wrong
-back_favorite: 25 right / 36 wrong
+back_favorite: 25 right / 37 wrong
 chased_better_payout: 0 right / 1 wrong
-line_stable: 9 right / 9 wrong
+line_stable: 9 right / 10 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
@@ -1204,26 +1211,4 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-## WNBA Lean: Portland Fire @ Seattle Storm
-- Event ID: `6b4f25c1f4c4acebd21a5e1e465343c9`
-- Revision: `5a33d5ac-b74d-4c7c-bc3e-e7d878e034d6`
-- Status: `active`
-
-### Full game
-- **Side:** Seattle Storm (small)
-  - Evidence: FINAL (~20min to tip): Storm -3.5 HELD from the earlier lock -- the drift +2.5 -> +3.5 stuck with no give-back into tip; follow_line_movement + home court.; Modest number, but the market settled firmly on the Storm.
-  - Watch: The Fire have hung as a live dog (covered vs the Lynx); still ~pick'em -- 1-star lean.
-- **Total:** Under (small)
-  - Evidence: Total closed 179.5 (dropped 181.5 -> 179.5 and held = real, stable under money).
-  - Watch: The 1H points the other way (fast start) -- this under is a full-game/2nd-half read.
-
-### First half
-- **Total:** Over (small)
-  - Evidence: 1H total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (fast first half priced well above a straight split); held into tip.
-  - Watch: fh_total_high is 0/2 -- a flag, not a bet; fights the full-game under (fast 1H, slower 2H).
-
-**Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
 
