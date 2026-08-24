@@ -1212,3 +1212,19 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
 
+<!-- WNBA_LEAN_EVENT_START event_id=409b5df2946c7913e77a1c509e505fdb -->
+## WNBA Lean: Golden State Valkyries @ Minnesota Lynx
+- Event ID: `409b5df2946c7913e77a1c509e505fdb`
+- Revision: `fdcf63c1-7457-4dd3-9d8a-3e49f660c2be`
+- Status: `active`
+
+### Full game
+- **Side:** Golden State Valkyries (small)
+  - Evidence: Lynx lay EASED -6 -> -5 through the day (dipped -4.5) -- money onto the Valkyries dog; follow_line_movement points to the dog, the market never confirmed a Lynx blowout.; Your Lynx -9.5 / by-20 read is well past the market's modest -5; big-favorites-don't-cover and back_favorite is 25/37 underwater.
+  - Watch: The Lynx are a top home team and just crushed Toronto by 32; a re-firm past -6 flips this toward laying the Lynx.; Cover-only, not a GSV moneyline.
+- **Total:** Under (small)
+  - Evidence: Asce implied 152 vs 161 close = -9 gap (underestimate band, ~7-3 under per the bias table).; Low 161 total with blowout-strand risk if the Lynx pull away; line flat-to-soft (161 -> 158.5 -> 161).
+  - Watch: 161 is already low; a competitive game or fast Lynx pace clears it -- near-small.
+
+**Summary:** INITIAL (tip 20:10 ET). GSV @ Lynx: small VALKYRIES +5 -- follow the line easing off the Lynx (-6 -> -5, money to the dog); big-favorites-don't-cover and your -9.5/by-20 blowout is unconfirmed. small UNDER 161 -- your -9 underestimate gap leans under and 161 is a low blowout-strand total. | GAPS: Final score -- Asce: 152 (Lynx 86, Valkyries 66) vs BO: 161 (Lynx 83, Valkyries 78) -> diff -9, bucket <=-6 underestimate (under ~7/10); spread Lynx -9.5 vs -5 (-4.5); team diffs Lynx +3 / Valkyries -12 (dog, noisy). H1: 1H total 78 vs 80.5 split = -2.5 fh_total_low flag; 1H spread -3 ~ half of -5 = noise. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=409b5df2946c7913e77a1c509e505fdb -->
