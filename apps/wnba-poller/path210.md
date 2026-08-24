@@ -1006,15 +1006,22 @@ line movement: wings (home fav) spread: -6.5 (open) -> -8.5 (close, firmed onto 
 context: sunday. fade storm = back the dallas wings (home favorite) to win big, your score wings 98-86 (wings by 12). the wings lay FIRMED -6.5 -> -8.5 into tip (money onto the home favorite) and the total ticked up 173.5 -> 175.5. the model published the other way on the side -- small STORM +8.5 on big-favorites-don't-cover (fade_favorite) -- plus a small UNDER 175.5 and a small 1H over. FINAL: dallas wings 92, seattle storm 70 -- the wings won by 22.
 model_lean: side (small STORM +8.5, fade the big wings favorite); total (small UNDER 175.5); 1H (small OVER 91.5) | stars: side=1:wrong, total=1:right, fh_total=1:wrong
 
+140fadesky
+wrong
+follow_line_movement,fade_favorite,total_under,situational_angle
+line movement: fever (road fav) spread: -4.5 (open) -> -2.0 (close, eased onto the sky home dog); total: 187.5 flat
+context: sunday. fade sky = back the indiana fever (road favorite) to win, your score fever 86-75 (fever by 11). the fever lay EASED all the way -4.5 -> -2 into tip (sustained money to the sky home dog, follow_line_movement), and the total sat flat at 187.5. the model flipped with the market to small SKY +2 (near-pickem) plus a watch under 187.5 and a watch 1H over. FINAL: indiana fever 113, chicago sky 90 -- the fever won by 23.
+model_lean: side (small SKY +2, flip onto the home dog); total (watch UNDER 187.5); 1H (watch OVER 97) | stars: side=1:wrong, total=1:wrong, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 20 right / 24 wrong
-fade_favorite: 28 right / 25 wrong
+follow_line_movement: 20 right / 25 wrong
+fade_favorite: 28 right / 26 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 42 right / 50 wrong
+situational_angle: 42 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 25 wrong
 back_favorite: 23 right / 36 wrong
@@ -1025,7 +1032,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 28 right / 31 wrong
+total_under: 28 right / 32 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1215,28 +1222,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~20min to 22:00 ET tip) -- Portland Fire @ Seattle Storm: the whole card HELD from the earlier lock -- small STORM -3.5 (drift +2.5 -> +3.5 stuck), small UNDER 179.5 (181.5 -> 179.5 held), small 1H OVER 93.5. 1H check: total 93.5 vs half 89.75 = +3.75 -> fh_total_high_BIG (over, flagged not bet; 0/2); 1H spread -1.5 vs half -1.75 = noise. Split read: fast 1H over, lower full pace under. All 1-star, numbers stable into tip. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6b4f25c1f4c4acebd21a5e1e465343c9 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
-## WNBA Lean: Indiana Fever @ Chicago Sky
-- Event ID: `bc3a81f7e77e90a0c34cd5cda709243d`
-- Revision: `fb67de44-2aae-4eed-a27c-94a5465eccdc`
-- Status: `active`
-
-### Full game
-- **Side:** Chicago Sky (small)
-  - Evidence: The Fever favorite EASED all the way -4.5 -> -2 into tip (sustained money to the Sky home dog) -- follow_line_movement now points to Sky; near-pickem.; Flips off your Fever side: the market moved 2.5 pts to the Sky dog, and laying Fever is the underwater back_favorite shape (22-36).
-  - Watch: Near-pickem (+2), low conviction; a re-firm to Fever -4 flips back. Cover-only, not a Sky ML.
-- **Total:** Under (watch)
-  - Evidence: Asce -26.5 total gap is an extreme underestimate, but the under-gap band (-13+) is only 1/2 [WL] (tiny) and 187.5 is high -- so watch, not a real under.
-  - Watch: Near-pass; a drop under 185 would firm it.
-
-### First half
-- **Total:** Over (watch)
-  - Evidence: 1H total 96.5 vs 93.75 straight-half split = +2.75 -> fh_total_high (medium).
-  - Watch: Flag not a bet; 1H spread -1 = half the -2 line = noise, no fh_side.
-
-**Summary:** FINAL (near tip ~7:00). Fever @ Sky: small SKY +2 -- FLIP off your Fever side; the Fever lay eased -4.5 -> -2 into tip (sustained money to the Sky home dog, follow_line_movement), near-pickem. Watch UNDER 187.5 -- your extreme -26.5 gap is on a tiny -13+ bucket (1/2 [WL]) and 187.5 is high, so near-pass not a real under. H1: total 96.5 vs 93.75 = +2.75 fh_total_high flag; side noise. | GAPS: Final score -- Asce: 161 (Fever 86, Sky 75) vs BO: 187.5 (95, 93) -> diff -26.5, bucket -13+ under 1/2 [WL]; spread Fever -5.5 vs -2 (-3.5); team fav Fever -8.75 / dog Sky -17.75. [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=bc3a81f7e77e90a0c34cd5cda709243d -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=4329aee135ac130aa177b8dfb7b3ffac -->
 ## WNBA Lean: Washington Mystics @ Portland Fire
