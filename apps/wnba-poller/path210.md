@@ -1242,3 +1242,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL (tip 19:00 ET). Sky @ Sun: small SKY -6.5 -- follow the firming lay (-4 -> -6.5, money on the Sky) vs an awful Sun; small on a sizable road number (big-favorites-don't-cover). small UNDER 169 -- your +7 over-gap (+6..12 band under 5/8) + 64% baseline + a low total between weak offenses. | GAPS: Final score -- Asce: 176 (Sky 92, Sun 84) vs BO: 169 (Sky 87.75, Sun 81.25) -> diff +7, bucket +6..12 under 5/8 [WLPWWWLW]; spread Sky -3.5 vs -6.5 (+3.0, market more bullish); team diffs Sky +4.25 / Sun +2.75. H1: 1H total 81.5 vs 84.5 split = -3 fh_total_low flag; 1H spread -3.5 ~ half -3.25 = noise. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=5f43473ad1951f5ea9a269f7dca8f19e -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=f7dfec13dd9570adbd59427145a195c9 -->
+## WNBA Lean: Portland Fire @ Dallas Wings
+- Event ID: `f7dfec13dd9570adbd59427145a195c9`
+- Revision: `9ee4ec6b-7a0f-4b24-adfa-75422828e330`
+- Status: `active`
+
+### Full game
+- **Side:** Dallas Wings (small)
+  - Evidence: Wings home lay FIRMED -7.5 -> -9 (money onto the Wings) -- follow_line_movement onto the favorite vs a bad Fire; the Wings just blew out by 22 at home on 8-23.; Agrees with your Wings side; market slightly more bullish (-9 vs -8.5).
+  - Watch: -9 is a big lay; big-favorites-don't-cover and the Fire won outright as a dog vs the Storm on 8-14.; Cover-only, not a Wings ML.
+- **Total:** Under (small)
+  - Evidence: Asce implied 187 vs 177 close = +10 gap, the +6..12 overestimate band (under 5/8 [WLPWWWLW]; overest>=+6 11/14 ~79%), on a 64% baseline under.; Blowout-strand risk if the Wings run away (8-23 Wings blowout finished 162 under).
+  - Watch: 177 is moderate; a rising total or a fast Wings pace clears it.
+
+**Summary:** INITIAL (tip 20:00 ET). Fire @ Wings: small WINGS -9 -- follow the firming home lay (-7.5 -> -9) vs a bad Fire; the Wings just blew out by 22 on 8-23. Small on a big number (big-favorites-don't-cover; Fire won outright as a dog 8-14). small UNDER 177 -- your +10 over-gap (+6..12 band under 5/8) + 64% baseline + blowout-strand. | GAPS: Final score -- Asce: 187 (Wings 98, Fire 89) vs BO: 177 (Wings 93, Fire 84) -> diff +10, bucket +6..12 under 5/8 [WLPWWWLW]; spread Wings -8.5 vs -9 (-0.5); team diffs Wings +5 / Fire +5. H1: 1H total 91.5 vs 88.5 split = +3 fh_total_high flag; 1H spread 4.5 ~ half 4.5 = noise. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=f7dfec13dd9570adbd59427145a195c9 -->
