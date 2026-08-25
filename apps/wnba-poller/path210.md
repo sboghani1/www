@@ -1226,3 +1226,19 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
 
+<!-- WNBA_LEAN_EVENT_START event_id=5f43473ad1951f5ea9a269f7dca8f19e -->
+## WNBA Lean: Chicago Sky @ Connecticut Sun
+- Event ID: `5f43473ad1951f5ea9a269f7dca8f19e`
+- Revision: `69ce4d58-adc7-46f3-b05b-779f914d38fa`
+- Status: `active`
+
+### Full game
+- **Side:** Chicago Sky (small)
+  - Evidence: Sky road lay FIRMED -4 -> -6.5 (money onto the Sky) -- follow_line_movement onto the favorite, market MORE bullish than your -3.5.; Both teams weak (bad Sky at awful Sun); the move is the信息.
+  - Watch: -6.5 road is a sizable lay; big-favorites-don't-cover and back_favorite is 25/37 -- yesterday a firmed Dream favorite (-10.5) failed to cover.; Cover-only, not a Sky ML; an ease back under -5 softens it.
+- **Total:** Under (small)
+  - Evidence: Asce implied 176 vs 169 close = +7 gap, the +6..12 overestimate band (authoritative under 5/8 [WLPWWWLW]; overest>=+6 overall 11/14 ~79%), on a 64% baseline under.; Low 169 total between two weak offenses; flat line.
+  - Watch: 169 is already low; a re-rise past 172 weakens it.
+
+**Summary:** INITIAL (tip 19:00 ET). Sky @ Sun: small SKY -6.5 -- follow the firming lay (-4 -> -6.5, money on the Sky) vs an awful Sun; small on a sizable road number (big-favorites-don't-cover). small UNDER 169 -- your +7 over-gap (+6..12 band under 5/8) + 64% baseline + a low total between weak offenses. | GAPS: Final score -- Asce: 176 (Sky 92, Sun 84) vs BO: 169 (Sky 87.75, Sun 81.25) -> diff +7, bucket +6..12 under 5/8 [WLPWWWLW]; spread Sky -3.5 vs -6.5 (+3.0, market more bullish); team diffs Sky +4.25 / Sun +2.75. H1: 1H total 81.5 vs 84.5 split = -3 fh_total_low flag; 1H spread -3.5 ~ half -3.25 = noise. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=5f43473ad1951f5ea9a269f7dca8f19e -->
