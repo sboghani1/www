@@ -1259,3 +1259,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL (tip 20:00 ET). Fire @ Wings: small WINGS -9 -- follow the firming home lay (-7.5 -> -9) vs a bad Fire; the Wings just blew out by 22 on 8-23. Small on a big number (big-favorites-don't-cover; Fire won outright as a dog 8-14). small UNDER 177 -- your +10 over-gap (+6..12 band under 5/8) + 64% baseline + blowout-strand. | GAPS: Final score -- Asce: 187 (Wings 98, Fire 89) vs BO: 177 (Wings 93, Fire 84) -> diff +10, bucket +6..12 under 5/8 [WLPWWWLW]; spread Wings -8.5 vs -9 (-0.5); team diffs Wings +5 / Fire +5. H1: 1H total 91.5 vs 88.5 split = +3 fh_total_high flag; 1H spread 4.5 ~ half 4.5 = noise. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=f7dfec13dd9570adbd59427145a195c9 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=1fb615886a5e9855f01b8c3824e8d937 -->
+## WNBA Lean: Washington Mystics @ Phoenix Mercury
+- Event ID: `1fb615886a5e9855f01b8c3824e8d937`
+- Revision: `f61b5067-8c9d-4fcd-946d-d72378def655`
+- Status: `active`
+
+### Full game
+- **Side:** Phoenix Mercury (small)
+  - Evidence: Mystics lay net EASED -2.5 -> -1.5 (recent -3 -> -2 -> -1.5, money onto the Mercury home dog) -- follow_line_movement to the dog; near-pickem, market LESS bullish on the Mystics than your -3.5.; Fades your Mystics side into a pickem.
+  - Watch: Near-pickem (+1.5); low conviction. A re-firm to Mystics -3 flips back. Cover-only, not a Mercury ML.
+- **Total:** Under (watch)
+  - Evidence: Asce implied 166 vs 167.5 close = -1.5 gap -- the |gap|<6 middle band is a coin flip (authoritative under 10/20 ~50%), so NO total edge.; Total flat ~167.5.
+  - Watch: No directional edge; nominal watch only. A move under 164 or over 170 would create a lean.
+
+**Summary:** INITIAL (tip 22:00 ET). Mystics @ Mercury: small MERCURY +1.5 -- follow the ease onto the home dog (-2.5 -> -1.5, near-pickem), fade your Mystics -3.5 blowout read. Total = watch UNDER 167.5 -- your -1.5 gap is the |gap|<6 middle band (coin flip 10/20), NO edge. | GAPS: Final score -- Asce: 166 (Mystics 86, Mercury 80) vs BO: 167.5 (Mystics 84.5, Mercury 83) -> diff -1.5, bucket |gap|<6 middle (under 10/20 ~50%, no edge); spread Mystics -3.5 vs -1.5 (-2.0, you more bullish); team diffs Mystics +1.5 / Mercury -3. H1: 1H total 81 vs 83.75 split = -2.75 fh_total_low flag; 1H spread -1 ~ half -0.75 = noise. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=1fb615886a5e9855f01b8c3824e8d937 -->
