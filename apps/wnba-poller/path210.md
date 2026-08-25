@@ -1041,12 +1041,19 @@ line movement: storm (home fav) spread: -2.5 (open) -> -2.5 (close, flat; round-
 context: friday (8-14, stale lean cleared via resolve). fade fire = back the seattle storm (home favorite) to win, your side the storm spread. the storm number round-tripped -2.5 -> -3.5 -> -2.5 (line_stable, no net confirmation of a blowout) and the total sat flat at 181.5. the model backed the home favorite -- small STORM -2.5 -- plus a small UNDER 181.5 and a small 1H over. FINAL: portland fire 84, seattle storm 82 -- the fire won outright by 2.
 model_lean: side (small STORM -2.5, back the home favorite); total (small UNDER 181.5); 1H (small OVER 93.5) | stars: side=1:wrong, total=1:right, fh_total=1:wrong
 
+145fadevalkyries
+right
+fade_favorite,follow_line_movement,total_under
+line movement: lynx (home fav) spread: -6 (open) -> -4.5 (close, eased onto the GSV dog); total: o161 -> 162 (close, flat)
+context: monday. fade valkyries = back the minnesota lynx (home favorite) to win big, your score lynx 86-66 (lynx by 20). the lynx lay EASED -6 -> -4.5 into tip (money onto the GSV dog) and the total sat ~161-162. the model published the other way: small GOLDEN STATE VALKYRIES +4.5 (fade the favorite) plus a moderate/2-star UNDER 162 driven by your -9.5 under-gap (the -6..-12 band, authoritative under 8/11). FINAL: golden state valkyries 80, minnesota lynx 66 -- the valkyries won outright by 14.
+model_lean: side (small GSV +4.5, fade the lynx favorite); total (moderate/2-star UNDER 162, -6..-12 under-gap band) | stars: side=1:right, total=2:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 23 right / 25 wrong
-fade_favorite: 29 right / 26 wrong
+follow_line_movement: 24 right / 25 wrong
+fade_favorite: 30 right / 26 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 43 right / 51 wrong
@@ -1060,7 +1067,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 30 right / 32 wrong
+total_under: 31 right / 32 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1211,23 +1218,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=409b5df2946c7913e77a1c509e505fdb -->
-## WNBA Lean: Golden State Valkyries @ Minnesota Lynx
-- Event ID: `409b5df2946c7913e77a1c509e505fdb`
-- Revision: `f98b5a88-1120-4f2c-be63-48f2be5feb3a`
-- Status: `active`
-
-### Full game
-- **Side:** Golden State Valkyries (small)
-  - Evidence: Lynx lay net EASED -6 -> -5.5 into tip (money onto the Valkyries dog), with only a late half-point re-firm; the market never confirmed a blowout -- net follow_line_movement to the dog + fade_favorite.; Your Lynx -9.5 / by-20 read is way past the market's modest -5.5; back_favorite is 25/37 underwater.
-  - Watch: The Lynx are elite at home and just crushed Toronto by 32; the late tick back to -5.5 is a mild re-firm.; Cover-only, not a GSV moneyline; a push past -6.5 flips to laying Minnesota.
-- **Total:** Under (moderate)
-  - Evidence: Asce implied 152 vs 161.5 close = -9.5 gap, the -6..-12 band -- authoritative Sheet recompute has that band under 8/11 [WWWWLWWLLWW] (~73%), on top of a 64% baseline under rate (30/17, 48 games).; Low 161.5 total with blowout-strand risk if the Lynx pull away; total essentially flat (161 -> 162 -> 161.5).
-  - Watch: 161.5 is already low, limiting room; a competitive game or fast Lynx pace could clear it. A rise past 164 weakens it.
-
-**Summary:** FINAL (~45min to 20:10 ET tip). GSV @ Lynx: small VALKYRIES +5.5 -- the Lynx lay net EASED -6 -> -5.5 (money to the dog, late half-pt re-firm); big-favorites-don't-cover and your Lynx -9.5/by-20 blowout is way past the market's modest -5.5. moderate UNDER 161.5 (conviction leg) -- your -9.5 under-gap is the -6..-12 band (authoritative recompute: under 8/11 [WWWWLWWLLWW], ~73%), reinforced by a 64% baseline under and a low blowout-strand total. | GAPS: Final score -- Asce: 152 (Lynx 86, Valkyries 66) vs BO: 161.5 (Lynx 83.5, Valkyries 78) -> diff -9.5, bucket -6..-12 under 8/11 [WWWWLWWLLWW]; spread Lynx -9.5 vs -5.5 (-4.0); team diffs Lynx +2.5 / Valkyries -12 (dog, noisy). H1: 1H total 78.5 vs 80.75 split = -2.25 fh_total_low_medium flag; 1H spread +3.5 vs -2.75 half = mild noise, no fh_side. [stars: side=1, total=2]
-<!-- WNBA_LEAN_EVENT_END event_id=409b5df2946c7913e77a1c509e505fdb -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=6be5d7c309d85e0d9d1c237ac81f414c -->
 ## WNBA Lean: Atlanta Dream @ Los Angeles Sparks
