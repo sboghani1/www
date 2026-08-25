@@ -1232,16 +1232,16 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=6be5d7c309d85e0d9d1c237ac81f414c -->
 ## WNBA Lean: Atlanta Dream @ Los Angeles Sparks
 - Event ID: `6be5d7c309d85e0d9d1c237ac81f414c`
-- Revision: `51c81d5a-3716-466a-9dfd-f9a0b35360ba`
+- Revision: `ba53a963-5644-4e0e-9546-fe83820073b6`
 - Status: `active`
 
 ### Full game
 - **Side:** Atlanta Dream (small)
-  - Evidence: Dream lay FIRMED -9 -> -10.5 (money onto the road favorite) -- follow_line_movement onto the Dream, the market MORE bullish than your -8.5; a good Dream team vs an awful Sparks side.; Yesterday's lesson: do not reflexively fade a favorite the market is confirming (faded Wings -8.5 and Sky, both blew out).
-  - Watch: -10.5 on the ROAD is a big lay; big-favorites-don't-cover and Dream -12 won by only 9 vs the Storm (entry 84) is the direct counter.; An ease back under -9 flips this to the Sparks points. Cover-only, not a Dream moneyline.
+  - Evidence: Dream road lay FIRMED -9 -> -10.5 and HELD firm for hours into tip (confirmed money on the favorite) -- follow_line_movement onto the Dream; don't fade a confirmed firming favorite (yesterday's Wings/Sky blowout lesson) vs an overmatched Sparks.; Dream ML -750 = heavy favorite; the Sparks are the weaker side.
+  - Watch: -10.5 on the road is a big lay; big-favorites-don't-cover and Dream -12 won by only 9 vs the Storm (entry 84).; Cover-only, not a Dream ML; an ease back under -9 flips to Sparks points.
 - **Total:** Under (watch)
-  - Evidence: Total eased 183 -> 181.5 (mild under money); blowout-strand risk if the Dream run away.; Asce implied 183 vs 181.5 = +1.5 gap (~0, no bias edge) and the -1-4 band actually leans over -- so watch, not a firm under.
-  - Watch: 181.5 is moderately high; a shootout or fast Dream pace clears it. Near-pass -- a drop under 179 would firm it.
+  - Evidence: Asce +1.5 gap = the +1..5 band (under 5/7 [LWWWWWL]) plus a 64% baseline under (30/17) and a mild total ease 183 -> 181.5.; COUNTER: this exact matchup went 212 (massive over) just 4 days ago on 8-20, and the Sparks defend terribly -- a no-defense / high-pace over risk that caps this to a watch.
+  - Watch: Near-pass; a rise back to 183+ or a fast start flips toward the over. A drop under 179 would firm the under.
 
-**Summary:** INITIAL (tip 22:00 ET). Dream @ Sparks: small DREAM -10.5 -- follow the line firming onto the road favorite (-9 -> -10.5) vs an overmatched Sparks; kept small on a big road lay (big-favorites-don't-cover; Dream -12 won by only 9 in entry 84). Watch UNDER 181.5 -- mild ease 183 -> 181.5 and blowout-strand, but your gap is ~0 (183 vs 181.5) and the -1-4 band leans over, so near-pass. | GAPS: Final score -- Asce: 183 (Dream 96, Sparks 87) vs BO: 181.5 (Dream 96, Sparks 85.5) -> diff +1.5, bucket -1-4 (no under edge, leans over); spread Dream -8.5 vs -10.5 (+2, market more bullish than you); team diffs Dream 0 / Sparks +1.5 (your read hugs the market). H1: 1H total 89 vs 90.75 split = -1.75 fh_total_low flag; 1H spread -6 vs half of -10.5 = mild noise. [stars: side=1, total=1]
+**Summary:** FINAL (~20min to 22:00 ET tip). Dream @ Sparks: small DREAM -10.5 -- the road lay FIRMED -9 -> -10.5 and HELD firm into tip (confirmed money on the Dream, don't fade a confirmed favorite) vs an overmatched Sparks; small on a big road number (big-favorites-don't-cover; Dream -12 won by only 9 in entry 84). Watch UNDER 181.5 -- your +1.5 gap is the +1..5 band (under 5/7 [LWWWWWL]) + 64% baseline under and a mild ease 183 -> 181.5, BUT this exact matchup went 212 (huge over) just 4 days ago and the Sparks defend terribly (no-defense over risk), so near-pass. | GAPS: Final score -- Asce: 183 (Dream 96, Sparks 87) vs BO: 181.5 (Dream 96, Sparks 85.5) -> diff +1.5, bucket +1..5 under 5/7 [LWWWWWL]; spread Dream -8.5 vs -10.5 (+2.0, market more bullish); team diffs Dream 0 / Sparks +1.5 (your read hugs the market). H1: 1H total 89 vs 90.75 split = -1.75 fh_total_low_medium flag; 1H spread -6 vs -5.25 half = mild noise, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=6be5d7c309d85e0d9d1c237ac81f414c -->
