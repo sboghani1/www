@@ -1250,18 +1250,18 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=8c94c1b3ead27f83634f28eecbee96ee -->
 ## WNBA Lean: Golden State Valkyries @ Connecticut Sun
 - Event ID: `8c94c1b3ead27f83634f28eecbee96ee`
-- Revision: `42c27308-5f71-4f76-b3c8-05f04573543f`
+- Revision: `c3cfe91d-6788-40c3-8216-b6f966b94ec8`
 - Status: `active`
 
 ### Full game
 - **Side:** Connecticut Sun (small)
-  - Evidence: Fade the HUGE Valkyries lay -- firmed -13 -> -14; big-favorites-don't-cover on a 14-point road number, and the model's recent big-favorite fades cashed (GSV +4.5, Tempo +13.5).; Fades your Valkyries side; the market (-14) is far more bullish on GSV than your -8.5.
-  - Watch: Line firmed onto GSV (money on the favorite) and GSV are hot (beat the Lynx by 14) -- cover-only, small; a push past -15 or a hot GSV start flips to laying them.
+  - Evidence: Fade the HUGE Valkyries lay -- firmed -13 -> -14.5 into tip; big-favorites-don't-cover on a 14.5-point road number, and the model's recent big-favorite fades cashed (GSV +4.5, Tempo +13.5).; Fades your Valkyries side; the market (-14.5) is far more bullish on GSV than your -8.5.
+  - Watch: Line firmed onto GSV and GSV are hot (beat the Lynx by 14) -- cover-only, small; a 14.5 dog is a lot of points but a true blowout beats it.
 - **Total:** Under (small)
-  - Evidence: Asce +9 over-gap = the +6..12 band (under 5/8 [WLPWWWLW]); total eased 154 -> 152 (mild under money) on an already-low number.; 64% baseline under; blowout-strand if GSV run away from an awful Sun.
-  - Watch: 152 is very low, limiting room; a rise past 155 weakens it.
+  - Evidence: Asce +8.5 over-gap = the +6..12 band (under 5/8 [WLPWWWLW]) + 64% baseline under; low 152.5 total.; Blowout-strand risk if GSV run away from an awful Sun.
+  - Watch: 152.5 is very low, limiting room; a fast pace clears it.
 
-**Summary:** INITIAL (tip 19:10 ET). GSV @ Sun: small SUN +14 -- fade the HUGE Valkyries lay (firmed -13 -> -14); big-favorites-don't-cover on a 14-pt road number, and fading big favorites has cashed lately. small UNDER 152 -- your +9 over-gap (+6..12 band under 5/8) + a low, easing total (154 -> 152). | GAPS: Final score -- Asce: 161 (Valkyries 86, Sun 75) vs BO: 152 (Valkyries 83, Sun 69) -> diff +9, bucket +6..12 under 5/8 [WLPWWWLW]; spread Valkyries -8.5 vs -14 (+5.5, market FAR more bullish than you); team diffs Valkyries +3 / Sun +6. H1: 1H total 73 vs 76 split = -3 fh_total_low flag; 1H spread -7.5 ~ half -7 = noise, no fh_side. [stars: side=1, total=1]
+**Summary:** FINAL (at ~tip 19:10 ET; score not yet in). GSV @ Sun: small SUN +14.5 -- fade the HUGE Valkyries lay (firmed -13 -> -14.5); big-favorites-don't-cover on a 14.5-pt road number. small UNDER 152.5 -- your +8.5 over-gap (+6..12 band under 5/8 [WLPWWWLW]) + a low total + 64% baseline. | GAPS: Final score -- Asce: 161 (Valkyries 86, Sun 75) vs BO: 152.5 (Valkyries 83.5, Sun 69) -> diff +8.5, bucket +6..12 under 5/8 [WLPWWWLW]; spread Valkyries -8.5 vs -14.5 (+6, market FAR more bullish); team diffs Valkyries +2.5 / Sun +6. H1: 1H total 74 vs 76.25 split = -2.25 fh_total_low flag; 1H spread -8 vs -7.25 half = mild noise, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=8c94c1b3ead27f83634f28eecbee96ee -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=3f4381eed1a924a849ea9959a1f16db1 -->
