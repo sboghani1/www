@@ -1055,18 +1055,25 @@ line movement: dream (road fav) spread: -9 (open) -> -10.5 (close, firmed onto t
 context: monday. fade sparks = back the atlanta dream (road favorite) to win, your score dream 96-87 (dream by 9). the dream lay FIRMED -9 -> -10.5 and held firm into tip (money onto the road favorite) while the total eased 183 -> 181.5. the model backed the confirmed favorite -- small DREAM -10.5 -- and kept the total a watch UNDER 181.5, flagging over risk from this exact matchup's 212 shootout 4 days earlier. FINAL: atlanta dream 78, los angeles sparks 71 -- the dream won by 7.
 model_lean: side (small DREAM -10.5, back the confirmed road favorite); total (watch UNDER 181.5) | stars: side=1:wrong, total=1:right
 
+147fadesun
+wrong
+back_favorite,follow_line_movement
+line movement: sky (road fav) spread: -4 (open) -> -7 (close, firmed onto the favorite); total: o169.5 -> 171 (close, +1.5)
+context: tuesday. fade sun = back the chicago sky (road favorite) to win, your score sky 92-84 (sky by 8). the sky lay FIRMED steadily -4 -> -7 (money onto the road favorite) and the total rose 169.5 -> 171. the model backed the confirmed favorite -- small SKY -7 -- plus a small UNDER 171 (your +5 over-gap, +1..5 band). FINAL: connecticut sun 87, chicago sky 81 -- the sun won outright by 6.
+model_lean: side (small SKY -7, back the confirmed road favorite); total (small UNDER 171, +1..5 over-gap band) | stars: side=1:wrong, total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 24 right / 26 wrong
+follow_line_movement: 24 right / 27 wrong
 fade_favorite: 30 right / 26 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 43 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 25 wrong
-back_favorite: 25 right / 38 wrong
+back_favorite: 25 right / 39 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 10 wrong
 overcaution: 0 right / 1 wrong
@@ -1225,23 +1232,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=5f43473ad1951f5ea9a269f7dca8f19e -->
-## WNBA Lean: Chicago Sky @ Connecticut Sun
-- Event ID: `5f43473ad1951f5ea9a269f7dca8f19e`
-- Revision: `c619695e-3671-42db-afdf-7c4854994d92`
-- Status: `active`
-
-### Full game
-- **Side:** Chicago Sky (small)
-  - Evidence: Sky road lay FIRMED steadily -4 -> -6.5 -> -7 (money onto the Sky) -- follow_line_movement onto the favorite vs an awful Sun; market well past your -3.5.; back_favorite is 25/37 and big-favorites-don't-cover; yesterday's firmed Dream -10.5 failed to cover -- so cover-only, small.
-  - Watch: -7 road is a sizable lay; an ease back under -5 softens it. Not a Sky ML.
-- **Total:** Under (small)
-  - Evidence: Asce +5 over-gap = the +1..5 band: authoritative under 6/8 [LWWWWWLW]; overest>=+6 threshold 11/14 nearby; 64% baseline under (32/50). Low 171 total between two weak offenses.; COUNTER: total ROSE 169 -> 171 (mild over money) -- a rising-total follow_line_movement signal not to fully fade, so kept small.; FULL BUCKET TABLE (auth, N=50, W=under): +13up 6/6 [WWWWWW] | +6..12 5/8 [WLPWWWLW] | +1..5 6/8 [LWWWWWLW] (this game) | ~0 0/1 [L] | -1..-5 5/12 [LLLWWWWLLWLL] | -6..-12 9/12 [WWWWLWWLWLWW] | -13dn 1/3 [WLL].
-  - Watch: A rise past 173 flips toward the over; a drop back to 169 firms the under.
-
-**Summary:** FINAL (~18min to 19:00 ET tip). Sky @ Sun: small SKY -7 -- road lay FIRMED steadily -4 -> -7 (money on the Sky) vs an awful Sun; small on a sizable road number (big-favorites-don't-cover; yesterday's firmed Dream -10.5 failed to cover). small UNDER 171 -- your +5 over-gap is the +1..5 band (under 6/8) BUT the total ROSE 169 -> 171 (mild over money, rising-total counter), so small not moderate; low 171 between two weak offenses supports it. FULL BUCKET TABLE (auth, N=50, W=under): +13up 6/6 [WWWWWW]; +6..12 5/8 [WLPWWWLW]; +1..5 6/8 [LWWWWWLW] <-THIS GAME; ~0 0/1 [L]; -1..-5 5/12 [LLLWWWWLLWLL]; -6..-12 9/12 [WWWWLWWLWLWW]; -13dn 1/3 [WLL]; baseline under 32/50 (64%). | GAPS: Final score -- Asce: 176 (Sky 92, Sun 84) vs BO: 171 (Sky 89, Sun 82) -> diff +5, bucket +1..5 under 6/8 [LWWWWWLW]; spread Sky -3.5 vs -7 (+3.5, market more bullish); team diffs Sky +3 / Sun +2. H1: 1H total 82.5 vs 85.5 split = -3 fh_total_low flag; 1H spread -4 vs -3.5 half = mild noise, no fh_side. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=5f43473ad1951f5ea9a269f7dca8f19e -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=f7dfec13dd9570adbd59427145a195c9 -->
 ## WNBA Lean: Portland Fire @ Dallas Wings
