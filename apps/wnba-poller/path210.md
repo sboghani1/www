@@ -1263,16 +1263,16 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=1fb615886a5e9855f01b8c3824e8d937 -->
 ## WNBA Lean: Washington Mystics @ Phoenix Mercury
 - Event ID: `1fb615886a5e9855f01b8c3824e8d937`
-- Revision: `f61b5067-8c9d-4fcd-946d-d72378def655`
+- Revision: `c95ba1cf-5662-4a90-9883-1da9a1ffc131`
 - Status: `active`
 
 ### Full game
-- **Side:** Phoenix Mercury (small)
-  - Evidence: Mystics lay net EASED -2.5 -> -1.5 (recent -3 -> -2 -> -1.5, money onto the Mercury home dog) -- follow_line_movement to the dog; near-pickem, market LESS bullish on the Mystics than your -3.5.; Fades your Mystics side into a pickem.
-  - Watch: Near-pickem (+1.5); low conviction. A re-firm to Mystics -3 flips back. Cover-only, not a Mercury ML.
+- **Side:** Phoenix Mercury (watch)
+  - Evidence: Line ~stable at Mystics -2 (net slight ease -2.5 -> -2, line_stable) -- no follow_line_movement signal either way; market LESS bullish on the Mystics than your -3.5.; Per the new spread-diff recompute the side/spread gap is a COIN FLIP (your side ~47% ATS, N=49; margin-gap +4 band covers 8/16) -- NO usable side edge, so this is a near-pass, only a mild fade of your Mystics read.
+  - Watch: Near-pickem; a re-firm to Mystics -3 or a push to Mercury +3 would create a side. Cover-only, not a Mercury ML. Internal-divergence hint (+2.5) is a tiny-sample to-validate, NOT used here.
 - **Total:** Under (watch)
-  - Evidence: Asce implied 166 vs 167.5 close = -1.5 gap -- the |gap|<6 middle band is a coin flip (authoritative under 10/20 ~50%), so NO total edge.; Total flat ~167.5.
-  - Watch: No directional edge; nominal watch only. A move under 164 or over 170 would create a lean.
+  - Evidence: Asce -2 gap = the -1..-5 band, which LEANS OVER (authoritative under 5/12 [LLLWWWWLLWLL]) -- so NO under edge; total is a PASS.; Total flat ~168 (167.5 -> 168).
+  - Watch: A drop under 164 firms an under; a rise past 171 an over. Nominal watch only.
 
-**Summary:** INITIAL (tip 22:00 ET). Mystics @ Mercury: small MERCURY +1.5 -- follow the ease onto the home dog (-2.5 -> -1.5, near-pickem), fade your Mystics -3.5 blowout read. Total = watch UNDER 167.5 -- your -1.5 gap is the |gap|<6 middle band (coin flip 10/20), NO edge. | GAPS: Final score -- Asce: 166 (Mystics 86, Mercury 80) vs BO: 167.5 (Mystics 84.5, Mercury 83) -> diff -1.5, bucket |gap|<6 middle (under 10/20 ~50%, no edge); spread Mystics -3.5 vs -1.5 (-2.0, you more bullish); team diffs Mystics +1.5 / Mercury -3. H1: 1H total 81 vs 83.75 split = -2.75 fh_total_low flag; 1H spread -1 ~ half -0.75 = noise. [stars: side=1, total=1]
+**Summary:** UPDATED (tip 22:00 ET). Mystics @ Mercury: watch MERCURY +2 -- line ~stable at Mystics -2 (net slight ease from -2.5, line_stable), no follow signal; per the new spread-diff finding the side/spread gap is a COIN FLIP (your side ~47% ATS, no edge), so near-pass -- a mild fade of your -3.5 Mystics read (market less bullish at -2). Total = watch/PASS UNDER 168 -- your -2 gap is the -1..-5 band which LEANS OVER (under 5/12 [LLLWWWWLLWLL]), NO under edge. | GAPS: Final score -- Asce: 166 (Mystics 86, Mercury 80) vs BO: 168 (Mystics 85, Mercury 83) -> diff -2, bucket -1..-5 under 5/12 [LLLWWWWLLWLL] (leans over); SPREAD Mystics -3.5 vs -2 (-1.5); margin-gap +4 (+3..5 cover 8/16, coin flip); internal divergence +2.5 (1..3 band, tiny 0/3 -- to-validate, NOT used); team diffs Mystics +1 / Mercury -3. H1: 1H total 81 vs 84 split = -3 fh_total_low flag; 1H spread -1 = half of -2 = noise, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=1fb615886a5e9855f01b8c3824e8d937 -->
