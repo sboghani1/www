@@ -1062,18 +1062,25 @@ line movement: sky (road fav) spread: -4 (open) -> -7 (close, firmed onto the fa
 context: tuesday. fade sun = back the chicago sky (road favorite) to win, your score sky 92-84 (sky by 8). the sky lay FIRMED steadily -4 -> -7 (money onto the road favorite) and the total rose 169.5 -> 171. the model backed the confirmed favorite -- small SKY -7 -- plus a small UNDER 171 (your +5 over-gap, +1..5 band). FINAL: connecticut sun 87, chicago sky 81 -- the sun won outright by 6.
 model_lean: side (small SKY -7, back the confirmed road favorite); total (small UNDER 171, +1..5 over-gap band) | stars: side=1:wrong, total=1:right
 
+148fadefire
+right
+back_favorite,follow_line_movement,total_under
+line movement: wings (home fav) spread: -7.5 (open) -> -9 (close, firmed onto the favorite); total: o177.5 -> 177.5 (flat)
+context: tuesday. fade fire = back the dallas wings (home favorite) to win big, your score wings 98-89 (wings by 9). the wings lay FIRMED -7.5 -> -9 and held (money onto the favorite) vs a bad fire; the total sat flat ~177.5. the model backed the confirmed favorite -- small WINGS -9 -- plus a small UNDER 177.5 (your +9.5 over-gap, +6..12 band). FINAL: dallas wings 96, portland fire 78 -- the wings won by 18.
+model_lean: side (small WINGS -9, back the confirmed home favorite); total (small UNDER 177.5, +6..12 over-gap band) | stars: side=1:right, total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 24 right / 27 wrong
+follow_line_movement: 25 right / 27 wrong
 fade_favorite: 30 right / 26 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 43 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 25 wrong
-back_favorite: 25 right / 39 wrong
+back_favorite: 26 right / 39 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 10 wrong
 overcaution: 0 right / 1 wrong
@@ -1081,7 +1088,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 31 right / 32 wrong
+total_under: 32 right / 32 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1232,23 +1239,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=f7dfec13dd9570adbd59427145a195c9 -->
-## WNBA Lean: Portland Fire @ Dallas Wings
-- Event ID: `f7dfec13dd9570adbd59427145a195c9`
-- Revision: `1e8a2945-7eac-4840-9077-749e4c0a63d2`
-- Status: `active`
-
-### Full game
-- **Side:** Dallas Wings (small)
-  - Evidence: Wings home lay FIRMED -7.5 -> -9 and held at close (money onto the Wings) -- follow_line_movement onto the favorite vs a bad Fire; the Wings blew out by 22 at home on 8-23.; Agrees with your Wings side; market slightly more bullish (-9 vs -8.5).
-  - Watch: -9 is a big lay; big-favorites-don't-cover and the Fire won outright as a dog vs the Storm on 8-14. Cover-only, not a Wings ML.
-- **Total:** Under (small)
-  - Evidence: Asce +9.5 over-gap = the +6..12 band (authoritative under 5/8 [WLPWWWLW]); overest>=+6 threshold 11/14; 64% baseline under (32/50).; Blowout-strand risk if the Wings run away (their 8-23 home blowout finished 162 under).
-  - Watch: 177.5 is moderate; a fast Wings pace or a rising total clears it.
-
-**Summary:** FINAL (at ~tip 20:00 ET; score not yet in). Fire @ Wings: small WINGS -9 -- lay firmed -7.5 -> -9 and held (money on the Wings) vs a bad Fire; Wings blew out by 22 at home on 8-23. Small on a big number (big-favorites-don't-cover; Fire won outright as a dog 8-14). small UNDER 177.5 -- your +9.5 over-gap is the +6..12 band (under 5/8 [WLPWWWLW]) + 64% baseline under + blowout-strand. | GAPS: Final score -- Asce: 187 (Wings 98, Fire 89) vs BO: 177.5 (Wings 93.25, Fire 84.25) -> diff +9.5, bucket +6..12 under 5/8 [WLPWWWLW]; spread Wings -8.5 vs -9 (-0.5); team diffs Wings +4.75 / Fire +4.75. H1: 1H total 90.5 vs 88.75 split = +1.75 fh_total_high flag; 1H spread 5 vs 4.5 half = mild noise, no fh_side. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=f7dfec13dd9570adbd59427145a195c9 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=1fb615886a5e9855f01b8c3824e8d937 -->
 ## WNBA Lean: Washington Mystics @ Phoenix Mercury
