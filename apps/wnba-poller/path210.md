@@ -1069,12 +1069,19 @@ line movement: wings (home fav) spread: -7.5 (open) -> -9 (close, firmed onto th
 context: tuesday. fade fire = back the dallas wings (home favorite) to win big, your score wings 98-89 (wings by 9). the wings lay FIRMED -7.5 -> -9 and held (money onto the favorite) vs a bad fire; the total sat flat ~177.5. the model backed the confirmed favorite -- small WINGS -9 -- plus a small UNDER 177.5 (your +9.5 over-gap, +6..12 band). FINAL: dallas wings 96, portland fire 78 -- the wings won by 18.
 model_lean: side (small WINGS -9, back the confirmed home favorite); total (small UNDER 177.5, +6..12 over-gap band) | stars: side=1:right, total=1:right
 
+149fademercury
+wrong
+fade_favorite,line_stable,total_under
+line movement: mystics (road fav) spread: -2.5 (open) -> -2 (close, ~flat, wobbled to -1.5); total: o167.5 -> 168.5 (close, +1)
+context: tuesday. fade mercury = back the washington mystics (road favorite) to win, your score mystics 86-80 (mystics by 6). the mystics lay wobbled -2.5 -> -1.5 -> -2 (line_stable) and the total sat ~168. the model faded your side to a watch MERCURY +2 (near-pickem, no side edge per the spread-diff finding) and kept the total a watch UNDER 168.5 (your -2 gap is the leans-over band). FINAL: washington mystics 94, phoenix mercury 84 -- the mystics won by 10.
+model_lean: side (watch MERCURY +2, near-pass fade); total (watch UNDER 168.5, leans-over band) | stars: side=1:wrong, total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 25 right / 27 wrong
-fade_favorite: 30 right / 26 wrong
+fade_favorite: 30 right / 27 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 43 right / 51 wrong
@@ -1082,13 +1089,13 @@ decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 25 wrong
 back_favorite: 26 right / 39 wrong
 chased_better_payout: 0 right / 1 wrong
-line_stable: 9 right / 10 wrong
+line_stable: 9 right / 11 wrong
 overcaution: 0 right / 1 wrong
 misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 32 right / 32 wrong
+total_under: 32 right / 33 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1240,19 +1247,3 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
 
-<!-- WNBA_LEAN_EVENT_START event_id=1fb615886a5e9855f01b8c3824e8d937 -->
-## WNBA Lean: Washington Mystics @ Phoenix Mercury
-- Event ID: `1fb615886a5e9855f01b8c3824e8d937`
-- Revision: `c95ba1cf-5662-4a90-9883-1da9a1ffc131`
-- Status: `active`
-
-### Full game
-- **Side:** Phoenix Mercury (watch)
-  - Evidence: Line ~stable at Mystics -2 (net slight ease -2.5 -> -2, line_stable) -- no follow_line_movement signal either way; market LESS bullish on the Mystics than your -3.5.; Per the new spread-diff recompute the side/spread gap is a COIN FLIP (your side ~47% ATS, N=49; margin-gap +4 band covers 8/16) -- NO usable side edge, so this is a near-pass, only a mild fade of your Mystics read.
-  - Watch: Near-pickem; a re-firm to Mystics -3 or a push to Mercury +3 would create a side. Cover-only, not a Mercury ML. Internal-divergence hint (+2.5) is a tiny-sample to-validate, NOT used here.
-- **Total:** Under (watch)
-  - Evidence: Asce -2 gap = the -1..-5 band, which LEANS OVER (authoritative under 5/12 [LLLWWWWLLWLL]) -- so NO under edge; total is a PASS.; Total flat ~168 (167.5 -> 168).
-  - Watch: A drop under 164 firms an under; a rise past 171 an over. Nominal watch only.
-
-**Summary:** UPDATED (tip 22:00 ET). Mystics @ Mercury: watch MERCURY +2 -- line ~stable at Mystics -2 (net slight ease from -2.5, line_stable), no follow signal; per the new spread-diff finding the side/spread gap is a COIN FLIP (your side ~47% ATS, no edge), so near-pass -- a mild fade of your -3.5 Mystics read (market less bullish at -2). Total = watch/PASS UNDER 168 -- your -2 gap is the -1..-5 band which LEANS OVER (under 5/12 [LLLWWWWLLWLL]), NO under edge. | GAPS: Final score -- Asce: 166 (Mystics 86, Mercury 80) vs BO: 168 (Mystics 85, Mercury 83) -> diff -2, bucket -1..-5 under 5/12 [LLLWWWWLLWLL] (leans over); SPREAD Mystics -3.5 vs -2 (-1.5); margin-gap +4 (+3..5 cover 8/16, coin flip); internal divergence +2.5 (1..3 band, tiny 0/3 -- to-validate, NOT used); team diffs Mystics +1 / Mercury -3. H1: 1H total 81 vs 84 split = -3 fh_total_low flag; 1H spread -1 = half of -2 = noise, no fh_side. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=1fb615886a5e9855f01b8c3824e8d937 -->
