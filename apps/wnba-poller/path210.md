@@ -1297,3 +1297,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL (tip 20:00 ET). GSV @ Liberty: small LIBERTY -3 -- the lay FIRMED -1.5 -> -3 (money on the home favorite), a great Liberty team home vs a GSV squad on a road back-to-back; follow_line_movement, agrees your side (small number, not a big lay). moderate UNDER 162 (2-star) -- your +14 over-gap is the +13up KILLER band (under 6/6 [WWWWWW]), the cleanest under signal, on an already-low 162. | GAPS: Final score -- Asce: 176 (Liberty 92, GSV 84) vs BO: 162 (Liberty 82.5, GSV 79.5) -> diff +14, bucket +13up under 6/6 [WWWWWW]; spread Liberty -5.5 vs -3 (-2.5, you more bullish); team diffs Liberty +9.5 / GSV +4.5. H1: 1H total 79 vs 81 split = -2 fh_total_low flag; 1H spread +1.5 ~ half = noise, no fh_side. [stars: side=1, total=2]
 <!-- WNBA_LEAN_EVENT_END event_id=2b50cabc59140f70773beddc04b65f5b -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=c50e15e047d9d6a906dc41c27c15120d -->
+## WNBA Lean: Washington Mystics @ Phoenix Mercury
+- Event ID: `c50e15e047d9d6a906dc41c27c15120d`
+- Revision: `cfc757f0-f45f-45f3-9b8e-787a0b0f8143`
+- Status: `active`
+
+### Full game
+- **Side:** Washington Mystics (small)
+  - Evidence: Mystics lay FIRMED -2.5 -> -4 (money onto the road favorite) -- follow_line_movement; the Mystics covered this exact matchup yesterday (won by 10 at -2).; Market slightly past your -3.5; not a side-flip.
+  - Watch: -4 road lay; big-favorites-don't-cover. Cover-only; an ease under -3 softens it.
+- **Total:** Under (small)
+  - Evidence: Asce +9.5 over-gap = the +6..12 band (under 6/9 [WLPWWWLWW]) + a total ease 167.5 -> 165.5 (under money).; 64% baseline under.
+  - Watch: TEMPERED: this exact matchup went OVER 178 yesterday -- a no-defense over risk; a rebound past 168 flips over.
+
+**Summary:** INITIAL (tip 22:00 ET). Mystics @ Mercury: small MYSTICS -4 -- the lay FIRMED -2.5 -> -4 (money onto the road favorite, follow_line_movement); market slightly past your -3.5, and the Mystics covered this exact matchup yesterday (won by 10). small UNDER 165.5 -- your +9.5 over-gap (+6..12 band under 6/9) + a total ease 167.5 -> 165.5; TEMPERED because this exact matchup went OVER 178 just yesterday. | GAPS: Final score -- Asce: 175 (Mystics 91, Mercury 84) vs BO: 165.5 (Mystics 84.75, Mercury 80.75) -> diff +9.5, bucket +6..12 under 6/9 [WLPWWWLWW]; spread Mystics -3.5 vs -4 (+0.5, market slightly more bullish); team diffs Mystics +6.25 / Mercury +3.25. H1: 1H total 80.5 vs 82.75 split = -2.25 fh_total_low flag; 1H spread -2 = half -2 = noise, no fh_side. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=c50e15e047d9d6a906dc41c27c15120d -->
