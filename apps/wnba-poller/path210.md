@@ -1267,16 +1267,16 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=3f4381eed1a924a849ea9959a1f16db1 -->
 ## WNBA Lean: Toronto Tempo @ Seattle Storm
 - Event ID: `3f4381eed1a924a849ea9959a1f16db1`
-- Revision: `b55c3115-d76b-4463-b856-53768198ab4f`
+- Revision: `a2dce758-daa6-419c-a80b-d3c6ad41e360`
 - Status: `active`
 
 ### Full game
 - **Side:** Seattle Storm (small)
-  - Evidence: Market FIRMED the Storm -4 -> -7 (money onto the home favorite) -- follow_line_movement; a strong fade of your side-flip (you have Tempo a -3.5 FAVORITE, market has Tempo a +7 DOG, ~10.5-pt disagreement).; path210 flags a favorite/dog side-flip as an unreliable user read -- lean with the market, not your Tempo side.
-  - Watch: -7 home lay is big; big-favorites-don't-cover. Cover-only, not a Storm ML; an ease back under -5 softens it.
-- **Total:** Under (watch)
-  - Evidence: Asce -3 gap = the -1..-5 band, which LEANS OVER (under 5/12 [LLLWWWWLLWLL]) -- no under edge.; Counter: total eased 177.5 -> 175 (mild under money) -- so near-pass, not a real lean either way.
-  - Watch: A drop under 172 firms an under; a rise past 178 an over. Nominal watch only.
+  - Evidence: Market firmed the Storm -4 -> -6.5 (money on the home favorite) -- follow_line_movement; fades your side-flip (you have Tempo a -3.5 FAVORITE, market a +6.5 DOG).; The side-flip is the no-history/unreliable-read bucket (stated-gap +10.5 is unprecedented; side-flips 1/1) -- lean with the market, low conviction.
+  - Watch: -6.5 home lay; big-favorites-don't-cover. Cover-only, not a Storm ML; an ease under -5 softens it.
+- **Total:** Under (small)
+  - Evidence: Total DROPPED 177.5 -> 174.5 (real under money) -- follow_line_movement toward the under, the cleaner signal here.; 64% baseline under.
+  - Watch: Counter: your -2.5 gap is the -1..-5 band which leans over (under 5/12), so kept small; a rebound past 177 flips toward the over.
 
-**Summary:** INITIAL (tip 22:00 ET). Tempo @ Storm: small STORM -7 -- the market FIRMED the Storm -4 -> -7 (money onto the home favorite), a strong fade of your side-flip (you have Tempo -3.5 FAVORITE; market has Tempo +7 DOG -- ~10.5-pt disagreement path210 flags as an unreliable read). Small on a -7 home lay (big-favorites-don't-cover). Total = watch/PASS UNDER 175 -- your -3 gap is the -1..-5 leans-OVER band (under 5/12), though the total eased 177.5 -> 175 (mild under money), so near-pass. | GAPS: Final score -- Asce: 172 (Tempo 88, Storm 84) vs BO: 175 (Storm 91, Tempo 84) -> diff -3, bucket -1..-5 under 5/12 [LLLWWWWLLWLL] (leans over); SPREAD your Tempo -3.5 vs mkt Tempo +7 (-10.5, SIDE-FLIP, unreliable-read flag); team diffs Tempo +4 / Storm -7. H1: 1H total 85 vs 87.5 split = -2.5 fh_total_low flag; 1H spread +3.5 ~ half +3.5 = noise, no fh_side. [stars: side=1, total=1]
+**Summary:** FINAL (at ~tip 22:00 ET; score not yet in). Tempo @ Storm: small STORM -6.5 -- the market firmed the Storm -4 -> -6.5 (money on the home favorite), fading your side-flip (you have Tempo -3.5 FAVORITE; market has Tempo +6.5 DOG -- a ~10-pt disagreement in the no-history/unreliable-read bucket), so low conviction/cover-only. small UNDER 174.5 -- the total DROPPED 177.5 -> 174.5 (real under money, follow_line_movement); counter is your -2.5 gap (-1..-5 leans-over band). | GAPS: Final score -- Asce: 172 (Tempo 88, Storm 84) vs BO: 174.5 (Storm 90.5, Tempo 84) -> diff -2.5, bucket -1..-5 under 5/12 [LLLWWWWLLWLL] (leans over); SPREAD your Tempo -3.5 vs mkt Tempo +6.5 (-10, SIDE-FLIP, no-history bucket); team diffs Tempo +4 / Storm -6.5. H1: 1H total 85 vs 87.25 split = -2.25 fh_total_low flag; 1H spread +3.5 ~ half +3.25 = noise, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=3f4381eed1a924a849ea9959a1f16db1 -->
