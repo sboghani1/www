@@ -1076,17 +1076,24 @@ line movement: mystics (road fav) spread: -2.5 (open) -> -2 (close, ~flat, wobbl
 context: tuesday. fade mercury = back the washington mystics (road favorite) to win, your score mystics 86-80 (mystics by 6). the mystics lay wobbled -2.5 -> -1.5 -> -2 (line_stable) and the total sat ~168. the model faded your side to a watch MERCURY +2 (near-pickem, no side edge per the spread-diff finding) and kept the total a watch UNDER 168.5 (your -2 gap is the leans-over band). FINAL: washington mystics 94, phoenix mercury 84 -- the mystics won by 10.
 model_lean: side (watch MERCURY +2, near-pass fade); total (watch UNDER 168.5, leans-over band) | stars: side=1:wrong, total=1:wrong
 
+150fadesun
+wrong
+fade_favorite,fade_line_movement,total_under
+line movement: valkyries (road fav) spread: -13 (open) -> -14.5 (close, firmed onto the favorite); total: o154 -> 152.5 (close, -1.5)
+context: wednesday. fade sun = back the golden state valkyries (road favorite) to win, your score valkyries 86-75 (valkyries by 11, you had them -8.5). the valkyries lay FIRMED -13 -> -14.5 (money onto the favorite) and the total eased 154 -> 152.5. the model FADED the huge lay -- small SUN +14.5 (big-favorites-don't-cover) -- plus a small UNDER 152.5 (your +8.5 over-gap). FINAL: golden state valkyries 89, connecticut sun 64 -- the valkyries won by 25 (153 total, over by a half-point).
+model_lean: side (small SUN +14.5, fade the huge valkyries lay); total (small UNDER 152.5, +6..12 over-gap band) | stars: side=1:wrong, total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 25 right / 27 wrong
-fade_favorite: 30 right / 27 wrong
+fade_favorite: 30 right / 28 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 43 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
-fade_line_movement: 19 right / 25 wrong
+fade_line_movement: 19 right / 26 wrong
 back_favorite: 26 right / 39 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 11 wrong
@@ -1095,7 +1102,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 32 right / 33 wrong
+total_under: 32 right / 34 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1246,23 +1253,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=8c94c1b3ead27f83634f28eecbee96ee -->
-## WNBA Lean: Golden State Valkyries @ Connecticut Sun
-- Event ID: `8c94c1b3ead27f83634f28eecbee96ee`
-- Revision: `c3cfe91d-6788-40c3-8216-b6f966b94ec8`
-- Status: `active`
-
-### Full game
-- **Side:** Connecticut Sun (small)
-  - Evidence: Fade the HUGE Valkyries lay -- firmed -13 -> -14.5 into tip; big-favorites-don't-cover on a 14.5-point road number, and the model's recent big-favorite fades cashed (GSV +4.5, Tempo +13.5).; Fades your Valkyries side; the market (-14.5) is far more bullish on GSV than your -8.5.
-  - Watch: Line firmed onto GSV and GSV are hot (beat the Lynx by 14) -- cover-only, small; a 14.5 dog is a lot of points but a true blowout beats it.
-- **Total:** Under (small)
-  - Evidence: Asce +8.5 over-gap = the +6..12 band (under 5/8 [WLPWWWLW]) + 64% baseline under; low 152.5 total.; Blowout-strand risk if GSV run away from an awful Sun.
-  - Watch: 152.5 is very low, limiting room; a fast pace clears it.
-
-**Summary:** FINAL (at ~tip 19:10 ET; score not yet in). GSV @ Sun: small SUN +14.5 -- fade the HUGE Valkyries lay (firmed -13 -> -14.5); big-favorites-don't-cover on a 14.5-pt road number. small UNDER 152.5 -- your +8.5 over-gap (+6..12 band under 5/8 [WLPWWWLW]) + a low total + 64% baseline. | GAPS: Final score -- Asce: 161 (Valkyries 86, Sun 75) vs BO: 152.5 (Valkyries 83.5, Sun 69) -> diff +8.5, bucket +6..12 under 5/8 [WLPWWWLW]; spread Valkyries -8.5 vs -14.5 (+6, market FAR more bullish); team diffs Valkyries +2.5 / Sun +6. H1: 1H total 74 vs 76.25 split = -2.25 fh_total_low flag; 1H spread -8 vs -7.25 half = mild noise, no fh_side. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=8c94c1b3ead27f83634f28eecbee96ee -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=3f4381eed1a924a849ea9959a1f16db1 -->
 ## WNBA Lean: Toronto Tempo @ Seattle Storm
