@@ -1083,18 +1083,25 @@ line movement: valkyries (road fav) spread: -13 (open) -> -14.5 (close, firmed o
 context: wednesday. fade sun = back the golden state valkyries (road favorite) to win, your score valkyries 86-75 (valkyries by 11, you had them -8.5). the valkyries lay FIRMED -13 -> -14.5 (money onto the favorite) and the total eased 154 -> 152.5. the model FADED the huge lay -- small SUN +14.5 (big-favorites-don't-cover) -- plus a small UNDER 152.5 (your +8.5 over-gap). FINAL: golden state valkyries 89, connecticut sun 64 -- the valkyries won by 25 (153 total, over by a half-point).
 model_lean: side (small SUN +14.5, fade the huge valkyries lay); total (small UNDER 152.5, +6..12 over-gap band) | stars: side=1:wrong, total=1:wrong
 
+151fadestorm
+right
+back_favorite,follow_line_movement,total_under
+line movement: storm (home fav) spread: -4 (open) -> -6.5 (close, firmed onto the favorite); total: o177.5 -> 174.5 (close, -3)
+context: wednesday. fade storm = back the toronto tempo (you had tempo -3.5, winning 88-84), a favorite/dog SIDE-FLIP -- the market had tempo a +6.5 dog (storm -6.5). the storm lay FIRMED -4 -> -6.5 (money onto the home favorite) and the total dropped 177.5 -> 174.5. the model faded your side-flip -- small STORM -6.5 -- plus a small UNDER 174.5 (following the total drop). FINAL: seattle storm 90, toronto tempo 78 -- the storm won by 12.
+model_lean: side (small STORM -6.5, fade the tempo side-flip); total (small UNDER 174.5, followed the total drop) | stars: side=1:right, total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 25 right / 27 wrong
+follow_line_movement: 26 right / 27 wrong
 fade_favorite: 30 right / 28 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 43 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 26 wrong
-back_favorite: 26 right / 39 wrong
+back_favorite: 27 right / 39 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 11 wrong
 overcaution: 0 right / 1 wrong
@@ -1102,7 +1109,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 32 right / 34 wrong
+total_under: 33 right / 34 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1253,23 +1260,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=3f4381eed1a924a849ea9959a1f16db1 -->
-## WNBA Lean: Toronto Tempo @ Seattle Storm
-- Event ID: `3f4381eed1a924a849ea9959a1f16db1`
-- Revision: `a2dce758-daa6-419c-a80b-d3c6ad41e360`
-- Status: `active`
-
-### Full game
-- **Side:** Seattle Storm (small)
-  - Evidence: Market firmed the Storm -4 -> -6.5 (money on the home favorite) -- follow_line_movement; fades your side-flip (you have Tempo a -3.5 FAVORITE, market a +6.5 DOG).; The side-flip is the no-history/unreliable-read bucket (stated-gap +10.5 is unprecedented; side-flips 1/1) -- lean with the market, low conviction.
-  - Watch: -6.5 home lay; big-favorites-don't-cover. Cover-only, not a Storm ML; an ease under -5 softens it.
-- **Total:** Under (small)
-  - Evidence: Total DROPPED 177.5 -> 174.5 (real under money) -- follow_line_movement toward the under, the cleaner signal here.; 64% baseline under.
-  - Watch: Counter: your -2.5 gap is the -1..-5 band which leans over (under 5/12), so kept small; a rebound past 177 flips toward the over.
-
-**Summary:** FINAL (at ~tip 22:00 ET; score not yet in). Tempo @ Storm: small STORM -6.5 -- the market firmed the Storm -4 -> -6.5 (money on the home favorite), fading your side-flip (you have Tempo -3.5 FAVORITE; market has Tempo +6.5 DOG -- a ~10-pt disagreement in the no-history/unreliable-read bucket), so low conviction/cover-only. small UNDER 174.5 -- the total DROPPED 177.5 -> 174.5 (real under money, follow_line_movement); counter is your -2.5 gap (-1..-5 leans-over band). | GAPS: Final score -- Asce: 172 (Tempo 88, Storm 84) vs BO: 174.5 (Storm 90.5, Tempo 84) -> diff -2.5, bucket -1..-5 under 5/12 [LLLWWWWLLWLL] (leans over); SPREAD your Tempo -3.5 vs mkt Tempo +6.5 (-10, SIDE-FLIP, no-history bucket); team diffs Tempo +4 / Storm -6.5. H1: 1H total 85 vs 87.25 split = -2.25 fh_total_low flag; 1H spread +3.5 ~ half +3.25 = noise, no fh_side. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=3f4381eed1a924a849ea9959a1f16db1 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=2b50cabc59140f70773beddc04b65f5b -->
 ## WNBA Lean: Golden State Valkyries @ New York Liberty
