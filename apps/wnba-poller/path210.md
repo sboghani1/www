@@ -1280,3 +1280,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (at ~tip 22:00 ET; score not yet in). Tempo @ Storm: small STORM -6.5 -- the market firmed the Storm -4 -> -6.5 (money on the home favorite), fading your side-flip (you have Tempo -3.5 FAVORITE; market has Tempo +6.5 DOG -- a ~10-pt disagreement in the no-history/unreliable-read bucket), so low conviction/cover-only. small UNDER 174.5 -- the total DROPPED 177.5 -> 174.5 (real under money, follow_line_movement); counter is your -2.5 gap (-1..-5 leans-over band). | GAPS: Final score -- Asce: 172 (Tempo 88, Storm 84) vs BO: 174.5 (Storm 90.5, Tempo 84) -> diff -2.5, bucket -1..-5 under 5/12 [LLLWWWWLLWLL] (leans over); SPREAD your Tempo -3.5 vs mkt Tempo +6.5 (-10, SIDE-FLIP, no-history bucket); team diffs Tempo +4 / Storm -6.5. H1: 1H total 85 vs 87.25 split = -2.25 fh_total_low flag; 1H spread +3.5 ~ half +3.25 = noise, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=3f4381eed1a924a849ea9959a1f16db1 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=2b50cabc59140f70773beddc04b65f5b -->
+## WNBA Lean: Golden State Valkyries @ New York Liberty
+- Event ID: `2b50cabc59140f70773beddc04b65f5b`
+- Revision: `6571339e-f6de-467d-bb44-c8a7b0bb3c68`
+- Status: `active`
+
+### Full game
+- **Side:** New York Liberty (small)
+  - Evidence: Liberty lay FIRMED -1.5 -> -3 (money on the home favorite) -- follow_line_movement; a great Liberty team at home vs GSV on a road back-to-back (played the Sun last night).; Small number (-3), so big-favorites-don't-cover is muted; agrees your Liberty side (market -3 vs your -5.5).
+  - Watch: -3 is a key number; an ease to -2 or a GSV upset (they're hot) flips it. Cover-only, not a Liberty ML.
+- **Total:** Under (moderate)
+  - Evidence: Asce +14 over-gap = the +13up KILLER band (under 6/6 [WWWWWW]) -- the cleanest under signal we track.; Already-low 162 total + 64% baseline under (34/53).
+  - Watch: 162 is low; a rise past 165 weakens it, but the +13+ band is the strongest signal.
+
+**Summary:** INITIAL (tip 20:00 ET). GSV @ Liberty: small LIBERTY -3 -- the lay FIRMED -1.5 -> -3 (money on the home favorite), a great Liberty team home vs a GSV squad on a road back-to-back; follow_line_movement, agrees your side (small number, not a big lay). moderate UNDER 162 (2-star) -- your +14 over-gap is the +13up KILLER band (under 6/6 [WWWWWW]), the cleanest under signal, on an already-low 162. | GAPS: Final score -- Asce: 176 (Liberty 92, GSV 84) vs BO: 162 (Liberty 82.5, GSV 79.5) -> diff +14, bucket +13up under 6/6 [WWWWWW]; spread Liberty -5.5 vs -3 (-2.5, you more bullish); team diffs Liberty +9.5 / GSV +4.5. H1: 1H total 79 vs 81 split = -2 fh_total_low flag; 1H spread +1.5 ~ half = noise, no fh_side. [stars: side=1, total=2]
+<!-- WNBA_LEAN_EVENT_END event_id=2b50cabc59140f70773beddc04b65f5b -->
