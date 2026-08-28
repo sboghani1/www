@@ -1097,18 +1097,25 @@ line movement: liberty (home fav) spread: -1.5 (open) -> -3 (close, firmed onto 
 context: thursday. fade valkyries = back the new york liberty (home favorite) to win, your score liberty 92-84 (liberty by 8, you had -5.5). the liberty lay FIRMED -1.5 -> -3 (money onto the home favorite) and the total sat ~162.5. the model backed the liberty -- small LIBERTY -3 -- plus a 2-star UNDER 162.5 (your +13.5 over-gap, the +13up killer band). FINAL: golden state valkyries 79, new york liberty 60 -- GSV won outright by 19 (139 total, way under).
 model_lean: side (small LIBERTY -3, back the home favorite); total (2-star UNDER 162.5, +13up killer band) | stars: side=1:wrong, total=2:right
 
+153fademercury
+right
+back_favorite,follow_line_movement,total_under
+line movement: mystics (road fav) spread: -4 (open) -> -5.5 (close, firmed onto the favorite); total: o167.5 -> 164.5 (close, -3)
+context: thursday. fade mercury = back the washington mystics (road favorite) to win, your score mystics 91-84 (mystics by 7, you had -3.5). the mystics lay FIRMED -4 -> -5.5 (money onto the road favorite) and the total dropped 167.5 -> 164.5. the model backed the mystics -- small MYSTICS -5.5 -- plus a small UNDER 164.5 (your +10.5 over-gap + the falling total), tempered by the exact matchup's 178 over the day before. FINAL: washington mystics 80, phoenix mercury 73 -- the mystics won by 7 (153 total, well under).
+model_lean: side (small MYSTICS -5.5, back the road favorite); total (small UNDER 164.5, +6..12 over-gap + falling total) | stars: side=1:right, total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 26 right / 28 wrong
+follow_line_movement: 27 right / 28 wrong
 fade_favorite: 30 right / 28 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 43 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 26 wrong
-back_favorite: 27 right / 40 wrong
+back_favorite: 28 right / 40 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 11 wrong
 overcaution: 0 right / 1 wrong
@@ -1116,7 +1123,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 33 right / 34 wrong
+total_under: 34 right / 34 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1267,23 +1274,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=c50e15e047d9d6a906dc41c27c15120d -->
-## WNBA Lean: Washington Mystics @ Phoenix Mercury
-- Event ID: `c50e15e047d9d6a906dc41c27c15120d`
-- Revision: `7f75b7e7-aada-46a1-87c5-95f5f62b7cec`
-- Status: `active`
-
-### Full game
-- **Side:** Washington Mystics (small)
-  - Evidence: Mystics lay FIRMED -4 -> -5.5 (money onto the road favorite) -- follow_line_movement; market past your -3.5, and the Mystics covered this exact matchup yesterday (won by 10).; Not a side-flip; you and the market agree on the Mystics side.
-  - Watch: -5.5 road lay; big-favorites-don't-cover. Cover-only, not a Mystics ML; an ease under -4 softens it.
-- **Total:** Under (small)
-  - Evidence: Asce +10.5 over-gap = the +6..12 band (under 6/9 [WLPWWWLWW]) + the total DROPPED 167.5 -> 164.5 (under money) + 64% baseline under.; Three under signals stacking (gap, falling total, baseline).
-  - Watch: Held at small (not 2-star): this exact matchup went OVER 178 just yesterday -- a no-defense over risk; a rebound past 167 flips toward the over.
-
-**Summary:** FINAL (at ~tip 22:00 ET; score not yet in). Mystics @ Mercury: small MYSTICS -5.5 -- the lay FIRMED -4 -> -5.5 (money onto the road favorite, follow_line_movement); market past your -3.5, and the Mystics covered this exact matchup yesterday (won by 10). small UNDER 164.5 -- your +10.5 over-gap (+6..12 band under 6/9 [WLPWWWLWW]) + the total DROPPED 167.5 -> 164.5 (under money); held at small (not 2-star) because this exact matchup went OVER 178 just yesterday. | GAPS: Final score -- Asce: 175 (Mystics 91, Mercury 84) vs BO: 164.5 (Mystics 85, Mercury 79.5) -> diff +10.5, bucket +6..12 under 6/9 [WLPWWWLWW]; spread Mystics -3.5 vs -5.5 (+2, market more bullish); team diffs Mystics +6 / Mercury +4.5. H1: 1H total 80 vs 82.25 split = -2.25 fh_total_low flag; 1H spread -2.5 ~ half -2.75 = noise, no fh_side. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=c50e15e047d9d6a906dc41c27c15120d -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=c006f8c7eb0093bcd146ea746609a5c1 -->
 ## WNBA Lean: Portland Fire @ Atlanta Dream
