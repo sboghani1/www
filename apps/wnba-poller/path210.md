@@ -1311,3 +1311,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~38min to 19:30 ET tip). Fire @ Dream: small DREAM -13 -- lay firmed 12.5 -> 13 (money on the home favorite) vs an awful Fire; cover-only (big-favorites-don't-cover). small UNDER 178.5 -- your -7.5 under-gap is the -6..-12 band (under 9/12 [WWWWLWWLLWWW], ~75%) + the total fell 180.5 -> 178.5 (under money) + 64% baseline. | GAPS: Final score -- Asce: 171 (Dream 93, Fire 78) vs BO: 178.5 (Dream 95.75, Fire 82.75) -> diff -7.5, bucket -6..-12 under 9/12 [WWWWLWWLLWWW]; spread Dream -11.5 vs -13 (+1.5, market more bullish); team diffs Dream -2.75 / Fire -4.75. H1: 1H total 93.5 vs 89.25 split = +4.25 fh_total_high_big flag (fast 1H, fights the full under); 1H spread +7.5 vs +6.5 half = mild, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=c006f8c7eb0093bcd146ea746609a5c1 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=bf890f553715b7954a44f36770b69830 -->
+## WNBA Lean: Connecticut Sun @ Indiana Fever
+- Event ID: `bf890f553715b7954a44f36770b69830`
+- Revision: `87d2c20e-c3cc-4883-a87c-71ae7336e672`
+- Status: `active`
+
+### Full game
+- **Side:** Indiana Fever (small)
+  - Evidence: Great Fever vs an awful Sun; market Fever -17, past your -15.5.; Recent big favorites vs awful teams have covered (GSV by 25).
+  - Watch: -17 is an enormous lay; big-favorites-don't-cover. Cover-only, not a Fever ML; a large dog gets a lot of points.
+- **Total:** Under (moderate)
+  - Evidence: The total CRASHED 182 -> 178 (strong under money, follow_line_movement -- the cleaner signal) + your +1 gap is the +1..5 band (under 7/9 [LWWWWWLWW], ~78%) + 64% baseline.; Three under signals stacking (falling total, gap band, baseline).
+  - Watch: 1H is priced high (fast start) -- a fh_total_high_big flag that fights the full-game under; a rebound past 180 weakens it.
+
+**Summary:** FINAL (~38min to 19:30 ET tip). Sun @ Fever: small FEVER -17 -- huge home lay (great Fever vs awful Sun); cover-only (big-favorites-don't-cover on a 17-pt number). moderate UNDER 178 (2-star) -- the total CRASHED 182 -> 178 (strong under money, follow_line_movement) + your +1 gap is the +1..5 band (under 7/9 [LWWWWWLWW], ~78%) + 64% baseline. | GAPS: Final score -- Asce: 179 (Fever 98, Sun 81) vs BO: 178 (Fever 97.5, Sun 80.5) -> diff +1, bucket +1..5 under 7/9 [LWWWWWLWW]; spread Fever -15.5 vs -17 (+1.5, market more bullish); team diffs Fever +0.5 / Sun +0.5. H1: 1H total 93 vs 89 split = +4 fh_total_high_big flag (fast 1H, fights the full under); 1H spread +9.5 vs +8.5 half = mild, no fh_side. [stars: side=1, total=2]
+<!-- WNBA_LEAN_EVENT_END event_id=bf890f553715b7954a44f36770b69830 -->
