@@ -1090,18 +1090,25 @@ line movement: storm (home fav) spread: -4 (open) -> -6.5 (close, firmed onto th
 context: wednesday. fade storm = back the toronto tempo (you had tempo -3.5, winning 88-84), a favorite/dog SIDE-FLIP -- the market had tempo a +6.5 dog (storm -6.5). the storm lay FIRMED -4 -> -6.5 (money onto the home favorite) and the total dropped 177.5 -> 174.5. the model faded your side-flip -- small STORM -6.5 -- plus a small UNDER 174.5 (following the total drop). FINAL: seattle storm 90, toronto tempo 78 -- the storm won by 12.
 model_lean: side (small STORM -6.5, fade the tempo side-flip); total (small UNDER 174.5, followed the total drop) | stars: side=1:right, total=1:right
 
+152fadevalkyries
+wrong
+back_favorite,follow_line_movement
+line movement: liberty (home fav) spread: -1.5 (open) -> -3 (close, firmed onto the favorite); total: o162.5 -> 162.5 (flat)
+context: thursday. fade valkyries = back the new york liberty (home favorite) to win, your score liberty 92-84 (liberty by 8, you had -5.5). the liberty lay FIRMED -1.5 -> -3 (money onto the home favorite) and the total sat ~162.5. the model backed the liberty -- small LIBERTY -3 -- plus a 2-star UNDER 162.5 (your +13.5 over-gap, the +13up killer band). FINAL: golden state valkyries 79, new york liberty 60 -- GSV won outright by 19 (139 total, way under).
+model_lean: side (small LIBERTY -3, back the home favorite); total (2-star UNDER 162.5, +13up killer band) | stars: side=1:wrong, total=2:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 26 right / 27 wrong
+follow_line_movement: 26 right / 28 wrong
 fade_favorite: 30 right / 28 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 43 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 26 wrong
-back_favorite: 27 right / 39 wrong
+back_favorite: 27 right / 40 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 11 wrong
 overcaution: 0 right / 1 wrong
@@ -1260,23 +1267,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=2b50cabc59140f70773beddc04b65f5b -->
-## WNBA Lean: Golden State Valkyries @ New York Liberty
-- Event ID: `2b50cabc59140f70773beddc04b65f5b`
-- Revision: `86625bb8-62df-4fbb-bb7e-c90413d2ef98`
-- Status: `active`
-
-### Full game
-- **Side:** New York Liberty (small)
-  - Evidence: Liberty lay firmed -1.5 -> -3 and held (money on the home favorite) -- follow_line_movement; a great Liberty team at home vs GSV on a road back-to-back (played the Sun last night, won by 25).; Small number (-3), big-favorites-don't-cover muted; agrees your Liberty side (market -3 vs your -5.5).
-  - Watch: -3 is a key number; an ease to -2 or a hot-GSV upset flips it. Cover-only, not a Liberty ML.
-- **Total:** Under (moderate)
-  - Evidence: Asce +13.5 over-gap = the +13up KILLER band (under 6/6 [WWWWWW]) -- the cleanest under signal we track.; Low 162.5 total + 64% baseline under (34/53).
-  - Watch: 162.5 is low; a rise past 165 weakens it, but +13+ is the strongest band. (2-star totals are 3-2, last three W.)
-
-**Summary:** FINAL (~22min to 20:00 ET tip). GSV @ Liberty: small LIBERTY -3 -- the lay firmed -1.5 -> -3 and held (money on the home favorite); a great Liberty team home vs GSV on a road back-to-back. moderate UNDER 162.5 (2-star, conviction leg) -- your +13.5 over-gap is the +13up KILLER band (under 6/6 [WWWWWW]), the cleanest under signal, on a low total. | GAPS: Final score -- Asce: 176 (Liberty 92, GSV 84) vs BO: 162.5 (Liberty 82.75, GSV 79.75) -> diff +13.5, bucket +13up under 6/6 [WWWWWW]; spread Liberty -5.5 vs -3 (-2.5, you more bullish); team diffs Liberty +9.25 / GSV +4.25. H1: 1H total 78 vs 81.25 split = -3.25 fh_total_low flag; 1H spread +1.5 ~ half = noise, no fh_side. [stars: side=1, total=2]
-<!-- WNBA_LEAN_EVENT_END event_id=2b50cabc59140f70773beddc04b65f5b -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=c50e15e047d9d6a906dc41c27c15120d -->
 ## WNBA Lean: Washington Mystics @ Phoenix Mercury
