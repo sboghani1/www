@@ -1294,3 +1294,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (at ~tip 22:00 ET; score not yet in). Mystics @ Mercury: small MYSTICS -5.5 -- the lay FIRMED -4 -> -5.5 (money onto the road favorite, follow_line_movement); market past your -3.5, and the Mystics covered this exact matchup yesterday (won by 10). small UNDER 164.5 -- your +10.5 over-gap (+6..12 band under 6/9 [WLPWWWLWW]) + the total DROPPED 167.5 -> 164.5 (under money); held at small (not 2-star) because this exact matchup went OVER 178 just yesterday. | GAPS: Final score -- Asce: 175 (Mystics 91, Mercury 84) vs BO: 164.5 (Mystics 85, Mercury 79.5) -> diff +10.5, bucket +6..12 under 6/9 [WLPWWWLWW]; spread Mystics -3.5 vs -5.5 (+2, market more bullish); team diffs Mystics +6 / Mercury +4.5. H1: 1H total 80 vs 82.25 split = -2.25 fh_total_low flag; 1H spread -2.5 ~ half -2.75 = noise, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=c50e15e047d9d6a906dc41c27c15120d -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=c006f8c7eb0093bcd146ea746609a5c1 -->
+## WNBA Lean: Portland Fire @ Atlanta Dream
+- Event ID: `c006f8c7eb0093bcd146ea746609a5c1`
+- Revision: `8d605042-e102-4160-abb0-d17e8d909f91`
+- Status: `active`
+
+### Full game
+- **Side:** Atlanta Dream (small)
+  - Evidence: Dream lay firmed 12.5 -> 13 (money on the home favorite) vs an awful Fire; agrees your Dream side (market -13 vs your -11.5).; Recent big favorites vs awful teams have covered (GSV by 25, Wings by 18).
+  - Watch: -13 is a big lay; big-favorites-don't-cover (Dream -12 won by only 9 vs the Storm, entry 84). Cover-only, not a Dream ML.
+- **Total:** Under (small)
+  - Evidence: Asce -7.5 under-gap = the -6..-12 band (under 9/12 [WWWWLWWLLWWW], ~75%) + the total fell 180.5 -> 178.5 (under money) + 64% baseline.; Underestimate that historically lands under.
+  - Watch: 1H is priced high (fast start) -- a fh_total_high_big flag that fights the full-game under; a rebound past 181 weakens it.
+
+**Summary:** FINAL (~38min to 19:30 ET tip). Fire @ Dream: small DREAM -13 -- lay firmed 12.5 -> 13 (money on the home favorite) vs an awful Fire; cover-only (big-favorites-don't-cover). small UNDER 178.5 -- your -7.5 under-gap is the -6..-12 band (under 9/12 [WWWWLWWLLWWW], ~75%) + the total fell 180.5 -> 178.5 (under money) + 64% baseline. | GAPS: Final score -- Asce: 171 (Dream 93, Fire 78) vs BO: 178.5 (Dream 95.75, Fire 82.75) -> diff -7.5, bucket -6..-12 under 9/12 [WWWWLWWLLWWW]; spread Dream -11.5 vs -13 (+1.5, market more bullish); team diffs Dream -2.75 / Fire -4.75. H1: 1H total 93.5 vs 89.25 split = +4.25 fh_total_high_big flag (fast 1H, fights the full under); 1H spread +7.5 vs +6.5 half = mild, no fh_side. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=c006f8c7eb0093bcd146ea746609a5c1 -->
