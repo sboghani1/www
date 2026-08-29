@@ -1111,6 +1111,13 @@ line movement: dream (home fav) spread: -12.5 (open) -> -13 (close, firmed); tot
 context: friday. fade fire = back the atlanta dream (home favorite) to win big, your score dream 93-78 (dream by 15, you had -11.5). the dream lay firmed 12.5 -> 13 and the total eased 180.5 -> 178.5. the model backed the dream -- small DREAM -13 -- plus a small UNDER 178.5 (your -7.5 under-gap), flagging a fast 1H (fh_total_high_big) that fought the under. FINAL: portland fire 101, atlanta dream 83 -- the FIRE won outright by 18 (184 total, over); the fast-1H flag was the warning.
 model_lean: side (small DREAM -13, back the home favorite); total (small UNDER 178.5, -6..-12 under-gap; fast-1H flag was the warning) | stars: side=1:wrong, total=1:wrong
 
+155fadesun
+right
+back_favorite,situational_angle
+line movement: fever (home fav) spread: -16.5 (open) -> -17 (close, firm); total: o182 -> 178 (close, -4)
+context: friday. fade sun = back the indiana fever (home favorite) to win big, your score fever 98-81 (fever by 17, you had -15.5). the fever held -17 and the total CRASHED 182 -> 178 (under money). the model backed the fever -- small FEVER -17 -- plus a 2-star UNDER 178 (falling total + your +1 gap), flagging a fast 1H (fh_total_high_big) that fought the under. FINAL: connecticut sun 91, indiana fever 111 -- the fever won by 20 (202 total, way over); the fast-1H flag was the warning and the 2-star under lost.
+model_lean: side (small FEVER -17, back the home favorite); total (2-star UNDER 178, falling total -- fast-1H flag was the warning) | stars: side=1:right, total=2:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
@@ -1119,10 +1126,10 @@ follow_line_movement: 27 right / 29 wrong
 fade_favorite: 30 right / 28 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
-situational_angle: 43 right / 51 wrong
+situational_angle: 44 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 26 wrong
-back_favorite: 28 right / 41 wrong
+back_favorite: 29 right / 41 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 11 wrong
 overcaution: 0 right / 1 wrong
@@ -1281,23 +1288,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=bf890f553715b7954a44f36770b69830 -->
-## WNBA Lean: Connecticut Sun @ Indiana Fever
-- Event ID: `bf890f553715b7954a44f36770b69830`
-- Revision: `87d2c20e-c3cc-4883-a87c-71ae7336e672`
-- Status: `active`
-
-### Full game
-- **Side:** Indiana Fever (small)
-  - Evidence: Great Fever vs an awful Sun; market Fever -17, past your -15.5.; Recent big favorites vs awful teams have covered (GSV by 25).
-  - Watch: -17 is an enormous lay; big-favorites-don't-cover. Cover-only, not a Fever ML; a large dog gets a lot of points.
-- **Total:** Under (moderate)
-  - Evidence: The total CRASHED 182 -> 178 (strong under money, follow_line_movement -- the cleaner signal) + your +1 gap is the +1..5 band (under 7/9 [LWWWWWLWW], ~78%) + 64% baseline.; Three under signals stacking (falling total, gap band, baseline).
-  - Watch: 1H is priced high (fast start) -- a fh_total_high_big flag that fights the full-game under; a rebound past 180 weakens it.
-
-**Summary:** FINAL (~38min to 19:30 ET tip). Sun @ Fever: small FEVER -17 -- huge home lay (great Fever vs awful Sun); cover-only (big-favorites-don't-cover on a 17-pt number). moderate UNDER 178 (2-star) -- the total CRASHED 182 -> 178 (strong under money, follow_line_movement) + your +1 gap is the +1..5 band (under 7/9 [LWWWWWLWW], ~78%) + 64% baseline. | GAPS: Final score -- Asce: 179 (Fever 98, Sun 81) vs BO: 178 (Fever 97.5, Sun 80.5) -> diff +1, bucket +1..5 under 7/9 [LWWWWWLWW]; spread Fever -15.5 vs -17 (+1.5, market more bullish); team diffs Fever +0.5 / Sun +0.5. H1: 1H total 93 vs 89 split = +4 fh_total_high_big flag (fast 1H, fights the full under); 1H spread +9.5 vs +8.5 half = mild, no fh_side. [stars: side=1, total=2]
-<!-- WNBA_LEAN_EVENT_END event_id=bf890f553715b7954a44f36770b69830 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=1b26020bcb94ee4afa6296071e87834f -->
 ## WNBA Lean: Washington Mystics @ Los Angeles Sparks
