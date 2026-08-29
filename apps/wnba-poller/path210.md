@@ -1118,6 +1118,13 @@ line movement: fever (home fav) spread: -16.5 (open) -> -17 (close, firm); total
 context: friday. fade sun = back the indiana fever (home favorite) to win big, your score fever 98-81 (fever by 17, you had -15.5). the fever held -17 and the total CRASHED 182 -> 178 (under money). the model backed the fever -- small FEVER -17 -- plus a 2-star UNDER 178 (falling total + your +1 gap), flagging a fast 1H (fh_total_high_big) that fought the under. FINAL: connecticut sun 91, indiana fever 111 -- the fever won by 20 (202 total, way over); the fast-1H flag was the warning and the 2-star under lost.
 model_lean: side (small FEVER -17, back the home favorite); total (2-star UNDER 178, falling total -- fast-1H flag was the warning) | stars: side=1:right, total=2:wrong
 
+156fadesparks
+wrong
+back_favorite,total_under
+line movement: mystics (road fav) spread: -5.5 (open) -> -4.5 (close, eased to the Sparks dog); total: o167.5 -> 167 (close, flat)
+context: friday. fade sparks = back the washington mystics (road favorite) to win, your score mystics 85-81 (mystics by 4, you had -3.5). the mystics lay EASED -5.5 -> -4.5 (money to the Sparks home dog) and the total sat ~167. the model backed the mystics low-conviction -- small MYSTICS -4.5 -- with the total a watch/PASS UNDER 167 (your -1 gap, leans-over band, no edge). FINAL: washington mystics 82, los angeles sparks 88 -- the SPARKS won outright by 6 (170 total, over).
+model_lean: side (small MYSTICS -4.5, low-conviction road favorite); total (watch UNDER 167, no-edge leans-over band) | stars: side=1:wrong, total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
@@ -1129,7 +1136,7 @@ fade_consensus: 1 right / 0 wrong
 situational_angle: 44 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 26 wrong
-back_favorite: 29 right / 41 wrong
+back_favorite: 29 right / 42 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 11 wrong
 overcaution: 0 right / 1 wrong
@@ -1137,7 +1144,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 34 right / 35 wrong
+total_under: 34 right / 36 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1288,23 +1295,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=1b26020bcb94ee4afa6296071e87834f -->
-## WNBA Lean: Washington Mystics @ Los Angeles Sparks
-- Event ID: `1b26020bcb94ee4afa6296071e87834f`
-- Revision: `55a3136d-db79-4182-8f56-5a3c0bd15990`
-- Status: `active`
-
-### Full game
-- **Side:** Washington Mystics (small)
-  - Evidence: Lay EASED -5.5 -> -4.5 (mild money to the Sparks home dog), but the market still favors the Mystics -- agrees your side; low conviction (spread is a coin flip).
-  - Watch: Near a coin flip; the ease toward the Sparks is the counter. Cover-only, not a Mystics ML.
-- **Total:** Under (watch)
-  - Evidence: Asce -1 gap = the -1..-5 band which LEANS OVER (under 6/14 [LLLWWWWLLWLLLW]) -- NO under edge; total flat ~167.
-  - Watch: Nominal watch only; a drop under 164 firms an under, a rise past 169 an over.
-
-**Summary:** FINAL (~15min to 22:00 ET tip). Mystics @ Sparks: small MYSTICS -4.5 -- the lay EASED -5.5 -> -4.5 (mild money to the Sparks home dog) but the market still favors the Mystics, agreeing your side; low conviction (spread is a coin flip). watch/PASS UNDER 167 -- your -1 gap is the -1..-5 leans-OVER band (under 6/14), NO under edge; total flat. | GAPS: Final score -- Asce: 166 (Mystics 85, Sparks 81) vs BO: 167 (Mystics 85.75, Sparks 81.25) -> diff -1, bucket -1..-5 under 6/14 [LLLWWWWLLWLLLW] (leans over); spread Mystics -3.5 vs -4.5 (+1, market more bullish); team diffs Mystics -0.75 / Sparks -0.25. H1: 1H total 80.5 vs 83.5 split = -3 fh_total_low flag; 1H spread -2.5 ~ half -2.25 = noise, no fh_side. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=1b26020bcb94ee4afa6296071e87834f -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=a59eb5f96bbf1e45008e6ab59d21db23 -->
 ## WNBA Lean: Toronto Tempo @ Las Vegas Aces
