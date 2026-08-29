@@ -1125,17 +1125,24 @@ line movement: mystics (road fav) spread: -5.5 (open) -> -4.5 (close, eased to t
 context: friday. fade sparks = back the washington mystics (road favorite) to win, your score mystics 85-81 (mystics by 4, you had -3.5). the mystics lay EASED -5.5 -> -4.5 (money to the Sparks home dog) and the total sat ~167. the model backed the mystics low-conviction -- small MYSTICS -4.5 -- with the total a watch/PASS UNDER 167 (your -1 gap, leans-over band, no edge). FINAL: washington mystics 82, los angeles sparks 88 -- the SPARKS won outright by 6 (170 total, over).
 model_lean: side (small MYSTICS -4.5, low-conviction road favorite); total (watch UNDER 167, no-edge leans-over band) | stars: side=1:wrong, total=1:wrong
 
+157fadetempo
+wrong
+fade_favorite,fade_line_movement
+line movement: aces (home fav) spread: -15.5 (open) -> -13.5 (eased) -> -16 (close, re-firmed onto the favorite); total: o180 -> 175.5 (close, -4.5)
+context: friday. fade tempo = back the las vegas aces (home favorite) to blow out the tempo, your score aces 88-67 (aces by 21, you had -14.5). the aces lay eased 15.5 -> 13.5 then RE-FIRMED to -16 into close, while the total dropped 180 -> 175.5. the model faded your blowout -- small TEMPO +16 (took the points as the line had eased) -- plus a small UNDER 175.5 (following the falling total). FINAL: toronto tempo 73, las vegas aces 93 -- the ACES won by 20 (166 total, under); your aces-by-21 blowout was nearly exact and the model's fade missed the late re-firm to -16.
+model_lean: side (small TEMPO +16, faded the aces blowout -- missed the late re-firm to -16); total (small UNDER 175.5, followed the falling total) | stars: side=1:wrong, total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
 follow_line_movement: 27 right / 29 wrong
-fade_favorite: 30 right / 28 wrong
+fade_favorite: 30 right / 29 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 44 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
-fade_line_movement: 19 right / 26 wrong
+fade_line_movement: 19 right / 27 wrong
 back_favorite: 29 right / 42 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 11 wrong
@@ -1295,23 +1302,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=a59eb5f96bbf1e45008e6ab59d21db23 -->
-## WNBA Lean: Toronto Tempo @ Las Vegas Aces
-- Event ID: `a59eb5f96bbf1e45008e6ab59d21db23`
-- Revision: `e7b2fa6b-9be6-4644-9444-40712495e81b`
-- Status: `active`
-
-### Full game
-- **Side:** Toronto Tempo (small)
-  - Evidence: Aces lay EASED 15.5 -> 13.5 (money to the Tempo dog) -- follow_line_movement to the dog; fade your Aces-by-21 blowout (a +7.5 margin overshoot, the unreliable-read profile).; Take the points -- big-favorites-don't-cover on a 13.5 lay.
-  - Watch: Cover-only, not a Tempo ML; a re-firm past -15 warns a blowout.
-- **Total:** Under (small)
-  - Evidence: The total CRASHED 180 -> 173.5 (strong under money, follow_line_movement -- the cleaner signal) which OVERRIDES your -18.5 gap (the -13dn band leans over, 1/3).; 64% baseline under.
-  - Watch: Counter: the extreme-underestimate band historically leans over; a rebound past 176 flips it.
-
-**Summary:** FINAL (~15min to 22:00 ET tip). Tempo @ Aces: small TEMPO +13.5 -- the Aces lay EASED 15.5 -> 13.5 (money to the Tempo dog); fade your Aces-by-21 blowout (a +7.5 margin overshoot, the unreliable-read profile) and take the points (big-favorites-don't-cover). small UNDER 173.5 -- the total CRASHED 180 -> 173.5 (strong under money, follow_line_movement) which OVERRIDES your -18.5 gap (the -13dn band leans over 1/3). | GAPS: Final score -- Asce: 155 (Aces 88, Tempo 67) vs BO: 173.5 (Aces 93.5, Tempo 80) -> diff -18.5, bucket -13dn under 1/3 [WLL] (leans over, overridden by the falling line); spread Aces -14.5 vs -13.5 (-1; margin overshoot +7.5, you predict Aces by 21); team diffs Aces -5.5 / Tempo -13. H1: 1H total 85 vs 86.75 split = -1.75 fh_total_low flag; 1H spread +7.5 ~ half +6.75 = noise, no fh_side. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=a59eb5f96bbf1e45008e6ab59d21db23 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=0de4387925b67939993839b06126ed1f -->
 ## WNBA Lean: Chicago Sky @ New York Liberty
