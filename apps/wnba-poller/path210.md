@@ -1325,3 +1325,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~15min to 22:00 ET tip). Mystics @ Sparks: small MYSTICS -4.5 -- the lay EASED -5.5 -> -4.5 (mild money to the Sparks home dog) but the market still favors the Mystics, agreeing your side; low conviction (spread is a coin flip). watch/PASS UNDER 167 -- your -1 gap is the -1..-5 leans-OVER band (under 6/14), NO under edge; total flat. | GAPS: Final score -- Asce: 166 (Mystics 85, Sparks 81) vs BO: 167 (Mystics 85.75, Sparks 81.25) -> diff -1, bucket -1..-5 under 6/14 [LLLWWWWLLWLLLW] (leans over); spread Mystics -3.5 vs -4.5 (+1, market more bullish); team diffs Mystics -0.75 / Sparks -0.25. H1: 1H total 80.5 vs 83.5 split = -3 fh_total_low flag; 1H spread -2.5 ~ half -2.25 = noise, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=1b26020bcb94ee4afa6296071e87834f -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=a59eb5f96bbf1e45008e6ab59d21db23 -->
+## WNBA Lean: Toronto Tempo @ Las Vegas Aces
+- Event ID: `a59eb5f96bbf1e45008e6ab59d21db23`
+- Revision: `e7b2fa6b-9be6-4644-9444-40712495e81b`
+- Status: `active`
+
+### Full game
+- **Side:** Toronto Tempo (small)
+  - Evidence: Aces lay EASED 15.5 -> 13.5 (money to the Tempo dog) -- follow_line_movement to the dog; fade your Aces-by-21 blowout (a +7.5 margin overshoot, the unreliable-read profile).; Take the points -- big-favorites-don't-cover on a 13.5 lay.
+  - Watch: Cover-only, not a Tempo ML; a re-firm past -15 warns a blowout.
+- **Total:** Under (small)
+  - Evidence: The total CRASHED 180 -> 173.5 (strong under money, follow_line_movement -- the cleaner signal) which OVERRIDES your -18.5 gap (the -13dn band leans over, 1/3).; 64% baseline under.
+  - Watch: Counter: the extreme-underestimate band historically leans over; a rebound past 176 flips it.
+
+**Summary:** FINAL (~15min to 22:00 ET tip). Tempo @ Aces: small TEMPO +13.5 -- the Aces lay EASED 15.5 -> 13.5 (money to the Tempo dog); fade your Aces-by-21 blowout (a +7.5 margin overshoot, the unreliable-read profile) and take the points (big-favorites-don't-cover). small UNDER 173.5 -- the total CRASHED 180 -> 173.5 (strong under money, follow_line_movement) which OVERRIDES your -18.5 gap (the -13dn band leans over 1/3). | GAPS: Final score -- Asce: 155 (Aces 88, Tempo 67) vs BO: 173.5 (Aces 93.5, Tempo 80) -> diff -18.5, bucket -13dn under 1/3 [WLL] (leans over, overridden by the falling line); spread Aces -14.5 vs -13.5 (-1; margin overshoot +7.5, you predict Aces by 21); team diffs Aces -5.5 / Tempo -13. H1: 1H total 85 vs 86.75 split = -1.75 fh_total_low flag; 1H spread +7.5 ~ half +6.75 = noise, no fh_side. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=a59eb5f96bbf1e45008e6ab59d21db23 -->
