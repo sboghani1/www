@@ -1308,3 +1308,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~38min to 19:30 ET tip). Sun @ Fever: small FEVER -17 -- huge home lay (great Fever vs awful Sun); cover-only (big-favorites-don't-cover on a 17-pt number). moderate UNDER 178 (2-star) -- the total CRASHED 182 -> 178 (strong under money, follow_line_movement) + your +1 gap is the +1..5 band (under 7/9 [LWWWWWLWW], ~78%) + 64% baseline. | GAPS: Final score -- Asce: 179 (Fever 98, Sun 81) vs BO: 178 (Fever 97.5, Sun 80.5) -> diff +1, bucket +1..5 under 7/9 [LWWWWWLWW]; spread Fever -15.5 vs -17 (+1.5, market more bullish); team diffs Fever +0.5 / Sun +0.5. H1: 1H total 93 vs 89 split = +4 fh_total_high_big flag (fast 1H, fights the full under); 1H spread +9.5 vs +8.5 half = mild, no fh_side. [stars: side=1, total=2]
 <!-- WNBA_LEAN_EVENT_END event_id=bf890f553715b7954a44f36770b69830 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=1b26020bcb94ee4afa6296071e87834f -->
+## WNBA Lean: Washington Mystics @ Los Angeles Sparks
+- Event ID: `1b26020bcb94ee4afa6296071e87834f`
+- Revision: `55a3136d-db79-4182-8f56-5a3c0bd15990`
+- Status: `active`
+
+### Full game
+- **Side:** Washington Mystics (small)
+  - Evidence: Lay EASED -5.5 -> -4.5 (mild money to the Sparks home dog), but the market still favors the Mystics -- agrees your side; low conviction (spread is a coin flip).
+  - Watch: Near a coin flip; the ease toward the Sparks is the counter. Cover-only, not a Mystics ML.
+- **Total:** Under (watch)
+  - Evidence: Asce -1 gap = the -1..-5 band which LEANS OVER (under 6/14 [LLLWWWWLLWLLLW]) -- NO under edge; total flat ~167.
+  - Watch: Nominal watch only; a drop under 164 firms an under, a rise past 169 an over.
+
+**Summary:** FINAL (~15min to 22:00 ET tip). Mystics @ Sparks: small MYSTICS -4.5 -- the lay EASED -5.5 -> -4.5 (mild money to the Sparks home dog) but the market still favors the Mystics, agreeing your side; low conviction (spread is a coin flip). watch/PASS UNDER 167 -- your -1 gap is the -1..-5 leans-OVER band (under 6/14), NO under edge; total flat. | GAPS: Final score -- Asce: 166 (Mystics 85, Sparks 81) vs BO: 167 (Mystics 85.75, Sparks 81.25) -> diff -1, bucket -1..-5 under 6/14 [LLLWWWWLLWLLLW] (leans over); spread Mystics -3.5 vs -4.5 (+1, market more bullish); team diffs Mystics -0.75 / Sparks -0.25. H1: 1H total 80.5 vs 83.5 split = -3 fh_total_low flag; 1H spread -2.5 ~ half -2.25 = noise, no fh_side. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=1b26020bcb94ee4afa6296071e87834f -->
