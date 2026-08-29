@@ -1342,3 +1342,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (~15min to 22:00 ET tip). Tempo @ Aces: small TEMPO +13.5 -- the Aces lay EASED 15.5 -> 13.5 (money to the Tempo dog); fade your Aces-by-21 blowout (a +7.5 margin overshoot, the unreliable-read profile) and take the points (big-favorites-don't-cover). small UNDER 173.5 -- the total CRASHED 180 -> 173.5 (strong under money, follow_line_movement) which OVERRIDES your -18.5 gap (the -13dn band leans over 1/3). | GAPS: Final score -- Asce: 155 (Aces 88, Tempo 67) vs BO: 173.5 (Aces 93.5, Tempo 80) -> diff -18.5, bucket -13dn under 1/3 [WLL] (leans over, overridden by the falling line); spread Aces -14.5 vs -13.5 (-1; margin overshoot +7.5, you predict Aces by 21); team diffs Aces -5.5 / Tempo -13. H1: 1H total 85 vs 86.75 split = -1.75 fh_total_low flag; 1H spread +7.5 ~ half +6.75 = noise, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=a59eb5f96bbf1e45008e6ab59d21db23 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=0de4387925b67939993839b06126ed1f -->
+## WNBA Lean: Chicago Sky @ New York Liberty
+- Event ID: `0de4387925b67939993839b06126ed1f`
+- Revision: `ec41087d-4aea-4f87-85d6-40aa1d7f1f3e`
+- Status: `active`
+
+### Full game
+- **Side:** New York Liberty (small)
+  - Evidence: Lay firmed -8.5 -> -9 (money on the home favorite) -- follow_line_movement; a great Liberty team vs a bad Sky; agrees your side (market -9 vs your -9.5).
+  - Watch: -9 is a big lay; big-favorites-don't-cover. Cover-only, not a Liberty ML; an ease under -8 softens it.
+- **Total:** Under (watch)
+  - Evidence: Asce -5 gap = the -1..-5 band which LEANS OVER (under 6/14 [LLLWWWWLLWLLLW]) AND the total ROSE 180 -> 181 (mild over money) -- so NO under edge, a near-pass leaning mild over.
+  - Watch: Nominal watch only; a drop under 178 would create an under, a rise past 183 an over.
+
+**Summary:** FINAL (at ~tip 13:00 ET; score not yet in). Sky @ Liberty: small LIBERTY -9 -- lay firmed -8.5 -> -9 (money on the home favorite), a great Liberty team vs a bad Sky; agrees your side (market -9 vs your -9.5). Total = watch/PASS UNDER 181 -- your -5 gap is the -1..-5 leans-OVER band (under 6/14) AND the total ROSE 180 -> 181 (mild over money), so NO under edge, if anything a mild over. | GAPS: Final score -- Asce: 176 (Liberty 92, Sky 84) vs BO: 181 (Liberty 95, Sky 86) -> diff -5, bucket -1..-5 under 6/14 [LLLWWWWLLWLLLW] (leans over); spread Liberty -9.5 vs -9 (+0.5, you slightly more bullish); team diffs Liberty -3 / Sky -2. H1: 1H total 88 vs 90.5 split = -2.5 fh_total_low flag; 1H spread +4.5 = half of -9 = noise, no fh_side. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=0de4387925b67939993839b06126ed1f -->
