@@ -1104,18 +1104,25 @@ line movement: mystics (road fav) spread: -4 (open) -> -5.5 (close, firmed onto 
 context: thursday. fade mercury = back the washington mystics (road favorite) to win, your score mystics 91-84 (mystics by 7, you had -3.5). the mystics lay FIRMED -4 -> -5.5 (money onto the road favorite) and the total dropped 167.5 -> 164.5. the model backed the mystics -- small MYSTICS -5.5 -- plus a small UNDER 164.5 (your +10.5 over-gap + the falling total), tempered by the exact matchup's 178 over the day before. FINAL: washington mystics 80, phoenix mercury 73 -- the mystics won by 7 (153 total, well under).
 model_lean: side (small MYSTICS -5.5, back the road favorite); total (small UNDER 164.5, +6..12 over-gap + falling total) | stars: side=1:right, total=1:right
 
+154fadefire
+wrong
+back_favorite,follow_line_movement,total_under
+line movement: dream (home fav) spread: -12.5 (open) -> -13 (close, firmed); total: o180.5 -> 178.5 (close, -2)
+context: friday. fade fire = back the atlanta dream (home favorite) to win big, your score dream 93-78 (dream by 15, you had -11.5). the dream lay firmed 12.5 -> 13 and the total eased 180.5 -> 178.5. the model backed the dream -- small DREAM -13 -- plus a small UNDER 178.5 (your -7.5 under-gap), flagging a fast 1H (fh_total_high_big) that fought the under. FINAL: portland fire 101, atlanta dream 83 -- the FIRE won outright by 18 (184 total, over); the fast-1H flag was the warning.
+model_lean: side (small DREAM -13, back the home favorite); total (small UNDER 178.5, -6..-12 under-gap; fast-1H flag was the warning) | stars: side=1:wrong, total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 27 right / 28 wrong
+follow_line_movement: 27 right / 29 wrong
 fade_favorite: 30 right / 28 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 43 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 26 wrong
-back_favorite: 28 right / 40 wrong
+back_favorite: 28 right / 41 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 11 wrong
 overcaution: 0 right / 1 wrong
@@ -1123,7 +1130,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 34 right / 34 wrong
+total_under: 34 right / 35 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1274,23 +1281,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=c006f8c7eb0093bcd146ea746609a5c1 -->
-## WNBA Lean: Portland Fire @ Atlanta Dream
-- Event ID: `c006f8c7eb0093bcd146ea746609a5c1`
-- Revision: `8d605042-e102-4160-abb0-d17e8d909f91`
-- Status: `active`
-
-### Full game
-- **Side:** Atlanta Dream (small)
-  - Evidence: Dream lay firmed 12.5 -> 13 (money on the home favorite) vs an awful Fire; agrees your Dream side (market -13 vs your -11.5).; Recent big favorites vs awful teams have covered (GSV by 25, Wings by 18).
-  - Watch: -13 is a big lay; big-favorites-don't-cover (Dream -12 won by only 9 vs the Storm, entry 84). Cover-only, not a Dream ML.
-- **Total:** Under (small)
-  - Evidence: Asce -7.5 under-gap = the -6..-12 band (under 9/12 [WWWWLWWLLWWW], ~75%) + the total fell 180.5 -> 178.5 (under money) + 64% baseline.; Underestimate that historically lands under.
-  - Watch: 1H is priced high (fast start) -- a fh_total_high_big flag that fights the full-game under; a rebound past 181 weakens it.
-
-**Summary:** FINAL (~38min to 19:30 ET tip). Fire @ Dream: small DREAM -13 -- lay firmed 12.5 -> 13 (money on the home favorite) vs an awful Fire; cover-only (big-favorites-don't-cover). small UNDER 178.5 -- your -7.5 under-gap is the -6..-12 band (under 9/12 [WWWWLWWLLWWW], ~75%) + the total fell 180.5 -> 178.5 (under money) + 64% baseline. | GAPS: Final score -- Asce: 171 (Dream 93, Fire 78) vs BO: 178.5 (Dream 95.75, Fire 82.75) -> diff -7.5, bucket -6..-12 under 9/12 [WWWWLWWLLWWW]; spread Dream -11.5 vs -13 (+1.5, market more bullish); team diffs Dream -2.75 / Fire -4.75. H1: 1H total 93.5 vs 89.25 split = +4.25 fh_total_high_big flag (fast 1H, fights the full under); 1H spread +7.5 vs +6.5 half = mild, no fh_side. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=c006f8c7eb0093bcd146ea746609a5c1 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=bf890f553715b7954a44f36770b69830 -->
 ## WNBA Lean: Connecticut Sun @ Indiana Fever
