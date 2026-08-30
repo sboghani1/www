@@ -1370,3 +1370,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL (tip 17:00 ET). Sparks @ Storm: watch SPARKS -1 -- SIDE-FLIP (you have Storm -4.5, market has Storm a +1 dog), lean with the market at low conviction. watch OVER 174.5 -- your -2.5 gap is the FLAGGED -1..-5 leans-over band (under 6/15, ~40%) + a rising total, so mild over lean. NOTE: your thought is not linked to this event_id (submitted pre-pricing). | GAPS: Final score -- Asce: 172 (Storm 88, Sparks 84) vs BO: 174.5 (Sparks 87.75, Storm 86.75) -> diff -2.5, bucket -1..-5 under 6/15 (leans over); SPREAD you Storm -4.5 vs market Storm +1 (SIDE-FLIP); team diffs Storm +1.25 / Sparks -3.75. H1: 1H total 84.5 vs 87.25 split = -2.75 fh_total_low flag; no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=e4b8bdd661d1fa402d169b6b385404d1 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=2fcf599f6c0c992bc15678ce93b486c5 -->
+## WNBA Lean: Golden State Valkyries @ Portland Fire
+- Event ID: `2fcf599f6c0c992bc15678ce93b486c5`
+- Revision: `664a096d-53d9-4d2b-b0d7-c02062c146d1`
+- Status: `active`
+
+### Full game
+- **Side:** Golden State Valkyries (small)
+  - Evidence: You over-rate the favorite by ~1 (you -6.5 vs -5.5) and your stated spread is within 1 of the market -- laid_more/close-agree profiles (5/6 and 5/7); GSV good vs a bad Fire.
+  - Watch: -5.5 road lay; big-favorites-don't-cover. Cover-only, not a GSV ML.
+- **Total:** Under (small)
+  - Evidence: Asce +10.5 over-gap = +6..12 band (under 7/10, ~70%) + close-spread agree (under 5/7); an already very low 159.5 total.
+  - Watch: 159.5 is very low, limiting room; a rise past 162 weakens it.
+
+**Summary:** INITIAL (tip 19:00 ET). GSV @ Fire: small GSV -5.5 -- you over-rate the favorite by ~1 (laid_more 5/6, close-agree 5/7); small UNDER 159.5 -- +10.5 over-gap (+6..12 under 7/10) + close-agree + a very low total. NOTE: your thought is not linked to this event_id (submitted pre-pricing). | GAPS: Final score -- Asce: 170 (GSV 89, Fire 81) vs BO: 159.5 (GSV 82.5, Fire 77) -> diff +10.5, bucket +6..12 under 7/10; spread GSV -6.5 vs -5.5 (+1, over-rate by 1 / close-agree); team diffs GSV +6.5 / Fire +4. H1: 1H total 77 vs 79.75 split = -2.75 fh_total_low flag; no fh_side. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=2fcf599f6c0c992bc15678ce93b486c5 -->
