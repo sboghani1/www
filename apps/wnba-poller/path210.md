@@ -1319,3 +1319,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** FINAL (at ~tip 13:00 ET; score not yet in). Sky @ Liberty: small LIBERTY -9 -- lay firmed -8.5 -> -9 (money on the home favorite), a great Liberty team vs a bad Sky; agrees your side (market -9 vs your -9.5). Total = watch/PASS UNDER 181 -- your -5 gap is the -1..-5 leans-OVER band (under 6/14) AND the total ROSE 180 -> 181 (mild over money), so NO under edge, if anything a mild over. | GAPS: Final score -- Asce: 176 (Liberty 92, Sky 84) vs BO: 181 (Liberty 95, Sky 86) -> diff -5, bucket -1..-5 under 6/14 [LLLWWWWLLWLLLW] (leans over); spread Liberty -9.5 vs -9 (+0.5, you slightly more bullish); team diffs Liberty -3 / Sky -2. H1: 1H total 88 vs 90.5 split = -2.5 fh_total_low flag; 1H spread +4.5 = half of -9 = noise, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=0de4387925b67939993839b06126ed1f -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=5835f2334381d020c40d42ab5ddf572b -->
+## WNBA Lean: Toronto Tempo @ Phoenix Mercury
+- Event ID: `5835f2334381d020c40d42ab5ddf572b`
+- Revision: `ba5eea17-5e88-4b09-8e98-b3798a201da4`
+- Status: `active`
+
+### Full game
+- **Side:** Phoenix Mercury (small)
+  - Evidence: Market FIRMED Mercury -8.5 -> -9.5 (5 pts past your -4.5); when you underrate your favorite by 3-5, the market's bigger number has been right (your side only 1/3 there) -- so lean with the market.
+  - Watch: Low conviction: -9.5 is a big lay (big-favorites-don't-cover) and favorites got upset last night (Dream -13, Mystics -4.5 both lost). Cover-only, not a Mercury ML; an ease under -8 softens it.
+- **Total:** Under (watch)
+  - Evidence: The falling total (178 -> 173.5) is a HEAD-FAKE: your gap slid to -5.5 (the -1..-5 leans-over band, no edge), your underrate-favorite spots went over 2/3, and last night's identical falling-total-under (Fever crashed 182 -> 178) blew OVER 202.
+  - Watch: No under edge, mild over risk; a rebound past 176 confirms over, a drop under 171 would re-open an under.
+
+**Summary:** FINAL (~4h to 22:00 ET tip; lines may still move). Tempo @ Mercury: small MERCURY -9.5 (cover-only) -- the market FIRMED Mercury -8.5 -> -9.5 (5 pts past your -4.5); when you underrate your favorite the market's bigger number has been right (your side 1/3 there), so lean with the market -- but low conviction (big-favorites-don't-cover; favorites got upset last night). Total = watch/PASS UNDER 173.5 -- the falling total (178 -> 173.5) is a HEAD-FAKE: your gap slid to -5.5 (leans-over band), your underrate-favorite spots went over 2/3, and last night's identical falling-total-under (Fever 182->178) blew OVER 202. No under edge, mild over risk. | GAPS: Final score -- Asce: 168 (Mercury 86, Tempo 82) vs BO: 173.5 (Mercury 91.5, Tempo 82) -> diff -5.5, bucket -1..-5 under 6/14 [LLLWWWWLLWLLLW] (leans over); spread Mercury -4.5 vs -9.5 (+5, market far more bullish; you underrate the favorite); team diffs Mercury -5.5 / Tempo 0. H1: 1H total 84.5 vs 86.75 split = -2.25 fh_total_low flag; 1H spread +5 ~ half +4.75 = noise, no fh_side. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=5835f2334381d020c40d42ab5ddf572b -->
