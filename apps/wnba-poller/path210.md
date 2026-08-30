@@ -1387,3 +1387,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL (tip 19:00 ET). GSV @ Fire: small GSV -5.5 -- you over-rate the favorite by ~1 (laid_more 5/6, close-agree 5/7); small UNDER 159.5 -- +10.5 over-gap (+6..12 under 7/10) + close-agree + a very low total. NOTE: your thought is not linked to this event_id (submitted pre-pricing). | GAPS: Final score -- Asce: 170 (GSV 89, Fire 81) vs BO: 159.5 (GSV 82.5, Fire 77) -> diff +10.5, bucket +6..12 under 7/10; spread GSV -6.5 vs -5.5 (+1, over-rate by 1 / close-agree); team diffs GSV +6.5 / Fire +4. H1: 1H total 77 vs 79.75 split = -2.75 fh_total_low flag; no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=2fcf599f6c0c992bc15678ce93b486c5 -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=337a2824c40f562e197e790c84c767c8 -->
+## WNBA Lean: Connecticut Sun @ Dallas Wings
+- Event ID: `337a2824c40f562e197e790c84c767c8`
+- Revision: `a772bb64-8d20-402c-a686-8821e8e8a0c9`
+- Status: `active`
+
+### Full game
+- **Side:** Dallas Wings (small)
+  - Evidence: You UNDER-rate the favorite by 4 (you -10.5 vs market -14.5) -- when you shade below the market its bigger number has tended to be right, so lean with the market; Wings firmed -12 -> -14.5 vs an awful Sun.; 4-6 under-rate bucket is 0/1 (tiny).
+  - Watch: -14.5 is a huge lay; big-favorites-don't-cover. Cover-only, low conviction; an ease under -13 softens it.
+- **Total:** Under (small)
+  - Evidence: Asce +7 over-gap = +6..12 band (under 7/10, ~70%); total eased 167 -> 166.
+  - Watch: 1H priced high (fh_total_high) fights it a bit; a rise past 169 weakens it.
+
+**Summary:** INITIAL (tip 20:00 ET). Sun @ Wings: small WINGS -14.5 (cover-only) -- you under-rate the favorite by 4 (you -10.5 vs -14.5), the market's bigger number has tended right; low conviction on a huge lay (big-favorites-don't-cover). small UNDER 166 -- +7 over-gap (+6..12 under 7/10) + eased total. | GAPS: Final score -- Asce: 173 (Wings 94, Sun 79) vs BO: 166 (Wings 90.25, Sun 75.75) -> diff +7, bucket +6..12 under 7/10; spread Wings -10.5 vs -14.5 (+4, you under-rate -> 4-6 bucket 0/1); team diffs Wings +3.75 / Sun +3.25. H1: 1H total 85.5 vs 83 split = +2.5 fh_total_high flag; no fh_side. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=337a2824c40f562e197e790c84c767c8 -->
