@@ -1353,3 +1353,20 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 
 **Summary:** INITIAL (tip 15:00 ET). Lynx @ Dream: small LYNX -2.5 -- you over-rate the favorite (-5.5 vs -2.5), your laid_more bucket covers 5/6 (best side profile); small UNDER 176.5 -- +3.5 over-gap (+1..5 under 7/10) + eased total. | GAPS: Final score -- Asce: 180 (Lynx 94, Dream 86) vs BO: 176.5 (Lynx 89.5, Dream 87) -> diff +3.5, bucket +1..5 under 7/10; spread Lynx -5.5 vs -2.5 (-3, you over-rate -> laid_more 5/6); team diffs Lynx +4.5 / Dream -1. H1: 1H total 90.5 vs 88.25 split = +2.25 fh_total_high flag; 1H spread noise, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=ac8625c332b318a2e588554bd8c3198c -->
+
+<!-- WNBA_LEAN_EVENT_START event_id=e4b8bdd661d1fa402d169b6b385404d1 -->
+## WNBA Lean: Los Angeles Sparks @ Seattle Storm
+- Event ID: `e4b8bdd661d1fa402d169b6b385404d1`
+- Revision: `f26dace0-9fac-4fe5-823f-632cf36db84b`
+- Status: `active`
+
+### Full game
+- **Side:** Los Angeles Sparks (watch)
+  - Evidence: SIDE-FLIP: you have Storm a -4.5 favorite, but the market moved off pickem to SPARKS -1 (Storm is the +1 dog) -- the unreliable-read profile; lean with the market, low conviction.; Near-pickem, awful vs awful.
+  - Watch: Near-pickem coin flip; a move back to Storm-favored flips it. Cover-only.
+- **Total:** Over (watch)
+  - Evidence: Asce -2.5 gap = the -1..-5 band, the FLAGGED leans-OVER bucket (under only 6/15, ~40%); total also ROSE 173 -> 174.5 (mild over money).
+  - Watch: Nominal watch; both teams weak so a low-scoring game is live -- a drop under 171 flips to under.
+
+**Summary:** INITIAL (tip 17:00 ET). Sparks @ Storm: watch SPARKS -1 -- SIDE-FLIP (you have Storm -4.5, market has Storm a +1 dog), lean with the market at low conviction. watch OVER 174.5 -- your -2.5 gap is the FLAGGED -1..-5 leans-over band (under 6/15, ~40%) + a rising total, so mild over lean. NOTE: your thought is not linked to this event_id (submitted pre-pricing). | GAPS: Final score -- Asce: 172 (Storm 88, Sparks 84) vs BO: 174.5 (Sparks 87.75, Storm 86.75) -> diff -2.5, bucket -1..-5 under 6/15 (leans over); SPREAD you Storm -4.5 vs market Storm +1 (SIDE-FLIP); team diffs Storm +1.25 / Sparks -3.75. H1: 1H total 84.5 vs 87.25 split = -2.75 fh_total_low flag; no fh_side. [stars: side=1, total=1]
+<!-- WNBA_LEAN_EVENT_END event_id=e4b8bdd661d1fa402d169b6b385404d1 -->
