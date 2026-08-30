@@ -1357,7 +1357,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=e4b8bdd661d1fa402d169b6b385404d1 -->
 ## WNBA Lean: Los Angeles Sparks @ Seattle Storm
 - Event ID: `e4b8bdd661d1fa402d169b6b385404d1`
-- Revision: `f26dace0-9fac-4fe5-823f-632cf36db84b`
+- Revision: `956672c1-0cbc-492c-8632-89a02ae07314`
 - Status: `active`
 
 ### Full game
@@ -1368,7 +1368,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
   - Evidence: Asce -2.5 gap = the -1..-5 band, the FLAGGED leans-OVER bucket (under only 6/15, ~40%); total also ROSE 173 -> 174.5 (mild over money).
   - Watch: Nominal watch; both teams weak so a low-scoring game is live -- a drop under 171 flips to under.
 
-**Summary:** INITIAL (tip 17:00 ET). Sparks @ Storm: watch SPARKS -1 -- SIDE-FLIP (you have Storm -4.5, market has Storm a +1 dog), lean with the market at low conviction. watch OVER 174.5 -- your -2.5 gap is the FLAGGED -1..-5 leans-over band (under 6/15, ~40%) + a rising total, so mild over lean. NOTE: your thought is not linked to this event_id (submitted pre-pricing). | GAPS: Final score -- Asce: 172 (Storm 88, Sparks 84) vs BO: 174.5 (Sparks 87.75, Storm 86.75) -> diff -2.5, bucket -1..-5 under 6/15 (leans over); SPREAD you Storm -4.5 vs market Storm +1 (SIDE-FLIP); team diffs Storm +1.25 / Sparks -3.75. H1: 1H total 84.5 vs 87.25 split = -2.75 fh_total_low flag; no fh_side. [stars: side=1, total=1]
+**Summary:** INITIAL (tip 17:00 ET). Sparks @ Storm: watch SPARKS -1 -- SIDE-FLIP (you have Storm -4.5, market has Storm a +1 dog), lean with the market at low conviction. watch OVER 174.5 -- your -2.5 gap is the FLAGGED -1..-5 leans-over band (under 6/15, ~40%) + a rising total, so mild over lean. | GAPS: Final score -- Asce: 172 (Storm 88, Sparks 84) vs BO: 174.5 (Sparks 87.75, Storm 86.75) -> diff -2.5, bucket -1..-5 under 6/15 (leans over); SPREAD you Storm -4.5 vs market Storm +1 (SIDE-FLIP); team diffs Storm +1.25 / Sparks -3.75. H1: 1H total 84.5 vs 87.25 split = -2.75 fh_total_low flag; no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=e4b8bdd661d1fa402d169b6b385404d1 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=2fcf599f6c0c992bc15678ce93b486c5 -->
