@@ -1374,18 +1374,23 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=2fcf599f6c0c992bc15678ce93b486c5 -->
 ## WNBA Lean: Golden State Valkyries @ Portland Fire
 - Event ID: `2fcf599f6c0c992bc15678ce93b486c5`
-- Revision: `5c04e95b-537b-4fd3-a1bc-8bc8a07c2591`
+- Revision: `96ceab74-2d9d-4ba1-aa7f-0b777433e9f8`
 - Status: `active`
 
 ### Full game
 - **Side:** Golden State Valkyries (small)
-  - Evidence: You over-rate the favorite by ~1 (you -6.5 vs -5.5) and your stated spread is within 1 of the market -- laid_more/close-agree profiles (5/6 and 5/7); GSV good vs a bad Fire.
-  - Watch: -5.5 road lay; big-favorites-don't-cover. Cover-only, not a GSV ML.
+  - Evidence: You over-rate the favorite by 0.5 (you -6.5 vs -6) -- laid_more 6/7 [WWWWLWW], your best side profile -- and agree within 1 pt (close-agree 6/8 [WWWWLWLW]); GSV good vs a bad Fire.; Margin gap +2 -> +1..5 cover 7/13 (coin flip) -- side edge is the over-rate profile, not the margin.
+  - Watch: -6 road lay; big-favorites-don't-cover. Cover-only, not a GSV ML; an ease under -5 softens it.
 - **Total:** Under (small)
-  - Evidence: Asce +10.5 over-gap = +6..12 band (under 7/10, ~70%) + close-spread agree (under 5/7); an already very low 159.5 total.
-  - Watch: 159.5 is very low, limiting room; a rise past 162 weakens it.
+  - Evidence: Asce +11 over-gap = +6..12 band (under 7/10 [WLPWWWLWWLW]) + close-spread agree + an already very low 159 total.
+  - Watch: 159 is very low, limiting room; a rise past 162 weakens it.
 
-**Summary:** INITIAL (tip 19:00 ET). GSV @ Fire: small GSV -5.5 -- you over-rate the favorite by ~1 (laid_more 5/6, close-agree 5/7); small UNDER 159.5 -- +10.5 over-gap (+6..12 under 7/10) + close-agree + a very low total. | GAPS: Final score -- Asce: 170 (GSV 89, Fire 81) vs BO: 159.5 (GSV 82.5, Fire 77) -> diff +10.5, bucket +6..12 under 7/10; spread GSV -6.5 vs -5.5 (+1, over-rate by 1 / close-agree); team diffs GSV +6.5 / Fire +4. H1: 1H total 77 vs 79.75 split = -2.75 fh_total_low flag; no fh_side. [stars: side=1, total=1]
+### First half
+- **Total:** Under (small)
+  - Evidence: 1H total 76.5 vs 79.5 straight-half split = -3 -> fh_total_low; the log finds fh_total_low hits better on the ACTUAL first half than the full ('bet the 1H not the full'), so this is the cleaner under angle.
+  - Watch: fh records are small (fh_total_low ~2/3 on the actual half, 2-4 full); kept small. 1H spread -3 = exactly half of -6 = noise, no fh_side.
+
+**Summary:** FINAL (at ~tip 19:00 ET; score not yet in). GSV @ Fire: small GSV -6, small UNDER 159, small 1H UNDER 76.5. BUCKETS -- side: you over-rate the fav by 0.5 (laid_more 6/7 [WWWWLWW], best side profile) + close-agree 6/8 [WWWWLWLW]; margin gap +2 -> +1..5 cover 7/13 (coin flip). total: +11 over-gap -> +6..12 under 7/10 [WLPWWWLWWLW] on a very low 159. 1H ANGLE: 1H 76.5 vs 79.5 split = -3 -> fh_total_low; log says fh_total_low hits better on the ACTUAL first half ('bet the 1H not the full'), so a small 1H UNDER 76.5 is posted; 1H spread -3 = half of -6 = noise. | GAPS: Final score -- Asce: 170 (GSV 89, Fire 81) vs BO: 159 (GSV 82.5, Fire 76.5) -> diff +11, bucket +6..12 under 7/10 [WLPWWWLWWLW]; spread GSV -6.5 vs -6 (+0.5, over-rate/close-agree); team diffs GSV +6.5 / Fire +4.5. [stars: side=1, total=1, fh_total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=2fcf599f6c0c992bc15678ce93b486c5 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=337a2824c40f562e197e790c84c767c8 -->
