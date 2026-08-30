@@ -1374,7 +1374,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=2fcf599f6c0c992bc15678ce93b486c5 -->
 ## WNBA Lean: Golden State Valkyries @ Portland Fire
 - Event ID: `2fcf599f6c0c992bc15678ce93b486c5`
-- Revision: `664a096d-53d9-4d2b-b0d7-c02062c146d1`
+- Revision: `5c04e95b-537b-4fd3-a1bc-8bc8a07c2591`
 - Status: `active`
 
 ### Full game
@@ -1385,7 +1385,7 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
   - Evidence: Asce +10.5 over-gap = +6..12 band (under 7/10, ~70%) + close-spread agree (under 5/7); an already very low 159.5 total.
   - Watch: 159.5 is very low, limiting room; a rise past 162 weakens it.
 
-**Summary:** INITIAL (tip 19:00 ET). GSV @ Fire: small GSV -5.5 -- you over-rate the favorite by ~1 (laid_more 5/6, close-agree 5/7); small UNDER 159.5 -- +10.5 over-gap (+6..12 under 7/10) + close-agree + a very low total. NOTE: your thought is not linked to this event_id (submitted pre-pricing). | GAPS: Final score -- Asce: 170 (GSV 89, Fire 81) vs BO: 159.5 (GSV 82.5, Fire 77) -> diff +10.5, bucket +6..12 under 7/10; spread GSV -6.5 vs -5.5 (+1, over-rate by 1 / close-agree); team diffs GSV +6.5 / Fire +4. H1: 1H total 77 vs 79.75 split = -2.75 fh_total_low flag; no fh_side. [stars: side=1, total=1]
+**Summary:** INITIAL (tip 19:00 ET). GSV @ Fire: small GSV -5.5 -- you over-rate the favorite by ~1 (laid_more 5/6, close-agree 5/7); small UNDER 159.5 -- +10.5 over-gap (+6..12 under 7/10) + close-agree + a very low total. | GAPS: Final score -- Asce: 170 (GSV 89, Fire 81) vs BO: 159.5 (GSV 82.5, Fire 77) -> diff +10.5, bucket +6..12 under 7/10; spread GSV -6.5 vs -5.5 (+1, over-rate by 1 / close-agree); team diffs GSV +6.5 / Fire +4. H1: 1H total 77 vs 79.75 split = -2.75 fh_total_low flag; no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=2fcf599f6c0c992bc15678ce93b486c5 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=337a2824c40f562e197e790c84c767c8 -->
