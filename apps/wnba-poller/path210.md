@@ -1396,16 +1396,16 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=337a2824c40f562e197e790c84c767c8 -->
 ## WNBA Lean: Connecticut Sun @ Dallas Wings
 - Event ID: `337a2824c40f562e197e790c84c767c8`
-- Revision: `a772bb64-8d20-402c-a686-8821e8e8a0c9`
+- Revision: `47fccc9b-8280-4c5f-8951-61c5be23bed5`
 - Status: `active`
 
 ### Full game
 - **Side:** Dallas Wings (small)
-  - Evidence: You UNDER-rate the favorite by 4 (you -10.5 vs market -14.5) -- when you shade below the market its bigger number has tended to be right, so lean with the market; Wings firmed -12 -> -14.5 vs an awful Sun.; 4-6 under-rate bucket is 0/1 (tiny).
-  - Watch: -14.5 is a huge lay; big-favorites-don't-cover. Cover-only, low conviction; an ease under -13 softens it.
+  - Evidence: Your predicted score (Wings by 15) MATCHES the market -15 exactly -- the margin-gap ~0 bucket covers 4/5 [WWWWL]; Wings great vs an awful Sun.; Your STATED -10.5 under-shot (under-rate 4-6, 0/1) -- the internal divergence (+4.5) resolves toward the market's number, which has tended right.
+  - Watch: -15 is a huge lay; big-favorites-don't-cover. Cover-only, not a Wings ML; an ease under -13 softens it.
 - **Total:** Under (small)
-  - Evidence: Asce +7 over-gap = +6..12 band (under 7/10, ~70%); total eased 167 -> 166.
-  - Watch: 1H priced high (fh_total_high) fights it a bit; a rise past 169 weakens it.
+  - Evidence: Asce +7 over-gap = +6..12 band (under 7/10 [WLPWWWLWWLW]).; Kept small: the 1H is priced HIGH (fh_total_high_big, +4 over split) -- the exact flag that burned the unders last night (Fire and Fever both went over).
+  - Watch: Live over risk from the fast 1H; a rise past 169 weakens it.
 
-**Summary:** INITIAL (tip 20:00 ET). Sun @ Wings: small WINGS -14.5 (cover-only) -- you under-rate the favorite by 4 (you -10.5 vs -14.5), the market's bigger number has tended right; low conviction on a huge lay (big-favorites-don't-cover). small UNDER 166 -- +7 over-gap (+6..12 under 7/10) + eased total. | GAPS: Final score -- Asce: 173 (Wings 94, Sun 79) vs BO: 166 (Wings 90.25, Sun 75.75) -> diff +7, bucket +6..12 under 7/10; spread Wings -10.5 vs -14.5 (+4, you under-rate -> 4-6 bucket 0/1); team diffs Wings +3.75 / Sun +3.25. H1: 1H total 85.5 vs 83 split = +2.5 fh_total_high flag; no fh_side. [stars: side=1, total=1]
+**Summary:** FINAL (~37min to 20:30 ET tip). Sun @ Wings: small WINGS -15 (cover-only) -- your predicted score (Wings by 15) MATCHES the market -15 exactly (margin-gap ~0 bucket, cover 4/5 [WWWWL]), though your stated -10.5 under-shot (internal divergence +4.5); big lay caveat (big-favorites-don't-cover). small UNDER 166 -- +7 over-gap (+6..12 under 7/10 [WLPWWWLWWLW]) BUT the 1H is priced HIGH (fh_total_high_big, +4 over split -- the flag that burned the unders last night), so kept small with real over risk. | GAPS: Final score -- Asce: 173 (Wings 94, Sun 79) vs BO: 166 (Wings 90.5, Sun 75.5) -> diff +7, bucket +6..12 under 7/10 [WLPWWWLWWLW]; spread stated Wings -10.5 vs -15 (+4.5 under-rate, but predicted margin +15 = market -> ~0 cover 4/5); team diffs Wings +3.5 / Sun +3.5. H1: 1H total 87 vs 83 split = +4 fh_total_high_big flag (fast 1H, burned unders last night); 1H spread +8.5 vs +7.5 half = mild, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=337a2824c40f562e197e790c84c767c8 -->
