@@ -1340,18 +1340,18 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=ac8625c332b318a2e588554bd8c3198c -->
 ## WNBA Lean: Minnesota Lynx @ Atlanta Dream
 - Event ID: `ac8625c332b318a2e588554bd8c3198c`
-- Revision: `a96f6822-367c-4be3-a189-b47643150f16`
+- Revision: `e6a98c65-314e-4db8-8448-4efeab51b039`
 - Status: `active`
 
 ### Full game
 - **Side:** Minnesota Lynx (small)
-  - Evidence: You over-rate the favorite (you -5.5 vs market -2.5) -- your 'laid_more' bucket covers 5/6 (best side profile, small N); great Lynx team.; Counter: the line eased -3 -> -2.5 (mild money to the Dream).
-  - Watch: -2.5 is a small number; cover-only, not a Lynx ML.
+  - Evidence: You over-rate the favorite (-5.5 vs -2.5) -- your laid_more bucket covers 5/6 (best side profile, small N); great Lynx team; line held at -2.5.
+  - Watch: -2.5 is a small number; cover-only, not a Lynx ML; an ease to pickem flips it.
 - **Total:** Under (small)
-  - Evidence: Asce +3.5 over-gap = +1..5 band (under 7/10, ~70%); total eased 179 -> 176.5.
-  - Watch: 1H priced a bit high (fh_total_high) fights it; a rise past 179 weakens it.
+  - Evidence: Asce +3 over-gap = +1..5 band (under 7/10, ~70%).; Kept small: total ticked UP 176.5 -> 177, and the 1H is priced high (fh_total_high, fast start) -- the exact flag that burned the unders last night.
+  - Watch: A rise past 179 weakens it; the fast-1H flag is a live over risk.
 
-**Summary:** INITIAL (tip 15:00 ET). Lynx @ Dream: small LYNX -2.5 -- you over-rate the favorite (-5.5 vs -2.5), your laid_more bucket covers 5/6 (best side profile); small UNDER 176.5 -- +3.5 over-gap (+1..5 under 7/10) + eased total. | GAPS: Final score -- Asce: 180 (Lynx 94, Dream 86) vs BO: 176.5 (Lynx 89.5, Dream 87) -> diff +3.5, bucket +1..5 under 7/10; spread Lynx -5.5 vs -2.5 (-3, you over-rate -> laid_more 5/6); team diffs Lynx +4.5 / Dream -1. H1: 1H total 90.5 vs 88.25 split = +2.25 fh_total_high flag; 1H spread noise, no fh_side. [stars: side=1, total=1]
+**Summary:** FINAL (~16min to 15:00 ET tip). Lynx @ Dream: small LYNX -2.5 -- you over-rate the favorite (-5.5 vs -2.5), your laid_more bucket covers 5/6 (best side profile); great Lynx team, cover-only. small UNDER 177 -- your +3 over-gap (+1..5 under 7/10) but the total ticked UP 176.5 -> 177 and the 1H is priced high (fh_total_high, fast start -- the flag that burned the unders last night), so kept small. | GAPS: Final score -- Asce: 180 (Lynx 94, Dream 86) vs BO: 177 (Lynx 89.75, Dream 87.25) -> diff +3, bucket +1..5 under 7/10; spread Lynx -5.5 vs -2.5 (-3, you over-rate -> laid_more 5/6); team diffs Lynx +4.25 / Dream -1.25. H1: 1H total 90.5 vs 88.5 split = +2 fh_total_high flag (fast 1H, fought the under last night); 1H spread -1.5 ~ half -1.25 = noise, no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=ac8625c332b318a2e588554bd8c3198c -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=e4b8bdd661d1fa402d169b6b385404d1 -->
