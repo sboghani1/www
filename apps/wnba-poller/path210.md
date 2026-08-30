@@ -1357,18 +1357,18 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 <!-- WNBA_LEAN_EVENT_START event_id=e4b8bdd661d1fa402d169b6b385404d1 -->
 ## WNBA Lean: Los Angeles Sparks @ Seattle Storm
 - Event ID: `e4b8bdd661d1fa402d169b6b385404d1`
-- Revision: `956672c1-0cbc-492c-8632-89a02ae07314`
+- Revision: `cc0a8d21-fe15-41e5-89e6-fc570a524d17`
 - Status: `active`
 
 ### Full game
 - **Side:** Los Angeles Sparks (watch)
-  - Evidence: SIDE-FLIP: you have Storm a -4.5 favorite, but the market moved off pickem to SPARKS -1 (Storm is the +1 dog) -- the unreliable-read profile; lean with the market, low conviction.; Near-pickem, awful vs awful.
-  - Watch: Near-pickem coin flip; a move back to Storm-favored flips it. Cover-only.
+  - Evidence: SIDE-FLIP: you make the market DOG (Storm +1.5) a -4.5 favorite; that exact profile is just 1/2 on the side (N=2, both Tempo) -- essentially no track record, so lean with the market.
+  - Watch: Near-pickem, awful vs awful; a move back to Storm-favored flips it. Cover-only, low conviction.
 - **Total:** Over (watch)
-  - Evidence: Asce -2.5 gap = the -1..-5 band, the FLAGGED leans-OVER bucket (under only 6/15, ~40%); total also ROSE 173 -> 174.5 (mild over money).
-  - Watch: Nominal watch; both teams weak so a low-scoring game is live -- a drop under 171 flips to under.
+  - Evidence: Asce -2 gap = the FLAGGED -1..-5 leans-over band (under 6/15, ~40%); total flat ~174.
+  - Watch: Countersignal: the side-flip profile went under 2/2 (N=2) -- conflicts, so near-pass; a drop under 171 flips to under.
 
-**Summary:** INITIAL (tip 17:00 ET). Sparks @ Storm: watch SPARKS -1 -- SIDE-FLIP (you have Storm -4.5, market has Storm a +1 dog), lean with the market at low conviction. watch OVER 174.5 -- your -2.5 gap is the FLAGGED -1..-5 leans-over band (under 6/15, ~40%) + a rising total, so mild over lean. | GAPS: Final score -- Asce: 172 (Storm 88, Sparks 84) vs BO: 174.5 (Sparks 87.75, Storm 86.75) -> diff -2.5, bucket -1..-5 under 6/15 (leans over); SPREAD you Storm -4.5 vs market Storm +1 (SIDE-FLIP); team diffs Storm +1.25 / Sparks -3.75. H1: 1H total 84.5 vs 87.25 split = -2.75 fh_total_low flag; no fh_side. [stars: side=1, total=1]
+**Summary:** FINAL (~35min to 17:00 ET tip). Sparks @ Storm: watch SPARKS -1.5 -- SIDE-FLIP: you make the market DOG (Storm +1.5) a -4.5 favorite; that profile is 1/2 on the side (N=2, both Tempo) -- no track record, so lean with the market at low conviction. watch OVER 174 -- your -2 gap is the FLAGGED -1..-5 leans-over band (under 6/15, ~40%); a tiny 2/2 'under' countersignal from the side-flip profile conflicts, so near-pass. | GAPS: Final score -- Asce: 172 (Storm 88, Sparks 84) vs BO: 174 (Sparks 87.75, Storm 86.25) -> diff -2, bucket -1..-5 under 6/15 (leans over); SPREAD you Storm -4.5 vs market Storm +1.5 (SIDE-FLIP, you make a market dog a 4.5 favorite); team diffs Storm +1.75 / Sparks -3.75. H1: 1H total 84.5 vs 87 split = -2.5 fh_total_low flag; no fh_side. [stars: side=1, total=1]
 <!-- WNBA_LEAN_EVENT_END event_id=e4b8bdd661d1fa402d169b6b385404d1 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=2fcf599f6c0c992bc15678ce93b486c5 -->
