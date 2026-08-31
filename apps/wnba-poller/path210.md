@@ -1160,18 +1160,25 @@ line movement: sparks (road fav) spread: pk -> -1.5 (firmed onto the sparks; sid
 context: sunday. fade sparks = back the seattle storm (home favorite) to win, your score storm 88-84 (storm by 4, you had -4.5). BUT the market made LOS ANGELES the road favorite -- sparks -1.5 (line moved from pick'em onto the sparks) -- a full side-flip from your read. the model leaned with the market at low conviction -- watch SPARKS -1.5 -- and made the total a watch/near-pass OVER 174 (your -2 gap, leans-over band). FINAL: los angeles sparks 90, seattle storm 74 -- the sparks won by 16 (164 total).
 model_lean: side (watch SPARKS -1.5, leaned with the market on a side-flip); total (watch OVER 174) | stars: side=1:right, total=1:wrong
 
+162fadefire
+right
+back_favorite,follow_line_movement,total_under,fh_total_low_big
+line movement: gsv (road fav) spread: -5.5 -> -6 (firmed onto the favorite); total o158.5 -> 159 (flat); 1H total 76.5
+context: sunday. fade fire = back the golden state valkyries (road favorite) to win, your score valkyries 89-81 (valks by 8, you had -6.5). the valkyries lay FIRMED -5.5 -> -6 (money onto the road favorite) on a nearly flat total (158.5 -> 159). the model backed the confirmed favorite -- small GSV -6 -- plus a small UNDER 159 (your +11 over-gap on a very low number) and a small first-half UNDER 76.5 on fh_total_low_big (1H 76.5 vs 79.5 half = -3). FINAL: golden state valkyries 86, portland fire 69 -- the valkyries won by 17 (155 total; 1H 72).
+model_lean: side (small GSV -6, back the road favorite); total (small UNDER 159, +6..12 over-gap); first-half total (small UNDER 76.5, fh_total_low_big) | stars: side=1:right, total=1:right, fh_total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 30 right / 29 wrong
+follow_line_movement: 31 right / 29 wrong
 fade_favorite: 30 right / 29 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 44 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 27 wrong
-back_favorite: 32 right / 43 wrong
+back_favorite: 33 right / 43 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 11 wrong
 overcaution: 0 right / 1 wrong
@@ -1179,8 +1186,8 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 36 right / 36 wrong
-fh_total_low_big: 1 right / 2 wrong
+total_under: 37 right / 36 wrong
+fh_total_low_big: 2 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
 fh_total_high_medium: 0 right / 0 wrong
@@ -1330,28 +1337,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=2fcf599f6c0c992bc15678ce93b486c5 -->
-## WNBA Lean: Golden State Valkyries @ Portland Fire
-- Event ID: `2fcf599f6c0c992bc15678ce93b486c5`
-- Revision: `96ceab74-2d9d-4ba1-aa7f-0b777433e9f8`
-- Status: `active`
-
-### Full game
-- **Side:** Golden State Valkyries (small)
-  - Evidence: You over-rate the favorite by 0.5 (you -6.5 vs -6) -- laid_more 6/7 [WWWWLWW], your best side profile -- and agree within 1 pt (close-agree 6/8 [WWWWLWLW]); GSV good vs a bad Fire.; Margin gap +2 -> +1..5 cover 7/13 (coin flip) -- side edge is the over-rate profile, not the margin.
-  - Watch: -6 road lay; big-favorites-don't-cover. Cover-only, not a GSV ML; an ease under -5 softens it.
-- **Total:** Under (small)
-  - Evidence: Asce +11 over-gap = +6..12 band (under 7/10 [WLPWWWLWWLW]) + close-spread agree + an already very low 159 total.
-  - Watch: 159 is very low, limiting room; a rise past 162 weakens it.
-
-### First half
-- **Total:** Under (small)
-  - Evidence: 1H total 76.5 vs 79.5 straight-half split = -3 -> fh_total_low; the log finds fh_total_low hits better on the ACTUAL first half than the full ('bet the 1H not the full'), so this is the cleaner under angle.
-  - Watch: fh records are small (fh_total_low ~2/3 on the actual half, 2-4 full); kept small. 1H spread -3 = exactly half of -6 = noise, no fh_side.
-
-**Summary:** FINAL (at ~tip 19:00 ET; score not yet in). GSV @ Fire: small GSV -6, small UNDER 159, small 1H UNDER 76.5. BUCKETS -- side: you over-rate the fav by 0.5 (laid_more 6/7 [WWWWLWW], best side profile) + close-agree 6/8 [WWWWLWLW]; margin gap +2 -> +1..5 cover 7/13 (coin flip). total: +11 over-gap -> +6..12 under 7/10 [WLPWWWLWWLW] on a very low 159. 1H ANGLE: 1H 76.5 vs 79.5 split = -3 -> fh_total_low; log says fh_total_low hits better on the ACTUAL first half ('bet the 1H not the full'), so a small 1H UNDER 76.5 is posted; 1H spread -3 = half of -6 = noise. | GAPS: Final score -- Asce: 170 (GSV 89, Fire 81) vs BO: 159 (GSV 82.5, Fire 76.5) -> diff +11, bucket +6..12 under 7/10 [WLPWWWLWWLW]; spread GSV -6.5 vs -6 (+0.5, over-rate/close-agree); team diffs GSV +6.5 / Fire +4.5. [stars: side=1, total=1, fh_total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=2fcf599f6c0c992bc15678ce93b486c5 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=337a2824c40f562e197e790c84c767c8 -->
 ## WNBA Lean: Connecticut Sun @ Dallas Wings
