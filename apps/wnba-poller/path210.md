@@ -1132,18 +1132,25 @@ line movement: aces (home fav) spread: -15.5 (open) -> -13.5 (eased) -> -16 (clo
 context: friday. fade tempo = back the las vegas aces (home favorite) to blow out the tempo, your score aces 88-67 (aces by 21, you had -14.5). the aces lay eased 15.5 -> 13.5 then RE-FIRMED to -16 into close, while the total dropped 180 -> 175.5. the model faded your blowout -- small TEMPO +16 (took the points as the line had eased) -- plus a small UNDER 175.5 (following the falling total). FINAL: toronto tempo 73, las vegas aces 93 -- the ACES won by 20 (166 total, under); your aces-by-21 blowout was nearly exact and the model's fade missed the late re-firm to -16.
 model_lean: side (small TEMPO +16, faded the aces blowout -- missed the late re-firm to -16); total (small UNDER 175.5, followed the falling total) | stars: side=1:wrong, total=1:right
 
+158fadesky
+right
+back_favorite,follow_line_movement,total_under
+line movement: liberty (home fav) spread firmed toward -9; total o180 -> 181 (+1, mild over)
+context: saturday. fade sky = back the new york liberty (home favorite) to win, your score liberty 92-84 (liberty by 8, you had -9.5). the liberty lay firmed toward -9 (money on the home favorite) while the total ticked 180 -> 181 (mild over, no under edge). the model backed the confirmed favorite -- small LIBERTY -9 -- and kept the total a watch/PASS UNDER 181 (your -5 gap sits in the leans-over band, so no under conviction). FINAL: new york liberty 85, chicago sky 66 -- the liberty won by 19 (151 total).
+model_lean: side (small LIBERTY -9, back the home favorite); total (watch/PASS UNDER 181, leans-over band) | stars: side=1:right, total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 27 right / 29 wrong
+follow_line_movement: 28 right / 29 wrong
 fade_favorite: 30 right / 29 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 44 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 27 wrong
-back_favorite: 29 right / 42 wrong
+back_favorite: 30 right / 42 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 11 wrong
 overcaution: 0 right / 1 wrong
@@ -1151,7 +1158,7 @@ misread_line_movement: 0 right / 1 wrong
 motivated_underdog: 13 right / 7 wrong
 overconfidence: 22 right / 30 wrong
 total_over: 18 right / 22 wrong
-total_under: 34 right / 36 wrong
+total_under: 35 right / 36 wrong
 fh_total_low_big: 1 right / 2 wrong
 fh_total_low_medium: 2 right / 4 wrong
 fh_total_high_big: 1 right / 1 wrong
@@ -1302,23 +1309,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=0de4387925b67939993839b06126ed1f -->
-## WNBA Lean: Chicago Sky @ New York Liberty
-- Event ID: `0de4387925b67939993839b06126ed1f`
-- Revision: `ec41087d-4aea-4f87-85d6-40aa1d7f1f3e`
-- Status: `active`
-
-### Full game
-- **Side:** New York Liberty (small)
-  - Evidence: Lay firmed -8.5 -> -9 (money on the home favorite) -- follow_line_movement; a great Liberty team vs a bad Sky; agrees your side (market -9 vs your -9.5).
-  - Watch: -9 is a big lay; big-favorites-don't-cover. Cover-only, not a Liberty ML; an ease under -8 softens it.
-- **Total:** Under (watch)
-  - Evidence: Asce -5 gap = the -1..-5 band which LEANS OVER (under 6/14 [LLLWWWWLLWLLLW]) AND the total ROSE 180 -> 181 (mild over money) -- so NO under edge, a near-pass leaning mild over.
-  - Watch: Nominal watch only; a drop under 178 would create an under, a rise past 183 an over.
-
-**Summary:** FINAL (at ~tip 13:00 ET; score not yet in). Sky @ Liberty: small LIBERTY -9 -- lay firmed -8.5 -> -9 (money on the home favorite), a great Liberty team vs a bad Sky; agrees your side (market -9 vs your -9.5). Total = watch/PASS UNDER 181 -- your -5 gap is the -1..-5 leans-OVER band (under 6/14) AND the total ROSE 180 -> 181 (mild over money), so NO under edge, if anything a mild over. | GAPS: Final score -- Asce: 176 (Liberty 92, Sky 84) vs BO: 181 (Liberty 95, Sky 86) -> diff -5, bucket -1..-5 under 6/14 [LLLWWWWLLWLLLW] (leans over); spread Liberty -9.5 vs -9 (+0.5, you slightly more bullish); team diffs Liberty -3 / Sky -2. H1: 1H total 88 vs 90.5 split = -2.5 fh_total_low flag; 1H spread +4.5 = half of -9 = noise, no fh_side. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=0de4387925b67939993839b06126ed1f -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=5835f2334381d020c40d42ab5ddf572b -->
 ## WNBA Lean: Toronto Tempo @ Phoenix Mercury
