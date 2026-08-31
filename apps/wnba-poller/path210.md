@@ -1153,18 +1153,25 @@ line movement: lynx (road fav) spread: -3 -> -2.5 (eased to the dream home dog);
 context: sunday. fade dream = back the minnesota lynx (road favorite) to win, your score lynx 94-86 (lynx by 8, you had -5.5). the lynx lay EASED -3 -> -2.5 (money to the atlanta home dog) and the total slipped 179 -> 177. the model backed the favorite at the reduced number -- small LYNX -2.5 (your laid_more over-rate bucket, best side profile) -- plus a small UNDER 177 (your +3 over-gap and the falling total), flagging a high-priced 1H. FINAL: atlanta dream 89, minnesota lynx 81 -- the dream won by 8 (170 total).
 model_lean: side (small LYNX -2.5, back the road favorite); total (small UNDER 177, over-gap + falling total) | stars: side=1:wrong, total=1:right
 
+161fadesparks
+right
+back_favorite,follow_line_movement
+line movement: sparks (road fav) spread: pk -> -1.5 (firmed onto the sparks; side-flip vs your storm read); total o173 -> 174 (+1)
+context: sunday. fade sparks = back the seattle storm (home favorite) to win, your score storm 88-84 (storm by 4, you had -4.5). BUT the market made LOS ANGELES the road favorite -- sparks -1.5 (line moved from pick'em onto the sparks) -- a full side-flip from your read. the model leaned with the market at low conviction -- watch SPARKS -1.5 -- and made the total a watch/near-pass OVER 174 (your -2 gap, leans-over band). FINAL: los angeles sparks 90, seattle storm 74 -- the sparks won by 16 (164 total).
+model_lean: side (watch SPARKS -1.5, leaned with the market on a side-flip); total (watch OVER 174) | stars: side=1:right, total=1:wrong
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
 (WNBA only — soccer/world_cup entries are excluded from these counts)
-follow_line_movement: 29 right / 29 wrong
+follow_line_movement: 30 right / 29 wrong
 fade_favorite: 30 right / 29 wrong
 spread_nervousness: 1 right / 1 wrong
 fade_consensus: 1 right / 0 wrong
 situational_angle: 44 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 27 wrong
-back_favorite: 31 right / 43 wrong
+back_favorite: 32 right / 43 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 11 wrong
 overcaution: 0 right / 1 wrong
@@ -1323,23 +1330,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=e4b8bdd661d1fa402d169b6b385404d1 -->
-## WNBA Lean: Los Angeles Sparks @ Seattle Storm
-- Event ID: `e4b8bdd661d1fa402d169b6b385404d1`
-- Revision: `cc0a8d21-fe15-41e5-89e6-fc570a524d17`
-- Status: `active`
-
-### Full game
-- **Side:** Los Angeles Sparks (watch)
-  - Evidence: SIDE-FLIP: you make the market DOG (Storm +1.5) a -4.5 favorite; that exact profile is just 1/2 on the side (N=2, both Tempo) -- essentially no track record, so lean with the market.
-  - Watch: Near-pickem, awful vs awful; a move back to Storm-favored flips it. Cover-only, low conviction.
-- **Total:** Over (watch)
-  - Evidence: Asce -2 gap = the FLAGGED -1..-5 leans-over band (under 6/15, ~40%); total flat ~174.
-  - Watch: Countersignal: the side-flip profile went under 2/2 (N=2) -- conflicts, so near-pass; a drop under 171 flips to under.
-
-**Summary:** FINAL (~35min to 17:00 ET tip). Sparks @ Storm: watch SPARKS -1.5 -- SIDE-FLIP: you make the market DOG (Storm +1.5) a -4.5 favorite; that profile is 1/2 on the side (N=2, both Tempo) -- no track record, so lean with the market at low conviction. watch OVER 174 -- your -2 gap is the FLAGGED -1..-5 leans-over band (under 6/15, ~40%); a tiny 2/2 'under' countersignal from the side-flip profile conflicts, so near-pass. | GAPS: Final score -- Asce: 172 (Storm 88, Sparks 84) vs BO: 174 (Sparks 87.75, Storm 86.25) -> diff -2, bucket -1..-5 under 6/15 (leans over); SPREAD you Storm -4.5 vs market Storm +1.5 (SIDE-FLIP, you make a market dog a 4.5 favorite); team diffs Storm +1.75 / Sparks -3.75. H1: 1H total 84.5 vs 87 split = -2.5 fh_total_low flag; no fh_side. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=e4b8bdd661d1fa402d169b6b385404d1 -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=2fcf599f6c0c992bc15678ce93b486c5 -->
 ## WNBA Lean: Golden State Valkyries @ Portland Fire
