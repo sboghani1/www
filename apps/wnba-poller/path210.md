@@ -1146,6 +1146,13 @@ line movement: mercury (home fav) spread: -8.5 -> -9 (firmed onto the favorite);
 context: saturday. fade tempo = back the phoenix mercury (home favorite) to win, your score mercury 86-82 (mercury by 4, you had -4.5). the mercury lay FIRMED -8.5 -> -9 (money onto the home favorite, ~4.5 past your number) while the total FELL 178 -> 173. the model leaned with the market's bigger number -- small MERCURY -9 (cover-only, low conviction on big-favorites-don't-cover) -- and kept the total a watch/PASS UNDER 173 despite mild over risk from your over-gap. FINAL: phoenix mercury 101, toronto tempo 69 -- the mercury won by 32 (170 total).
 model_lean: side (small MERCURY -9, backed the market's bigger number, cover-only); total (watch/PASS UNDER 173) | stars: side=1:right, total=1:right
 
+160fadedream
+wrong
+back_favorite
+line movement: lynx (road fav) spread: -3 -> -2.5 (eased to the dream home dog); total o179 -> 177 (-2)
+context: sunday. fade dream = back the minnesota lynx (road favorite) to win, your score lynx 94-86 (lynx by 8, you had -5.5). the lynx lay EASED -3 -> -2.5 (money to the atlanta home dog) and the total slipped 179 -> 177. the model backed the favorite at the reduced number -- small LYNX -2.5 (your laid_more over-rate bucket, best side profile) -- plus a small UNDER 177 (your +3 over-gap and the falling total), flagging a high-priced 1H. FINAL: atlanta dream 89, minnesota lynx 81 -- the dream won by 8 (170 total).
+model_lean: side (small LYNX -2.5, back the road favorite); total (small UNDER 177, over-gap + falling total) | stars: side=1:wrong, total=1:right
+
 # Model Cache
 
 Signal right/wrong record (based on tags):
@@ -1157,7 +1164,7 @@ fade_consensus: 1 right / 0 wrong
 situational_angle: 44 right / 51 wrong
 decision_day_before: 1 right / 0 wrong
 fade_line_movement: 19 right / 27 wrong
-back_favorite: 31 right / 42 wrong
+back_favorite: 31 right / 43 wrong
 chased_better_payout: 0 right / 1 wrong
 line_stable: 9 right / 11 wrong
 overcaution: 0 right / 1 wrong
@@ -1316,23 +1323,6 @@ net: PASS / small SKY -3 + moderate OVER 189.5. strongest total on the slate.
 - Status: `deleted`
 - This lean was deleted through append-only revision history.
 <!-- WNBA_LEAN_EVENT_END event_id=800eb336fe4f10021c1fb5b7d4a808f6 -->
-
-<!-- WNBA_LEAN_EVENT_START event_id=ac8625c332b318a2e588554bd8c3198c -->
-## WNBA Lean: Minnesota Lynx @ Atlanta Dream
-- Event ID: `ac8625c332b318a2e588554bd8c3198c`
-- Revision: `e6a98c65-314e-4db8-8448-4efeab51b039`
-- Status: `active`
-
-### Full game
-- **Side:** Minnesota Lynx (small)
-  - Evidence: You over-rate the favorite (-5.5 vs -2.5) -- your laid_more bucket covers 5/6 (best side profile, small N); great Lynx team; line held at -2.5.
-  - Watch: -2.5 is a small number; cover-only, not a Lynx ML; an ease to pickem flips it.
-- **Total:** Under (small)
-  - Evidence: Asce +3 over-gap = +1..5 band (under 7/10, ~70%).; Kept small: total ticked UP 176.5 -> 177, and the 1H is priced high (fh_total_high, fast start) -- the exact flag that burned the unders last night.
-  - Watch: A rise past 179 weakens it; the fast-1H flag is a live over risk.
-
-**Summary:** FINAL (~16min to 15:00 ET tip). Lynx @ Dream: small LYNX -2.5 -- you over-rate the favorite (-5.5 vs -2.5), your laid_more bucket covers 5/6 (best side profile); great Lynx team, cover-only. small UNDER 177 -- your +3 over-gap (+1..5 under 7/10) but the total ticked UP 176.5 -> 177 and the 1H is priced high (fh_total_high, fast start -- the flag that burned the unders last night), so kept small. | GAPS: Final score -- Asce: 180 (Lynx 94, Dream 86) vs BO: 177 (Lynx 89.75, Dream 87.25) -> diff +3, bucket +1..5 under 7/10; spread Lynx -5.5 vs -2.5 (-3, you over-rate -> laid_more 5/6); team diffs Lynx +4.25 / Dream -1.25. H1: 1H total 90.5 vs 88.5 split = +2 fh_total_high flag (fast 1H, fought the under last night); 1H spread -1.5 ~ half -1.25 = noise, no fh_side. [stars: side=1, total=1]
-<!-- WNBA_LEAN_EVENT_END event_id=ac8625c332b318a2e588554bd8c3198c -->
 
 <!-- WNBA_LEAN_EVENT_START event_id=e4b8bdd661d1fa402d169b6b385404d1 -->
 ## WNBA Lean: Los Angeles Sparks @ Seattle Storm
