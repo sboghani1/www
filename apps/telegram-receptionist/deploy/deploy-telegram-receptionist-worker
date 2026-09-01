@@ -189,6 +189,9 @@ install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/receptionist-wnba-helper" \
     /usr/local/libexec/receptionist-wnba-helper
 install -m 0755 -o root -g root \
+    "$release/$app_rel/deploy/receptionist-nfl-history-helper" \
+    /usr/local/bin/receptionist-nfl-history-helper
+install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/receptionist-watchdog-helper" \
     /usr/local/libexec/receptionist-watchdog-helper
 install -m 0755 -o root -g root \
@@ -205,6 +208,11 @@ install -d -m 0755 -o receptionist-agent -g receptionist-agent \
 install -m 0644 -o receptionist-agent -g receptionist-agent \
     "$release/.claude/skills/wnba-lean/SKILL.md" \
     /home/receptionist/repos/.claude/skills/wnba-lean/SKILL.md
+install -d -m 0755 -o receptionist-agent -g receptionist-agent \
+    /home/receptionist/repos/.claude/skills/nfl-history
+install -m 0644 -o receptionist-agent -g receptionist-agent \
+    "$release/.claude/skills/nfl-history/SKILL.md" \
+    /home/receptionist/repos/.claude/skills/nfl-history/SKILL.md
 visudo -cf "$release/$app_rel/deploy/telegram-receptionist.sudoers"
 visudo -cf "$release/$app_rel/deploy/telegram-receptionist-watchdog.sudoers"
 install -m 0440 -o root -g root \

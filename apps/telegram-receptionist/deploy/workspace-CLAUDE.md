@@ -16,6 +16,9 @@ This directory is the root of a private coding workspace.
 - A small environment with `gspread` and `google-auth` is available at
   `/home/receptionist-agent/.cache/google-sheet-check`; repositories may create
   their own virtual environments when they need additional dependencies.
+- For analytical questions about completed 2023-2025 NFL games, invoke the
+  `nfl-history` skill. It queries the authoritative `nfl_game_history` Sheet tab
+  through a fixed read-only helper and reuses a private local cache.
 - Never run a production deployment directly. Queue one immutable request only
   after the repository is clean, pushed, tested, and the exact command is ready:
 
