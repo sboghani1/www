@@ -13,6 +13,7 @@ from google.oauth2.service_account import Credentials
 
 TAB_NAME = "nfl_leans"
 BACKUP_TAB = "nfl_leans_backup_20260901"
+PICKEM_REPAIR_BACKUP_TAB = "nfl_leans_backup_20260901_pickem_repair"
 TARGET_USER_ID = "6780239459"
 CONFIRMATION = "CORRECT-6780239459-20260901"
 
@@ -206,7 +207,7 @@ EXPECTED_PRICES = {
     "telegram:6780239459:153": ("-190", "-195"),
     "telegram:6780239459:188": ("-160", "-160"),
     "telegram:6780239459:194": ("-185", "-180"),
-    "telegram:6780239459:202": ("nodata", "nodata"),
+    "telegram:6780239459:202": ("-110", "-110"),
     "telegram:6780239459:208": ("-145", "-150"),
     "telegram:6780239459:214": ("-148", "-140"),
     "telegram:6780239459:279": ("-190", "-210"),
@@ -284,7 +285,18 @@ def _snapshot_moneyline(row: dict[str, Any], prefix: str) -> str:
         raise ValueError(
             f"{row['submission_id']} has an invalid team snapshot"
         )
-    return fields[2]
+    moneyline = fields[2]
+    if (
+        _string(row["submission_id"]) == "telegram:6780239459:202"
+        and moneyline in {"", "nodata"}
+    ):
+        try:
+            is_pickem = float(fields[0]) == 0
+        except ValueError:
+            is_pickem = False
+        if is_pickem and fields[1] not in {"", "nodata"}:
+            return fields[1]
+    return moneyline
 
 
 def _rows_by_id(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -331,23 +343,35 @@ def correction_state(rows: list[dict[str, Any]]) -> str:
         and conversion_markets == {"moneyline"}
         and target_ids == APPLIED_TARGET_IDS
     ):
+        pickem_repair_needed = False
         for submission_id, expected in CONVERT_ROWS.items():
             row = by_id[submission_id]
             _assert_expected(
                 submission_id, row, expected, allow_converted=True
             )
-            if (
+            incomplete = (
                 _string(row["opening_selected_line"]) != "nodata"
                 or _string(row["latest_selected_line"]) != "nodata"
                 or _string(row["opening_selected_price"])
-                != _snapshot_moneyline(row, "opening")
+                != EXPECTED_PRICES[submission_id][0]
                 or _string(row["latest_selected_price"])
-                != _snapshot_moneyline(row, "latest")
-            ):
+                != EXPECTED_PRICES[submission_id][1]
+            )
+            if incomplete:
+                legacy_pickem = (
+                    submission_id == "telegram:6780239459:202"
+                    and _string(row["opening_selected_line"]) == "nodata"
+                    and _string(row["latest_selected_line"]) == "nodata"
+                    and _string(row["opening_selected_price"]) == "nodata"
+                    and _string(row["latest_selected_price"]) == "nodata"
+                )
+                if legacy_pickem:
+                    pickem_repair_needed = True
+                    continue
                 raise ValueError(
                     f"{submission_id} has an incomplete moneyline conversion"
                 )
-        return "applied"
+        return "pickem_repair_pending" if pickem_repair_needed else "applied"
     raise ValueError(
         "NFL lean correction source set is incomplete, expanded, "
         "partially applied, or divergent"
@@ -357,19 +381,26 @@ def correction_state(rows: list[dict[str, Any]]) -> str:
 def transform_rows(
     rows: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
-    if correction_state(rows) == "applied":
+    state = correction_state(rows)
+    if state == "applied":
         return rows, []
     by_id = _rows_by_id(rows)
-    for submission_id, expected in DELETE_ROWS.items():
-        _assert_expected(submission_id, by_id[submission_id], expected)
+    if state == "pending":
+        for submission_id, expected in DELETE_ROWS.items():
+            _assert_expected(submission_id, by_id[submission_id], expected)
     for submission_id, expected in CONVERT_ROWS.items():
-        _assert_expected(submission_id, by_id[submission_id], expected)
+        _assert_expected(
+            submission_id,
+            by_id[submission_id],
+            expected,
+            allow_converted=state == "pickem_repair_pending",
+        )
 
     changes: list[dict[str, str]] = []
     transformed: list[dict[str, Any]] = []
     for source_row in rows:
         submission_id = _string(source_row["submission_id"])
-        if submission_id in DELETE_ROWS:
+        if state == "pending" and submission_id in DELETE_ROWS:
             changes.append(
                 {
                     "submission_id": submission_id,
@@ -384,7 +415,13 @@ def transform_rows(
             )
             continue
         row = dict(source_row)
-        if submission_id in CONVERT_ROWS:
+        should_convert = (
+            state == "pending" and submission_id in CONVERT_ROWS
+        ) or (
+            state == "pickem_repair_pending"
+            and submission_id == "telegram:6780239459:202"
+        )
+        if should_convert:
             opening_price = _snapshot_moneyline(row, "opening")
             latest_price = _snapshot_moneyline(row, "latest")
             if (opening_price, latest_price) != EXPECTED_PRICES[submission_id]:
@@ -397,12 +434,21 @@ def transform_rows(
             row["latest_selected_line"] = "nodata"
             row["opening_selected_price"] = opening_price
             row["latest_selected_price"] = latest_price
+            operation = (
+                "convert"
+                if state == "pending"
+                else "repair_pickem_moneyline_price"
+            )
             changes.append(
                 {
                     "submission_id": submission_id,
-                    "operation": "convert",
+                    "operation": operation,
                     "event_id": _string(row["event_id"]),
-                    "from": f"spread {source_row['side']}",
+                    "from": (
+                        f"spread {source_row['side']}"
+                        if state == "pending"
+                        else "moneyline Buffalo Bills (nodata -> nodata)"
+                    ),
                     "to": (
                         f"moneyline {row['side']} "
                         f"({opening_price} -> {latest_price})"
@@ -410,7 +456,8 @@ def transform_rows(
                 }
             )
         transformed.append(row)
-    if len(rows) - len(transformed) != len(DELETE_ROWS):
+    expected_deletions = len(DELETE_ROWS) if state == "pending" else 0
+    if len(rows) - len(transformed) != expected_deletions:
         raise ValueError("Unexpected NFL lean deletion count")
     if correction_state(transformed) != "applied":
         raise ValueError("Transformed NFL lean rows failed validation")
@@ -503,6 +550,13 @@ def _batch_requests(
     transformed: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     transformed_by_id = _rows_by_id(transformed)
+    source_by_id = {
+        row[0]: dict(
+            zip(HEADERS, row + [""] * (len(HEADERS) - len(row)))
+        )
+        for row in old_values[1:]
+        if row
+    }
     row_indexes = {
         row[0]: index
         for index, row in enumerate(old_values)
@@ -511,15 +565,27 @@ def _batch_requests(
     requests: list[dict[str, Any]] = []
     for submission_id in CONVERT_ROWS:
         row_index = row_indexes[submission_id]
+        source = source_by_id[submission_id]
         row = transformed_by_id[submission_id]
-        requests.extend(
-            [
+        if _string(source["market"]) != _string(row["market"]):
+            requests.append(
                 _update_request(
                     sheet_id=worksheet.id,
                     row_index=row_index,
                     column_index=HEADERS.index("market"),
                     values=["moneyline"],
-                ),
+                )
+            )
+        opening_line_changed = (
+            _string(source["opening_selected_line"])
+            != _string(row["opening_selected_line"])
+        )
+        opening_price_changed = (
+            _string(source["opening_selected_price"])
+            != _string(row["opening_selected_price"])
+        )
+        if opening_line_changed:
+            requests.append(
                 _update_request(
                     sheet_id=worksheet.id,
                     row_index=row_index,
@@ -528,7 +594,27 @@ def _batch_requests(
                         "nodata",
                         _string(row["opening_selected_price"]),
                     ],
-                ),
+                )
+            )
+        elif opening_price_changed:
+            requests.append(
+                _update_request(
+                    sheet_id=worksheet.id,
+                    row_index=row_index,
+                    column_index=HEADERS.index("opening_selected_price"),
+                    values=[_string(row["opening_selected_price"])],
+                )
+            )
+        latest_line_changed = (
+            _string(source["latest_selected_line"])
+            != _string(row["latest_selected_line"])
+        )
+        latest_price_changed = (
+            _string(source["latest_selected_price"])
+            != _string(row["latest_selected_price"])
+        )
+        if latest_line_changed:
+            requests.append(
                 _update_request(
                     sheet_id=worksheet.id,
                     row_index=row_index,
@@ -537,11 +623,21 @@ def _batch_requests(
                         "nodata",
                         _string(row["latest_selected_price"]),
                     ],
-                ),
-            ]
-        )
+                )
+            )
+        elif latest_price_changed:
+            requests.append(
+                _update_request(
+                    sheet_id=worksheet.id,
+                    row_index=row_index,
+                    column_index=HEADERS.index("latest_selected_price"),
+                    values=[_string(row["latest_selected_price"])],
+                )
+            )
     for submission_id in sorted(
-        DELETE_ROWS, key=lambda value: row_indexes[value], reverse=True
+        set(DELETE_ROWS) & set(row_indexes),
+        key=lambda value: row_indexes[value],
+        reverse=True,
     ):
         row_index = row_indexes[submission_id]
         requests.append(
@@ -577,25 +673,30 @@ def apply() -> dict[str, Any]:
             "rows": len(rows),
         }
     transformed, changes = transform_rows(rows)
+    backup_tab = (
+        PICKEM_REPAIR_BACKUP_TAB
+        if state == "pickem_repair_pending"
+        else BACKUP_TAB
+    )
     existing_backup = next(
         (
             sheet
             for sheet in spreadsheet.worksheets()
-            if sheet.title == BACKUP_TAB
+            if sheet.title == backup_tab
         ),
         None,
     )
     if existing_backup:
         if existing_backup.get_all_values() != old_values:
             raise ValueError(
-                f"Existing backup tab {BACKUP_TAB} does not match "
+                f"Existing backup tab {backup_tab} does not match "
                 "the pending source"
             )
         backup = existing_backup
     else:
         backup = spreadsheet.duplicate_sheet(
             source_sheet_id=worksheet.id,
-            new_sheet_name=BACKUP_TAB,
+            new_sheet_name=backup_tab,
         )
         backup.hide()
 
@@ -614,13 +715,13 @@ def apply() -> dict[str, Any]:
         except Exception:
             pass
         raise RuntimeError(
-            f"Correction failed; source backup is {BACKUP_TAB}: {error}"
+            f"Correction failed; source backup is {backup_tab}: {error}"
         ) from error
     return {
         "status": "applied",
         "applied_at_utc": datetime.now(UTC).isoformat(),
         "sheet": TAB_NAME,
-        "backup_sheet": BACKUP_TAB,
+        "backup_sheet": backup_tab,
         "rows_before": len(rows),
         "rows_after": len(readback),
         "changes": changes,
