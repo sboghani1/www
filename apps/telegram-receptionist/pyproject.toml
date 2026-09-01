@@ -23,6 +23,7 @@ telegram-receptionist-bootstrap = "receptionist.bootstrap:main"
 telegram-receptionist-health = "receptionist.health:main"
 telegram-receptionist-maintenance = "receptionist.maintenance:main"
 receptionist-nfl-history = "receptionist.nfl_history:main"
+receptionist-correct-nfl-leans = "receptionist.nfl_lean_correction:main"
 telegram-receptionist-watchdog = "receptionist.watchdog:main"
 
 [tool.setuptools.packages.find]
