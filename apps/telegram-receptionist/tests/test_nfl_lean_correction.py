@@ -54,8 +54,12 @@ def _row(
     opening_price, latest_price = EXPECTED_PRICES.get(
         submission_id, ("165", "-190")
     )
-    selected_opening = f"3.5,-110,{opening_price}"
-    selected_latest = f"4.0,-105,{latest_price}"
+    if submission_id == "telegram:6780239459:202":
+        selected_opening = "0,-110,nodata"
+        selected_latest = "0,-110,nodata"
+    else:
+        selected_opening = f"3.5,-110,{opening_price}"
+        selected_latest = f"4.0,-105,{latest_price}"
     other_opening = "3.5,-110,125"
     other_latest = "4.0,-105,130"
     for header in HEADERS:
@@ -154,6 +158,31 @@ def test_transform_is_idempotent_after_application() -> None:
     assert changes == []
 
 
+def test_transform_repairs_legacy_pickem_moneyline_price() -> None:
+    transformed, _ = transform_rows(_pending_rows())
+    bills = next(
+        row
+        for row in transformed
+        if row["submission_id"] == "telegram:6780239459:202"
+    )
+    bills["opening_selected_price"] = "nodata"
+    bills["latest_selected_price"] = "nodata"
+
+    assert correction_state(transformed) == "pickem_repair_pending"
+    repaired, changes = transform_rows(transformed)
+    repaired_bills = next(
+        row
+        for row in repaired
+        if row["submission_id"] == "telegram:6780239459:202"
+    )
+    assert correction_state(repaired) == "applied"
+    assert repaired_bills["opening_selected_price"] == "-110"
+    assert repaired_bills["latest_selected_price"] == "-110"
+    assert [change["operation"] for change in changes] == [
+        "repair_pickem_moneyline_price"
+    ]
+
+
 def test_transform_rejects_divergent_guarded_row() -> None:
     rows = deepcopy(_pending_rows())
     row = next(
@@ -218,4 +247,32 @@ def test_batch_request_updates_then_deletes_in_descending_order() -> None:
     assert delete_indexes == sorted(delete_indexes, reverse=True)
     assert requests[0]["updateCells"]["rows"][0]["values"] == [
         {"userEnteredValue": {"stringValue": "moneyline"}}
+    ]
+
+
+def test_batch_request_for_pickem_repair_updates_only_price_pairs() -> None:
+    transformed, _ = transform_rows(_pending_rows())
+    bills = next(
+        row
+        for row in transformed
+        if row["submission_id"] == "telegram:6780239459:202"
+    )
+    bills["opening_selected_price"] = "nodata"
+    bills["latest_selected_price"] = "nodata"
+    repaired, _ = transform_rows(transformed)
+    old_values = [HEADERS] + [
+        [row[header] for header in HEADERS] for row in transformed
+    ]
+    worksheet = type("Worksheet", (), {"id": 123})()
+
+    requests = _batch_requests(old_values, worksheet, repaired)
+
+    assert len(requests) == 2
+    assert all("updateCells" in request for request in requests)
+    assert [
+        request["updateCells"]["range"]["startColumnIndex"]
+        for request in requests
+    ] == [
+        HEADERS.index("opening_selected_price"),
+        HEADERS.index("latest_selected_price"),
     ]
