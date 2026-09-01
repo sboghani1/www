@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Awaitable, Callable
 
 from telegram import (
+    CopyTextButton,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     ReplyKeyboardMarkup,
@@ -45,6 +46,11 @@ DIAGNOSE_DEPLOYMENT_MENU_TEXT = "/agent-try-recovery"
 WNBA_RESOLVE_MENU_TEXT = "🏁 Resolve WNBA"
 WNBA_STREAKS_MENU_TEXT = "📊 WNBA Streaks"
 TOPICS_MENU_TEXT = "🧭 Topics & Context"
+NFL_HISTORY_MENU_TEXT = "nfl-history"
+NFL_HISTORY_PROMPT_PREFIX = (
+    "use the nfl-history skill (and refresh the nfl history cache after any "
+    "corrections) to "
+)
 SESSION_ROLLOVER_PATTERN = re.compile(
     r"^session:(?:new|continue):[0-9a-f-]{36}$"
 )
@@ -428,7 +434,7 @@ class Receptionist:
             [
                 [RECOVER_MENU_TEXT, DIAGNOSE_DEPLOYMENT_MENU_TEXT],
                 [WNBA_RESOLVE_MENU_TEXT, WNBA_STREAKS_MENU_TEXT],
-                [TOPICS_MENU_TEXT],
+                [TOPICS_MENU_TEXT, NFL_HISTORY_MENU_TEXT],
             ],
             resize_keyboard=True,
             is_persistent=True,
@@ -537,6 +543,8 @@ class Receptionist:
             "/wnba_revisions — superseded/deleted lean revisions\n"
             "/wnba_undo — undo the latest published lean\n"
             "/wnba_cancel — clear the selected WNBA game\n\n"
+            "Keyboard: nfl-history — copy the NFL history skill prompt "
+            "prefix\n\n"
             "Validated immutable deployment requests execute automatically; "
             "Telegram reports their exact revision, command, and result.\n\n"
             "A WNBA_LEAN_REQUEST_V1 template is validated and routed through "
@@ -715,6 +723,30 @@ class Receptionist:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         await self.wnba_streaks(update, context)
+
+    @staticmethod
+    def nfl_history_copy_markup() -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        NFL_HISTORY_MENU_TEXT,
+                        copy_text=CopyTextButton(
+                            text=NFL_HISTORY_PROMPT_PREFIX
+                        ),
+                    )
+                ]
+            ]
+        )
+
+    async def nfl_history_menu_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        await update.message.reply_text(
+            "Tap nfl-history below to copy the prompt prefix, then paste it "
+            "before your question.",
+            reply_markup=self.nfl_history_copy_markup(),
+        )
 
     async def recover_button(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -1940,6 +1972,14 @@ def build_application(config: Config) -> Application:
         MessageHandler(
             filters.Regex(f"^{re.escape(TOPICS_MENU_TEXT)}$"),
             receptionist.authorized(receptionist.topics),
+        )
+    )
+    application.add_handler(
+        MessageHandler(
+            filters.Regex(f"^{re.escape(NFL_HISTORY_MENU_TEXT)}$"),
+            receptionist.authorized(
+                receptionist.nfl_history_menu_button
+            ),
         )
     )
     application.add_handler(

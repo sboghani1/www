@@ -26,6 +26,11 @@ read-only aggregate queries. The cache has no time-based expiry because these
 seasons are complete; ask to refresh NFL game history after a historical
 correction.
 
+The persistent reply keyboard includes `nfl-history`. Telegram does not support
+copy actions directly on reply-keyboard buttons, so tapping it opens a fresh
+inline `nfl-history` button that copies the standard skill prompt prefix without
+submitting an agent turn.
+
 ## Local development
 
 ```bash

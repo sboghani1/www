@@ -9,6 +9,8 @@ from telegram.error import TelegramError
 
 from receptionist.bot import (
     DIAGNOSE_DEPLOYMENT_MENU_TEXT,
+    NFL_HISTORY_MENU_TEXT,
+    NFL_HISTORY_PROMPT_PREFIX,
     RECOVER_MENU_TEXT,
     TOPICS_MENU_TEXT,
     WNBA_RESOLVE_MENU_TEXT,
@@ -582,6 +584,20 @@ def test_start_exposes_persistent_recovery_menu(tmp_path: Path) -> None:
     )
     assert tuple(button.text for button in markup.keyboard[2]) == (
         TOPICS_MENU_TEXT,
+        NFL_HISTORY_MENU_TEXT,
+    )
+
+
+def test_nfl_history_copy_button_uses_exact_prompt_prefix() -> None:
+    markup = Receptionist.nfl_history_copy_markup()
+
+    button = markup.inline_keyboard[0][0]
+    assert button.text == NFL_HISTORY_MENU_TEXT
+    assert button.callback_data is None
+    assert button.copy_text.text == NFL_HISTORY_PROMPT_PREFIX
+    assert NFL_HISTORY_PROMPT_PREFIX == (
+        "use the nfl-history skill (and refresh the nfl history cache after "
+        "any corrections) to "
     )
 
 
