@@ -1,0 +1,48 @@
+#!/usr/bin/python3
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+GOOGLE_ENV = Path(
+    "/home/receptionist-agent/.config/receptionist-agent/google.env"
+)
+HELPER_BINARY = (
+    "/opt/telegram-receptionist/current/.venv/bin/"
+    "receptionist-nfl-history"
+)
+ALLOWED_KEYS = {
+    "GOOGLE_CREDENTIALS",
+    "GOOGLE_SERVICE_ACCOUNT_JSON",
+    "NFL_INTAKE_SHEET_ID",
+}
+
+
+def main() -> None:
+    arguments = sys.argv[1:]
+    valid = arguments in (["schema"], ["refresh"]) or (
+        len(arguments) == 3
+        and arguments[0] == "query"
+        and arguments[1] == "--sql"
+    )
+    if not valid:
+        raise SystemExit(
+            "Usage: receptionist-nfl-history-helper "
+            "{schema|refresh|query --sql <SELECT>}"
+        )
+    if not GOOGLE_ENV.is_file():
+        raise SystemExit("NFL history helper environment is unavailable.")
+    for line in GOOGLE_ENV.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key in ALLOWED_KEYS:
+            os.environ[key] = value
+    if not os.getenv("NFL_INTAKE_SHEET_ID"):
+        raise SystemExit("NFL_INTAKE_SHEET_ID is required.")
+    os.execv(HELPER_BINARY, [HELPER_BINARY, *arguments])
+
+
+if __name__ == "__main__":
+    main()

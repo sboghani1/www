@@ -8,6 +8,8 @@ version = "0.1.0"
 description = "Private Telegram interface for coding agents on a VPS"
 requires-python = ">=3.12"
 dependencies = [
+  "google-auth>=2.22,<3",
+  "gspread>=6.1,<7",
   "psutil>=6.1,<8",
   "python-telegram-bot[job-queue]>=22.0,<23",
 ]
@@ -20,6 +22,7 @@ telegram-receptionist = "receptionist.bot:main"
 telegram-receptionist-bootstrap = "receptionist.bootstrap:main"
 telegram-receptionist-health = "receptionist.health:main"
 telegram-receptionist-maintenance = "receptionist.maintenance:main"
+receptionist-nfl-history = "receptionist.nfl_history:main"
 telegram-receptionist-watchdog = "receptionist.watchdog:main"
 
 [tool.setuptools.packages.find]

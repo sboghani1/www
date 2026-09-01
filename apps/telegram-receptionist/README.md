@@ -19,6 +19,13 @@ next turn.
 
 Plain text is queued as the exact next agent message. V1 accepts text only.
 
+Natural-language analytical questions about completed 2023-2025 NFL games use
+the installed `nfl-history` skill. Its fixed helper snapshots the authoritative
+`nfl_game_history` Sheet tab into a private SQLite cache, then executes bounded
+read-only aggregate queries. The cache has no time-based expiry because these
+seasons are complete; ask to refresh NFL game history after a historical
+correction.
+
 ## Local development
 
 ```bash
