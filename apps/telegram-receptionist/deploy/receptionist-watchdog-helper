@@ -9,6 +9,8 @@ from pathlib import Path
 
 SERVICE = "telegram-receptionist.service"
 CURRENT_RELEASE = Path("/opt/telegram-receptionist/current")
+CLAUDE_BINARY = "/usr/bin/claude"
+CLAUDE_USER = "receptionist-agent"
 DEPLOYMENT_DRAIN = Path(
     "/var/lib/telegram-receptionist/deployment-drain.json"
 )
@@ -43,6 +45,32 @@ def service_status() -> None:
         revision = Path(os.path.realpath(CURRENT_RELEASE)).name
     except OSError:
         pass
+    claude_logged_in = None
+    claude_auth_method = "unknown"
+    auth = run(
+        [
+            "/usr/bin/sudo",
+            "-n",
+            "-H",
+            "-u",
+            CLAUDE_USER,
+            CLAUDE_BINARY,
+            "auth",
+            "status",
+        ]
+    )
+    if auth.returncode == 0:
+        try:
+            auth_status = json.loads(auth.stdout)
+        except json.JSONDecodeError:
+            auth_status = {}
+        if isinstance(auth_status, dict):
+            logged_in = auth_status.get("loggedIn")
+            if isinstance(logged_in, bool):
+                claude_logged_in = logged_in
+            method = auth_status.get("authMethod")
+            if isinstance(method, str) and method:
+                claude_auth_method = method
     print(
         json.dumps(
             {
@@ -52,6 +80,8 @@ def service_status() -> None:
                 "restarts": values.get("NRestarts", "unknown"),
                 "revision": revision,
                 "deployment_drain": DEPLOYMENT_DRAIN.exists(),
+                "claude_logged_in": claude_logged_in,
+                "claude_auth_method": claude_auth_method,
             }
         )
     )
@@ -97,6 +127,21 @@ def main() -> None:
             )
         print(json.dumps({"entries": entries}))
         return
+    if action == "reauth":
+        result = subprocess.run(
+            [
+                "/usr/bin/sudo",
+                "-n",
+                "-H",
+                "-u",
+                CLAUDE_USER,
+                CLAUDE_BINARY,
+                "auth",
+                "login",
+            ],
+            check=False,
+        )
+        raise SystemExit(result.returncode)
     raise SystemExit("Unsupported watchdog action.")
 
 

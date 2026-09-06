@@ -2,6 +2,7 @@ import json
 
 from receptionist.providers.base import ProviderResult
 from receptionist.providers.claude_cli import build_command, parse_event
+from receptionist.runner import provider_error_message
 
 
 def test_build_command_keeps_prompt_as_one_exact_argument() -> None:
@@ -51,6 +52,27 @@ def test_parse_non_object_json_does_not_crash() -> None:
     event_type, payload = parse_event('["unexpected"]', result)
     assert event_type == "unparsed"
     assert payload == {"raw_json": ["unexpected"]}
+
+
+def test_authentication_error_directs_user_to_watchdog() -> None:
+    result = ProviderResult(
+        final_response=(
+            "Failed to authenticate: OAuth session expired and could not be "
+            "refreshed"
+        ),
+        is_error=True,
+    )
+
+    message = provider_error_message(result)
+
+    assert "authentication expired" in message
+    assert "Reauthenticate Claude" in message
+
+
+def test_unclassified_provider_error_keeps_generic_failure_message() -> None:
+    result = ProviderResult(final_response="Unexpected provider text", is_error=True)
+
+    assert provider_error_message(result) == ""
 
 
 def test_parse_read_activity_includes_compact_file_path() -> None:

@@ -17,6 +17,13 @@ next turn.
 - `/stop`
 - `/deployments`
 
+The independent watchdog reports both service and Claude-provider readiness.
+Its `/reauth` command starts a five-minute, single-use Claude OAuth session,
+sends the browser authorization URL to the allowlisted private chat, relays the
+next plain-text response directly to Claude, and deletes that Telegram message
+when possible. OAuth responses are not written to the Receptionist database or
+application logs.
+
 Plain text is queued as the exact next agent message. V1 accepts text only.
 
 Natural-language analytical questions about completed 2023-2025 NFL games use

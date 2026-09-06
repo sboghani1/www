@@ -1,3 +1,4 @@
 receptionist-watchdog ALL=(root) NOPASSWD: /usr/local/libexec/receptionist-watchdog-helper status
 receptionist-watchdog ALL=(root) NOPASSWD: /usr/local/libexec/receptionist-watchdog-helper restart
 receptionist-watchdog ALL=(root) NOPASSWD: /usr/local/libexec/receptionist-watchdog-helper logs
+receptionist-watchdog ALL=(root) NOPASSWD: /usr/local/libexec/receptionist-watchdog-helper reauth

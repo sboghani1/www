@@ -360,3 +360,36 @@ def test_failed_run_prefers_durable_launcher_receipt(tmp_path: Path) -> None:
     assert bot.sent == ["receipt response"]
     assert "launcher receipt" in message
     runner._recover_provider_session.assert_not_awaited()
+
+
+def test_failed_run_does_not_recover_provider_error_as_success(
+    tmp_path: Path,
+) -> None:
+    database, run = _finished_run(tmp_path)
+    database.finish_run(
+        run["id"],
+        status="failed",
+        exit_code=1,
+        final_response=None,
+        error="Claude exited without a final response.",
+    )
+    failed = database.get_run(run["id"])
+    runner = AgentRunner(SimpleNamespace(), database, FakeBot())
+    runner._recover_run_receipt = AsyncMock(
+        return_value={
+            "exit_code": 1,
+            "final_response": (
+                "Failed to authenticate: OAuth session expired and could not "
+                "be refreshed"
+            ),
+            "is_error": True,
+        }
+    )
+    runner._recover_provider_session = AsyncMock(return_value={})
+
+    message = asyncio.run(runner._recover_failed_run(failed))
+
+    recovered = database.get_run(run["id"])
+    assert recovered["status"] == "failed"
+    assert "durable provider error" in message
+    runner._recover_provider_session.assert_not_awaited()

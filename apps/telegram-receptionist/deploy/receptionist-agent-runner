@@ -162,6 +162,7 @@ def recover_run_receipt(run_id_value: str) -> None:
         raise SystemExit("Run receipt was not found.")
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     final_response = ""
+    is_error = False
     session_id = ""
     if stdout_path.is_file() and not stdout_path.is_symlink():
         with stdout_path.open(encoding="utf-8", errors="replace") as handle:
@@ -174,6 +175,7 @@ def recover_run_receipt(run_id_value: str) -> None:
                 if isinstance(candidate_session, str) and candidate_session:
                     session_id = candidate_session
                 if event.get("type") == "result":
+                    is_error = bool(event.get("is_error"))
                     response = event.get("result")
                     if isinstance(response, str) and response.strip():
                         final_response = response.strip()
@@ -183,6 +185,7 @@ def recover_run_receipt(run_id_value: str) -> None:
                 **receipt,
                 "session_id": session_id,
                 "final_response": final_response,
+                "is_error": is_error,
             },
             ensure_ascii=False,
         )

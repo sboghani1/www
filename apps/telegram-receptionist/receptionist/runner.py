@@ -313,6 +313,7 @@ class AgentRunner:
             receipt_response = receipt.get("final_response")
             if isinstance(receipt_response, str) and receipt_response.strip():
                 result.final_response = receipt_response.strip()
+                result.is_error = bool(receipt.get("is_error"))
                 recovered = True
         if result.session_id and not result.final_response:
             recovery = await self._recover_provider_session(result.session_id)
@@ -346,7 +347,7 @@ class AgentRunner:
             error = None
         else:
             status = "failed"
-            error = stderr or (
+            error = stderr or provider_error_message(result) or (
                 "Claude's process disappeared without a recoverable final response."
                 if process_disappeared
                 else "Claude exited without a final response."
@@ -355,7 +356,9 @@ class AgentRunner:
         self.database.finish_run(
             run["id"],
             status=status,
-            exit_code=0 if recovered else process.returncode,
+            exit_code=(
+                0 if recovered and not result.is_error else process.returncode
+            ),
             final_response=result.final_response or None,
             error=error,
             usage=result.usage,
@@ -509,14 +512,29 @@ class AgentRunner:
         receipt = await self._recover_run_receipt(run["id"])
         receipt_response = receipt.get("final_response")
         if isinstance(receipt_response, str) and receipt_response.strip():
+            receipt_is_error = bool(receipt.get("is_error"))
             self.database.finish_run(
                 run["id"],
-                status="succeeded",
+                status="failed" if receipt_is_error else "succeeded",
                 exit_code=receipt.get("exit_code"),
                 final_response=receipt_response.strip(),
-                error=None,
+                error=(
+                    provider_error_message(
+                        ProviderResult(
+                            final_response=receipt_response.strip(),
+                            is_error=True,
+                        )
+                    )
+                    if receipt_is_error
+                    else None
+                ),
             )
             await self._deliver_run(self.database.get_run(run["id"]))
+            if receipt_is_error:
+                return (
+                    f"Recovered failed run {run['id'][:8]} from its durable "
+                    "launcher receipt."
+                )
             return (
                 f"Recovered completed run {run['id'][:8]} from its durable "
                 "launcher receipt."
@@ -566,6 +584,11 @@ class AgentRunner:
         receipt = await self._recover_run_receipt(run["id"])
         receipt_response = receipt.get("final_response")
         if isinstance(receipt_response, str) and receipt_response.strip():
+            if receipt.get("is_error"):
+                return (
+                    f"Run {run['id'][:8]} has a durable provider error and "
+                    "was not replayed."
+                )
             self.database.finish_run(
                 run["id"],
                 status="succeeded",
@@ -816,6 +839,20 @@ class AgentRunner:
         except TimeoutError:
             await self._force_kill_process_group(process.pid)
             await process.wait()
+
+
+def provider_error_message(result: ProviderResult) -> str:
+    if not result.is_error or not result.final_response:
+        return ""
+    normalized = result.final_response.lower()
+    if "failed to authenticate" in normalized or (
+        "oauth" in normalized and "expired" in normalized
+    ):
+        return (
+            "Claude authentication expired and could not be refreshed. Open "
+            "the independent watchdog bot and tap “Reauthenticate Claude”."
+        )
+    return ""
 
 
 def resource_summary(process_id: int) -> str:
