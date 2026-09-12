@@ -8,7 +8,7 @@ TRUSTED_REPO_ROOT = Path("/home/receptionist/repos").resolve()
 TRUSTED_CLAUDE_BINARY = "/usr/bin/claude"
 TRUSTED_WNBA_HELPER = "/usr/local/libexec/receptionist-wnba-helper"
 DEFAULT_CLAUDE_MODEL = "claude-opus-4-8"
-DEFAULT_CLAUDE_EFFORT = "medium"
+DEFAULT_CLAUDE_EFFORT = "high"
 CLAUDE_EFFORT_LEVELS = {"low", "medium", "high", "xhigh", "max"}
 
 

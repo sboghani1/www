@@ -12,3 +12,4 @@ def test_config_uses_single_workspace(monkeypatch) -> None:
     assert len(config.repositories) == 1
     assert config.repositories[0].name == "workspace"
     assert config.repositories[0].path == TRUSTED_REPO_ROOT
+    assert config.effort == "high"
