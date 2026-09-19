@@ -69,6 +69,23 @@ def test_authentication_error_directs_user_to_watchdog() -> None:
     assert "Reauthenticate Claude" in message
 
 
+def test_usage_limit_preserves_reset_time() -> None:
+    result = ProviderResult(
+        final_response=(
+            "You've hit your session limit · resets 1am "
+            "(America/New_York)"
+        ),
+        is_error=True,
+    )
+
+    message = provider_error_message(result)
+
+    assert message == (
+        "Claude usage limit reached. You've hit your session limit · "
+        "resets 1am (America/New_York)"
+    )
+
+
 def test_unclassified_provider_error_keeps_generic_failure_message() -> None:
     result = ProviderResult(final_response="Unexpected provider text", is_error=True)
 

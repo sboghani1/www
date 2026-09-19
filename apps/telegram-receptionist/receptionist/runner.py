@@ -347,7 +347,7 @@ class AgentRunner:
             error = None
         else:
             status = "failed"
-            error = stderr or provider_error_message(result) or (
+            error = provider_error_message(result) or stderr or (
                 "Claude's process disappeared without a recoverable final response."
                 if process_disappeared
                 else "Claude exited without a final response."
@@ -852,6 +852,15 @@ def provider_error_message(result: ProviderResult) -> str:
             "Claude authentication expired and could not be refreshed. Open "
             "the independent watchdog bot and tap “Reauthenticate Claude”."
         )
+    if any(
+        phrase in normalized
+        for phrase in (
+            "hit your session limit",
+            "usage limit",
+            "rate limit",
+        )
+    ):
+        return f"Claude usage limit reached. {result.final_response.strip()}"
     return ""
 
 
