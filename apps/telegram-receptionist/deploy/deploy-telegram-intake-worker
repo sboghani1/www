@@ -71,15 +71,28 @@ production_status="$(
     as_forwarder git -C "$production_repo" status --porcelain \
         --untracked-files=no
 )"
+matching_changes_stashed=0
 if [[ -n "$production_status" ]]; then
-    if as_forwarder git -C "$production_repo" diff --quiet "$revision" --; then
-        echo "Production tracked files already match the requested revision; aligning Git metadata."
-        as_forwarder git -C "$production_repo" reset --mixed "$revision"
-    else
+    production_changes_match=1
+    while IFS= read -r -d '' path; do
+        if ! as_forwarder git -C "$production_repo" \
+            diff --quiet "$revision" -- "$path"; then
+            production_changes_match=0
+            break
+        fi
+    done < <(
+        as_forwarder git -C "$production_repo" \
+            diff --name-only -z HEAD --
+    )
+    if [[ "$production_changes_match" != "1" ]]; then
         echo "Production checkout has local tracked changes that do not match the requested revision:" >&2
         printf '%s\n' "$production_status" >&2
         exit 1
     fi
+    echo "Production local changes are contained in the requested revision; stashing them before fast-forward."
+    as_forwarder git -C "$production_repo" stash push --quiet \
+        --message "intake deploy duplicate changes for $revision"
+    matching_changes_stashed=1
 fi
 
 production_head="$(as_forwarder git -C "$production_repo" rev-parse HEAD)"
@@ -96,6 +109,9 @@ fi
     echo "Production checkout did not reach the requested revision." >&2
     exit 1
 }
+if [[ "$matching_changes_stashed" == "1" ]]; then
+    as_forwarder git -C "$production_repo" stash drop --quiet "stash@{0}"
+fi
 
 systemctl restart "$service"
 systemctl is-active --quiet "$service"

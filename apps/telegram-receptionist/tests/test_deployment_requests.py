@@ -150,8 +150,10 @@ def test_intake_deployment_uses_fixed_revision_bound_worker() -> None:
     assert "merge-base" in worker
     assert 'merge --ff-only "$revision"' in worker
     assert 'status --porcelain' in worker
-    assert 'diff --quiet "$revision" --' in worker
-    assert 'reset --mixed "$revision"' in worker
+    assert 'diff --name-only -z HEAD --' in worker
+    assert 'diff --quiet "$revision" -- "$path"' in worker
+    assert 'stash push --quiet' in worker
+    assert 'stash drop --quiet "stash@{0}"' in worker
     assert "local tracked changes that do not match" in worker
     assert 'systemctl restart "$service"' in worker
     assert "rm -rf" not in worker
