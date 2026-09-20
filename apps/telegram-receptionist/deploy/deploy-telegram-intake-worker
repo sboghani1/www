@@ -67,6 +67,21 @@ production_remote="$(
     exit 1
 }
 
+production_status="$(
+    as_forwarder git -C "$production_repo" status --porcelain \
+        --untracked-files=no
+)"
+if [[ -n "$production_status" ]]; then
+    if as_forwarder git -C "$production_repo" diff --quiet "$revision" --; then
+        echo "Production tracked files already match the requested revision; aligning Git metadata."
+        as_forwarder git -C "$production_repo" reset --mixed "$revision"
+    else
+        echo "Production checkout has local tracked changes that do not match the requested revision:" >&2
+        printf '%s\n' "$production_status" >&2
+        exit 1
+    fi
+fi
+
 production_head="$(as_forwarder git -C "$production_repo" rev-parse HEAD)"
 if [[ "$production_head" != "$revision" ]]; then
     as_forwarder git -C "$production_repo" merge-base \

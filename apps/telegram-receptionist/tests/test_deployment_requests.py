@@ -149,6 +149,10 @@ def test_intake_deployment_uses_fixed_revision_bound_worker() -> None:
     assert 'rev-parse origin/main' in worker
     assert "merge-base" in worker
     assert 'merge --ff-only "$revision"' in worker
+    assert 'status --porcelain' in worker
+    assert 'diff --quiet "$revision" --' in worker
+    assert 'reset --mixed "$revision"' in worker
+    assert "local tracked changes that do not match" in worker
     assert 'systemctl restart "$service"' in worker
     assert "rm -rf" not in worker
     assert "reset --hard" not in worker

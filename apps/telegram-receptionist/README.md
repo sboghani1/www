@@ -99,4 +99,7 @@ restarting the service.
 `request-telegram-intake-deploy` provides the same immutable-request path for
 the `telegram-channel-forwarder` NFL intake bot. Its fixed root worker only
 fast-forwards the production checkout to the request's exact revision and
-restarts `telegram-intake.service` once.
+restarts `telegram-intake.service` once. If tracked production files already
+match that exact revision but Git metadata is stale, the worker safely aligns
+HEAD without rewriting those files. Any other tracked production changes stop
+the deployment and are reported for manual reconciliation.
