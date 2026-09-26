@@ -136,6 +136,12 @@ def test_receptionist_agent_can_run_production_forwarder_commands() -> None:
     assert "sudo -n -u forwarder -H bash -lc" in workspace_instructions
     assert "/home/forwarder/venv/bin/python" in workspace_instructions
 
+    installer = (
+        deploy_dir / "deploy-telegram-receptionist-worker"
+    ).read_text(encoding="utf-8")
+    assert '"$release/$app_rel/deploy/telegram-receptionist.service"' in installer
+    assert "/etc/systemd/system/telegram-receptionist.service" in installer
+
 
 def test_intake_deployment_uses_fixed_revision_bound_worker() -> None:
     deploy_dir = Path(__file__).resolve().parents[1] / "deploy"
