@@ -23,6 +23,7 @@ ProtectSystem=strict
 ProtectHome=read-only
 ReadWritePaths=/home/receptionist/repos
 ReadWritePaths=/home/receptionist-agent
+ReadWritePaths=/home/forwarder
 ReadWritePaths=/var/lib/telegram-receptionist
 ReadOnlyPaths=/home/receptionist/.config/telegram-receptionist
 RestrictSUIDSGID=true

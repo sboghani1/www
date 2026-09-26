@@ -70,6 +70,13 @@ The bot runs as `receptionist`; Claude and Git run as `receptionist-agent`
 through a fixed root-owned launcher. This separation keeps the Telegram token
 and bot state outside the coding agent's Unix permissions.
 
+`receptionist-agent` may use passwordless `sudo` only to run as the trusted
+`forwarder` account. This gives receptionist sessions access to the production
+forwarder checkout, environment, and data for operational work such as MOE
+opinion generation, without granting root access. The service namespace makes
+`/home/forwarder` writable so those account-switched commands can persist to the
+authoritative SQLite stores.
+
 The launcher may load only these Google Sheets values from the agent-owned
 `~/.config/receptionist-agent/google.env`:
 
@@ -77,7 +84,8 @@ The launcher may load only these Google Sheets values from the agent-owned
 - `GOOGLE_SERVICE_ACCOUNT_JSON`
 - `NFL_INTAKE_SHEET_ID`
 
-It does not load the forwarder's general environment.
+It does not load the forwarder's general environment into ordinary agent
+commands; production operations must explicitly switch to `forwarder`.
 
 ## Automatic deployments
 

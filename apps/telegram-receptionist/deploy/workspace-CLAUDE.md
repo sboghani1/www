@@ -16,6 +16,15 @@ This directory is the root of a private coding workspace.
 - A small environment with `gspread` and `google-auth` is available at
   `/home/receptionist-agent/.cache/google-sheet-check`; repositories may create
   their own virtual environments when they need additional dependencies.
+- Production forwarder operations may run as the trusted `forwarder` account:
+  `sudo -n -u forwarder -H bash -lc 'cd /home/forwarder/app && <command>'`.
+  Use this for commands that must read or write the authoritative forwarder
+  environment or SQLite stores, including MOE opinion generation. Run the
+  production checkout's command with `/home/forwarder/venv/bin/python` when it
+  needs the forwarder virtual environment. Do not substitute the receptionist
+  workspace's Sheet-backed or readonly configuration for a production command.
+  This account permission does not grant root access or replace the deployment
+  rules below.
 - For analytical questions about completed 2023-2025 NFL games, invoke the
   `nfl-history` skill. It queries the authoritative `nfl_game_history` Sheet tab
   through a fixed read-only helper and reuses a private local cache.

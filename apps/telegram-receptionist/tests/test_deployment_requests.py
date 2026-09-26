@@ -119,6 +119,24 @@ def test_deployment_scripts_require_clean_pushed_revision() -> None:
         assert '"@{upstream}"' in script
 
 
+def test_receptionist_agent_can_run_production_forwarder_commands() -> None:
+    deploy_dir = Path(__file__).resolve().parents[1] / "deploy"
+    sudoers = (deploy_dir / "telegram-receptionist.sudoers").read_text(
+        encoding="utf-8"
+    )
+    service = (deploy_dir / "telegram-receptionist.service").read_text(
+        encoding="utf-8"
+    )
+    workspace_instructions = (deploy_dir / "workspace-CLAUDE.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "receptionist-agent ALL=(forwarder) NOPASSWD: ALL" in sudoers
+    assert "ReadWritePaths=/home/forwarder" in service
+    assert "sudo -n -u forwarder -H bash -lc" in workspace_instructions
+    assert "/home/forwarder/venv/bin/python" in workspace_instructions
+
+
 def test_intake_deployment_uses_fixed_revision_bound_worker() -> None:
     deploy_dir = Path(__file__).resolve().parents[1] / "deploy"
     requester = (deploy_dir / "request-telegram-intake-deploy").read_text(
