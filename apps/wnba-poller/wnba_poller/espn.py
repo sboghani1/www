@@ -207,10 +207,29 @@ def fetch_schedule(
     client: httpx.Client | None = None,
     timeout: float = 20,
 ) -> list[ScheduleGame]:
-    start, end = rolling_date_range(now, days=days)
-    return _fetch_for_date_query(
-        f"{start}-{end}", client=client, timeout=timeout
-    )
+    """Fetch the rolling window one Eastern date per request.
+
+    ESPN's WNBA scoreboard answers every `dates=START-END` range with HTTP 400
+    since 2026-09-16 (single dates still work), so the window is fetched day
+    by day on one client and merged. Any failed day fails the whole sync, as
+    the range request did, so a partial window never reaches the Sheet.
+    """
+    if days <= 0:
+        raise ValueError("days must be positive")
+    start = now.astimezone(ET).date()
+    owns_client = client is None
+    if client is None:
+        client = httpx.Client(timeout=timeout)
+    try:
+        by_event: dict[str, ScheduleGame] = {}
+        for offset in range(days):
+            day = (start + timedelta(days=offset)).strftime("%Y%m%d")
+            for game in _fetch_for_date_query(day, client=client):
+                by_event[game.espn_event_id] = game
+    finally:
+        if owns_client:
+            client.close()
+    return sorted(by_event.values(), key=lambda game: game.commence_time_utc)
 
 
 def fetch_scores_for_date(

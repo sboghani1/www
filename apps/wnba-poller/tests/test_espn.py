@@ -2,7 +2,9 @@ from datetime import datetime, timezone
 
 import pytest
 
-from wnba_poller.espn import parse_schedule, rolling_date_range
+import httpx
+
+from wnba_poller.espn import fetch_schedule, parse_schedule, rolling_date_range
 
 
 def _payload() -> dict:
@@ -160,3 +162,39 @@ def test_final_game_captures_quarter_box_score() -> None:
 def test_scheduled_game_has_no_quarter_scores() -> None:
     game = parse_schedule(_payload())[0]
     assert game.away_q1 is None and game.home_q4 is None
+
+
+def test_fetch_schedule_requests_one_date_at_a_time() -> None:
+    # ESPN 400s every dates=START-END range since 2026-09-16.
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        dates = request.url.params["dates"]
+        seen.append(dates)
+        if "-" in dates:
+            return httpx.Response(400)
+        payload = _payload()
+        if dates != "20260804":
+            payload["events"] = []
+        return httpx.Response(200, json=payload)
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    now = datetime(2026, 8, 5, 2, 30, tzinfo=timezone.utc)
+
+    games = fetch_schedule(now=now, days=3, client=client)
+
+    assert seen == ["20260804", "20260805", "20260806"]
+    assert [game.espn_event_id for game in games] == ["401"]
+
+
+def test_fetch_schedule_fails_whole_window_on_one_bad_day() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.params["dates"] == "20260805":
+            return httpx.Response(400)
+        return httpx.Response(200, json={"events": []})
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    now = datetime(2026, 8, 5, 2, 30, tzinfo=timezone.utc)
+
+    with pytest.raises(RuntimeError, match="HTTP 400"):
+        fetch_schedule(now=now, days=3, client=client)
