@@ -151,6 +151,9 @@ def test_receptionist_agent_can_run_production_forwarder_commands() -> None:
     assert "nfl-audio-parser-channel.timer" in installer
     assert "systemctl enable --now nfl-audio-parser-channel.timer" in installer
     assert "AssemblyAI is not configured" in installer
+    assert installer.index('source_worker="$repo/$app_rel/deploy/') < (
+        installer.index('if [[ ! -d "$release" ]]')
+    )
 
     parser_deploy = deploy_dir.parents[1] / "nfl-audio-parser" / "deploy"
     timer = (
