@@ -135,8 +135,18 @@ if [[ ! -d "$release" ]]; then
     python3 -m venv "$release/.venv"
     "$release/.venv/bin/pip" install --quiet --upgrade pip
     "$release/.venv/bin/pip" install --quiet \
+        "$release/packages/www-sqlite[test]" \
+        "$release/apps/nfl-audio-parser[test]" \
         "$release/$app_rel[test]" \
         "$release/apps/wnba-poller[test]"
+    (
+        cd "$release/packages/www-sqlite"
+        PYTHONDONTWRITEBYTECODE=1 "$release/.venv/bin/pytest" -p no:cacheprovider
+    )
+    (
+        cd "$release/apps/nfl-audio-parser"
+        PYTHONDONTWRITEBYTECODE=1 "$release/.venv/bin/pytest" -p no:cacheprovider
+    )
     (
         cd "$release/$app_rel"
         PYTHONDONTWRITEBYTECODE=1 "$release/.venv/bin/pytest" -p no:cacheprovider
@@ -213,6 +223,28 @@ install -d -m 0755 -o receptionist-agent -g receptionist-agent \
 install -m 0644 -o receptionist-agent -g receptionist-agent \
     "$release/.claude/skills/nfl-history/SKILL.md" \
     /home/receptionist/repos/.claude/skills/nfl-history/SKILL.md
+install -d -m 0755 -o receptionist-agent -g receptionist-agent \
+    /home/receptionist/repos/.claude/skills/nfl-audio-parser
+install -m 0644 -o receptionist-agent -g receptionist-agent \
+    "$release/.claude/skills/nfl-audio-parser/SKILL.md" \
+    /home/receptionist/repos/.claude/skills/nfl-audio-parser/SKILL.md
+install -d -m 0700 -o receptionist-agent -g receptionist-agent \
+    /home/receptionist-agent/.config/nfl-audio-parser
+parser_env=/home/receptionist-agent/.config/nfl-audio-parser/env
+if [[ ! -e "$parser_env" ]]; then
+    install -m 0600 -o receptionist-agent -g receptionist-agent \
+        /dev/null "$parser_env"
+fi
+forwarder_parser_env=/home/forwarder/.config/nfl-audio-parser/env
+if ! grep -Eq '^ASSEMBLYAI_API_KEY=.+$' "$parser_env" &&
+    [[ -f "$forwarder_parser_env" ]] &&
+    grep -Eq '^ASSEMBLYAI_API_KEY=.+$' "$forwarder_parser_env"; then
+    install -m 0600 -o receptionist-agent -g receptionist-agent \
+        "$forwarder_parser_env" "$parser_env"
+fi
+if ! grep -Eq '^ASSEMBLYAI_API_KEY=.+$' "$parser_env"; then
+    fail "AssemblyAI is not configured for the NFL channel pipeline."
+fi
 visudo -cf "$release/$app_rel/deploy/telegram-receptionist.sudoers"
 visudo -cf "$release/$app_rel/deploy/telegram-receptionist-watchdog.sudoers"
 install -m 0440 -o root -g root \
@@ -227,6 +259,12 @@ install -m 0644 -o root -g root \
 install -m 0644 -o root -g root \
     "$release/$app_rel/deploy/telegram-receptionist-watchdog.service" \
     /etc/systemd/system/telegram-receptionist-watchdog.service
+install -m 0644 -o root -g root \
+    "$release/apps/nfl-audio-parser/deploy/nfl-audio-parser-channel.service" \
+    /etc/systemd/system/nfl-audio-parser-channel.service
+install -m 0644 -o root -g root \
+    "$release/apps/nfl-audio-parser/deploy/nfl-audio-parser-channel.timer" \
+    /etc/systemd/system/nfl-audio-parser-channel.timer
 chmod -R a+rX "$release"
 
 ln -sfn "$release" "$install_root/current.new"
@@ -237,7 +275,8 @@ failure_message="Receptionist failed its health check."
 healthy=0
 if systemctl restart "$service" &&
     wait_healthy "$release" &&
-    restart_watchdog_if_enabled; then
+    restart_watchdog_if_enabled &&
+    systemctl enable --now nfl-audio-parser-channel.timer; then
     healthy=1
 fi
 

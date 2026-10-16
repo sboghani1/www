@@ -141,6 +141,34 @@ def test_receptionist_agent_can_run_production_forwarder_commands() -> None:
     ).read_text(encoding="utf-8")
     assert '"$release/$app_rel/deploy/telegram-receptionist.service"' in installer
     assert "/etc/systemd/system/telegram-receptionist.service" in installer
+    assert '"$release/packages/www-sqlite[test]"' in installer
+    assert '"$release/apps/nfl-audio-parser[test]"' in installer
+    assert 'cd "$release/packages/www-sqlite"' in installer
+    assert 'cd "$release/apps/nfl-audio-parser"' in installer
+    assert "/home/receptionist/repos/.claude/skills/nfl-audio-parser" in installer
+    assert "nfl-audio-parser-channel.service" in installer
+    assert "nfl-audio-parser-channel.timer" in installer
+    assert "systemctl enable --now nfl-audio-parser-channel.timer" in installer
+    assert "AssemblyAI is not configured" in installer
+
+    parser_deploy = deploy_dir.parents[1] / "nfl-audio-parser" / "deploy"
+    timer = (
+        parser_deploy / "nfl-audio-parser-channel.timer"
+    ).read_text(encoding="utf-8")
+    service = (
+        parser_deploy / "nfl-audio-parser-channel.service"
+    ).read_text(encoding="utf-8")
+    assert "08:00:00 America/New_York" in timer
+    assert "nfl-audio-parser-pipeline run --max-items 8" in service
+    assert "User=receptionist-agent" in service
+    assert "ReadWritePaths=/home/receptionist-agent" in service
+    assert "ReadWritePaths=/home/forwarder/data" in service
+
+    agent_runner = (
+        deploy_dir / "receptionist-agent-runner"
+    ).read_text(encoding="utf-8")
+    assert "AGENT_LOCK_PATH" in agent_runner
+    assert "LOCK_EX | fcntl.LOCK_NB" in agent_runner
 
 
 def test_intake_deployment_uses_fixed_revision_bound_worker() -> None:

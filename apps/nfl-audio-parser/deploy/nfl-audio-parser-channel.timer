@@ -1,0 +1,12 @@
+[Unit]
+Description=Check configured NFL pick channels every morning
+
+[Timer]
+OnCalendar=*-*-* 08:00:00 America/New_York
+Persistent=true
+AccuracySec=1min
+RandomizedDelaySec=5min
+Unit=nfl-audio-parser-channel.service
+
+[Install]
+WantedBy=timers.target

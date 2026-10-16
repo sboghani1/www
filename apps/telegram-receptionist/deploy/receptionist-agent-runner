@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import fcntl
 import subprocess
 import sys
 import threading
@@ -31,6 +32,9 @@ CLAUDE_PROJECTS = Path("/home/receptionist-agent/.claude/projects")
 GIT_BINARY = "/usr/bin/git"
 RUN_STATE_DIR = Path(
     "/home/receptionist-agent/.local/state/telegram-receptionist/runs"
+)
+AGENT_LOCK_PATH = Path(
+    "/home/receptionist-agent/.local/state/telegram-receptionist/agent.lock"
 )
 STREAM_JOIN_TIMEOUT_SECONDS = 30
 STREAM_FLUSH_TIMEOUT_EXIT_CODE = 74
@@ -197,6 +201,14 @@ def run_claude(
     command: list[str],
     run_id_value: str,
 ) -> None:
+    AGENT_LOCK_PATH.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    lock_handle = AGENT_LOCK_PATH.open("a+")
+    try:
+        fcntl.flock(
+            lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB
+        )
+    except BlockingIOError:
+        raise SystemExit(75)
     run_id = str(uuid.UUID(run_id_value))
     RUN_STATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
     os.chmod(RUN_STATE_DIR, 0o700)

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nfl-audio-parser"
+version = "0.1.0"
+description = "Evidence and analytics store for NFL/NBA audio opinions"
+requires-python = ">=3.12"
+dependencies = [
+    "www-sqlite>=0.1,<1",
+    "yt-dlp==2026.8.19",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.3,<9"]
+
+[project.scripts]
+nfl-audio-parser-store = "nfl_audio_parser.cli:main"
+nfl-audio-parser-transcribe = "nfl_audio_parser.transcribe:main"
+nfl-audio-parser-pipeline = "nfl_audio_parser.pipeline:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nfl_audio_parser*"]
+
+[tool.setuptools.package-data]
+nfl_audio_parser = ["channels.json"]
+
+[tool.pytest.ini_options]
+addopts = "-q --import-mode=importlib"
+testpaths = ["tests"]

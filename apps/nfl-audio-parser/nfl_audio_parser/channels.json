@@ -1,0 +1,74 @@
+{
+  "schema_version": "nfl_audio_channel_registry_v1",
+  "channels": [
+    {
+      "key": "sharp-or-square",
+      "provider": "youtube",
+      "locator": "@SharporSquare",
+      "display_name": "Sharp or Square",
+      "program_name": "Sharp or Square",
+      "sport": "nfl",
+      "active": true,
+      "season": 2026,
+      "expected_speakers": [
+        "Chad Millman",
+        "Simon Hunter"
+      ],
+      "required_patterns": [
+        "\\bnfl\\b"
+      ],
+      "candidate_patterns": [
+        "\\bweek\\s*[0-9]{1,2}\\b",
+        "\\bpicks?\\b",
+        "\\bbets?\\b",
+        "\\bbetting\\b",
+        "\\bgamblers?\\b",
+        "\\bsharp\\b"
+      ],
+      "exclude_patterns": [
+        "\\breactions?\\b",
+        "\\bpostgame\\b",
+        "\\brecap\\b"
+      ],
+      "discovery_limit": 160,
+      "seeds": [
+        {
+          "source_reference_hash": "6ed989f1ca5e96dbccff6381b51cbe368aa08388aa3d6764bfcde36925a13c45",
+          "season": 2026,
+          "week": 5,
+          "status": "parsed",
+          "reason": "Seeded from reviewed Monday early-look extraction."
+        },
+        {
+          "source_reference_hash": "17321140076345965fffcba3da0ce937e7094f9ec086f3b12ede31d7a3f925b0",
+          "season": 2026,
+          "week": 5,
+          "status": "parsed",
+          "reason": "Seeded from reviewed Tuesday full-board extraction."
+        },
+        {
+          "source_reference_hash": "971a1d5bae2b656a0b78684e4abbbac4aee8dc86d792e5e16fa33ace2035493f",
+          "season": 2026,
+          "week": 5,
+          "status": "parsed",
+          "reason": "Seeded from reviewed Thursday betting-card extraction."
+        },
+        {
+          "source_reference_hash": "19b39f35c3815c23d65e1631e463167b4c299cfd7b7d0761d2d5148630b3e1e0",
+          "season": 2026,
+          "week": 5,
+          "status": "duplicate",
+          "reason": "Seeded as a transcript-verified derivative of the Thursday extraction.",
+          "duplicate_of_hash": "971a1d5bae2b656a0b78684e4abbbac4aee8dc86d792e5e16fa33ace2035493f"
+        },
+        {
+          "source_reference_hash": "76f2b56ae72a54df6286f198e3b4eece11111483cbee488089ebb1485e969db2",
+          "season": 2026,
+          "week": 5,
+          "status": "parsed",
+          "reason": "Seeded from reviewed Sunday final-card extraction."
+        }
+      ]
+    }
+  ]
+}

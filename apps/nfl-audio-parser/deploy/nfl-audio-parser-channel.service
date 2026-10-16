@@ -1,0 +1,43 @@
+[Unit]
+Description=Discover and parse configured NFL pick channels
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=receptionist-agent
+Group=receptionist-agent
+WorkingDirectory=/home/receptionist/repos/www
+Environment=HOME=/home/receptionist-agent
+Environment=PATH=/opt/telegram-receptionist/current/.venv/bin:/usr/bin:/bin
+Environment=PYTHONDONTWRITEBYTECODE=1
+EnvironmentFile=-/home/receptionist-agent/.config/nfl-audio-parser/env
+StateDirectory=nfl-audio-parser
+StateDirectoryMode=0700
+RuntimeDirectory=nfl-audio-parser
+RuntimeDirectoryMode=0700
+ExecStart=/opt/telegram-receptionist/current/.venv/bin/nfl-audio-parser-pipeline run --max-items 8
+TimeoutStartSec=8h
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=false
+ReadWritePaths=/home/receptionist-agent
+ReadWritePaths=/home/forwarder/data
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryAccounting=true
+MemoryHigh=768M
+MemoryMax=1536M
+TasksMax=256
+UMask=0077
+StandardOutput=journal
+StandardError=journal
