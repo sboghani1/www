@@ -145,6 +145,7 @@ def test_receptionist_agent_can_run_production_forwarder_commands() -> None:
     assert '"$release/apps/nfl-audio-parser[test]"' in installer
     assert 'cd "$release/packages/www-sqlite"' in installer
     assert 'cd "$release/apps/nfl-audio-parser"' in installer
+    assert 'PYTHONPATH="$release/apps/nfl-audio-parser"' in installer
     assert "/home/receptionist/repos/.claude/skills/nfl-audio-parser" in installer
     assert "nfl-audio-parser-channel.service" in installer
     assert "nfl-audio-parser-channel.timer" in installer

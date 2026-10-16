@@ -145,7 +145,9 @@ if [[ ! -d "$release" ]]; then
     )
     (
         cd "$release/apps/nfl-audio-parser"
-        PYTHONDONTWRITEBYTECODE=1 "$release/.venv/bin/pytest" -p no:cacheprovider
+        PYTHONDONTWRITEBYTECODE=1 \
+            PYTHONPATH="$release/apps/nfl-audio-parser" \
+            "$release/.venv/bin/pytest" -p no:cacheprovider
     )
     (
         cd "$release/$app_rel"
