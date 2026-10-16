@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import uuid
 from contextlib import contextmanager
@@ -30,8 +31,28 @@ class Database:
         finally:
             connection.close()
 
+    def _ensure_shared_permissions(self) -> None:
+        # Gateway, worker, watchdog, and root helpers share this database
+        # through the receptionist2-state group. SQLite creates files 0644
+        # minus umask and copies the main file's mode to -wal/-shm, so the
+        # main file must be group-writable before SQLite first opens it.
+        if not self.path.exists():
+            os.close(os.open(self.path, os.O_CREAT | os.O_WRONLY, 0o660))
+        for path in (
+            self.path,
+            self.path.with_name(self.path.name + "-wal"),
+            self.path.with_name(self.path.name + "-shm"),
+        ):
+            try:
+                status = path.stat()
+                if status.st_uid == os.geteuid() and status.st_mode & 0o060 != 0o060:
+                    os.chmod(path, (status.st_mode | 0o660) & 0o7777)
+            except OSError:
+                continue
+
     def initialize(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._ensure_shared_permissions()
         with self.connect() as connection:
             connection.executescript(
                 """

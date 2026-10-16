@@ -197,3 +197,19 @@ def test_restart_timeout_can_be_immediate_bounded_or_unlimited(
     assert (
         database.create_restart_request(1, 2, None)["timeout_seconds"] is None
     )
+
+
+def test_database_files_are_group_writable(tmp_path: Path) -> None:
+    import os
+    import stat
+
+    previous = os.umask(0o022)
+    try:
+        database = make_database(tmp_path)
+        database.set_state("probe", "1")
+    finally:
+        os.umask(previous)
+    for suffix in ("", "-wal", "-shm"):
+        path = database.path.with_name(database.path.name + suffix)
+        if path.exists():
+            assert stat.S_IMODE(path.stat().st_mode) & 0o060 == 0o060, suffix
