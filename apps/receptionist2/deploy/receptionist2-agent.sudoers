@@ -1,5 +1,3 @@
 # Explicit operator approval: every Receptionist2 agent run is a full host
-# operator. Root writes must still leave the worker's read-only namespace via
-# systemd-run.
-receptionist-agent ALL=(root) NOPASSWD: ALL
-receptionist-agent ALL=(forwarder) NOPASSWD: ALL
+# operator with the same sudo authority as the forwarder account.
+receptionist-agent ALL=(ALL) NOPASSWD: ALL

@@ -97,14 +97,14 @@ RECEPTIONIST2_DIAGNOSTIC_RUNNER=/usr/local/libexec/receptionist2-diagnostic-runn
 
 ## Security warning
 
-The operator explicitly approved full-operator agents.
-`deploy/receptionist2-agent.sudoers` grants `receptionist-agent` unrestricted
-root sudo (every run) and `forwarder` access, and
+The operator explicitly approved full-operator agents matching the
+forwarder's `claude-channels` bot. `deploy/receptionist2-agent.sudoers` grants
+`receptionist-agent` `(ALL) NOPASSWD: ALL`, the installer adds it to the
+`root`, `adm`, and `systemd-journal` groups, and the worker unit (whose
+namespace every agent run inherits) is unsandboxed.
 `deploy/receptionist2-watchdog.sudoers` grants `receptionist2-watchdog`
 unrestricted root sudo for `/diagnose`. These apply as soon as the installer
-runs, including to agent runs of the existing receptionist. Agent runs still
-inherit the worker's read-only system namespace, so root writes must use
-`systemd-run`.
+runs, including to agent runs of the existing receptionist.
 
 ## Install without starting
 

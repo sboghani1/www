@@ -58,6 +58,8 @@ done
 usermod -a -G receptionist2-state receptionist-agent
 usermod -a -G receptionist-ipc receptionist2-worker
 usermod -a -G receptionist-ipc receptionist-agent
+# Match the forwarder account's operator groups.
+usermod -a -G root,adm,systemd-journal receptionist-agent
 
 install -d -m 0755 "$install_root/releases"
 if [[ ! -f "$release/.receptionist2-complete" ]]; then

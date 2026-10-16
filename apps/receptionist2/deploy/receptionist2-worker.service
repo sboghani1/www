@@ -16,15 +16,10 @@ Restart=on-failure
 RestartSec=5
 KillMode=control-group
 TimeoutStopSec=30
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=read-only
-ReadWritePaths=/var/lib/receptionist2 /home/receptionist/repos /home/receptionist-agent -/home/forwarder
+# Agent runs inherit this unit's namespace. Like the forwarder's
+# claude-channels.service, the worker is deliberately unsandboxed so agents
+# see and can change the real host with their root sudo.
 NoNewPrivileges=false
-RestrictSUIDSGID=false
-LockPersonality=true
-RestrictRealtime=true
-SystemCallArchitectures=native
 UMask=0007
 
 [Install]

@@ -46,12 +46,11 @@ This directory is the root of a private coding workspace.
 - The command executes as root on the `pickbot` VPS, so commands should
   target local production paths directly rather than SSHing back into the same
   server.
-- Agent runs and the deployment executor inherit the Receptionist2 worker's
-  `ProtectSystem=strict` mount namespace. Any command that writes to `/opt`,
-  `/etc`, `/usr/local`, or otherwise changes system services (including
-  `sudo` commands) must launch a transient systemd unit with `systemd-run` so
-  it runs outside that read-only namespace. Add `--wait --pipe` when the result
-  must reflect the command's success and include its output.
+- Agent runs are not sandboxed: they see the real host filesystem, and
+  `sudo -n` works for root and any other account. Commands that restart
+  `receptionist2-worker.service` would kill the current run, so launch those
+  in a transient unit with `systemd-run` (add `--wait --pipe` when the result
+  must include the command's output).
 - To deploy Receptionist2 itself, queue exactly:
   `systemd-run --unit=receptionist2-deploy-$(date +%s) --collect /bin/bash /home/receptionist/repos/www/apps/receptionist2/deploy/install-receptionist2 --restart`
   Receptionist2 drains running work before its own restart and reports the
@@ -60,11 +59,5 @@ This directory is the root of a private coding workspace.
   its tests, commit and push a clean `main`, then queue the fixed deployment:
   `request-telegram-intake-deploy --summary "<what changed>"`.
   Do not SSH to root or run `git pull` and `systemctl restart` directly.
-- The service namespace intentionally sees `/` as read-only. Never infer a
-  host filesystem incident from `findmnt` or a write test inside it. Check the
-  real host with
-  `sudo -n systemd-run --pipe --wait --quiet findmnt -no OPTIONS /`.
-- `errors=remount-ro` is a normal ext4 safety option even while the filesystem
-  is healthy and mounted `rw`; it is not evidence of an error by itself.
 - WNBA installer requests must use:
   `systemd-run --unit=wnba-poller-install-$(date +%s) --collect --wait --pipe /bin/bash /home/receptionist/repos/www/apps/wnba-poller/deploy/install-wnba-poller --enable-timers --enable-guesser-bot`.
