@@ -154,6 +154,8 @@ def test_receptionist_agent_can_run_production_forwarder_commands() -> None:
     assert installer.index('source_worker="$repo/$app_rel/deploy/') < (
         installer.index('if [[ ! -d "$release" ]]')
     )
+    assert '"$source_worker" "$installed_worker"' in installer
+    assert "$release_worker" not in installer
 
     parser_deploy = deploy_dir.parents[1] / "nfl-audio-parser" / "deploy"
     timer = (

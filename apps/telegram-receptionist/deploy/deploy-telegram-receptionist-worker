@@ -193,7 +193,7 @@ install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/deploy-telegram-intake-worker" \
     /usr/local/libexec/deploy-telegram-intake-worker
 install -m 0755 -o root -g root \
-    "$release_worker" "$installed_worker"
+    "$source_worker" "$installed_worker"
 install -m 0755 -o root -g root \
     "$release/$app_rel/deploy/receptionist-agent-runner" \
     /usr/local/libexec/receptionist-agent-runner
