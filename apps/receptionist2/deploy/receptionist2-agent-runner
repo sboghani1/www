@@ -1,0 +1,169 @@
+#!/usr/bin/python3
+from __future__ import annotations
+
+import json
+import os
+import re
+import subprocess
+import sys
+import threading
+import uuid
+from datetime import UTC, datetime
+from pathlib import Path
+
+REPO_ROOT = Path("/home/receptionist/repos").resolve()
+CLAUDE_BINARY = "/usr/bin/claude"
+RUN_STATE_DIR = Path("/var/lib/receptionist2/runs")
+MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._\-\[\]]*$")
+EFFORTS = {"low", "medium", "high", "xhigh", "max"}
+
+
+def validate_command(command: object) -> list[str]:
+    if (
+        not isinstance(command, list)
+        or not command
+        or any(not isinstance(value, str) for value in command)
+        or command[0] != CLAUDE_BINARY
+    ):
+        raise ValueError("Only the configured Claude command is allowed")
+    try:
+        model = command[command.index("--model") + 1]
+        effort = command[command.index("--effort") + 1]
+    except (ValueError, IndexError) as error:
+        raise ValueError("Claude command requires model and effort") from error
+    if not MODEL_RE.fullmatch(model) or effort not in EFFORTS:
+        raise ValueError("Claude model or effort is invalid")
+    return command
+
+
+def write_receipt(
+    run_id: str,
+    *,
+    exit_code: int,
+    session_id: str,
+    final_response: str,
+    is_error: bool,
+    usage: dict,
+    error: str,
+) -> None:
+    RUN_STATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o750)
+    receipt = RUN_STATE_DIR / f"{run_id}.receipt.json"
+    temporary = receipt.with_suffix(".tmp")
+    temporary.write_text(
+        json.dumps(
+            {
+                "run_id": run_id,
+                "finished_at": datetime.now(UTC).isoformat(),
+                "exit_code": exit_code,
+                "session_id": session_id,
+                "final_response": final_response,
+                "is_error": is_error,
+                "usage": usage,
+                "error": error,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    os.chmod(temporary, 0o640)
+    os.replace(temporary, receipt)
+
+
+def main() -> None:
+    try:
+        request = json.loads(sys.stdin.read())
+        run_id = str(uuid.UUID(str(request["run_id"])))
+        repository = Path(request["repository"]).resolve()
+        command = validate_command(request["command"])
+    except (KeyError, ValueError, TypeError, json.JSONDecodeError) as error:
+        raise SystemExit(f"Invalid agent request: {error}") from error
+    if not repository.is_relative_to(REPO_ROOT) or not repository.is_dir():
+        raise SystemExit("Repository is outside the approved workspace")
+
+    RUN_STATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o750)
+    stdout_path = RUN_STATE_DIR / f"{run_id}.stdout.jsonl"
+    stderr_path = RUN_STATE_DIR / f"{run_id}.stderr.log"
+    for path in (stdout_path, stderr_path):
+        path.unlink(missing_ok=True)
+
+    process = subprocess.Popen(
+        command,
+        cwd=repository,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        bufsize=0,
+    )
+    assert process.stdout is not None
+    assert process.stderr is not None
+    stderr_chunks: list[bytes] = []
+
+    def copy_stderr() -> None:
+        with stderr_path.open("xb", buffering=0) as destination:
+            os.chmod(stderr_path, 0o640)
+            while chunk := process.stderr.read(65536):
+                stderr_chunks.append(chunk)
+                destination.write(chunk)
+                try:
+                    sys.stderr.buffer.write(chunk)
+                    sys.stderr.buffer.flush()
+                except BrokenPipeError:
+                    pass
+
+    stderr_thread = threading.Thread(target=copy_stderr, daemon=True)
+    stderr_thread.start()
+    session_id = ""
+    final_response = ""
+    is_error = False
+    usage: dict = {}
+    with stdout_path.open("xb", buffering=0) as destination:
+        os.chmod(stdout_path, 0o640)
+        for line in process.stdout:
+            destination.write(line)
+            try:
+                sys.stdout.buffer.write(line)
+                sys.stdout.buffer.flush()
+            except BrokenPipeError:
+                pass
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(event, dict):
+                continue
+            candidate = event.get("session_id")
+            if isinstance(candidate, str) and candidate:
+                session_id = candidate
+            if event.get("type") == "result":
+                response = event.get("result")
+                if isinstance(response, str):
+                    final_response = response.strip()
+                is_error = bool(event.get("is_error"))
+                usage = {
+                    key: event[key]
+                    for key in (
+                        "duration_ms",
+                        "duration_api_ms",
+                        "num_turns",
+                        "total_cost_usd",
+                        "usage",
+                        "modelUsage",
+                    )
+                    if key in event
+                }
+    exit_code = process.wait()
+    stderr_thread.join(timeout=30)
+    error = b"".join(stderr_chunks).decode(errors="replace")[-2000:]
+    write_receipt(
+        run_id,
+        exit_code=exit_code,
+        session_id=session_id,
+        final_response=final_response,
+        is_error=is_error,
+        usage=usage,
+        error=error,
+    )
+    raise SystemExit(exit_code)
+
+
+if __name__ == "__main__":
+    main()

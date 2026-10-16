@@ -1,0 +1,3 @@
+# The unrestricted entry below is intentional and was explicitly approved by
+# the operator. It makes the /diagnose and /investigate agents full operators.
+receptionist2-watchdog ALL=(root) NOPASSWD: ALL

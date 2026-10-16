@@ -1,0 +1,5 @@
+# Explicit operator approval: every Receptionist2 agent run is a full host
+# operator. Root writes must still leave the worker's read-only namespace via
+# systemd-run.
+receptionist-agent ALL=(root) NOPASSWD: ALL
+receptionist-agent ALL=(forwarder) NOPASSWD: ALL

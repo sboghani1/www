@@ -1,0 +1,3 @@
+receptionist2-worker ALL=(receptionist-agent) NOPASSWD: /usr/local/libexec/receptionist2-agent-runner
+receptionist2-worker ALL=(receptionist-agent) NOPASSWD: /usr/local/libexec/receptionist2-agent-killer
+receptionist2-worker ALL=(root) NOPASSWD: /usr/local/libexec/receptionist-deploy-executor

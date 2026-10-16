@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "receptionist2"
+version = "0.1.0"
+description = "Durable Telegram control plane for coding-agent work"
+requires-python = ">=3.12"
+dependencies = [
+  "apscheduler>=3.10,<4",
+  "python-telegram-bot[job-queue]>=22.0,<23",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.3,<9"]
+
+[project.scripts]
+receptionist2-gateway = "receptionist2.gateway:main"
+receptionist2-worker = "receptionist2.worker:main"
+receptionist2-watchdog = "receptionist2.watchdog:main"
+receptionist2-control = "receptionist2.control:main"
+receptionist2-provider-monitor = "receptionist2.provider_monitor:main"
+receptionist2-diagnose = "receptionist2.diagnostic:main"
+receptionist2-maintenance = "receptionist2.maintenance:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["receptionist2*"]
+
+[tool.pytest.ini_options]
+addopts = "-q --import-mode=importlib"
+testpaths = ["tests"]

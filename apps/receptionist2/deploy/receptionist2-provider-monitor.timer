@@ -1,0 +1,9 @@
+[Unit]
+Description=Check Receptionist2 provider and host memory every 15 minutes
+
+[Timer]
+OnCalendar=*:02,17,32,47
+Persistent=true
+
+[Install]
+WantedBy=timers.target

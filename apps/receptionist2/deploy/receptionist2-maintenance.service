@@ -1,0 +1,17 @@
+[Unit]
+Description=Receptionist2 database backup and retention maintenance
+
+[Service]
+Type=oneshot
+User=root
+Group=receptionist2-state
+WorkingDirectory=/opt/receptionist2/current/apps/receptionist2
+Environment=PATH=/opt/receptionist2/current/.venv/bin:/usr/bin:/bin
+ExecStart=/opt/receptionist2/current/.venv/bin/receptionist2-maintenance
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/receptionist2
+UMask=0007
+StandardOutput=journal
+StandardError=journal

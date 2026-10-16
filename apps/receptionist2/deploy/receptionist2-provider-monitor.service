@@ -1,0 +1,20 @@
+[Unit]
+Description=Receptionist2 provider, limit, and memory monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=receptionist2-watchdog
+Group=receptionist2-state
+WorkingDirectory=/opt/receptionist2/current/apps/receptionist2
+Environment=HOME=/home/receptionist2-watchdog
+EnvironmentFile=/etc/receptionist2/watchdog.env
+ExecStart=/opt/receptionist2/current/.venv/bin/receptionist2-provider-monitor
+TimeoutStartSec=300
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/receptionist2
+NoNewPrivileges=false
+UMask=0007

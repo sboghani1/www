@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Receptionist2 database maintenance
+
+[Timer]
+OnCalendar=*-*-* 04:45:00
+Persistent=true
+RandomizedDelaySec=10m
+Unit=receptionist2-maintenance.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,171 @@
+#!/bin/bash
+# Install a Receptionist2 release from an exact workspace revision.
+#
+#   install-receptionist2 [--revision SHA] [--workspace] [--restart]
+#
+# --workspace  also install the shared workspace CLAUDE.md, skills, and the
+#              deployment broker tools (do this at cutover).
+# --restart    restart Receptionist2 services that are enabled.
+set -euo pipefail
+umask 022
+
+if [[ "$EUID" -ne 0 ]]; then
+    echo "Run as root." >&2
+    exit 1
+fi
+
+revision=""
+install_workspace=0
+restart_services=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --revision) revision="${2:?--revision requires a value}"; shift 2 ;;
+        --workspace) install_workspace=1; shift ;;
+        --restart) restart_services=1; shift ;;
+        *) echo "Unknown argument: $1" >&2; exit 2 ;;
+    esac
+done
+
+repo="${RECEPTIONIST2_REPO:-$(cd "$(dirname "$0")/../../.." && pwd)}"
+workspace_root="/home/receptionist/repos"
+install_root="/opt/receptionist2"
+state_dir="/var/lib/receptionist2"
+app_rel="apps/receptionist2"
+
+as_agent() {
+    runuser -u receptionist-agent -- "$@"
+}
+
+if ! id receptionist-agent >/dev/null 2>&1; then
+    echo "Required user receptionist-agent does not exist." >&2
+    exit 1
+fi
+if [[ -z "$revision" ]]; then
+    revision="$(as_agent git -C "$repo" rev-parse HEAD)"
+fi
+revision="$(as_agent git -C "$repo" rev-parse --verify "${revision}^{commit}")"
+release="$install_root/releases/$revision"
+
+getent group receptionist2-state >/dev/null ||
+    groupadd --system receptionist2-state
+getent group receptionist-ipc >/dev/null ||
+    groupadd --system receptionist-ipc
+for user in receptionist2 receptionist2-worker receptionist2-watchdog; do
+    id "$user" >/dev/null 2>&1 ||
+        useradd --system --create-home --shell /usr/sbin/nologin "$user"
+    usermod -a -G receptionist2-state "$user"
+done
+usermod -a -G receptionist2-state receptionist-agent
+usermod -a -G receptionist-ipc receptionist2-worker
+usermod -a -G receptionist-ipc receptionist-agent
+
+install -d -m 0755 "$install_root/releases"
+if [[ ! -f "$release/.receptionist2-complete" ]]; then
+    rm -rf "$release"
+    trap 'rm -rf "$release"' EXIT
+    mkdir -p "$release"
+    as_agent git -C "$repo" archive "$revision" | tar -x -C "$release"
+    python3 -m venv "$release/.venv"
+    "$release/.venv/bin/pip" install --quiet --upgrade pip
+    "$release/.venv/bin/pip" install --quiet "$release/$app_rel[test]"
+    (
+        cd "$release/$app_rel"
+        PYTHONDONTWRITEBYTECODE=1 "$release/.venv/bin/pytest" \
+            -q -p no:cacheprovider
+    )
+    chown -R root:root "$release"
+    chmod -R go-w,a+rX "$release"
+    touch "$release/.receptionist2-complete"
+    trap - EXIT
+fi
+deploy="$release/$app_rel/deploy"
+
+install -d -m 0770 -o receptionist2 -g receptionist2-state "$state_dir"
+install -d -m 2770 -o receptionist-agent -g receptionist2-state \
+    "$state_dir/runs"
+install -d -m 0700 -o receptionist2 -g receptionist2 \
+    /home/receptionist2/.config/receptionist2
+install -d -m 0750 -o root -g receptionist2-state /etc/receptionist2
+install -d -m 2770 -o receptionist-agent -g receptionist-ipc \
+    "$workspace_root/.receptionist/deploy-requests"
+
+for unit in \
+    receptionist2-gateway.service \
+    receptionist2-worker.service \
+    receptionist2-watchdog.service \
+    receptionist2-provider-monitor.service \
+    receptionist2-provider-monitor.timer \
+    receptionist2-maintenance.service \
+    receptionist2-maintenance.timer; do
+    install -m 0644 -o root -g root "$deploy/$unit" "/etc/systemd/system/$unit"
+done
+
+for helper in \
+    receptionist2-agent-runner \
+    receptionist2-agent-killer \
+    receptionist2-diagnostic-runner; do
+    install -m 0755 -o root -g root "$deploy/$helper" \
+        "/usr/local/libexec/$helper"
+done
+
+for sudoers in worker watchdog agent; do
+    visudo -cf "$deploy/receptionist2-$sudoers.sudoers"
+done
+for sudoers in worker watchdog agent; do
+    install -m 0440 -o root -g root \
+        "$deploy/receptionist2-$sudoers.sudoers" \
+        "/etc/sudoers.d/receptionist2-$sudoers"
+done
+visudo -c >/dev/null
+
+if [[ "$install_workspace" == "1" ]]; then
+    install -m 0644 -o receptionist-agent -g receptionist-agent \
+        "$deploy/workspace-CLAUDE.md" "$workspace_root/CLAUDE.md"
+    for skill in nfl-history wnba-lean nfl-audio-parser; do
+        source_skill="$release/.claude/skills/$skill/SKILL.md"
+        if [[ ! -f "$source_skill" ]]; then
+            echo "Skipping missing skill $skill" >&2
+            continue
+        fi
+        install -d -m 0755 -o receptionist-agent -g receptionist-agent \
+            "$workspace_root/.claude/skills/$skill"
+        install -m 0644 -o receptionist-agent -g receptionist-agent \
+            "$source_skill" "$workspace_root/.claude/skills/$skill/SKILL.md"
+    done
+    install -m 0755 -o root -g root "$deploy/request-receptionist-deploy" \
+        /usr/local/bin/request-receptionist-deploy
+    install -m 0755 -o root -g root "$deploy/receptionist-deploy-executor" \
+        /usr/local/libexec/receptionist-deploy-executor
+fi
+
+ln -sfn "$release/.venv/bin/receptionist2-control" \
+    /usr/local/libexec/receptionist2-control
+ln -sfn "$release" "$install_root/current.new"
+mv -Tf "$install_root/current.new" "$install_root/current"
+systemctl daemon-reload
+
+if [[ "$restart_services" == "1" ]]; then
+    restarted=()
+    for service in \
+        receptionist2-worker.service \
+        receptionist2-gateway.service \
+        receptionist2-watchdog.service; do
+        if systemctl is-enabled --quiet "$service"; then
+            systemctl restart "$service"
+            restarted+=("$service")
+        fi
+    done
+    for service in "${restarted[@]}"; do
+        for _ in $(seq 1 30); do
+            systemctl is-active --quiet "$service" && break
+            sleep 2
+        done
+        if ! systemctl is-active --quiet "$service"; then
+            echo "$service failed to become active." >&2
+            exit 1
+        fi
+    done
+    echo "Receptionist2 $revision installed; restarted: ${restarted[*]:-none}."
+else
+    echo "Receptionist2 $revision installed; services were not restarted."
+fi

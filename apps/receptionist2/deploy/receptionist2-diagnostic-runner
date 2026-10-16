@@ -1,0 +1,14 @@
+#!/bin/bash
+set -euo pipefail
+
+# The watchdog runs in a read-only mount namespace. Re-launch the diagnostic
+# agent in a transient unit so root repairs reach the real host filesystem.
+if [[ -z "${RECEPTIONIST2_OUTSIDE_SANDBOX:-}" ]]; then
+  exec /usr/bin/systemd-run --pipe --wait --quiet --collect \
+    --unit="receptionist2-diagnose-$(date +%s)-$$" \
+    --setenv=RECEPTIONIST2_OUTSIDE_SANDBOX=1 \
+    --setenv=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    /bin/bash "$0" "$@"
+fi
+
+exec /opt/receptionist2/current/.venv/bin/receptionist2-diagnose "$@"

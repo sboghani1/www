@@ -1,0 +1,31 @@
+[Unit]
+Description=Receptionist2 durable agent worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=receptionist2-worker
+Group=receptionist2-state
+WorkingDirectory=/opt/receptionist2/current/apps/receptionist2
+Environment=HOME=/home/receptionist2-worker
+Environment=PATH=/opt/receptionist2/current/.venv/bin:/usr/bin:/bin
+EnvironmentFile=/etc/receptionist2/worker.env
+ExecStart=/opt/receptionist2/current/.venv/bin/receptionist2-worker
+Restart=on-failure
+RestartSec=5
+KillMode=control-group
+TimeoutStopSec=30
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/receptionist2 /home/receptionist/repos /home/receptionist-agent -/home/forwarder
+NoNewPrivileges=false
+RestrictSUIDSGID=false
+LockPersonality=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+UMask=0007
+
+[Install]
+WantedBy=multi-user.target
