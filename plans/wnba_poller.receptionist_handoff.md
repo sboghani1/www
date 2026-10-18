@@ -72,7 +72,7 @@ Deliver a continuously running VPS system with:
   `1toTFz0zmeMQI5WnuWr-jhg0HwVkMPEF5nLBIe0R3wyk`
 - Spreadsheet title: `asce Guesser`
 - New bot username: `@wnbaguesser_bot`
-- VPS: `pickbot` / `209.38.51.86`
+- VPS: `pickbot` / `40.160.147.124`
 
 ## Existing evidence and completed preparation
 

@@ -4,6 +4,12 @@ umask 022
 
 repo="/home/receptionist/repos/www"
 app_rel="apps/telegram-receptionist"
+python_binary="${TELEGRAM_RECEPTIONIST_PYTHON:-/usr/local/bin/python3.12}"
+
+if [[ ! -x "$python_binary" ]]; then
+    echo "Required Python 3.12 binary is unavailable: $python_binary" >&2
+    exit 1
+fi
 install_root="/opt/telegram-receptionist"
 releases="$install_root/releases"
 state_dir="/var/lib/telegram-receptionist"
@@ -141,7 +147,7 @@ if [[ ! -d "$release" ]]; then
     mkdir -p "$temporary"
     as_agent git -C "$repo" archive "$revision" | tar -x -C "$temporary"
     mv "$temporary" "$release"
-    python3 -m venv "$release/.venv"
+    "$python_binary" -m venv "$release/.venv"
     "$release/.venv/bin/pip" install --quiet --upgrade pip
     "$release/.venv/bin/pip" install --quiet \
         "$release/packages/www-sqlite[test]" \

@@ -156,6 +156,9 @@ def test_receptionist_agent_can_run_production_forwarder_commands() -> None:
     )
     assert '"$source_worker" "$installed_worker"' in installer
     assert "$release_worker" not in installer
+    assert "/usr/local/bin/python3.12" in installer
+    assert '"$python_binary" -m venv "$release/.venv"' in installer
+    assert 'python3 -m venv "$release/.venv"' not in installer
 
     parser_deploy = deploy_dir.parents[1] / "nfl-audio-parser" / "deploy"
     timer = (

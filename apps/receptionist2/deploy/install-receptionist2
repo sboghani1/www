@@ -31,6 +31,12 @@ workspace_root="/home/receptionist/repos"
 install_root="/opt/receptionist2"
 state_dir="/var/lib/receptionist2"
 app_rel="apps/receptionist2"
+python_binary="${RECEPTIONIST2_PYTHON:-/usr/local/bin/python3.12}"
+
+if [[ ! -x "$python_binary" ]]; then
+    echo "Required Python 3.12 binary is unavailable: $python_binary" >&2
+    exit 1
+fi
 
 as_agent() {
     runuser -u receptionist-agent -- "$@"
@@ -67,7 +73,7 @@ if [[ ! -f "$release/.receptionist2-complete" ]]; then
     trap 'rm -rf "$release"' EXIT
     mkdir -p "$release"
     as_agent git -C "$repo" archive "$revision" | tar -x -C "$release"
-    python3 -m venv "$release/.venv"
+    "$python_binary" -m venv "$release/.venv"
     "$release/.venv/bin/pip" install --quiet --upgrade pip
     "$release/.venv/bin/pip" install --quiet "$release/$app_rel[test]"
     (

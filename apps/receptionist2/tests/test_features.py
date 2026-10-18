@@ -130,6 +130,18 @@ def test_deployment_request_validation(tmp_path: Path) -> None:
     assert not is_self_deployment("systemctl restart wnba")
 
 
+def test_installer_pins_python_312() -> None:
+    installer = (
+        Path(__file__).resolve().parents[1]
+        / "deploy"
+        / "install-receptionist2"
+    ).read_text(encoding="utf-8")
+
+    assert "/usr/local/bin/python3.12" in installer
+    assert '"$python_binary" -m venv "$release/.venv"' in installer
+    assert 'python3 -m venv "$release/.venv"' not in installer
+
+
 def test_cancel_requeue_and_verbose(tmp_path: Path) -> None:
     database = make_database(tmp_path)
     assert database.request_cancel() is None
