@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+set -a
+. /home/receptionist-agent/.config/telegram-clipboard/env
+set +a
+exec /opt/telegram-clipboard/current/.venv/bin/clipboard-latest "$@"

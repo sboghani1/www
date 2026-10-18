@@ -34,3 +34,25 @@ The service namespace being read-only does not mean the host filesystem is
 read-only. Use
 `sudo -n /usr/local/libexec/receptionist-host-recovery diagnose` from the
 agent account before diagnosing a host mount incident.
+
+## Telegram clipboard
+
+The private `@clipboard2_bot` application lives in
+`apps/telegram-clipboard`. It persistently accepts text, images, documents, and
+videos from the allowlisted private chat. Receptionist2 exposes the latest item
+as untrusted user data in startup context.
+
+Run its tests before committing:
+
+```bash
+cd apps/telegram-clipboard && python -m pytest
+```
+
+Install or update it through a transient unit:
+
+```bash
+systemd-run --unit=telegram-clipboard-install-$(date +%s) --collect --wait --pipe \
+  /bin/bash /home/receptionist/repos/www/apps/telegram-clipboard/deploy/install-telegram-clipboard
+```
+
+Use `clipboard-send` only after the user approves the exact outbound content.

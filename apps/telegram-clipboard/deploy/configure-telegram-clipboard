@@ -1,0 +1,48 @@
+#!/bin/bash
+set -euo pipefail
+umask 077
+
+if [[ "$EUID" -ne 0 ]]; then
+    echo "Run as root." >&2
+    exit 1
+fi
+
+gateway_env="/home/receptionist2/.config/receptionist2/gateway.env"
+config_dir="/home/receptionist-agent/.config/telegram-clipboard"
+env_file="$config_dir/env"
+
+if [[ ! -f "$gateway_env" ]]; then
+    echo "Receptionist2 gateway environment is missing." >&2
+    exit 1
+fi
+allowed_user_id="$(
+    sed -n 's/^TELEGRAM_ALLOWED_USER_ID=//p' "$gateway_env" | tail -1
+)"
+if [[ ! "$allowed_user_id" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Could not load TELEGRAM_ALLOWED_USER_ID." >&2
+    exit 1
+fi
+
+read -r -s -p "BotFather token for @clipboard2_bot: " token
+echo
+if [[ -z "$token" ]]; then
+    echo "Token cannot be empty." >&2
+    exit 1
+fi
+
+install -d -m 0700 -o receptionist-agent -g receptionist-agent "$config_dir"
+temporary="$(mktemp)"
+trap 'rm -f "$temporary"' EXIT
+cat >"$temporary" <<EOF
+CLIPBOARD_BOT_TOKEN=$token
+CLIPBOARD_EXPECTED_USERNAME=clipboard2_bot
+TELEGRAM_ALLOWED_USER_ID=$allowed_user_id
+CLIPBOARD_STATE_DIR=/var/lib/telegram-clipboard
+CLIPBOARD_MAX_DOWNLOAD_BYTES=20971520
+EOF
+install -m 0600 -o receptionist-agent -g receptionist-agent \
+    "$temporary" "$env_file"
+systemctl enable --now telegram-clipboard.service
+systemctl restart telegram-clipboard.service
+systemctl is-active --quiet telegram-clipboard.service
+echo "@clipboard2_bot configured and active."

@@ -1,0 +1,76 @@
+#!/bin/bash
+set -euo pipefail
+umask 022
+
+if [[ "$EUID" -ne 0 ]]; then
+    echo "Run as root." >&2
+    exit 1
+fi
+
+python_binary="${TELEGRAM_CLIPBOARD_PYTHON:-/usr/local/bin/python3.12}"
+if [[ ! -x "$python_binary" ]]; then
+    echo "Required Python 3.12 binary is unavailable: $python_binary" >&2
+    exit 1
+fi
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+app_dir="$(cd "$script_dir/.." && pwd)"
+install_root="/opt/telegram-clipboard"
+releases="$install_root/releases"
+release="$releases/$(date -u +%Y%m%dT%H%M%SZ)-$$"
+config_dir="/home/receptionist-agent/.config/telegram-clipboard"
+env_file="$config_dir/env"
+
+id receptionist-agent >/dev/null
+getent group receptionist2-state >/dev/null
+usermod -a -G receptionist2-state receptionist-agent
+install -d -m 0755 -o root -g root "$install_root" "$releases"
+install -d -m 0700 -o receptionist-agent -g receptionist-agent "$config_dir"
+if [[ ! -e "$env_file" ]]; then
+    install -m 0600 -o receptionist-agent -g receptionist-agent \
+        /dev/null "$env_file"
+fi
+
+cleanup() {
+    rm -rf "$release"
+}
+trap cleanup ERR
+
+mkdir -p "$release"
+cp -a "$app_dir/." "$release/"
+"$python_binary" -m venv "$release/.venv"
+"$release/.venv/bin/pip" install --quiet --upgrade pip
+"$release/.venv/bin/pip" install --quiet "$release[test]"
+(
+    cd "$release"
+    PYTHONDONTWRITEBYTECODE=1 \
+        "$release/.venv/bin/pytest" -p no:cacheprovider
+)
+chown -R root:root "$release"
+chmod -R go-w,a+rX "$release"
+trap - ERR
+
+ln -sfn "$release" "$install_root/current.new"
+mv -Tf "$install_root/current.new" "$install_root/current"
+install -m 0644 -o root -g root \
+    "$script_dir/telegram-clipboard.service" \
+    /etc/systemd/system/telegram-clipboard.service
+install -m 0755 -o root -g root \
+    "$script_dir/clipboard-send" /usr/local/bin/clipboard-send
+install -m 0755 -o root -g root \
+    "$script_dir/clipboard-latest" /usr/local/bin/clipboard-latest
+install -m 0755 -o root -g root \
+    "$script_dir/configure-telegram-clipboard" \
+    /usr/local/sbin/configure-telegram-clipboard
+systemctl daemon-reload
+if [[ -s "$env_file" ]] || systemctl is-active --quiet telegram-clipboard.service; then
+    systemctl enable telegram-clipboard.service
+    systemctl restart telegram-clipboard.service
+    systemctl is-active --quiet telegram-clipboard.service
+fi
+
+current_release="$(readlink -f "$install_root/current")"
+find "$releases" -mindepth 1 -maxdepth 1 -type d -mtime +30 \
+    ! -path "$current_release" -exec rm -rf -- {} +
+echo "Installed Telegram clipboard at $current_release."
+echo "Run /usr/local/sbin/configure-telegram-clipboard to set the token."

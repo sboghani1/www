@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "telegram-clipboard"
+version = "0.1.0"
+description = "Private persistent Telegram clipboard"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "python-telegram-bot>=22.0,<23",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.3,<9"]
+
+[project.scripts]
+telegram-clipboard-bot = "telegram_clipboard.bot:main"
+clipboard-send = "telegram_clipboard.cli:send_main"
+clipboard-latest = "telegram_clipboard.cli:latest_main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["telegram_clipboard*"]
+
+[tool.pytest.ini_options]
+addopts = "-q --import-mode=importlib"
+testpaths = ["tests"]

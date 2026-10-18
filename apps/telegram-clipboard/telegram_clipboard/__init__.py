@@ -1,0 +1,1 @@
+"""Private persistent Telegram clipboard."""

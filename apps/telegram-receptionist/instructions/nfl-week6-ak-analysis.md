@@ -40,8 +40,9 @@ For every Week 6 matchup:
    - how each team scored relative to AK's predicted score.
 5. Update the notable points and expectation without treating incompatible
    contracts as equivalent.
-6. Render one full-resolution PNG per matchup. If asked to deliver them, send
-   each as a separate Telegram document with no caption.
+6. Render one full-resolution PNG per matchup. If asked to deliver them, use
+   `clipboard-send /absolute/path/to/report.png` to send each through
+   `@clipboard2_bot` as a separate item with no caption.
 
 Do not create an AK-only report. AK must appear alongside the other pickers in
 the existing Week 6 matchup report.
