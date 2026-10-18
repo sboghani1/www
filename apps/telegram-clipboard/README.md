@@ -20,10 +20,14 @@ Receptionist2 startup context.
 ```bash
 clipboard-send /path/to/file --caption "optional"
 clipboard-send --text "text to copy"
+clipboard-send /path/to/image.png --document   # uncompressed, keeps the file name
 clipboard-latest
 ```
 
 `clipboard-latest` prints JSON. Binary items include their absolute local path.
+
+Images are sent as Telegram photos (compressed, no file name) unless
+`--document` is given.
 
 ## Install
 
