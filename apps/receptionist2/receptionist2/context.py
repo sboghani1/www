@@ -57,11 +57,12 @@ def build_context_manifest(
     user_id: int,
     repo_root: Path,
     timezone: str,
+    clipboard_path: Path = CLIPBOARD_DATABASE,
 ) -> dict[str, Any]:
     session = database.active_session(user_id)
     schedules = database.list_schedules(user_id)
     queue = database.queue_summary()
-    clipboard = clipboard_context()
+    clipboard = clipboard_context(clipboard_path)
     workspace_loaded = repo_root.is_dir()
     repositories = (
         sorted(

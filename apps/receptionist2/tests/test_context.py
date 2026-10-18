@@ -27,6 +27,7 @@ def test_context_manifest_is_complete_and_bootstrapped(tmp_path: Path) -> None:
         user_id=1,
         repo_root=workspace,
         timezone="America/Los_Angeles",
+        clipboard_path=tmp_path / "clipboard.db",
     )
     prompt = bootstrap_prompt("do this", manifest)
 
@@ -51,6 +52,7 @@ def test_missing_workspace_prevents_false_ready_state(tmp_path: Path) -> None:
         user_id=1,
         repo_root=tmp_path / "missing",
         timezone="America/Los_Angeles",
+        clipboard_path=tmp_path / "clipboard.db",
     )
 
     assert manifest["sources"]["workspace"]["status"] == "missing"
