@@ -24,6 +24,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
 )
 log = logging.getLogger("receptionist2.watchdog")
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 REAUTH_TIMEOUT_SECONDS = 300
 CLAUDE_AUTH_URL_PREFIX = "https://claude.com/"

@@ -390,3 +390,23 @@ def test_extract_auth_url_strips_ansi_and_wrapping() -> None:
     )
     with pytest.raises(RuntimeError):
         extract_auth_url("https://evil.example/x\nPaste code here")
+
+
+def test_watchdog_does_not_log_bot_token_urls() -> None:
+    import subprocess
+    import sys
+
+    # httpx logs every request URL at INFO, and Bot API URLs embed the token.
+    # Import the watchdog alone so the gateway's own setting cannot mask it.
+    level = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import logging, receptionist2.watchdog; "
+            "print(logging.getLogger('httpx').getEffectiveLevel())",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    assert int(level) >= 30
