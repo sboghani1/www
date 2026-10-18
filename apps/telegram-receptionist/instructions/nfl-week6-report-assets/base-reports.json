@@ -1,0 +1,738 @@
+{
+  "schema_version": "nfl_week6_picker_reports_v1",
+  "season": 2026,
+  "week": 6,
+  "baseline_scope": "Frozen reviewed reports for Doc's Sports, Ringer Wise Guys, and Sharp or Square. Add AK without changing these rows unless a sourced correction is required.",
+  "reports": [
+    {
+      "slug": "seahawks-broncos",
+      "title": "Seattle Seahawks at Denver Broncos \u2014 Week 6 Picker History",
+      "intro": "Final: Broncos 17, Seahawks 14. Indian Cowboy took Seattle moneyline; Simon Hunter took Denver +3.5.",
+      "rows": [
+        {
+          "speaker": "Indian Cowboy",
+          "position": "Seattle ML, standard \u2014 LOST",
+          "overall_text": "3-1",
+          "confidence_text": "Low 1-0; standard 2-1; high 0-0",
+          "interpretation": "Backing Seattle Seahawks: 0-1; fading Denver Broncos: 1-0. Favorite contracts: 1-1; standard confidence: 2-1."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Denver +3.5, low \u2014 WON",
+          "overall_text": "2-5, 1 unresolved",
+          "confidence_text": "Low 1-2; standard 0-1, 1 unresolved; high 1-2",
+          "interpretation": "Backing Denver Broncos: 1-1; fading Seattle Seahawks: 0-1. Underdog contracts: 0-2; low confidence: 1-2."
+        }
+      ],
+      "favorite_records": "Current-role history: Indian Cowboy favorite 1-1; Simon Hunter underdog 0-2.",
+      "notable": [
+        "This game is complete. The report grades the pregame positions rather than presenting a new recommendation.",
+        "Board structure: Indian Cowboy took Seattle moneyline; Simon Hunter took Denver +3.5.",
+        "Best prior record in this matchup subset: Indian Cowboy at 3-1.",
+        "Main historical caution: Simon Hunter is 2-5, 1 unresolved in contracts involving either team."
+      ],
+      "expectation": "Outcome: Simon's Denver +3.5 covered and won outright; Indian Cowboy's Seattle moneyline lost. Denver's underdog position was the correct construction.",
+      "footnote": "Records use distinct graded Weeks 1-5 side, moneyline, teaser, and parlay-leg contracts from Doc's Sports, Ringer Wise Guys, and Sharp or Square. Repeated weekly updates are collapsed to the latest market position. Totals, props, passes, and period-specific contracts without period results are excluded or unresolved. Sharp or Square Weeks 1-2 use the previously reviewed explicit side contracts encoded from those episodes."
+    },
+    {
+      "slug": "texans-jaguars",
+      "title": "Houston Texans at Jacksonville Jaguars \u2014 Week 6 Picker History",
+      "intro": "Week 6 is Houston at Jacksonville in London: Jaguars -2.5, total 42.5. My read is a slight lean to Houston +2.5, but the cleaner position is Houston +8.5 in Raheem\u2019s teaser. The apparent 4\u20132 Houston consensus is misleading: the actual straight-spread board is tied 2\u20132.",
+      "rows": [
+        {
+          "speaker": "Anthony Dabbundo",
+          "position": "Texans +2.5 and ML, high",
+          "overall_text": "5\u20131",
+          "confidence_text": "Standard 4\u20131; high 1\u20130",
+          "interpretation": "Best overall record. However, he was 3\u20130 backing Jacksonville and is now reversing course. He is 1\u20131 backing Houston and 1\u20130 fading them."
+        },
+        {
+          "speaker": "Joe House",
+          "position": "Texans +2.5, high",
+          "overall_text": "4\u20135, 1 unresolved",
+          "confidence_text": "Low 0\u20131; standard 2\u20130; high 2\u20134",
+          "interpretation": "Major warning: 1\u20134 backing Houston, including losses on his two previous Houston Wise Wagers. His Week 5 Houston teaser won, but this is a much more aggressive straight bet."
+        },
+        {
+          "speaker": "Raheem Palmer",
+          "position": "Texans +8.5 teaser, standard",
+          "overall_text": "4\u20133, 2 unresolved",
+          "confidence_text": "Standard 4\u20130; high 0\u20133",
+          "interpretation": "His structure is historically intelligent: he avoids the straight line and lowers conviction. He is 1\u20132 backing Houston but 3\u20131 backing Jacksonville in graded bets."
+        },
+        {
+          "speaker": "Craig Trapp",
+          "position": "Jaguars -2.5, standard",
+          "overall_text": "2\u20130, 2 unresolved",
+          "confidence_text": "Standard 2\u20130; low 0\u20130 with 1 unresolved",
+          "interpretation": "Small sample, but he is 2\u20130 laying favorite prices involving these teams and previously won with Jacksonville -8.5."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Jaguars -2.5, standard",
+          "overall_text": "2\u20134",
+          "confidence_text": "Low 0\u20131; standard 1\u20131; high 1\u20132",
+          "interpretation": "He is 1\u20130 backing Jacksonville, but 0\u20132 fading them. Conversely, he is 0\u20132 backing Houston and 1\u20130 fading Houston. His current side fits his better team-specific split."
+        },
+        {
+          "speaker": "Chad Millman",
+          "position": "Texans +3 only, conditional/low",
+          "overall_text": "1\u20135",
+          "confidence_text": "Low 0\u20131; standard 0\u20134; high 1\u20130",
+          "interpretation": "Weakest historical support for Houston: 0\u20134 backing the Texans. His refusal to take +2.5 is important\u2014the key number, not Houston itself, is the appeal."
+        }
+      ],
+      "favorite_records": "Favorite/underdog records: Dabbundo is 2\u20130 on favorite contracts and 3\u20131 on underdogs; House is 3\u20134 on favorites and 1\u20131 on underdogs; Raheem is 3\u20132 on favorites and 1\u20131 on graded underdogs; Craig is 2\u20130 on graded favorites; Simon is 1\u20132 on favorites and 1\u20132 on underdogs; Chad is 1\u20133 on favorites and 0\u20132 on underdogs.",
+      "notable": [
+        "Dabbundo is the strongest individual handicapper in this subset, but this pick requires him to fade a Jacksonville team he previously backed successfully three times.",
+        "House\u2019s confidence should not be mistaken for historical reliability. He explicitly acknowledged that his first two Houston Wise Wagers lost.",
+        "Raheem\u2019s teaser is the best match between current bet and historical performance: his standard-confidence positions are 4\u20130, while his high-confidence positions are 0\u20133.",
+        "The Jacksonville support is quieter but cleaner: both Craig and Simon are making ordinary straight bets, while two of the four nominal Houston supporters require substantial protection\u2014Raheem at +8.5 and Chad only at +3.",
+        "Among speakers without a current selection, Danny went 4\u20130 backing Jacksonville or fading Houston in Weeks 3\u20134, while Cousin Sal went 3\u20131 and was much better fading Houston than backing it."
+      ],
+      "expectation": "Expectation: Houston\u2019s defense should keep this inside one possession, but Jacksonville\u2019s London advantage and Houston\u2019s repeated late-game failures make the moneyline less attractive. Texans +8.5 teaser is the strongest construction; Texans +2.5 is a smaller lean; I would not follow Dabbundo onto the moneyline.",
+      "footnote": "Records count each distinct side, moneyline, or teaser contract once and exclude totals, props, passes, and repeated unchanged mentions. Five older contracts remain ungraded because the available artifacts do not establish the exact Week 2 Denver\u2013Jacksonville margin or the Week 1 Cleveland\u2013Jacksonville halftime score."
+    },
+    {
+      "slug": "bears-falcons",
+      "title": "Chicago Bears at Atlanta Falcons \u2014 Week 6 Picker History",
+      "intro": "The latest board is split by timing: Chad Millman backs Chicago -1.5, while Craig Trapp, Joe House, and Cousin Sal hold Atlanta +1.5 conditionally; Raheem Palmer conditionally prefers Chicago -1.5. Simon Hunter first took Chicago +1.5 before the market flipped.",
+      "rows": [
+        {
+          "speaker": "Craig Trapp",
+          "position": "Falcons +1.5, conditional/low",
+          "overall_text": "2-5",
+          "confidence_text": "Low 0-0; standard 2-3; high 0-2",
+          "interpretation": "Backing Atlanta Falcons: 1-3; fading Chicago Bears: 0-0. Underdog contracts: 1-2; low confidence: 0-0."
+        },
+        {
+          "speaker": "Raheem Palmer",
+          "position": "Bears -1.5, conditional/low",
+          "overall_text": "3-0",
+          "confidence_text": "Low 0-0; standard 0-0; high 3-0",
+          "interpretation": "Backing Chicago Bears: 1-0; fading Atlanta Falcons: 1-0. Favorite contracts: 2-0; low confidence: 0-0."
+        },
+        {
+          "speaker": "Joe House",
+          "position": "Falcons +1.5, conditional/high",
+          "overall_text": "2-3",
+          "confidence_text": "Low 1-1; standard 0-0; high 1-2",
+          "interpretation": "Backing Atlanta Falcons: 1-0; fading Chicago Bears: 0-3. Underdog contracts: 2-3; high confidence: 1-2."
+        },
+        {
+          "speaker": "Cousin Sal",
+          "position": "Falcons +1.5, conditional/high",
+          "overall_text": "1-1",
+          "confidence_text": "Low 0-0; standard 0-1; high 1-0",
+          "interpretation": "Backing Atlanta Falcons: 0-1; fading Chicago Bears: 0-0. Underdog contracts: 1-1; high confidence: 1-0."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Bears +1.5 early; later -3.5 conditional",
+          "overall_text": "3-3, 1 unresolved",
+          "confidence_text": "Low 0-1, 1 unresolved; standard 0-0; high 3-2",
+          "interpretation": "Backing Chicago Bears: 0-0; fading Atlanta Falcons: 1-0. Favorite contracts: 1-1, 1 unresolved; standard confidence: 0-0."
+        },
+        {
+          "speaker": "Chad Millman",
+          "position": "Bears -1.5, high",
+          "overall_text": "3-2, 1 unresolved",
+          "confidence_text": "Low 0-0; standard 2-2, 1 unresolved; high 1-0",
+          "interpretation": "Backing Chicago Bears: 1-0; fading Atlanta Falcons: 1-0. Favorite contracts: 1-0, 1 unresolved; high confidence: 1-0."
+        }
+      ],
+      "favorite_records": "Current-role history: Craig Trapp underdog 1-2; Raheem Palmer favorite 2-0; Joe House underdog 2-3; Cousin Sal underdog 1-1; Simon Hunter favorite 1-1, 1 unresolved; Chad Millman favorite 1-0, 1 unresolved.",
+      "notable": [
+        "The Bears moved from underdog to favorite. Simon's early +1.5 and the later Chicago -1.5/-3.5 positions are not equivalent.",
+        "Board structure: The latest board is split by timing: Chad Millman backs Chicago -1.5, while Craig Trapp, Joe House, and Cousin Sal hold Atlanta +1.5 conditionally; Raheem Palmer conditionally prefers Chicago -1.5. Simon Hunter first took Chicago +1.5 before the market flipped.",
+        "Best prior record in this matchup subset: Raheem Palmer at 3-0.",
+        "Main historical caution: Craig Trapp is 2-5 in contracts involving either team."
+      ],
+      "expectation": "Expectation: Atlanta +1.5 is the cleaner current number if available because three speakers prefer it and the Bears support is fragmented across stale and conditional prices. Do not treat Simon's Bears +1.5 as support for laying points now.",
+      "footnote": "Records use distinct graded Weeks 1-5 side, moneyline, teaser, and parlay-leg contracts from Doc's Sports, Ringer Wise Guys, and Sharp or Square. Repeated weekly updates are collapsed to the latest market position. Totals, props, passes, and period-specific contracts without period results are excluded or unresolved. Sharp or Square Weeks 1-2 use the previously reviewed explicit side contracts encoded from those episodes."
+    },
+    {
+      "slug": "ravens-browns",
+      "title": "Baltimore Ravens at Cleveland Browns \u2014 Week 6 Picker History",
+      "intro": "Raheem Palmer has Ravens -3.5 as a best bet. Indian Cowboy, Cousin Sal, Chad Millman, and Simon Hunter all back Cleveland, with the available numbers ranging from +3.5 to +5.5.",
+      "rows": [
+        {
+          "speaker": "Indian Cowboy",
+          "position": "Browns +5.5, standard",
+          "overall_text": "3-2",
+          "confidence_text": "Low 0-0; standard 3-2; high 0-0",
+          "interpretation": "Backing Cleveland Browns: 0-0; fading Baltimore Ravens: 1-0. Underdog contracts: 1-0; standard confidence: 3-2."
+        },
+        {
+          "speaker": "Raheem Palmer",
+          "position": "Ravens -3.5, best bet",
+          "overall_text": "0-1, 2 unresolved",
+          "confidence_text": "Low 0-0; standard 0-0, 2 unresolved; high 0-1",
+          "interpretation": "Backing Baltimore Ravens: 0-0, 1 unresolved; fading Cleveland Browns: 0-0. Favorite contracts: 0-0, 1 unresolved; high confidence: 0-1."
+        },
+        {
+          "speaker": "Cousin Sal",
+          "position": "Browns +3.5, high",
+          "overall_text": "3-0, 1 unresolved",
+          "confidence_text": "Low 0-0; standard 0-0, 1 unresolved; high 3-0",
+          "interpretation": "Backing Cleveland Browns: 0-0; fading Baltimore Ravens: 0-0. Underdog contracts: 1-0; high confidence: 3-0."
+        },
+        {
+          "speaker": "Chad Millman",
+          "position": "Browns +5.5, high",
+          "overall_text": "5-0, 2 unresolved",
+          "confidence_text": "Low 2-0; standard 2-0, 2 unresolved; high 1-0",
+          "interpretation": "Backing Cleveland Browns: 2-0; fading Baltimore Ravens: 1-0, 1 unresolved. Underdog contracts: 3-0; high confidence: 1-0."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Browns +5.5, best bet",
+          "overall_text": "4-3-1, 2 unresolved",
+          "confidence_text": "Low 2-1, 1 unresolved; standard 0-1, 1 unresolved; high 2-1-1",
+          "interpretation": "Backing Cleveland Browns: 2-2; fading Baltimore Ravens: 1-1. Underdog contracts: 3-2; high confidence: 2-1-1."
+        }
+      ],
+      "favorite_records": "Current-role history: Indian Cowboy underdog 1-0; Raheem Palmer favorite 0-0, 1 unresolved; Cousin Sal underdog 1-0; Chad Millman underdog 3-0; Simon Hunter underdog 3-2.",
+      "notable": [
+        "The Cleveland consensus strengthened as the line rose. Indian, Chad, and Simon hold +5.5; Sal's +3.5 is materially worse.",
+        "Board structure: Raheem Palmer has Ravens -3.5 as a best bet. Indian Cowboy, Cousin Sal, Chad Millman, and Simon Hunter all back Cleveland, with the available numbers ranging from +3.5 to +5.5.",
+        "Best prior record in this matchup subset: Chad Millman at 5-0, 2 unresolved.",
+        "Main historical caution: Simon Hunter is 4-3-1, 2 unresolved in contracts involving either team."
+      ],
+      "expectation": "Expectation: Browns +5.5 is the consensus position and the preferred number. Raheem is the only Baltimore supporter, but his best-bet conviction makes Ravens moneyline more defensible than laying -3.5 against four opposing spread picks.",
+      "footnote": "Records use distinct graded Weeks 1-5 side, moneyline, teaser, and parlay-leg contracts from Doc's Sports, Ringer Wise Guys, and Sharp or Square. Repeated weekly updates are collapsed to the latest market position. Totals, props, passes, and period-specific contracts without period results are excluded or unresolved. Sharp or Square Weeks 1-2 use the previously reviewed explicit side contracts encoded from those episodes."
+    },
+    {
+      "slug": "panthers-eagles",
+      "title": "Carolina Panthers at Philadelphia Eagles \u2014 Week 6 Picker History",
+      "intro": "Indian Cowboy has Panthers moneyline; Raheem Palmer has Panthers -9.5 adjusted; Chad Millman has Panthers +1.5; Simon Hunter uses Panthers +7.5 in a teaser. Cousin Sal holds Eagles +3.5 and Joe House uses Eagles moneyline.",
+      "rows": [
+        {
+          "speaker": "Indian Cowboy",
+          "position": "Panthers ML, standard",
+          "overall_text": "2-1",
+          "confidence_text": "Low 0-0; standard 2-1; high 0-0",
+          "interpretation": "Backing Carolina Panthers: 0-0; fading Philadelphia Eagles: 2-0. Favorite contracts: 0-1; standard confidence: 2-1."
+        },
+        {
+          "speaker": "Cousin Sal",
+          "position": "Eagles +3.5, high/stale",
+          "overall_text": "2-1",
+          "confidence_text": "Low 0-0; standard 2-0; high 0-1",
+          "interpretation": "Backing Philadelphia Eagles: 1-0; fading Carolina Panthers: 0-0. Underdog contracts: 1-1; high confidence: 0-1."
+        },
+        {
+          "speaker": "Joe House",
+          "position": "Eagles ML, standard",
+          "overall_text": "2-1",
+          "confidence_text": "Low 0-1; standard 1-0; high 1-0",
+          "interpretation": "Backing Philadelphia Eagles: 1-0; fading Carolina Panthers: 0-0. Underdog contracts: 1-1; standard confidence: 1-0."
+        },
+        {
+          "speaker": "Raheem Palmer",
+          "position": "Panthers -9.5 adjusted, standard",
+          "overall_text": "1-1",
+          "confidence_text": "Low 0-0; standard 1-0; high 0-1",
+          "interpretation": "Backing Carolina Panthers: 0-0; fading Philadelphia Eagles: 1-0. Favorite contracts: 1-1; standard confidence: 1-0."
+        },
+        {
+          "speaker": "Chad Millman",
+          "position": "Panthers +1.5, high/stale",
+          "overall_text": "4-4",
+          "confidence_text": "Low 0-0; standard 2-3; high 2-1",
+          "interpretation": "Backing Carolina Panthers: 1-1; fading Philadelphia Eagles: 1-0. Favorite contracts: 1-1; high confidence: 2-1."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Panthers +7.5 teaser, standard",
+          "overall_text": "3-3, 1 unresolved",
+          "confidence_text": "Low 1-2, 1 unresolved; standard 1-0; high 1-1",
+          "interpretation": "Backing Carolina Panthers: 1-1; fading Philadelphia Eagles: 0-0. Favorite contracts: 0-0, 1 unresolved; standard confidence: 1-0."
+        }
+      ],
+      "favorite_records": "Current-role history: Indian Cowboy favorite 0-1; Cousin Sal underdog 1-1; Joe House underdog 1-1; Raheem Palmer favorite 1-1; Chad Millman favorite 1-1; Simon Hunter favorite 0-0, 1 unresolved.",
+      "notable": [
+        "This board spans a dramatic market flip. Panthers +1.5, Panthers -9.5 adjusted, and Eagles +3.5 cannot be treated as one current line.",
+        "Board structure: Indian Cowboy has Panthers moneyline; Raheem Palmer has Panthers -9.5 adjusted; Chad Millman has Panthers +1.5; Simon Hunter uses Panthers +7.5 in a teaser. Cousin Sal holds Eagles +3.5 and Joe House uses Eagles moneyline.",
+        "Best prior record in this matchup subset: Indian Cowboy at 2-1.",
+        "Main historical caution: Chad Millman is 4-4 in contracts involving either team."
+      ],
+      "expectation": "Expectation: the directional count favors Carolina 4-2, but the incompatible prices make a fresh straight-spread recommendation unsafe. The best transferable position is Simon's Panthers +7.5 teaser; otherwise use moneyline exposure rather than importing a stale spread.",
+      "footnote": "Records use distinct graded Weeks 1-5 side, moneyline, teaser, and parlay-leg contracts from Doc's Sports, Ringer Wise Guys, and Sharp or Square. Repeated weekly updates are collapsed to the latest market position. Totals, props, passes, and period-specific contracts without period results are excluded or unresolved. Sharp or Square Weeks 1-2 use the previously reviewed explicit side contracts encoded from those episodes."
+    },
+    {
+      "slug": "titans-colts",
+      "title": "Titans at Colts \u2014 Week 6 Picker History",
+      "intro": "Current board: Craig Trapp has Titans +6.5 strong; Chad Millman has Colts -6.5 strong; Cousin Sal has Colts -0.5 as a teaser leg; Simon Hunter's final position is Colts moneyline as a survivor selection. The true straight-spread board is 1-1, while the other two Colts supporters reduce the required margin.",
+      "rows": [
+        {
+          "speaker": "Craig Trapp",
+          "position": "Titans +6.5, high",
+          "overall_text": "0-1",
+          "confidence_text": "Standard 0-1; high 0-0",
+          "interpretation": "His only prior graded contract involving these teams was Titans moneyline in Week 3, a loss. He is 0-1 backing Tennessee and has no prior Colts sample."
+        },
+        {
+          "speaker": "Cousin Sal",
+          "position": "Colts -0.5 teaser, standard",
+          "overall_text": "3-4, 2 unresolved",
+          "confidence_text": "Standard 1-1; high 2-3",
+          "interpretation": "He is 1-0 backing Indianapolis but 0-2 backing Tennessee. His favorite contracts are 2-1, so the reduced-risk Colts structure fits better than a full spread."
+        },
+        {
+          "speaker": "Chad Millman",
+          "position": "Colts -6.5, high",
+          "overall_text": "3-2, 1 unresolved",
+          "confidence_text": "Low 1-1; high 2-1",
+          "interpretation": "He is 2-1 backing Indianapolis and 1-1 fading Tennessee. This is the most aggressive Colts position, but both his high-confidence and favorite-contract records are 2-1."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Colts ML survivor, standard",
+          "overall_text": "5-1, 2 unresolved",
+          "confidence_text": "Low 1-0; standard 2-0; high 2-1",
+          "interpretation": "Strongest history here: 2-0 backing Indianapolis, 2-0 fading Tennessee, and 3-0 on favorite contracts. The moneyline removes the only real concern\u2014the full 6.5-point margin."
+        }
+      ],
+      "favorite_records": "Favorite/underdog records: Craig is 0-0 on favorites and 0-1 on underdogs; Sal is 2-1 on favorites and 1-3 on underdogs; Chad is 2-1 on favorites and 1-1 on underdogs; Simon is 3-0 on favorites and 2-1 on underdogs.",
+      "notable": [
+        "Simon has the cleanest alignment between history and current position: he has won both prior Colts bets, both prior Titans fades, both standard-confidence decisions, and all three favorite contracts.",
+        "Chad and Simon both successfully faded Tennessee with Houston in Week 5. Chad stays with the anti-Titans position at full spread; Simon protects it with the moneyline.",
+        "Sal's history argues for the teaser rather than Colts -6.5: he is only 3-4 overall in this subset, but 1-0 backing Indianapolis and 2-1 on favorite contracts.",
+        "Craig is the lone Titans supporter and raises conviction despite losing his only prior Tennessee bet. There is no positive team-specific history behind the upgrade."
+      ],
+      "expectation": "Expectation: Indianapolis is the better-supported side, but the historical evidence favors winning the game more than clearing 6.5. Simon\u2019s Colts moneyline/survivor position is the best construction, Sal\u2019s -0.5 teaser is next, and Chad\u2019s -6.5 is a smaller play. Craig\u2019s Titans +6.5 is the value counterposition, not the history-backed one.",
+      "footnote": "Records cover distinct Weeks 1-5 side, moneyline, and teaser contracts from the parsed programs. Totals, props, passes, and repeated unchanged mentions are excluded. Two period-specific or unstated-adjustment contracts for Sal and two for Simon remain unresolved; Chad has one."
+    },
+    {
+      "slug": "jets-patriots",
+      "title": "Jets at Patriots \u2014 Week 6 Picker History",
+      "intro": "Current board: Indian Cowboy has Jets +6.5; Joe House has Jets +7.5; Anthony Dabbundo and Cousin Sal use Patriots -1.5 teaser legs; Chad Millman has Patriots -7.5 lean; Simon Hunter's final position is Patriots -7 standard. The nominal count is Patriots 4-2, but the true straight-spread board is 2-2 and House owns the key +7.5.",
+      "rows": [
+        {
+          "speaker": "Indian Cowboy",
+          "position": "Jets +6.5, standard",
+          "overall_text": "4-4",
+          "confidence_text": "Standard 4-3; high 0-1",
+          "interpretation": "He is 1-1 backing the Jets and 0-1 fading New England, while going 3-1 backing the Patriots. This repeats his Week 5 Jets backing but also repeats his failed Week 5 Patriots fade."
+        },
+        {
+          "speaker": "Joe House",
+          "position": "Jets +7.5, low",
+          "overall_text": "4-3",
+          "confidence_text": "Low 1-0; standard 2-1; high 1-2",
+          "interpretation": "He is 2-3 backing the Jets, but 1-0 fading New England. He flips from a winning Week 5 Patriots -3.5 bet; the extra half-point above 7 is the main attraction."
+        },
+        {
+          "speaker": "Anthony Dabbundo",
+          "position": "Patriots -1.5 teaser, standard",
+          "overall_text": "2-2, 1 unresolved",
+          "confidence_text": "Low 0-1; standard 1-0; high 1-1",
+          "interpretation": "He is 1-0 backing the Jets but 1-2 fading New England and has no prior graded Patriots backing. The teaser acknowledges that the full spread is not supported by his history."
+        },
+        {
+          "speaker": "Cousin Sal",
+          "position": "Patriots -1.5 teaser, standard",
+          "overall_text": "3-3, 1 unresolved",
+          "confidence_text": "Standard 1-2; high 2-1",
+          "interpretation": "He is 1-0 backing New England and won Patriots -3.5 last week. He also won Jets -1.5 last week, so the current teaser is a controlled flip rather than a strong anti-Jets trend."
+        },
+        {
+          "speaker": "Chad Millman",
+          "position": "Patriots -7.5, low",
+          "overall_text": "2-1",
+          "confidence_text": "Low 1-0; high 1-1",
+          "interpretation": "He is 1-0 backing the Jets and 1-0 fading New England, then reverses both patterns here. His only support is structural: he is 1-1 on favorite contracts versus 1-0 on an underdog teaser."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Patriots -7, standard",
+          "overall_text": "3-6",
+          "confidence_text": "Low 1-3; standard 1-2; high 1-1",
+          "interpretation": "Weakest overall history: 1-2 backing the Jets, 0-1 fading them, and 2-3 fading New England with no prior Patriots backing. The positive is that he is 3-2 on favorites but 0-4 on underdogs."
+        }
+      ],
+      "favorite_records": "Favorite/underdog records: Indian Cowboy is 2-1 on favorites and 2-3 on underdogs; House is 2-0 on favorites and 2-3 on underdogs; Dabbundo is 1-1 on favorites and 1-1 on underdogs; Sal is 3-3 on favorites with no graded underdog contract; Chad is 1-1 on favorites and 1-0 on an underdog teaser; Simon is 3-2 on favorites and 0-4 on underdogs.",
+      "notable": [
+        "The 4-2 Patriots headcount overstates agreement. Dabbundo and Sal only need New England to clear -1.5 in teasers; Chad and Simon are the only speakers laying the actual touchdown-sized spread.",
+        "House has the best straight number at Jets +7.5. His Jets history is only 2-3, but the hook above 7 materially improves this ticket compared with Indian Cowboy's +6.5.",
+        "Sal has the best current Patriots continuity: he won Patriots -3.5 in Week 5 and now lowers the requirement to -1.5. Dabbundo also flips to New England after losing a Raiders +3.5 Patriots fade.",
+        "Chad and Simon's full-spread support is not backed by team-specific success. Chad reverses two successful historical patterns; Simon is 3-6 overall and has never graded a Patriots backing in this set.",
+        "Indian Cowboy repeats two Week 5 ideas at once\u2014backing the Jets and fading New England\u2014but only the Jets leg worked last week."
+      ],
+      "expectation": "Expectation: do not treat this as a four-person Patriots consensus. The best straight-spread construction is House\u2019s Jets +7.5 because it captures the key-number hook. If using a valid teaser, Patriots -1.5 through Sal is the cleaner New England position. Laying -7 or -7.5 requires more confidence than the historical records justify.",
+      "footnote": "Records cover distinct Weeks 1-5 side, moneyline, and teaser contracts. Totals, props, passes, and repeated unchanged mentions are excluded. Unstated teaser adjustments remain unresolved. Conditional Week 5 Jets weather positions from Chad and Simon are omitted because the trigger was not verified."
+    },
+    {
+      "slug": "saints-giants",
+      "title": "Saints at Giants \u2014 Week 6 Picker History",
+      "intro": "Current board: Indian Cowboy has Saints moneyline; Cousin Sal has Saints -1.5 lean; Simon Hunter has an earlier Saints +1.5 speculative position; Billy Gill, Raheem Palmer, and Joe House have Giants +1.5. The nominal count is 3-3, but Simon's Saints number came from the opposite side of the current market and must not be treated as Saints -1.5 support.",
+      "rows": [
+        {
+          "speaker": "Indian Cowboy",
+          "position": "Saints ML, standard",
+          "overall_text": "1-1",
+          "confidence_text": "Standard 1-1",
+          "interpretation": "Both graded contracts backed New Orleans: Saints +6.5 won in Week 1, while the Week 3 Saints side lost. His favorite/underdog split is 0-1 as favorite and 1-0 as underdog."
+        },
+        {
+          "speaker": "Billy Gill",
+          "position": "Giants +1.5, standard",
+          "overall_text": "No prior sample",
+          "confidence_text": "No prior sample",
+          "interpretation": "There is no graded Weeks 1-5 side history for Billy in the parsed set, so his current opinion stands alone."
+        },
+        {
+          "speaker": "Raheem Palmer",
+          "position": "Giants +1.5, high",
+          "overall_text": "5-1, 1 unresolved",
+          "confidence_text": "Standard 2-1; high 3-0",
+          "interpretation": "Best support on the board: 3-0 fading New Orleans, 1-0 backing the Giants, 3-0 as an underdog picker, and 3-0 at high confidence."
+        },
+        {
+          "speaker": "Joe House",
+          "position": "Giants +1.5, low",
+          "overall_text": "1-3, 1 unresolved",
+          "confidence_text": "Standard 0-3; high 1-0",
+          "interpretation": "Weak overall record and 0-2 fading the Giants, but he is 1-0 fading New Orleans. He now flips away from the Saints after losing a Week 5 Saints teaser."
+        },
+        {
+          "speaker": "Cousin Sal",
+          "position": "Saints -1.5, low",
+          "overall_text": "3-2",
+          "confidence_text": "Low 1-0; standard 0-2; high 2-0",
+          "interpretation": "He is 0-1 backing New Orleans and 2-0 fading them. His only prior Giants backing won, so the team-specific history points opposite his current Saints lean."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Saints +1.5, stale/low",
+          "overall_text": "5-3",
+          "confidence_text": "Low 1-0; standard 1-1; high 3-2",
+          "interpretation": "He is 2-0 backing the Giants and 2-0 fading New Orleans, but only 1-2 backing the Saints. His +1.5 ticket has value if already held; it does not justify taking Saints -1.5 now."
+        }
+      ],
+      "favorite_records": "Favorite/underdog records: Indian Cowboy is 0-1 on favorites and 1-0 on underdogs; Raheem is 2-1 on favorites and 3-0 on underdogs; House is 1-2 on favorites and 0-1 on underdogs; Sal is 1-1 on favorites and 2-1 on underdogs; Simon is 0-1 on favorites and 5-2 on underdogs. Billy has no prior sample.",
+      "notable": [
+        "Raheem is the clearest signal: in Week 5 he won both relevant patterns\u2014fading New Orleans with Minnesota and backing the Giants at Washington\u2014and now repeats both at high confidence.",
+        "The three nominal Saints positions are not equivalent. Indian uses the moneyline, Sal lays -1.5 only as a lean, and Simon owns a stale +1.5 number that is materially better than today's Saints price.",
+        "Sal and Simon both have better historical results fading New Orleans than backing it. Simon also has a perfect 2-0 record backing the Giants, making his stale Saints ticket the exception rather than a team trend.",
+        "House adds agreement to the Giants side but not reliability: his 1-3 overall record and 0-3 standard-confidence record mean Raheem\u2014not the headcount\u2014is the reason to prefer New York."
+      ],
+      "expectation": "Expectation: Giants +1.5 is the strongest current-market position, driven primarily by Raheem\u2019s repeated and historically successful fade-Saints/back-Giants pattern. A previously secured Saints +1.5 is also a good ticket, but that stale number should not be converted into Saints -1.5. At the current line, New York is the lean.",
+      "footnote": "Records cover distinct Weeks 1-5 side, moneyline, and teaser contracts. Totals, props, passes, and repeated unchanged mentions are excluded. Period-specific bets without period results remain unresolved. House's provisional Week 4 Falcons lean is omitted because finalization was not verified."
+    },
+    {
+      "slug": "steelers-buccaneers",
+      "title": "Pittsburgh Steelers at Tampa Bay Buccaneers \u2014 Week 6 Picker History",
+      "intro": "Craig Trapp has Buccaneers moneyline; Raheem Palmer and Joe House have Tampa Bay +2.5. Chad Millman uses Pittsburgh moneyline in a parlay, while Simon Hunter's final position is Steelers -2.5 after earlier backing Tampa Bay +3.",
+      "rows": [
+        {
+          "speaker": "Craig Trapp",
+          "position": "Buccaneers ML, standard",
+          "overall_text": "2-1",
+          "confidence_text": "Low 1-0; standard 1-1; high 0-0",
+          "interpretation": "Backing Tampa Bay Buccaneers: 1-0; fading Pittsburgh Steelers: 0-1. Underdog contracts: 1-1; standard confidence: 1-1."
+        },
+        {
+          "speaker": "Raheem Palmer",
+          "position": "Buccaneers +2.5, best bet",
+          "overall_text": "2-1",
+          "confidence_text": "Low 0-0; standard 0-1; high 2-0",
+          "interpretation": "Backing Tampa Bay Buccaneers: 0-1; fading Pittsburgh Steelers: 0-0. Underdog contracts: 0-1; high confidence: 2-0."
+        },
+        {
+          "speaker": "Joe House",
+          "position": "Buccaneers +2.5, standard",
+          "overall_text": "1-1",
+          "confidence_text": "Low 0-0; standard 1-0; high 0-1",
+          "interpretation": "Backing Tampa Bay Buccaneers: 0-1; fading Pittsburgh Steelers: 0-0. Underdog contracts: 0-1; standard confidence: 1-0."
+        },
+        {
+          "speaker": "Chad Millman",
+          "position": "Steelers ML parlay leg, standard",
+          "overall_text": "5-4",
+          "confidence_text": "Low 2-1; standard 1-1; high 2-2",
+          "interpretation": "Backing Pittsburgh Steelers: 1-0; fading Tampa Bay Buccaneers: 1-0. Favorite contracts: 2-1; standard confidence: 1-1."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Steelers -2.5, high (final)",
+          "overall_text": "4-3, 1 unresolved",
+          "confidence_text": "Low 0-1, 1 unresolved; standard 1-0; high 3-2",
+          "interpretation": "Backing Pittsburgh Steelers: 2-1; fading Tampa Bay Buccaneers: 1-1. Favorite contracts: 3-1, 1 unresolved; high confidence: 3-2."
+        }
+      ],
+      "favorite_records": "Current-role history: Craig Trapp underdog 1-1; Raheem Palmer underdog 0-1; Joe House underdog 0-1; Chad Millman favorite 2-1; Simon Hunter favorite 3-1, 1 unresolved.",
+      "notable": [
+        "Simon explicitly flipped from Tampa Bay +3 to Pittsburgh -2.5. His final Steelers position supersedes the earlier Buccaneers side.",
+        "Board structure: Craig Trapp has Buccaneers moneyline; Raheem Palmer and Joe House have Tampa Bay +2.5. Chad Millman uses Pittsburgh moneyline in a parlay, while Simon Hunter's final position is Steelers -2.5 after earlier backing Tampa Bay +3.",
+        "Best prior record in this matchup subset: Craig Trapp at 2-1.",
+        "Main historical caution: Joe House is 1-1 in contracts involving either team."
+      ],
+      "expectation": "Expectation: Tampa Bay +2.5 has the stronger 3-2 headcount, led by Raheem's best bet. Pittsburgh support is more protected through Chad's moneyline parlay, while Simon alone lays the spread. The lean is Buccaneers +2.5.",
+      "footnote": "Records use distinct graded Weeks 1-5 side, moneyline, teaser, and parlay-leg contracts from Doc's Sports, Ringer Wise Guys, and Sharp or Square. Repeated weekly updates are collapsed to the latest market position. Totals, props, passes, and period-specific contracts without period results are excluded or unresolved. Sharp or Square Weeks 1-2 use the previously reviewed explicit side contracts encoded from those episodes."
+    },
+    {
+      "slug": "cardinals-rams",
+      "title": "Arizona Cardinals at Los Angeles Rams \u2014 Week 6 Picker History",
+      "intro": "Craig Trapp, Anthony Dabbundo, Chad Millman, and Simon Hunter back Arizona at +11.5 to +13.5. Joe House and Cousin Sal use Rams moneyline. Chad also includes Rams -5.5 in a separate parlay, creating an intentional middle/hedge.",
+      "rows": [
+        {
+          "speaker": "Craig Trapp",
+          "position": "Cardinals +11.5, low",
+          "overall_text": "2-2",
+          "confidence_text": "Low 0-0; standard 2-1; high 0-1",
+          "interpretation": "Backing Arizona Cardinals: 0-1; fading Los Angeles Rams: 0-0. Underdog contracts: 1-1; low confidence: 0-0."
+        },
+        {
+          "speaker": "Anthony Dabbundo",
+          "position": "Cardinals +12.5, low",
+          "overall_text": "3-2",
+          "confidence_text": "Low 1-1; standard 0-0; high 2-1",
+          "interpretation": "Backing Arizona Cardinals: 1-1; fading Los Angeles Rams: 0-0. Underdog contracts: 1-0; low confidence: 1-1."
+        },
+        {
+          "speaker": "Joe House",
+          "position": "Rams ML, standard",
+          "overall_text": "1-3",
+          "confidence_text": "Low 0-0; standard 0-2; high 1-1",
+          "interpretation": "Backing Los Angeles Rams: 1-1; fading Arizona Cardinals: 0-0. Favorite contracts: 1-2; standard confidence: 0-2."
+        },
+        {
+          "speaker": "Cousin Sal",
+          "position": "Rams ML, standard",
+          "overall_text": "3-1",
+          "confidence_text": "Low 1-0; standard 2-1; high 0-0",
+          "interpretation": "Backing Los Angeles Rams: 1-0; fading Arizona Cardinals: 1-0. Favorite contracts: 1-0; standard confidence: 2-1."
+        },
+        {
+          "speaker": "Chad Millman",
+          "position": "Cardinals +13.5 high; Rams -5.5 parlay",
+          "overall_text": "3-3",
+          "confidence_text": "Low 1-0; standard 2-2; high 0-1",
+          "interpretation": "Backing Arizona Cardinals: 0-2; fading Los Angeles Rams: 2-1. Underdog contracts: 2-2; high confidence: 0-1."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Cardinals +12.5, standard",
+          "overall_text": "4-2",
+          "confidence_text": "Low 2-2; standard 1-0; high 1-0",
+          "interpretation": "Backing Arizona Cardinals: 1-1; fading Los Angeles Rams: 1-1. Underdog contracts: 3-2; standard confidence: 1-0."
+        }
+      ],
+      "favorite_records": "Current-role history: Craig Trapp underdog 1-1; Anthony Dabbundo underdog 1-0; Joe House favorite 1-2; Cousin Sal favorite 1-0; Chad Millman underdog 2-2; Simon Hunter underdog 3-2.",
+      "notable": [
+        "Simon's early conditional Rams -3 was superseded by Cardinals +12.5. Chad keeps both Cardinals +13.5 straight and Rams -5.5 as a parlay leg.",
+        "Board structure: Craig Trapp, Anthony Dabbundo, Chad Millman, and Simon Hunter back Arizona at +11.5 to +13.5. Joe House and Cousin Sal use Rams moneyline. Chad also includes Rams -5.5 in a separate parlay, creating an intentional middle/hedge.",
+        "Best prior record in this matchup subset: Cousin Sal at 3-1.",
+        "Main historical caution: Joe House is 1-3 in contracts involving either team."
+      ],
+      "expectation": "Expectation: Cardinals +12.5 or better is the strongest straight-spread construction. Rams moneyline is compatible with that view, and Chad's two-sided setup explicitly targets a Rams win inside the large Arizona number.",
+      "footnote": "Records use distinct graded Weeks 1-5 side, moneyline, teaser, and parlay-leg contracts from Doc's Sports, Ringer Wise Guys, and Sharp or Square. Repeated weekly updates are collapsed to the latest market position. Totals, props, passes, and period-specific contracts without period results are excluded or unresolved. Sharp or Square Weeks 1-2 use the previously reviewed explicit side contracts encoded from those episodes."
+    },
+    {
+      "slug": "bills-raiders",
+      "title": "Buffalo Bills at Las Vegas Raiders \u2014 Week 6 Picker History",
+      "intro": "Indian Cowboy, Joe House, Chad Millman, and Simon Hunter back Las Vegas at +4.5 or +5.5; Cousin Sal has Raiders first-half +3.5. Raheem Palmer is alone on Bills -5.5. Simon also holds Bills +8.5 in a teaser, which can coexist with Raiders +4.5.",
+      "rows": [
+        {
+          "speaker": "Indian Cowboy",
+          "position": "Raiders +4.5, standard",
+          "overall_text": "2-4",
+          "confidence_text": "Low 0-1; standard 2-2; high 0-1",
+          "interpretation": "Backing Las Vegas Raiders: 1-1; fading Buffalo Bills: 1-1. Underdog contracts: 1-2; standard confidence: 2-2."
+        },
+        {
+          "speaker": "Cousin Sal",
+          "position": "Raiders 1H +3.5, best bet",
+          "overall_text": "3-2",
+          "confidence_text": "Low 0-0; standard 2-1; high 1-1",
+          "interpretation": "Backing Las Vegas Raiders: 0-0; fading Buffalo Bills: 0-0. Underdog contracts: 1-0; high confidence: 1-1."
+        },
+        {
+          "speaker": "Joe House",
+          "position": "Raiders +5.5, standard",
+          "overall_text": "2-3",
+          "confidence_text": "Low 1-0; standard 1-0; high 0-3",
+          "interpretation": "Backing Las Vegas Raiders: 1-0; fading Buffalo Bills: 0-2. Underdog contracts: 0-1; standard confidence: 1-0."
+        },
+        {
+          "speaker": "Raheem Palmer",
+          "position": "Bills -5.5, standard",
+          "overall_text": "0-4, 1 unresolved",
+          "confidence_text": "Low 0-0; standard 0-2, 1 unresolved; high 0-2",
+          "interpretation": "Backing Buffalo Bills: 0-1, 1 unresolved; fading Las Vegas Raiders: 0-1. Favorite contracts: 0-2, 1 unresolved; standard confidence: 0-2, 1 unresolved."
+        },
+        {
+          "speaker": "Chad Millman",
+          "position": "Raiders +4.5, best bet",
+          "overall_text": "3-0",
+          "confidence_text": "Low 0-0; standard 3-0; high 0-0",
+          "interpretation": "Backing Las Vegas Raiders: 1-0; fading Buffalo Bills: 0-0. Underdog contracts: 3-0; high confidence: 0-0."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Raiders +4.5 high; Bills +8.5 teaser",
+          "overall_text": "2-4",
+          "confidence_text": "Low 1-4; standard 0-0; high 1-0",
+          "interpretation": "Backing Las Vegas Raiders: 1-2; fading Buffalo Bills: 0-0. Underdog contracts: 2-2; high confidence: 1-0."
+        }
+      ],
+      "favorite_records": "Current-role history: Indian Cowboy underdog 1-2; Cousin Sal underdog 1-0; Joe House underdog 0-1; Raheem Palmer favorite 0-2, 1 unresolved; Chad Millman underdog 3-0; Simon Hunter underdog 2-2.",
+      "notable": [
+        "House owns the best full-game Raiders number at +5.5. Sal's first-half bet and Simon's Bills teaser are separate period/structure positions.",
+        "Board structure: Indian Cowboy, Joe House, Chad Millman, and Simon Hunter back Las Vegas at +4.5 or +5.5; Cousin Sal has Raiders first-half +3.5. Raheem Palmer is alone on Bills -5.5. Simon also holds Bills +8.5 in a teaser, which can coexist with Raiders +4.5.",
+        "Best prior record in this matchup subset: Chad Millman at 3-0.",
+        "Main historical caution: Raheem Palmer is 0-4, 1 unresolved in contracts involving either team."
+      ],
+      "expectation": "Expectation: Raiders +4.5 or better is the dominant full-game position, with House's +5.5 the best ticket. Raheem is the only full-game Buffalo spread supporter. Simon's Bills teaser is a middle, not a reversal of his Raiders pick.",
+      "footnote": "Records use distinct graded Weeks 1-5 side, moneyline, teaser, and parlay-leg contracts from Doc's Sports, Ringer Wise Guys, and Sharp or Square. Repeated weekly updates are collapsed to the latest market position. Totals, props, passes, and period-specific contracts without period results are excluded or unresolved. Sharp or Square Weeks 1-2 use the previously reviewed explicit side contracts encoded from those episodes."
+    },
+    {
+      "slug": "chargers-chiefs",
+      "title": "Los Angeles Chargers at Kansas City Chiefs \u2014 Week 6 Picker History",
+      "intro": "Craig Trapp, Cousin Sal, Chad Millman, and Simon Hunter back Chargers +8.5. Joe House and Anthony Dabbundo use Chiefs -2.5 teaser legs. Simon's earlier Chiefs teaser was superseded by his final Chargers +8.5 position.",
+      "rows": [
+        {
+          "speaker": "Craig Trapp",
+          "position": "Chargers +8.5, conditional/low",
+          "overall_text": "1-1",
+          "confidence_text": "Low 0-0; standard 1-1; high 0-0",
+          "interpretation": "Backing Los Angeles Chargers: 0-1; fading Kansas City Chiefs: 0-0. Underdog contracts: 0-0; low confidence: 0-0."
+        },
+        {
+          "speaker": "Cousin Sal",
+          "position": "Chargers +8.5, best bet",
+          "overall_text": "0-3, 1 unresolved",
+          "confidence_text": "Low 0-0, 1 unresolved; standard 0-0; high 0-3",
+          "interpretation": "Backing Los Angeles Chargers: 0-1; fading Kansas City Chiefs: 0-1. Underdog contracts: 0-2; high confidence: 0-3."
+        },
+        {
+          "speaker": "Joe House",
+          "position": "Chiefs -2.5 teaser, standard",
+          "overall_text": "1-3",
+          "confidence_text": "Low 1-2; standard 0-0; high 0-1",
+          "interpretation": "Backing Kansas City Chiefs: 0-1; fading Los Angeles Chargers: 1-0. Favorite contracts: 1-1; standard confidence: 0-0."
+        },
+        {
+          "speaker": "Anthony Dabbundo",
+          "position": "Chiefs -2.5 teaser, standard",
+          "overall_text": "1-2",
+          "confidence_text": "Low 0-1; standard 0-0; high 1-1",
+          "interpretation": "Backing Kansas City Chiefs: 0-1; fading Los Angeles Chargers: 1-0. Favorite contracts: 0-1; standard confidence: 0-0."
+        },
+        {
+          "speaker": "Chad Millman",
+          "position": "Chargers +8.5, best bet",
+          "overall_text": "3-1",
+          "confidence_text": "Low 0-0; standard 1-0; high 2-1",
+          "interpretation": "Backing Los Angeles Chargers: 0-0; fading Kansas City Chiefs: 2-1. Underdog contracts: 2-1; high confidence: 2-1."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Chargers +8.5, high (final)",
+          "overall_text": "4-1, 1 unresolved",
+          "confidence_text": "Low 1-1; standard 1-0, 1 unresolved; high 2-0",
+          "interpretation": "Backing Los Angeles Chargers: 0-0; fading Kansas City Chiefs: 1-0. Underdog contracts: 1-0; high confidence: 2-0."
+        }
+      ],
+      "favorite_records": "Current-role history: Craig Trapp underdog 0-0; Cousin Sal underdog 0-2; Joe House favorite 1-1; Anthony Dabbundo favorite 0-1; Chad Millman underdog 2-1; Simon Hunter underdog 1-0.",
+      "notable": [
+        "The straight-spread board is 4-0 Chargers. The two Chiefs supporters only ask Kansas City to clear -2.5 through teasers.",
+        "Board structure: Craig Trapp, Cousin Sal, Chad Millman, and Simon Hunter back Chargers +8.5. Joe House and Anthony Dabbundo use Chiefs -2.5 teaser legs. Simon's earlier Chiefs teaser was superseded by his final Chargers +8.5 position.",
+        "Best prior record in this matchup subset: Simon Hunter at 4-1, 1 unresolved.",
+        "Main historical caution: Cousin Sal is 0-3, 1 unresolved in contracts involving either team."
+      ],
+      "expectation": "Expectation: Chargers +8.5 is the strongest straight-spread position, with Sal and Chad at best-bet confidence and Simon strong. Chiefs -2.5 is the cleaner Kansas City construction if using a valid teaser; laying the full number has no support.",
+      "footnote": "Records use distinct graded Weeks 1-5 side, moneyline, teaser, and parlay-leg contracts from Doc's Sports, Ringer Wise Guys, and Sharp or Square. Repeated weekly updates are collapsed to the latest market position. Totals, props, passes, and period-specific contracts without period results are excluded or unresolved. Sharp or Square Weeks 1-2 use the previously reviewed explicit side contracts encoded from those episodes."
+    },
+    {
+      "slug": "cowboys-packers",
+      "title": "Dallas Cowboys at Green Bay Packers \u2014 Week 6 Picker History",
+      "intro": "Joe House and Simon Hunter have Cowboys +1.5. Raheem Palmer uses Dallas +7.5 as a teaser leg. No parsed speaker takes Green Bay.",
+      "rows": [
+        {
+          "speaker": "Raheem Palmer",
+          "position": "Cowboys +7.5 teaser, standard",
+          "overall_text": "1-1",
+          "confidence_text": "Low 0-0; standard 0-1; high 1-0",
+          "interpretation": "Backing Dallas Cowboys: 0-1; fading Green Bay Packers: 1-0. Underdog contracts: 0-0; standard confidence: 0-1."
+        },
+        {
+          "speaker": "Joe House",
+          "position": "Cowboys +1.5, low",
+          "overall_text": "1-2",
+          "confidence_text": "Low 1-1; standard 0-1; high 0-0",
+          "interpretation": "Backing Dallas Cowboys: 0-1; fading Green Bay Packers: 1-0. Underdog contracts: 0-0; low confidence: 1-1."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Cowboys +1.5, low",
+          "overall_text": "2-2-1, 1 unresolved",
+          "confidence_text": "Low 0-1; standard 0-1, 1 unresolved; high 2-0-1",
+          "interpretation": "Backing Dallas Cowboys: 0-1; fading Green Bay Packers: 0-0. Underdog contracts: 2-0; low confidence: 0-1."
+        }
+      ],
+      "favorite_records": "Current-role history: Raheem Palmer underdog 0-0; Joe House underdog 0-0; Simon Hunter underdog 2-0.",
+      "notable": [
+        "The board is unanimous toward Dallas, but one of the three positions is a heavily protected teaser rather than the current spread.",
+        "Board structure: Joe House and Simon Hunter have Cowboys +1.5. Raheem Palmer uses Dallas +7.5 as a teaser leg. No parsed speaker takes Green Bay.",
+        "Best prior record in this matchup subset: Simon Hunter at 2-2-1, 1 unresolved.",
+        "Main historical caution: Joe House is 1-2 in contracts involving either team."
+      ],
+      "expectation": "Expectation: Cowboys +1.5 is the clean consensus side. Raheem's +7.5 teaser is the safest construction, while House and Simon provide the direct spread confirmation. There is no Packers counterposition in the parsed board.",
+      "footnote": "Records use distinct graded Weeks 1-5 side, moneyline, teaser, and parlay-leg contracts from Doc's Sports, Ringer Wise Guys, and Sharp or Square. Repeated weekly updates are collapsed to the latest market position. Totals, props, passes, and period-specific contracts without period results are excluded or unresolved. Sharp or Square Weeks 1-2 use the previously reviewed explicit side contracts encoded from those episodes."
+    },
+    {
+      "slug": "commanders-49ers",
+      "title": "Washington Commanders at San Francisco 49ers \u2014 Week 6 Picker History",
+      "intro": "Anthony Dabbundo, Cousin Sal, Chad Millman, and Simon Hunter have Commanders +7.5, although Chad and Simon are conditional. Joe House uses 49ers -1.5 as a teaser leg.",
+      "rows": [
+        {
+          "speaker": "Joe House",
+          "position": "49ers -1.5 teaser, standard",
+          "overall_text": "0-2",
+          "confidence_text": "Low 0-1; standard 0-0; high 0-1",
+          "interpretation": "Backing San Francisco 49ers: 0-0; fading Washington Commanders: 0-0. Favorite contracts: 0-1; standard confidence: 0-0."
+        },
+        {
+          "speaker": "Anthony Dabbundo",
+          "position": "Commanders +7.5, high",
+          "overall_text": "0-2, 1 unresolved",
+          "confidence_text": "Low 0-0; standard 0-1, 1 unresolved; high 0-1",
+          "interpretation": "Backing Washington Commanders: 0-1; fading San Francisco 49ers: 0-1. Underdog contracts: 0-0; high confidence: 0-1."
+        },
+        {
+          "speaker": "Cousin Sal",
+          "position": "Commanders +7.5, low",
+          "overall_text": "0-4",
+          "confidence_text": "Low 0-0; standard 0-0; high 0-4",
+          "interpretation": "Backing Washington Commanders: 0-3; fading San Francisco 49ers: 0-1. Underdog contracts: 0-4; low confidence: 0-0."
+        },
+        {
+          "speaker": "Chad Millman",
+          "position": "Commanders +7.5, conditional/low",
+          "overall_text": "2-4",
+          "confidence_text": "Low 1-1; standard 1-1; high 0-2",
+          "interpretation": "Backing Washington Commanders: 0-1; fading San Francisco 49ers: 0-3. Underdog contracts: 0-2; low confidence: 1-1."
+        },
+        {
+          "speaker": "Simon Hunter",
+          "position": "Commanders +7.5, conditional/low",
+          "overall_text": "1-4",
+          "confidence_text": "Low 1-1; standard 0-1; high 0-2",
+          "interpretation": "Backing Washington Commanders: 0-1; fading San Francisco 49ers: 1-2. Underdog contracts: 1-1; low confidence: 1-1."
+        }
+      ],
+      "favorite_records": "Current-role history: Joe House favorite 0-1; Anthony Dabbundo underdog 0-0; Cousin Sal underdog 0-4; Chad Millman underdog 0-2; Simon Hunter underdog 1-1.",
+      "notable": [
+        "The straight-spread headcount is 4-0 Washington, but half of those positions are conditional. House is not laying the full San Francisco spread.",
+        "Board structure: Anthony Dabbundo, Cousin Sal, Chad Millman, and Simon Hunter have Commanders +7.5, although Chad and Simon are conditional. Joe House uses 49ers -1.5 as a teaser leg.",
+        "Best prior record in this matchup subset: Chad Millman at 2-4.",
+        "Main historical caution: Cousin Sal is 0-4 in contracts involving either team."
+      ],
+      "expectation": "Expectation: Commanders +7.5 is the strongest available straight-spread position, led by Dabbundo's high-confidence pick. If taking San Francisco, House's -1.5 teaser is the only supported construction; the full favorite line has no backer.",
+      "footnote": "Records use distinct graded Weeks 1-5 side, moneyline, teaser, and parlay-leg contracts from Doc's Sports, Ringer Wise Guys, and Sharp or Square. Repeated weekly updates are collapsed to the latest market position. Totals, props, passes, and period-specific contracts without period results are excluded or unresolved. Sharp or Square Weeks 1-2 use the previously reviewed explicit side contracts encoded from those episodes."
+    }
+  ]
+}

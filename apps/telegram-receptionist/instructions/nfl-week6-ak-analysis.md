@@ -5,6 +5,28 @@ Use this runbook after AK has submitted a pick and predicted score for every
 that already contain the Doc's Sports, Ringer Wise Guys, and Sharp or Square
 pickers, with AK shown as an additional picker rather than in a separate report.
 
+## Existing report assets
+
+The existing reports and other-picker data are committed beside this runbook:
+
+```text
+/home/receptionist/repos/www/apps/telegram-receptionist/instructions/nfl-week6-report-assets/
+```
+
+Use:
+
+- `base-reports.json` as the frozen machine-readable baseline for all 14
+  reports and all existing picker rows;
+- `baseline-pngs/` as the visual reference for the reports already delivered;
+- `render_week6_reports.py` to render the AK-enriched JSON; and
+- `README.md` for the enrichment schema and renderer command.
+
+Do not require `/home/forwarder/data/nfl_audio_parser.sqlite3` to recover the
+other pickers. It was not populated with the historical artifacts used to
+build these reports. Preserve the baseline rows and calculations from
+`base-reports.json`; use the authoritative intake data only for AK's picks,
+predicted scores, revisions, and results.
+
 ## Required outcome
 
 For every Week 6 matchup:
@@ -56,15 +78,15 @@ authoritative source for this 2026 slate. Do not use it, remembered scores,
 prose, or a web scoreboard as a substitute for the 2026 intake game's final
 score. If an authoritative 2026 final is missing, mark that game unresolved.
 
-The production celebrity-picker opinion store, when needed, is:
+The production celebrity-picker opinion store, if separately needed, is:
 
 ```text
 /home/forwarder/data/nfl_audio_parser.sqlite3
 ```
 
 Query it read-only unless the task explicitly requires an approved ingestion or
-grading operation. Preserve the established latest-pregame deduplication rules
-for the other pickers.
+grading operation. Its absence is not a blocker because the reviewed
+other-picker baseline is committed in `base-reports.json`.
 
 ## Completeness checks before analysis
 
@@ -225,10 +247,11 @@ or ATS versus AK's submitted spread.
 
 ## Add AK to the existing report
 
-Keep the existing report title, other picker rows, source caveats, market-timing
-warnings, and completed-game grading. Add AK as a normal row in the picker
-table, preferably after the existing source-grouped rows unless the report has
-an established ordering.
+Copy `base-reports.json` to a working AK-enriched JSON file. Keep each existing
+report title, other picker row, source caveat, market-timing warning, and
+completed-game grading. Add AK as a normal row in the picker table, preferably
+after the existing source-grouped rows unless the report has an established
+ordering. Do not edit the committed baseline file in place.
 
 The AK row should use these columns:
 
@@ -281,6 +304,10 @@ historical game and all formulas' inputs and outputs. Verify:
 9. every PNG is visually inspected for clipped cells, missing footnotes, and
    wrapped calibration text.
 
+Also compare every newly rendered report with the matching file in
+`baseline-pngs/` and confirm that any changed non-AK prose is necessary to
+describe AK's effect on the board. Existing picker records must not drift.
+
 Where source data is incomplete, write `unavailable` or `unresolved` and name
 the missing field. Never turn missing data into `0-0`, zero score error, a pass,
 or an implied pick.
@@ -294,6 +321,8 @@ Read and follow
 /home/receptionist/repos/www/apps/telegram-receptionist/instructions/nfl-week6-ak-analysis.md
 to add AK to every 2026 NFL Week 6 picker-history report. First verify that all
 Week 6 AK picks and predicted scores are complete. Generate the structured
-audit data and updated PNGs, visually inspect them, and report any missing or
-unresolved source data instead of guessing.
+audit data and updated PNGs using the committed assets in
+/home/receptionist/repos/www/apps/telegram-receptionist/instructions/nfl-week6-report-assets/,
+visually inspect them, and report any missing or unresolved AK source data
+instead of guessing.
 ```
