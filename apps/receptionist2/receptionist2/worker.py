@@ -19,6 +19,7 @@ from .deployments import (
     started_text,
 )
 from .investigation import continuation_prompt, missing_sections
+from .nfl_audio import remove_audio_files
 from .provider import (
     ProviderResult,
     build_command,
@@ -57,6 +58,7 @@ class Worker:
         self.database.initialize()
         self.database.set_state("worker_status", "starting")
         await self.reconcile()
+        self._cleanup_pending_nfl_audio()
         self.finish_self_deployment()
         self.database.set_state("worker_status", "ready")
         heartbeat = asyncio.create_task(self._heartbeat())
@@ -77,7 +79,7 @@ class Worker:
                 except Exception as error:
                     log.exception("Run %s crashed in the worker", run["id"])
                     if self.database.get_run(run["id"])["status"] == "running":
-                        self.database.finish_run(
+                        self._finish_run(
                             run["id"],
                             status="failed",
                             error=f"Worker error: {type(error).__name__}",
@@ -105,6 +107,7 @@ class Worker:
     async def _heartbeat(self) -> None:
         while True:
             self.database.set_state("worker_heartbeat", str(time.time()))
+            self._cleanup_pending_nfl_audio()
             await asyncio.sleep(10)
 
     async def reconcile(self) -> None:
@@ -120,7 +123,7 @@ class Worker:
             receipt = self.config.run_state_dir / f"{run['id']}.receipt.json"
             recovered = self._read_receipt(receipt)
             if recovered and recovered.get("final_response"):
-                self.database.finish_run(
+                self._finish_run(
                     run["id"],
                     status=(
                         "failed" if recovered.get("is_error") else "succeeded"
@@ -139,7 +142,7 @@ class Worker:
                     ),
                 )
             else:
-                self.database.finish_run(
+                self._finish_run(
                     run["id"],
                     status="interrupted",
                     error=(
@@ -185,7 +188,7 @@ class Worker:
     async def execute(self, run: dict[str, Any]) -> None:
         prompt = self._prepare_prompt(run)
         if prompt is None:
-            self.database.finish_run(
+            self._finish_run(
                 run["id"],
                 status="failed",
                 error="Required startup context could not be loaded.",
@@ -213,7 +216,7 @@ class Worker:
                 limit=16 * 1024 * 1024,
             )
         except OSError as error:
-            self.database.finish_run(
+            self._finish_run(
                 run["id"], status="failed", error=f"Launch failed: {error}"
             )
             return
@@ -276,7 +279,7 @@ class Worker:
             "context_window_tokens": result.context_window_tokens,
         }
         if self.database.cancel_requested(run["id"]):
-            self.database.finish_run(
+            self._finish_run(
                 run["id"],
                 status="cancelled",
                 error="Stopped from Telegram.",
@@ -284,7 +287,7 @@ class Worker:
             )
             return
         if timed_out:
-            self.database.finish_run(
+            self._finish_run(
                 run["id"],
                 status="failed",
                 error=(
@@ -295,7 +298,7 @@ class Worker:
             )
             return
         if exit_code == 0 and result.final_response and not result.is_error:
-            self.database.finish_run(
+            self._finish_run(
                 run["id"],
                 status="succeeded",
                 final_response=result.final_response,
@@ -303,7 +306,7 @@ class Worker:
             )
             self._continue_investigation(run, result.final_response)
             return
-        self.database.finish_run(
+        self._finish_run(
             run["id"],
             status="failed",
             final_response=result.final_response,
@@ -315,6 +318,55 @@ class Worker:
             ),
             **common,
         )
+
+    def _finish_run(
+        self, run_id: str, *, status: str, **values: Any
+    ) -> None:
+        self.database.finish_run(run_id, status=status, **values)
+        paths = self.database.nfl_audio_paths_for_run(run_id)
+        if not paths:
+            return
+        errors = remove_audio_files(paths)
+        if errors:
+            log.error(
+                "Could not remove NFL audio for run %s: %s",
+                run_id,
+                ", ".join(errors),
+            )
+            return
+        self.database.mark_nfl_audio_run_cleaned(
+            run_id, succeeded=status == "succeeded"
+        )
+
+    def _cleanup_pending_nfl_audio(self) -> None:
+        for collection in self.database.pending_nfl_audio_cleanup():
+            if collection["run_id"]:
+                paths = self.database.nfl_audio_paths_for_run(
+                    collection["run_id"]
+                )
+            else:
+                paths = [
+                    item["local_path"]
+                    for item in self.database.nfl_audio_items(collection["id"])
+                    if item["local_path"]
+                ]
+            errors = remove_audio_files(paths)
+            if errors:
+                log.error(
+                    "Could not remove NFL audio collection %s: %s",
+                    collection["id"],
+                    ", ".join(errors),
+                )
+                continue
+            if collection["run_id"]:
+                self.database.mark_nfl_audio_run_cleaned(
+                    collection["run_id"],
+                    succeeded=collection["run_status"] == "succeeded",
+                )
+            else:
+                self.database.mark_nfl_audio_collection_cleaned(
+                    collection["id"]
+                )
 
     def _continue_investigation(
         self, run: dict[str, Any], response: str

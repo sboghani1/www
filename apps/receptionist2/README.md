@@ -31,6 +31,10 @@ Primary bot:
 - `/deployments` with diagnosis buttons for failed deployments
 - `/investigate <problem>` for a structured investigation that continues until
   findings, evidence, changes, validation, and lessons are reported
+- `/nfl_audio <season> <week>` starts a private voice-note collection;
+  `/nfl_audio_done` queues schedule-backed, evidence-preserving transcription
+  and `/nfl_audio_cancel` discards it. Results are review-only and never become
+  official picks without a separate approval.
 - `/restart` with interrupt, ten-minute drain, or unlimited-drain choices
 - `/schedules`
 - `/schedule_add name | cron | prompt`
@@ -65,7 +69,14 @@ RECEPTIONIST2_REPO_ROOT=/home/receptionist/repos
 RECEPTIONIST2_TIMEZONE=America/Los_Angeles
 RECEPTIONIST2_DEFAULT_MODEL=claude-opus-5-5
 RECEPTIONIST2_DEFAULT_EFFORT=high
+RECEPTIONIST2_NFL_AUDIO_MAX_BYTES=20971520
+RECEPTIONIST2_NFL_AUDIO_MAX_CLIPS=24
+RECEPTIONIST2_NFL_AUDIO_MAX_DURATION_SECONDS=3600
 ```
+
+NFL audio is stored under `RECEPTIONIST2_STATE_DIR/nfl-audio` with shared
+group-only access while queued. The worker removes raw clips when the run
+finishes; interrupted cleanup is retried from durable collection metadata.
 
 Worker environment:
 

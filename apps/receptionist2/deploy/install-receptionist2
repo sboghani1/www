@@ -37,6 +37,12 @@ if [[ ! -x "$python_binary" ]]; then
     echo "Required Python 3.12 binary is unavailable: $python_binary" >&2
     exit 1
 fi
+for command in ffmpeg ffprobe; do
+    if ! command -v "$command" >/dev/null; then
+        echo "Required audio command is unavailable: $command" >&2
+        exit 1
+    fi
+done
 
 as_agent() {
     runuser -u receptionist-agent -- "$@"
@@ -75,7 +81,10 @@ if [[ ! -f "$release/.receptionist2-complete" ]]; then
     as_agent git -C "$repo" archive "$revision" | tar -x -C "$release"
     "$python_binary" -m venv "$release/.venv"
     "$release/.venv/bin/pip" install --quiet --upgrade pip
-    "$release/.venv/bin/pip" install --quiet "$release/$app_rel[test]"
+    "$release/.venv/bin/pip" install --quiet \
+        "$release/packages/www-sqlite" \
+        "$release/apps/nfl-audio-parser" \
+        "$release/$app_rel[test]"
     (
         cd "$release/$app_rel"
         PYTHONDONTWRITEBYTECODE=1 "$release/.venv/bin/pytest" \
@@ -91,6 +100,8 @@ deploy="$release/$app_rel/deploy"
 install -d -m 0770 -o receptionist2 -g receptionist2-state "$state_dir"
 install -d -m 2770 -o receptionist-agent -g receptionist2-state \
     "$state_dir/runs"
+install -d -m 2770 -o receptionist2 -g receptionist2-state \
+    "$state_dir/nfl-audio"
 install -d -m 0700 -o receptionist2 -g receptionist2 \
     /home/receptionist2/.config/receptionist2
 install -d -m 0750 -o root -g receptionist2-state /etc/receptionist2

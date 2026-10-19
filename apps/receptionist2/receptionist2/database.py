@@ -149,6 +149,49 @@ class Database:
                 CREATE INDEX IF NOT EXISTS runs_status_created
                     ON runs(status, created_at);
 
+                CREATE TABLE IF NOT EXISTS nfl_audio_collections (
+                    id TEXT PRIMARY KEY,
+                    telegram_user_id INTEGER NOT NULL,
+                    telegram_chat_id INTEGER NOT NULL,
+                    session_id TEXT NOT NULL REFERENCES sessions(id),
+                    season INTEGER NOT NULL,
+                    week INTEGER NOT NULL,
+                    status TEXT NOT NULL CHECK(status IN (
+                        'collecting','queued','completed','failed','cancelled'
+                    )),
+                    run_id TEXT REFERENCES runs(id),
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+
+                CREATE UNIQUE INDEX IF NOT EXISTS
+                    nfl_audio_one_collecting
+                    ON nfl_audio_collections(
+                        telegram_user_id, telegram_chat_id
+                    )
+                    WHERE status='collecting';
+
+                CREATE TABLE IF NOT EXISTS nfl_audio_items (
+                    id TEXT PRIMARY KEY,
+                    collection_id TEXT NOT NULL
+                        REFERENCES nfl_audio_collections(id),
+                    telegram_chat_id INTEGER NOT NULL,
+                    telegram_message_id INTEGER NOT NULL,
+                    kind TEXT NOT NULL CHECK(kind IN (
+                        'voice','audio','document'
+                    )),
+                    mime_type TEXT NOT NULL,
+                    local_path TEXT NOT NULL,
+                    duration_seconds INTEGER,
+                    size_bytes INTEGER NOT NULL,
+                    created_at TEXT NOT NULL,
+                    cleaned_at TEXT,
+                    UNIQUE(telegram_chat_id, telegram_message_id)
+                );
+
+                CREATE INDEX IF NOT EXISTS nfl_audio_items_collection
+                    ON nfl_audio_items(collection_id, created_at);
+
                 CREATE TABLE IF NOT EXISTS outbox (
                     id TEXT PRIMARY KEY,
                     telegram_chat_id INTEGER NOT NULL,
@@ -549,6 +592,383 @@ class Database:
                 (chat_id, message_id),
             ).fetchone()
         return dict(row) if row else None
+
+    def start_nfl_audio_collection(
+        self,
+        *,
+        user_id: int,
+        chat_id: int,
+        season: int,
+        week: int,
+        default_model: str,
+        default_effort: str,
+    ) -> tuple[dict[str, Any], bool]:
+        session = self.ensure_user(
+            user_id,
+            chat_id,
+            default_model=default_model,
+            default_effort=default_effort,
+        )
+        now = utc_now()
+        with self.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            existing = connection.execute(
+                """
+                SELECT * FROM nfl_audio_collections
+                WHERE telegram_user_id=? AND telegram_chat_id=?
+                  AND status='collecting'
+                """,
+                (user_id, chat_id),
+            ).fetchone()
+            if existing:
+                connection.commit()
+                return dict(existing), False
+            collection_id = str(uuid.uuid4())
+            connection.execute(
+                """
+                INSERT INTO nfl_audio_collections(
+                    id, telegram_user_id, telegram_chat_id, session_id,
+                    season, week, status, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, 'collecting', ?, ?)
+                """,
+                (
+                    collection_id,
+                    user_id,
+                    chat_id,
+                    session["id"],
+                    season,
+                    week,
+                    now,
+                    now,
+                ),
+            )
+            connection.commit()
+        return self.get_nfl_audio_collection(collection_id), True
+
+    def get_nfl_audio_collection(
+        self, collection_id: str
+    ) -> dict[str, Any]:
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM nfl_audio_collections WHERE id=?",
+                (collection_id,),
+            ).fetchone()
+        if row is None:
+            raise KeyError(collection_id)
+        return dict(row)
+
+    def active_nfl_audio_collection(
+        self, user_id: int, chat_id: int
+    ) -> dict[str, Any] | None:
+        with self.connect() as connection:
+            row = connection.execute(
+                """
+                SELECT * FROM nfl_audio_collections
+                WHERE telegram_user_id=? AND telegram_chat_id=?
+                  AND status='collecting'
+                """,
+                (user_id, chat_id),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def nfl_audio_item_by_message(
+        self, chat_id: int, message_id: int
+    ) -> dict[str, Any] | None:
+        with self.connect() as connection:
+            row = connection.execute(
+                """
+                SELECT * FROM nfl_audio_items
+                WHERE telegram_chat_id=? AND telegram_message_id=?
+                """,
+                (chat_id, message_id),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def add_nfl_audio_item(
+        self,
+        *,
+        collection_id: str,
+        chat_id: int,
+        message_id: int,
+        kind: str,
+        mime_type: str,
+        local_path: str,
+        duration_seconds: int | None,
+        size_bytes: int,
+        max_items: int,
+    ) -> tuple[dict[str, Any], bool]:
+        now = utc_now()
+        with self.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            existing = connection.execute(
+                """
+                SELECT * FROM nfl_audio_items
+                WHERE telegram_chat_id=? AND telegram_message_id=?
+                """,
+                (chat_id, message_id),
+            ).fetchone()
+            if existing:
+                connection.commit()
+                return dict(existing), False
+            collection = connection.execute(
+                """
+                SELECT status FROM nfl_audio_collections
+                WHERE id=? AND telegram_chat_id=?
+                """,
+                (collection_id, chat_id),
+            ).fetchone()
+            if collection is None or collection["status"] != "collecting":
+                raise RuntimeError("NFL audio collection is not collecting")
+            item_count = connection.execute(
+                """
+                SELECT COUNT(*) AS count FROM nfl_audio_items
+                WHERE collection_id=?
+                """,
+                (collection_id,),
+            ).fetchone()["count"]
+            if item_count >= max_items:
+                raise ValueError("NFL audio collection clip limit reached")
+            item_id = str(uuid.uuid4())
+            connection.execute(
+                """
+                INSERT INTO nfl_audio_items(
+                    id, collection_id, telegram_chat_id,
+                    telegram_message_id, kind, mime_type, local_path,
+                    duration_seconds, size_bytes, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    item_id,
+                    collection_id,
+                    chat_id,
+                    message_id,
+                    kind,
+                    mime_type,
+                    local_path,
+                    duration_seconds,
+                    size_bytes,
+                    now,
+                ),
+            )
+            connection.execute(
+                """
+                UPDATE nfl_audio_collections SET updated_at=? WHERE id=?
+                """,
+                (now, collection_id),
+            )
+            connection.commit()
+        return self.nfl_audio_item_by_message(chat_id, message_id), True
+
+    def nfl_audio_items(
+        self, collection_id: str
+    ) -> list[dict[str, Any]]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM nfl_audio_items
+                WHERE collection_id=? ORDER BY telegram_message_id, id
+                """,
+                (collection_id,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def queue_nfl_audio_collection(
+        self,
+        *,
+        collection_id: str,
+        message_id: int,
+        exact_prompt: str,
+    ) -> tuple[dict[str, Any], bool]:
+        now = utc_now()
+        with self.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            collection = connection.execute(
+                "SELECT * FROM nfl_audio_collections WHERE id=?",
+                (collection_id,),
+            ).fetchone()
+            if collection is None:
+                raise KeyError(collection_id)
+            if collection["status"] != "collecting":
+                if collection["run_id"]:
+                    run = connection.execute(
+                        "SELECT * FROM runs WHERE id=?",
+                        (collection["run_id"],),
+                    ).fetchone()
+                    connection.commit()
+                    return dict(run), False
+                raise RuntimeError("NFL audio collection is not collecting")
+            item_count = connection.execute(
+                """
+                SELECT COUNT(*) AS count FROM nfl_audio_items
+                WHERE collection_id=?
+                """,
+                (collection_id,),
+            ).fetchone()["count"]
+            if item_count == 0:
+                raise ValueError("NFL audio collection has no clips")
+            session = connection.execute(
+                "SELECT * FROM sessions WHERE id=?",
+                (collection["session_id"],),
+            ).fetchone()
+            if session is None:
+                raise RuntimeError("NFL audio collection session is missing")
+            run_id = str(uuid.uuid4())
+            connection.execute(
+                """
+                INSERT INTO runs(
+                    id, session_id, telegram_user_id, telegram_chat_id,
+                    source, exact_prompt, model, effort, provider_session_id,
+                    status, created_at
+                ) VALUES (?, ?, ?, ?, 'message', ?, ?, ?, ?, 'queued', ?)
+                """,
+                (
+                    run_id,
+                    collection["session_id"],
+                    collection["telegram_user_id"],
+                    collection["telegram_chat_id"],
+                    exact_prompt,
+                    session["model"],
+                    session["effort"],
+                    session["provider_session_id"],
+                    now,
+                ),
+            )
+            connection.execute(
+                """
+                INSERT INTO inbound_messages(
+                    telegram_chat_id, telegram_message_id, exact_text, run_id,
+                    received_at
+                ) VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    collection["telegram_chat_id"],
+                    message_id,
+                    f"/nfl_audio_done {collection_id}",
+                    run_id,
+                    now,
+                ),
+            )
+            connection.execute(
+                """
+                UPDATE nfl_audio_collections
+                SET status='queued', run_id=?, updated_at=? WHERE id=?
+                """,
+                (run_id, now, collection_id),
+            )
+            connection.commit()
+        return self.get_run(run_id), True
+
+    def cancel_nfl_audio_collection(
+        self, user_id: int, chat_id: int
+    ) -> tuple[dict[str, Any] | None, list[str]]:
+        now = utc_now()
+        with self.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            collection = connection.execute(
+                """
+                SELECT * FROM nfl_audio_collections
+                WHERE telegram_user_id=? AND telegram_chat_id=?
+                  AND status='collecting'
+                """,
+                (user_id, chat_id),
+            ).fetchone()
+            if collection is None:
+                connection.commit()
+                return None, []
+            paths = [
+                row["local_path"]
+                for row in connection.execute(
+                    """
+                    SELECT local_path FROM nfl_audio_items
+                    WHERE collection_id=? AND local_path != ''
+                    """,
+                    (collection["id"],),
+                ).fetchall()
+            ]
+            connection.execute(
+                """
+                UPDATE nfl_audio_collections
+                SET status='cancelled', updated_at=? WHERE id=?
+                """,
+                (now, collection["id"]),
+            )
+            connection.commit()
+        return dict(collection), paths
+
+    def mark_nfl_audio_collection_cleaned(self, collection_id: str) -> None:
+        now = utc_now()
+        with self.connect() as connection:
+            connection.execute(
+                """
+                UPDATE nfl_audio_items
+                SET local_path='', cleaned_at=?
+                WHERE collection_id=? AND local_path != ''
+                """,
+                (now, collection_id),
+            )
+            connection.commit()
+
+    def nfl_audio_paths_for_run(self, run_id: str) -> list[str]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT i.local_path FROM nfl_audio_items i
+                JOIN nfl_audio_collections c ON c.id=i.collection_id
+                WHERE c.run_id=? AND i.local_path != ''
+                """,
+                (run_id,),
+            ).fetchall()
+        return [row["local_path"] for row in rows]
+
+    def pending_nfl_audio_cleanup(self) -> list[dict[str, Any]]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT c.id, c.run_id, c.status, r.status AS run_status
+                FROM nfl_audio_collections c
+                LEFT JOIN runs r ON r.id=c.run_id
+                WHERE EXISTS (
+                    SELECT 1 FROM nfl_audio_items i
+                    WHERE i.collection_id=c.id AND i.local_path != ''
+                ) AND (
+                    c.status='cancelled'
+                    OR (
+                        c.status='queued'
+                        AND r.status IN (
+                            'succeeded','failed','interrupted','cancelled'
+                        )
+                    )
+                )
+                ORDER BY c.updated_at
+                """
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def mark_nfl_audio_run_cleaned(
+        self, run_id: str, *, succeeded: bool
+    ) -> None:
+        now = utc_now()
+        status = "completed" if succeeded else "failed"
+        with self.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            connection.execute(
+                """
+                UPDATE nfl_audio_items
+                SET local_path='', cleaned_at=?
+                WHERE collection_id IN (
+                    SELECT id FROM nfl_audio_collections WHERE run_id=?
+                ) AND local_path != ''
+                """,
+                (now, run_id),
+            )
+            connection.execute(
+                """
+                UPDATE nfl_audio_collections SET status=?, updated_at=?
+                WHERE run_id=? AND status='queued'
+                """,
+                (status, now, run_id),
+            )
+            connection.commit()
 
     def enqueue_scheduled_run(
         self, schedule: dict[str, Any], scheduled_for: str

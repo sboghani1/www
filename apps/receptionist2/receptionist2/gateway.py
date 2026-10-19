@@ -4,6 +4,7 @@ import json
 import logging
 import re
 import time
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -33,6 +34,7 @@ from .deployments import (
     diagnosis_prompt,
 )
 from .investigation import investigation_prompt
+from .nfl_audio import audio_review_prompt, remove_audio_files, telegram_audio
 from .resources import resource_summary
 from .scheduling import next_run
 
@@ -68,6 +70,9 @@ HELP_TEXT = (
     "/verbose [on|off] — toggle detailed progress updates\n"
     "/model [alias-or-id], /effort [level] — runtime for new runs\n"
     "/investigate <problem> — structured investigation run\n"
+    "/nfl_audio <season> <week> — collect private NFL voice notes\n"
+    "/nfl_audio_done — transcribe and build a review-only slate\n"
+    "/nfl_audio_cancel — discard the active audio collection\n"
     "/deployments — recent deployment requests\n"
     "/restart — drain and restart the gateway and worker\n"
     "/schedules, /schedule_add, /schedule_pause, /schedule_resume, "
@@ -245,6 +250,227 @@ class Gateway:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         await update.message.reply_text(HELP_TEXT, reply_markup=recovery_menu())
+
+    async def nfl_audio_start(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        if len(context.args) != 2:
+            await update.message.reply_text("Usage: /nfl_audio <season> <week>")
+            return
+        try:
+            season, week = (int(value) for value in context.args)
+        except ValueError:
+            await update.message.reply_text(
+                "Season and week must both be numbers."
+            )
+            return
+        if season < 2020 or season > 2100 or week < 1 or week > 22:
+            await update.message.reply_text(
+                "Use an NFL season from 2020–2100 and a week from 1–22."
+            )
+            return
+        collection, created = self.database.start_nfl_audio_collection(
+            user_id=update.effective_user.id,
+            chat_id=update.effective_chat.id,
+            season=season,
+            week=week,
+            default_model=self.config.default_model,
+            default_effort=self.config.default_effort,
+        )
+        if not created:
+            count = len(self.database.nfl_audio_items(collection["id"]))
+            await update.message.reply_text(
+                "An NFL audio collection is already active for "
+                f"{collection['season']} Week {collection['week']} with "
+                f"{count} clip{'s' if count != 1 else ''}. "
+                "Use /nfl_audio_done or /nfl_audio_cancel first."
+            )
+            return
+        await update.message.reply_text(
+            f"🎙️ Collecting your {season} Week {week} NFL commentary.\n"
+            "Send one or more Telegram voice notes or audio files, then use "
+            "/nfl_audio_done. Nothing will become an official pick without a "
+            "separate approval."
+        )
+
+    async def nfl_audio_receive(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        message = update.effective_message
+        selected = telegram_audio(message)
+        if selected is None:
+            await message.reply_text(
+                "That document is not an audio file. Send a voice note or "
+                "audio file."
+            )
+            return
+        collection = self.database.active_nfl_audio_collection(
+            update.effective_user.id, update.effective_chat.id
+        )
+        if collection is None:
+            await message.reply_text(
+                "Start a collection first with /nfl_audio <season> <week>."
+            )
+            return
+        existing = self.database.nfl_audio_item_by_message(
+            update.effective_chat.id, message.message_id
+        )
+        if existing:
+            count = len(self.database.nfl_audio_items(collection["id"]))
+            await message.reply_text(
+                f"Already saved that clip · {count} total."
+            )
+            return
+        items = self.database.nfl_audio_items(collection["id"])
+        if len(items) >= self.config.nfl_audio_max_clips:
+            await message.reply_text(
+                f"This collection already has the maximum "
+                f"{self.config.nfl_audio_max_clips} clips."
+            )
+            return
+        if (
+            selected.duration_seconds is not None
+            and selected.duration_seconds
+            > self.config.nfl_audio_max_duration_seconds
+        ):
+            await message.reply_text(
+                "That clip is too long. The per-clip limit is "
+                f"{self.config.nfl_audio_max_duration_seconds // 60} minutes."
+            )
+            return
+        reported_size = selected.media.file_size
+        if (
+            reported_size is not None
+            and reported_size > self.config.nfl_audio_max_bytes
+        ):
+            await message.reply_text(
+                "That clip is too large. The download limit is "
+                f"{self.config.nfl_audio_max_bytes // (1024 * 1024)} MB."
+            )
+            return
+        collection_dir = self.config.nfl_audio_dir / collection["id"]
+        final_path: Path | None = None
+        temp_path: Path | None = None
+        stored = False
+        try:
+            collection_dir.mkdir(parents=True, exist_ok=True, mode=0o2770)
+            collection_dir.chmod(0o2770)
+            final_path = collection_dir / f"{uuid.uuid4()}{selected.suffix}"
+            temp_path = collection_dir / f".{final_path.name}.part"
+            telegram_file = await selected.media.get_file()
+            await telegram_file.download_to_drive(custom_path=temp_path)
+            actual_size = temp_path.stat().st_size
+            if actual_size > self.config.nfl_audio_max_bytes:
+                await message.reply_text(
+                    "That clip exceeded the download size limit."
+                )
+                return
+            temp_path.chmod(0o660)
+            temp_path.replace(final_path)
+            item, created = self.database.add_nfl_audio_item(
+                collection_id=collection["id"],
+                chat_id=update.effective_chat.id,
+                message_id=message.message_id,
+                kind=selected.kind,
+                mime_type=selected.mime_type,
+                local_path=str(final_path),
+                duration_seconds=selected.duration_seconds,
+                size_bytes=actual_size,
+                max_items=self.config.nfl_audio_max_clips,
+            )
+            if not created:
+                final_path.unlink(missing_ok=True)
+            else:
+                stored = True
+            count = len(self.database.nfl_audio_items(collection["id"]))
+            duration = item.get("duration_seconds")
+            duration_text = (
+                f" · {duration // 60}:{duration % 60:02d}"
+                if duration is not None
+                else ""
+            )
+            await message.reply_text(
+                f"🎧 Saved clip {count}{duration_text}. "
+                "Send another or use /nfl_audio_done."
+            )
+        except (OSError, RuntimeError, TelegramError, ValueError) as error:
+            log.exception("Could not store NFL audio message")
+            if final_path is not None and not stored:
+                final_path.unlink(missing_ok=True)
+            await message.reply_text(
+                f"Could not save that audio clip: {error}"
+            )
+        finally:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
+
+    async def nfl_audio_done(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        existing = self.database.inbound_run(
+            update.effective_chat.id, update.effective_message.message_id
+        )
+        if existing:
+            await update.message.reply_text(
+                f"Already queued · run {existing['id'][:8]}."
+            )
+            return
+        collection = self.database.active_nfl_audio_collection(
+            update.effective_user.id, update.effective_chat.id
+        )
+        if collection is None:
+            await update.message.reply_text(
+                "There is no active NFL audio collection."
+            )
+            return
+        items = self.database.nfl_audio_items(collection["id"])
+        if not items:
+            await update.message.reply_text(
+                "Send at least one voice note or audio file first."
+            )
+            return
+        prompt = audio_review_prompt(collection, items)
+        try:
+            run, created = self.database.queue_nfl_audio_collection(
+                collection_id=collection["id"],
+                message_id=update.effective_message.message_id,
+                exact_prompt=prompt,
+            )
+        except (KeyError, RuntimeError, ValueError) as error:
+            await update.message.reply_text(str(error))
+            return
+        await update.message.reply_text(
+            f"{'Queued' if created else 'Already queued'} {len(items)} "
+            f"clip{'s' if len(items) != 1 else ''} for a review-only "
+            f"{collection['season']} Week {collection['week']} analysis · "
+            f"run {run['id'][:8]}.\n"
+            "Raw audio will be removed when the run finishes."
+        )
+
+    async def nfl_audio_cancel(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        collection, paths = self.database.cancel_nfl_audio_collection(
+            update.effective_user.id, update.effective_chat.id
+        )
+        if collection is None:
+            await update.message.reply_text(
+                "There is no active NFL audio collection."
+            )
+            return
+        errors = remove_audio_files(paths)
+        if not errors:
+            self.database.mark_nfl_audio_collection_cleaned(collection["id"])
+        await update.message.reply_text(
+            f"Cancelled {collection['season']} Week {collection['week']} "
+            f"audio collection."
+            + (
+                " Some temporary files could not be removed; maintenance "
+                "will retry."
+                if errors
+                else ""
+            )
+        )
 
     async def topics(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -1005,6 +1231,9 @@ def build_application(config: GatewayConfig) -> Application:
     commands = [
         ("start", gateway.start),
         ("help", gateway.help),
+        ("nfl_audio", gateway.nfl_audio_start),
+        ("nfl_audio_done", gateway.nfl_audio_done),
+        ("nfl_audio_cancel", gateway.nfl_audio_cancel),
         ("status", gateway.status),
         ("topics", gateway.topics),
         ("verbose", gateway.verbose),
@@ -1056,6 +1285,12 @@ def build_application(config: GatewayConfig) -> Application:
                 gateway.authorized(handler),
             )
         )
+    application.add_handler(
+        MessageHandler(
+            filters.VOICE | filters.AUDIO | filters.Document.ALL,
+            gateway.authorized(gateway.nfl_audio_receive),
+        )
+    )
     application.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,

@@ -70,6 +70,9 @@ class GatewayConfig(CommonConfig):
     default_effort: str
     delivery_poll_seconds: int
     schedule_poll_seconds: int
+    nfl_audio_max_bytes: int
+    nfl_audio_max_clips: int
+    nfl_audio_max_duration_seconds: int
 
     @classmethod
     def from_env(cls) -> "GatewayConfig":
@@ -91,7 +94,20 @@ class GatewayConfig(CommonConfig):
             schedule_poll_seconds=positive_int(
                 "RECEPTIONIST2_SCHEDULE_POLL_SECONDS", 30
             ),
+            nfl_audio_max_bytes=positive_int(
+                "RECEPTIONIST2_NFL_AUDIO_MAX_BYTES", 20 * 1024 * 1024
+            ),
+            nfl_audio_max_clips=positive_int(
+                "RECEPTIONIST2_NFL_AUDIO_MAX_CLIPS", 24
+            ),
+            nfl_audio_max_duration_seconds=positive_int(
+                "RECEPTIONIST2_NFL_AUDIO_MAX_DURATION_SECONDS", 3600
+            ),
         )
+
+    @property
+    def nfl_audio_dir(self) -> Path:
+        return self.state_dir / "nfl-audio"
 
 
 @dataclass(frozen=True)

@@ -13,6 +13,8 @@ from pathlib import Path
 
 REPO_ROOT = Path("/home/receptionist/repos").resolve()
 CLAUDE_BINARY = "/usr/bin/claude"
+RECEPTIONIST2_BIN = "/opt/receptionist2/current/.venv/bin"
+LEGACY_NFL_AUDIO_BIN = "/opt/telegram-receptionist/current/.venv/bin"
 RUN_STATE_DIR = Path("/var/lib/receptionist2/runs")
 MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._\-\[\]]*$")
 EFFORTS = {"low", "medium", "high", "xhigh", "max"}
@@ -101,6 +103,10 @@ def main() -> None:
         raise SystemExit("Repository is outside the approved workspace")
 
     load_google_environment()
+    os.environ["PATH"] = (
+        f"{RECEPTIONIST2_BIN}:{LEGACY_NFL_AUDIO_BIN}:"
+        f"{os.environ.get('PATH', '/usr/bin:/bin')}"
+    )
     os.environ["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1"
     RUN_STATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o750)
     stdout_path = RUN_STATE_DIR / f"{run_id}.stdout.jsonl"

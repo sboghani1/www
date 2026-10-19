@@ -2,6 +2,7 @@ import json
 import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -19,6 +20,11 @@ from receptionist2.investigation import (
     continuation_prompt,
     investigation_prompt,
     missing_sections,
+)
+from receptionist2.nfl_audio import (
+    audio_review_prompt,
+    remove_audio_files,
+    telegram_audio,
 )
 from receptionist2.maintenance import run_maintenance
 from receptionist2.provider import assistant_activities
@@ -45,6 +51,83 @@ def accept(database: Database, message_id: int, text: str = "work") -> dict:
         default_effort=session["effort"],
     )
     return run
+
+
+def test_telegram_audio_selects_voice_audio_and_audio_documents() -> None:
+    voice = SimpleNamespace(
+        mime_type="audio/ogg", duration=17, file_size=100
+    )
+    selected = telegram_audio(
+        SimpleNamespace(voice=voice, audio=None, document=None)
+    )
+    assert selected
+    assert (selected.kind, selected.suffix, selected.duration_seconds) == (
+        "voice",
+        ".ogg",
+        17,
+    )
+
+    document = SimpleNamespace(mime_type="audio/mpeg", file_size=100)
+    selected = telegram_audio(
+        SimpleNamespace(voice=None, audio=None, document=document)
+    )
+    assert selected
+    assert (selected.kind, selected.suffix, selected.duration_seconds) == (
+        "document",
+        ".mp3",
+        None,
+    )
+    assert (
+        telegram_audio(
+            SimpleNamespace(
+                voice=None,
+                audio=None,
+                document=SimpleNamespace(mime_type="application/pdf"),
+            )
+        )
+        is None
+    )
+
+
+def test_audio_review_prompt_is_review_only_and_evidence_bounded() -> None:
+    prompt = audio_review_prompt(
+        {"season": 2026, "week": 7},
+        [
+            {
+                "local_path": "/state/nfl-audio/a.ogg",
+                "duration_seconds": 42,
+                "mime_type": "audio/ogg",
+            },
+            {
+                "local_path": "/state/nfl-audio/b.mp3",
+                "duration_seconds": None,
+                "mime_type": "audio/mpeg",
+            },
+        ],
+    )
+    assert "nfl-audio-parser/SKILL.md" in prompt
+    assert "Season: 2026" in prompt
+    assert "Week: 7" in prompt
+    assert "/state/nfl-audio/a.ogg" in prompt
+    assert "End timestamp: 42" in prompt
+    assert "determine the exact duration with ffprobe" in prompt
+    assert "Never infer a pick" in prompt
+    assert "Do not write nfl_leans" in prompt
+    assert "separate explicit approval" in prompt
+
+
+def test_remove_audio_files_removes_clips_and_empty_directory(
+    tmp_path: Path,
+) -> None:
+    directory = tmp_path / "collection"
+    directory.mkdir()
+    first = directory / "a.ogg"
+    second = directory / "b.mp3"
+    first.write_bytes(b"a")
+    second.write_bytes(b"b")
+
+    assert remove_audio_files([str(first), str(second)]) == []
+    assert not directory.exists()
 
 
 def test_investigation_requires_every_section() -> None:
@@ -140,6 +223,9 @@ def test_installer_pins_python_312() -> None:
     assert "/usr/local/bin/python3.12" in installer
     assert '"$python_binary" -m venv "$release/.venv"' in installer
     assert 'python3 -m venv "$release/.venv"' not in installer
+    assert '"$release/packages/www-sqlite"' in installer
+    assert '"$release/apps/nfl-audio-parser"' in installer
+    assert "Required audio command is unavailable" in installer
 
 
 def test_cancel_requeue_and_verbose(tmp_path: Path) -> None:

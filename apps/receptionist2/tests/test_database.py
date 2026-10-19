@@ -43,6 +43,114 @@ def test_message_acceptance_is_deduplicated_and_snapshots_runtime(
     assert first["effort"] == "max"
 
 
+def test_nfl_audio_collection_queues_once_and_cleans_paths(
+    tmp_path: Path,
+) -> None:
+    database = make_database(tmp_path)
+    collection, created = database.start_nfl_audio_collection(
+        user_id=10,
+        chat_id=20,
+        season=2026,
+        week=7,
+        default_model="model",
+        default_effort="max",
+    )
+    duplicate, duplicate_created = database.start_nfl_audio_collection(
+        user_id=10,
+        chat_id=20,
+        season=2026,
+        week=8,
+        default_model="ignored",
+        default_effort="ignored",
+    )
+    assert created
+    assert not duplicate_created
+    assert duplicate["id"] == collection["id"]
+    assert duplicate["week"] == 7
+
+    audio_path = tmp_path / "clip.ogg"
+    audio_path.write_bytes(b"audio")
+    item, item_created = database.add_nfl_audio_item(
+        collection_id=collection["id"],
+        chat_id=20,
+        message_id=30,
+        kind="voice",
+        mime_type="audio/ogg",
+        local_path=str(audio_path),
+        duration_seconds=45,
+        size_bytes=5,
+        max_items=24,
+    )
+    item_duplicate, item_duplicate_created = database.add_nfl_audio_item(
+        collection_id=collection["id"],
+        chat_id=20,
+        message_id=30,
+        kind="voice",
+        mime_type="audio/ogg",
+        local_path=str(audio_path),
+        duration_seconds=45,
+        size_bytes=5,
+        max_items=24,
+    )
+    assert item_created
+    assert not item_duplicate_created
+    assert item_duplicate["id"] == item["id"]
+
+    run, run_created = database.queue_nfl_audio_collection(
+        collection_id=collection["id"],
+        message_id=40,
+        exact_prompt="review only",
+    )
+    assert run_created
+    assert run["source"] == "message"
+    assert run["exact_prompt"] == "review only"
+    assert database.active_nfl_audio_collection(10, 20) is None
+    assert database.nfl_audio_paths_for_run(run["id"]) == [str(audio_path)]
+
+    database.mark_nfl_audio_run_cleaned(run["id"], succeeded=True)
+    finished = database.get_nfl_audio_collection(collection["id"])
+    assert finished["status"] == "completed"
+    assert database.nfl_audio_paths_for_run(run["id"]) == []
+
+
+def test_nfl_audio_collection_cancellation_returns_owned_paths(
+    tmp_path: Path,
+) -> None:
+    database = make_database(tmp_path)
+    collection, _ = database.start_nfl_audio_collection(
+        user_id=10,
+        chat_id=20,
+        season=2026,
+        week=7,
+        default_model="model",
+        default_effort="max",
+    )
+    database.add_nfl_audio_item(
+        collection_id=collection["id"],
+        chat_id=20,
+        message_id=30,
+        kind="audio",
+        mime_type="audio/mpeg",
+        local_path="/state/nfl-audio/clip.mp3",
+        duration_seconds=60,
+        size_bytes=100,
+        max_items=24,
+    )
+
+    cancelled, paths = database.cancel_nfl_audio_collection(10, 20)
+    assert cancelled and cancelled["id"] == collection["id"]
+    assert paths == ["/state/nfl-audio/clip.mp3"]
+    assert (
+        database.get_nfl_audio_collection(collection["id"])["status"]
+        == "cancelled"
+    )
+    assert database.pending_nfl_audio_cleanup()[0]["id"] == collection["id"]
+
+    database.mark_nfl_audio_collection_cleaned(collection["id"])
+    assert database.nfl_audio_items(collection["id"])[0]["local_path"] == ""
+    assert database.pending_nfl_audio_cleanup() == []
+
+
 def test_runtime_changes_only_affect_new_runs(tmp_path: Path) -> None:
     database = make_database(tmp_path)
     database.ensure_user(
