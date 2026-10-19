@@ -54,7 +54,7 @@ class ClipboardStore:
         with self.connect() as connection:
             connection.executescript(
                 """
-                PRAGMA journal_mode=WAL;
+                PRAGMA journal_mode=DELETE;
                 CREATE TABLE IF NOT EXISTS clipboard_items (
                     id TEXT PRIMARY KEY,
                     telegram_message_id INTEGER,
@@ -78,13 +78,10 @@ class ClipboardStore:
                 """
             )
             connection.commit()
-        for path in (
-            self.database_path,
-            self.database_path.with_name(self.database_path.name + "-wal"),
-            self.database_path.with_name(self.database_path.name + "-shm"),
-        ):
-            if path.exists():
-                os.chmod(path, 0o660)
+        # Rollback-journal mode: Receptionist2 reads this database read-only
+        # as another user, and a WAL reader creates -wal/-shm files that the
+        # bot's user then cannot open.
+        os.chmod(self.database_path, 0o660)
 
     def connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.database_path, timeout=30)

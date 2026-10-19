@@ -11,7 +11,9 @@ from .config import Config
 from .store import ClipboardStore
 
 
-def _kind(path: Path, mime_type: str) -> str:
+def _kind(path: Path, mime_type: str, *, as_document: bool = False) -> str:
+    if as_document:
+        return "document"
     if mime_type.startswith("image/"):
         return "image"
     if mime_type.startswith("video/"):
@@ -49,7 +51,7 @@ async def _send(args: argparse.Namespace) -> None:
     mime_type = mimetypes.guess_type(path.name)[0] or (
         "application/octet-stream"
     )
-    kind = _kind(path, mime_type)
+    kind = _kind(path, mime_type, as_document=args.document)
     with path.open("rb") as handle:
         if kind == "image":
             message = await bot.send_photo(
@@ -100,6 +102,11 @@ def send_main() -> None:
     group.add_argument("path", type=Path, nargs="?")
     group.add_argument("--text")
     parser.add_argument("--caption", default="")
+    parser.add_argument(
+        "--document",
+        action="store_true",
+        help="Send a file uncompressed, with its file name, even if it is an image.",
+    )
     asyncio.run(_send(parser.parse_args()))
 
 
