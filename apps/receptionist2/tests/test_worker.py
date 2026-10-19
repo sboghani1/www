@@ -144,3 +144,42 @@ def test_worker_reports_finished_self_deployment(tmp_path: Path) -> None:
     assert database.get_state("deploy_drain", "") == ""
     message = database.claim_outbox()
     assert message and "abcdef12" in message["body"]
+
+
+def test_worker_closes_self_deployment_at_requested_revision(
+    tmp_path: Path,
+) -> None:
+    revision = "c" * 40
+    release = tmp_path / "releases" / revision
+    release.mkdir(parents=True)
+    release_link = tmp_path / "current"
+    release_link.symlink_to(release)
+    worker, database = make_worker(tmp_path, release_link=release_link)
+    database.ensure_user(1, 2, default_model="m", default_effort="high")
+    request_id = "1f0e8a3c-6f7e-4a59-9d0c-1f2e3d4c5b6a"
+    created = datetime.now(UTC)
+    database.import_deployment_request(
+        request_id=request_id,
+        user_id=1,
+        repository_path=str(tmp_path),
+        revision=revision,
+        command="install-receptionist2 --restart",
+        summary="Deploy",
+        created_at=created.isoformat(),
+        expires_at=(created + timedelta(minutes=10)).isoformat(),
+    )
+    assert database.transition_deployment_request(
+        request_id, "pending", "approved"
+    )
+    assert database.transition_deployment_request(
+        request_id, "approved", "running"
+    )
+    database.set_state("deploy_drain", f"{request_id}@123")
+
+    worker.finish_self_deployment()
+
+    request = database.get_deployment_request(request_id)
+    assert request["status"] == "succeeded"
+    assert request["exit_code"] == 0
+    assert revision in request["output"]
+    assert database.get_state("deploy_drain", "") == ""

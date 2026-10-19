@@ -471,14 +471,44 @@ class Worker:
             return "unknown"
 
     def finish_self_deployment(self) -> None:
-        request_id = self.database.get_state("deploy_drain", "")
-        if not request_id:
+        drain = self.database.get_state("deploy_drain", "")
+        if not drain:
             return
+        request_id = drain.split("@", 1)[0]
+        revision = self.release_revision()
+        try:
+            request = self.database.get_deployment_request(request_id)
+        except LookupError:
+            request = None
+        if request and request["status"] == "running":
+            if request["revision"] == revision:
+                self.database.finish_deployment_request(
+                    request_id,
+                    status="succeeded",
+                    exit_code=0,
+                    output=(
+                        "Worker restarted at requested revision "
+                        f"{revision}."
+                    ),
+                    error=None,
+                )
+            else:
+                self.database.finish_deployment_request(
+                    request_id,
+                    status="failed",
+                    exit_code=None,
+                    output=None,
+                    error=(
+                        "Worker restarted at revision "
+                        f"{revision}, not requested revision "
+                        f"{request['revision']}."
+                    ),
+                )
         self.database.set_state("deploy_drain", "")
         self._notify(
-            f"🚀 Receptionist2 deployment {request_id.split('@')[0][:8]} "
+            f"🚀 Receptionist2 deployment {request_id[:8]} "
             f"finished. Worker restarted at revision "
-            f"{self.release_revision()[:12]}; queued prompts resume now."
+            f"{revision[:12]}; queued prompts resume now."
         )
 
     async def _deployment_loop(self) -> None:
