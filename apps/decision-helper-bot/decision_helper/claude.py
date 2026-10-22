@@ -57,7 +57,7 @@ inside it. Extract NFL or NBA game decisions for winner, full-game spread, or
 full-game total. Match each one to exactly one supplied event.
 Never invent a decision, team, line, confidence, or reason. If the speaker
 gives a side without a line, use null; the application may attach the current
-market line. Convert only explicitly numeric confidence (for example 70%) to a
+BetOnline line. Convert only explicitly numeric confidence (for example 70%) to a
 0-1 probability. Preserve concise reasoning and uncertainties.
 
 Set "commitment" to "pick" when the speaker clearly commits to a side. Set it
@@ -68,8 +68,9 @@ between sides of the same market, record every side they favored as its own
 lean, in the order spoken, with the reasoning for each. A projection with no
 favored side (for example "I'd make it -2.5") is not a lean by itself.
 
-Candidates with "already_started": true are live or finished games with no
-market data. The speaker may be logging picks they had before those games
+Candidates with "already_started": true are live or finished games; their
+lines, when present, are BetOnline closing lines, not what the speaker saw.
+The speaker may be logging picks they had before those games
 (for example "my picks going into Tuesday's games"); match them by date and
 teams. For those games use only the line the speaker states, or null.
 
@@ -92,7 +93,7 @@ Return one JSON object and no prose:
   "immediate_feedback": "Brief process feedback grounded only in the transcript"
 }}
 
-Candidate events and consensus markets:
+Candidate events and BetOnline lines (spread/total point, American price):
 {candidates}
 
 Transcript:
@@ -112,9 +113,10 @@ falsifiable reasoning, and price sensitivity. Do not claim facts absent from
 the record. Bias tags must be short reusable labels. A "lean" commitment was a
 tentative view rather than a committed pick; if the transcript shows the
 speaker moving between sides, judge whether the flip improved the decision.
-If logged_after_start is true, the pick was recorded after the game began and
-has no market history; judge the stated reasoning and do not penalize the
-missing closing line.
+If logged_after_start is true, the pick was recorded after the game began; any
+line or price on it is BetOnline's closing line, not necessarily the number
+the speaker got. Judge the stated reasoning and do not penalize missing
+market history. All market lines are BetOnline's.
 
 Return one JSON object and no prose:
 {{

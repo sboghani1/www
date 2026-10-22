@@ -20,15 +20,17 @@ SCOREBOARD_URLS = {
 }
 
 
-def parse_started_events(payload: Any, sport: str) -> list[MarketEvent]:
-    """Games that are live or final, offered as candidates for late-logged picks."""
+def parse_scoreboard_events(
+    payload: Any, sport: str, states: frozenset[str] = frozenset({"pre", "in", "post"})
+) -> list[MarketEvent]:
+    """Scoreboard games (no markets) in the given ESPN states."""
     if not isinstance(payload, dict) or not isinstance(payload.get("events"), list):
         raise ValueError("ESPN response is missing an events list")
     events: list[MarketEvent] = []
     for event in payload["events"]:
         try:
             state = str(event["status"]["type"]["state"]).casefold()
-            if state not in {"in", "post"}:
+            if state not in states:
                 continue
             teams = {
                 str(competitor["homeAway"]): str(competitor["team"]["displayName"])
@@ -47,6 +49,11 @@ def parse_started_events(payload: Any, sport: str) -> list[MarketEvent]:
         except (IndexError, KeyError, TypeError):
             continue
     return events
+
+
+def parse_started_events(payload: Any, sport: str) -> list[MarketEvent]:
+    """Games that are live or final, offered as candidates for late-logged picks."""
+    return parse_scoreboard_events(payload, sport, frozenset({"in", "post"}))
 
 
 def parse_finals(payload: Any, sport: str) -> list[FinalGame]:
@@ -147,6 +154,9 @@ class EspnClient:
 
     async def fetch_started(self, sport: str, date: str) -> list[MarketEvent]:
         return parse_started_events(await self._scoreboard(sport, date), sport)
+
+    async def fetch_events(self, sport: str, date: str) -> list[MarketEvent]:
+        return parse_scoreboard_events(await self._scoreboard(sport, date), sport)
 
     async def _scoreboard(self, sport: str, date: str) -> Any:
         url = SCOREBOARD_URLS.get(sport)

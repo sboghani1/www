@@ -41,7 +41,7 @@ class FakeClaude:
         return DecisionReview(4, "Covered comfortably", "Specific edge", "Quantify weather", ("overconfidence",))
 
 
-class FakeOdds:
+class FakeLines:
     def __init__(self, events) -> None:
         self.events = events
         self.calls: list[str] = []
@@ -62,7 +62,7 @@ class FakeEspn:
     async def fetch_finals(self, sport, date):
         return [game for game in self.finals if game.sport == sport]
 
-    async def fetch_started(self, sport, date):
+    async def fetch_events(self, sport, date):
         return [event for event in self.started if event.sport == sport]
 
     async def close(self):
@@ -75,7 +75,8 @@ def make_bot(tmp_path: Path, events, finals=()) -> DecisionBot:
         allowed_user_id=1,
         expected_username="decision_helpers_bot",
         state_dir=tmp_path / "state",
-        odds_api_key="k",
+        google_credentials="c",
+        lines_sheet_id="s",
         claude_binary="/usr/bin/claude",
         claude_model="m",
         claude_effort="medium",
@@ -92,7 +93,7 @@ def make_bot(tmp_path: Path, events, finals=()) -> DecisionBot:
         store,
         transcriber=FakeTranscriber(),
         claude=FakeClaude(),
-        odds=FakeOdds(events),
+        lines=FakeLines(events),
         espn=FakeEspn(list(finals)),
     )
 
@@ -160,10 +161,10 @@ def test_voice_note_waits_for_button_then_parses_and_deletes(tmp_path: Path) -> 
     assert replies[0] == "🎧 Got it. Parse this note or trash the audio?"
     assert "Saved 3 pick(s)" in replies[1]
     assert "Buffalo Bills +3" in replies[1]
-    assert "Under 47.5 [market line]" in replies[1]
+    assert "Under 47.5 [BetOnline line]" in replies[1]
     assert "Good specificity" in replies[1]
     assert not any(bot.config.audio_dir.iterdir())
-    assert bot.odds.calls == ["nfl", "nba"]
+    assert bot.lines.calls == ["nfl", "nba"]
 
     # Telegram redelivery of the same message is ignored.
     run_voice(bot, update)
@@ -385,7 +386,7 @@ def test_market_tracking_settlement_and_post_game_review(tmp_path: Path) -> None
             },
         }
     )
-    bot.odds.events = [moved, events[1]]
+    bot.lines.events = [moved, events[1]]
     with bot.store.connect() as connection:
         connection.execute("UPDATE picks SET next_market_check_at=?", (timestamp(now),))
         connection.commit()
@@ -472,3 +473,90 @@ def test_service_uses_claude_subscription_account() -> None:
     installer = (Path(__file__).parents[1] / "deploy" / "install-decision-helper-bot").read_text()
     assert "auth status" in installer and "Claude subscription call OK" in installer
     assert "decision_helpers_bot" in installer
+
+
+def test_espn_games_carry_sheet_betonline_lines_and_closes(tmp_path: Path) -> None:
+    from decision_helper.models import MarketEvent, MarketQuote
+
+    now = datetime.now(UTC)
+    tip = now - timedelta(hours=20)
+    started = MarketEvent("espn-90", "nba", timestamp(tip), "LA Clippers", "Utah Jazz", {})
+    upcoming = MarketEvent("espn-91", "nba", timestamp(now + timedelta(hours=5)), "Boston Celtics", "New York Knicks", {})
+    sheet_close = MarketEvent(
+        "odds-90", "nba", timestamp(tip + timedelta(minutes=10)), "Los Angeles Clippers", "Utah Jazz",
+        {
+            "spread:Los Angeles Clippers": MarketQuote(-4.5, -108, 1),
+            "spread:Utah Jazz": MarketQuote(4.5, -112, 1),
+            "total:Over": MarketQuote(226.5, -110, 1),
+        },
+    )
+    sheet_only = MarketEvent(
+        "odds-92", "nba", timestamp(now + timedelta(days=1)), "Miami Heat", "Orlando Magic",
+        {"winner:Miami Heat": MarketQuote(None, 110, 1)},
+    )
+    bot = make_bot(tmp_path, [sheet_close, sheet_only])
+    bot.espn.started = [started, upcoming]
+
+    events = {event.id: event for event in asyncio.run(bot.candidate_events())}
+    assert set(events) == {"espn-90", "espn-91", "odds-92"}
+    assert events["espn-90"].markets["spread:LA Clippers"] == MarketQuote(-4.5, -108, 1)
+    assert events["espn-90"].markets["total:Over"].point == 226.5
+    assert events["espn-91"].markets == {}
+
+    async def extract(transcript, events):
+        return extraction_from_payload(
+            {
+                "picks": [
+                    {
+                        "sport": "nba",
+                        "event_id": "espn-90",
+                        "pick_type": "spread",
+                        "selection": "LA Clippers",
+                        "line": None,
+                        "commitment": "pick",
+                        "confidence_probability": None,
+                        "confidence_label": "",
+                        "reasoning": "Jazz tanking",
+                        "uncertainties": [],
+                    }
+                ],
+                "immediate_feedback": "Logged.",
+            },
+            events,
+        )
+
+    bot.claude.extract = extract
+    update = voice_update()
+    run_voice(bot, update)
+    reply = update.message.reply_text.await_args_list[-1].args[0]
+    assert "LA Clippers -4.5 [BetOnline close] [logged after start] (-108)" in reply
+    pick = bot.store.recent()[0]
+    assert pick["closing_line"] == -4.5 and pick["closing_price"] == -108
+
+
+def test_sync_reads_the_close_after_tip(tmp_path: Path) -> None:
+    from decision_helper.models import MarketEvent, MarketQuote
+
+    now = datetime.now(UTC)
+    events = make_events(now)
+    bot = make_bot(tmp_path, events)
+    run_voice(bot, voice_update())
+    tipped = timestamp(now - timedelta(minutes=20))
+    closed = MarketEvent(
+        **{
+            **events[0].__dict__,
+            "commence_time": tipped,
+            "markets": {**events[0].markets, "spread:Buffalo Bills": MarketQuote(1.0, -105, 1)},
+        }
+    )
+    bot.lines.events = [closed, events[1]]
+    with bot.store.connect() as connection:
+        connection.execute(
+            "UPDATE picks SET commence_time=?, next_market_check_at=? WHERE event_id='nfl-1'",
+            (tipped, timestamp(now - timedelta(minutes=5))),
+        )
+        connection.commit()
+    asyncio.run(bot.sync_markets())
+    spread = next(p for p in bot.store.recent() if p["pick_type"] == "spread")
+    assert spread["closing_line"] == 1.0 and spread["closing_price"] == -105
+    assert spread["next_market_check_at"] is None

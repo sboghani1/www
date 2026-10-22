@@ -5,95 +5,78 @@ import httpx
 import pytest
 
 from decision_helper.espn import EspnClient, match_final, parse_finals, parse_started_events
-from decision_helper.markets import (
-    OddsClient,
-    match_event,
-    next_market_check,
-    parse_events,
-)
+from decision_helper.lines import SheetLines, parse_rows
+from decision_helper.markets import match_event, next_market_check
 
 
-def odds_payload() -> list:
-    def book(spread: float, total: float, price: int) -> dict:
-        return {
-            "key": f"book{spread}",
-            "markets": [
-                {"key": "h2h", "outcomes": [
-                    {"name": "Buffalo Bills", "price": price},
-                    {"name": "Kansas City Chiefs", "price": -price - 20},
-                ]},
-                {"key": "spreads", "outcomes": [
-                    {"name": "Buffalo Bills", "point": spread, "price": -110},
-                    {"name": "Kansas City Chiefs", "point": -spread, "price": -110},
-                ]},
-                {"key": "totals", "outcomes": [
-                    {"name": "Over", "point": total, "price": -110},
-                    {"name": "Under", "point": total, "price": -110},
-                ]},
-            ],
-        }
+AWAY = "latest_away_game_spread_spreadprice_moneyline__h1_spread_spreadprice_moneyline__q1_spread_spreadprice_moneyline"
+HOME = AWAY.replace("latest_away_", "latest_home_")
+TOTALS = "latest_totals_game_total_overprice_underprice__h1_total_overprice_underprice__q1_total_overprice_underprice"
 
+
+def sheet_rows() -> list[list[str]]:
     return [
-        {
-            "id": "evt",
-            "commence_time": "2026-10-25T20:25:00Z",
-            "away_team": "Buffalo Bills",
-            "home_team": "Kansas City Chiefs",
-            "bookmakers": [book(2.5, 47.5, 120), book(3.0, 48.0, 125), book(2.5, 47.0, 118)],
-        },
-        {"id": "broken"},
+        ["event_id", "commence_time_utc", "away_team", "home_team", "opening_away_x", AWAY, HOME, TOTALS],
+        ["evt", "2026-10-25T20:25:00Z", "Buffalo Bills", "Kansas City Chiefs", "9,9,9",
+         "2.5,-110,120|nodata,nodata,nodata|nodata,nodata,nodata",
+         "-2.5,-110,-140|nodata,nodata,nodata|nodata,nodata,nodata",
+         "47.5,-108,-112|nodata,nodata,nodata|nodata,nodata,nodata"],
+        ["nolines", "2026-10-25T23:00:00Z", "Los Angeles Clippers", "Utah Jazz", "",
+         "nodata,nodata,nodata", "nodata,nodata,nodata", "nodata,nodata,nodata"],
+        ["bad", "not-a-time", "A", "B", "", "", "", ""],
     ]
 
 
-def test_consensus_uses_median_across_books() -> None:
-    [event] = parse_events(odds_payload(), "nfl")
+def test_sheet_rows_decode_latest_betonline_game_lines() -> None:
+    event, empty = parse_rows(sheet_rows(), "nfl")
+    assert event.id == "evt" and event.sport == "nfl"
     assert event.markets["spread:Buffalo Bills"].point == 2.5
-    assert event.markets["spread:Kansas City Chiefs"].point == -2.5
-    assert event.markets["total:Over"].point == 47.5
+    assert event.markets["spread:Kansas City Chiefs"].price == -110
     assert event.markets["winner:Buffalo Bills"].price == 120
-    assert event.markets["winner:Buffalo Bills"].bookmaker_count == 3
+    assert event.markets["winner:Buffalo Bills"].point is None
+    assert event.markets["total:Over"].point == 47.5
+    assert event.markets["total:Under"].price == -112
+    assert event.markets["total:Over"].bookmaker_count == 1
+    assert empty.id == "nolines" and empty.markets == {}
 
 
-def test_odds_client_requests_nba_and_nfl_keys() -> None:
-    seen = []
+def test_sheet_lines_reads_sport_tab_and_caches() -> None:
+    tabs = []
 
-    def handler(request: httpx.Request) -> httpx.Response:
-        seen.append(request.url.path)
-        assert request.url.params["markets"] == "h2h,spreads,totals"
-        return httpx.Response(200, json=odds_payload())
+    def loader(tab: str):
+        tabs.append(tab)
+        return sheet_rows()
 
-    client = OddsClient("key", client=httpx.AsyncClient(transport=httpx.MockTransport(handler)))
-    asyncio.run(client.fetch("nfl"))
-    asyncio.run(client.fetch("nba"))
-    assert seen == [
-        "/v4/sports/americanfootball_nfl/odds/",
-        "/v4/sports/basketball_nba/odds/",
-    ]
+    lines = SheetLines(loader=loader)
+    asyncio.run(lines.fetch("nba"))
+    asyncio.run(lines.fetch("nba"))
+    asyncio.run(lines.fetch("nfl"))
+    assert tabs == ["nba_games", "nfl_games"]
 
 
-def test_odds_client_surfaces_http_errors() -> None:
-    client = OddsClient(
-        "key",
-        client=httpx.AsyncClient(transport=httpx.MockTransport(lambda r: httpx.Response(401))),
-    )
-    with pytest.raises(RuntimeError, match="HTTP 401"):
-        asyncio.run(client.fetch("nba"))
+def test_sheet_lines_surfaces_read_errors() -> None:
+    def loader(tab: str):
+        raise OSError("quota")
+
+    with pytest.raises(RuntimeError, match="sheet read failed"):
+        asyncio.run(SheetLines(loader=loader).fetch("nba"))
 
 
 def test_match_event_falls_back_to_teams_and_time() -> None:
-    events = parse_events(odds_payload(), "nfl")
+    events = parse_rows(sheet_rows(), "nfl")
     assert match_event(
         events, event_id="other", away_team="Buffalo Bills",
         home_team="Kansas City Chiefs", commence_time="2026-10-25T21:00:00Z",
     ) is events[0]
 
 
-def test_market_checks_step_toward_kickoff() -> None:
+def test_market_checks_step_toward_kickoff_then_read_the_close() -> None:
     kickoff = "2026-10-25T20:00:00Z"
     assert next_market_check(kickoff, now=datetime(2026, 10, 20, tzinfo=UTC)) == "2026-10-24T20:00:00Z"
     assert next_market_check(kickoff, now=datetime(2026, 10, 25, 15, tzinfo=UTC)) == "2026-10-25T19:00:00Z"
-    assert next_market_check(kickoff, now=datetime(2026, 10, 25, 19, 30, tzinfo=UTC)) == "2026-10-25T19:50:00Z"
-    assert next_market_check(kickoff, now=datetime(2026, 10, 25, 21, tzinfo=UTC)) is None
+    assert next_market_check(kickoff, now=datetime(2026, 10, 25, 19, 30, tzinfo=UTC)) == "2026-10-25T20:15:00Z"
+    assert next_market_check(kickoff, now=datetime(2026, 10, 25, 20, 5, tzinfo=UTC)) == "2026-10-25T20:15:00Z"
+    assert next_market_check(kickoff, now=datetime(2026, 10, 25, 20, 15, tzinfo=UTC)) is None
 
 
 def espn_payload() -> dict:

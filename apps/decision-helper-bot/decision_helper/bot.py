@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 from collections.abc import Awaitable, Callable
+from dataclasses import replace
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -23,7 +24,8 @@ from telegram.ext import (
 from .claude import ClaudeClient
 from .config import Config
 from .espn import EspnClient, match_final
-from .markets import OddsClient, match_event
+from .lines import SheetLines
+from .markets import match_event
 from .models import MarketEvent, parse_timestamp, utc_now
 from .store import DecisionStore
 from .transcribe import WhisperTranscriber
@@ -94,7 +96,11 @@ def describe_pick(pick: dict[str, Any]) -> str:
             else f"{pick['selection']} (no total)"
         )
     if pick["line_source"] == "market":
-        detail += " [market line]"
+        detail += (
+            " [BetOnline close]"
+            if pick.get("logged_after_start")
+            else " [BetOnline line]"
+        )
     if pick.get("logged_after_start"):
         detail += " [logged after start]"
     if pick["price_at_pick"] is not None:
@@ -234,6 +240,18 @@ def telegram_audio(message: Any) -> tuple[Any, str, str] | None:
     return None
 
 
+def with_lines(game: MarketEvent, line: MarketEvent | None) -> MarketEvent:
+    """``game`` with BetOnline markets keyed by its own (ESPN) team names."""
+    if line is None:
+        return game
+    names = {line.away_team: game.away_team, line.home_team: game.home_team}
+    markets = {}
+    for key, quote in line.markets.items():
+        market, _, selection = key.partition(":")
+        markets[f"{market}:{names.get(selection, selection)}"] = quote
+    return replace(game, markets=markets)
+
+
 class DecisionBot:
     def __init__(
         self,
@@ -242,14 +260,14 @@ class DecisionBot:
         *,
         transcriber: WhisperTranscriber,
         claude: ClaudeClient,
-        odds: OddsClient,
+        lines: SheetLines,
         espn: EspnClient,
     ) -> None:
         self.config = config
         self.store = store
         self.transcriber = transcriber
         self.claude = claude
-        self.odds = odds
+        self.lines = lines
         self.espn = espn
         self._processing = asyncio.Lock()
         self._sync = asyncio.Lock()
@@ -307,7 +325,7 @@ class DecisionBot:
 
     async def post_shutdown(self, application: Application) -> None:
         del application
-        await self.odds.close()
+        await self.lines.close()
         await self.espn.close()
 
     async def start(
@@ -471,41 +489,60 @@ class DecisionBot:
                     audio_path.unlink(missing_ok=True)
 
     async def candidate_events(self) -> list[MarketEvent]:
+        """ESPN games from the last few days through the next week, with
+        BetOnline lines from the forwarder's sheet (no paid API calls)."""
         now = utc_now()
+        today = now.astimezone(EASTERN).date()
+        dates = [
+            (today + timedelta(days=offset)).strftime("%Y%m%d")
+            for offset in range(
+                1 - STARTED_LOOKBACK_DAYS, CANDIDATE_WINDOW.days + 1
+            )
+        ]
         events: list[MarketEvent] = []
         failures: list[str] = []
         for sport in ("nfl", "nba"):
             try:
-                fetched = await self.odds.fetch(sport)
+                sheet = await self.lines.fetch(sport)
             except Exception as error:
-                log.warning("Odds fetch failed for %s: %s", sport, error)
-                failures.append(f"{sport.upper()}: {error}")
-                continue
-            events.extend(
-                event
-                for event in fetched
-                if now
-                < parse_timestamp(event.commence_time)
-                <= now + CANDIDATE_WINDOW
+                log.warning("Lines sheet read failed for %s: %s", sport, error)
+                failures.append(f"{sport.upper()} lines: {error}")
+                sheet = []
+            results = await asyncio.gather(
+                *(self.espn.fetch_events(sport, date) for date in dates),
+                return_exceptions=True,
             )
-        events.extend(await self.started_events())
+            games: dict[str, MarketEvent] = {}
+            for date, result in zip(dates, results):
+                if isinstance(result, BaseException):
+                    log.warning("ESPN fetch failed for %s %s: %s", sport, date, result)
+                    failures.append(f"{sport.upper()} {date}: {result}")
+                    continue
+                for game in result:
+                    if parse_timestamp(game.commence_time) <= now + CANDIDATE_WINDOW:
+                        games[game.id] = game
+            matched: set[str] = set()
+            for game in games.values():
+                line = match_event(
+                    sheet,
+                    event_id="",
+                    away_team=game.away_team,
+                    home_team=game.home_team,
+                    commence_time=game.commence_time,
+                )
+                if line is not None:
+                    matched.add(line.id)
+                events.append(with_lines(game, line))
+            # Sheet games ESPN didn't return (an ESPN outage) stay pickable.
+            events.extend(
+                line
+                for line in sheet
+                if line.id not in matched
+                and now < parse_timestamp(line.commence_time) <= now + CANDIDATE_WINDOW
+            )
         if not events and failures:
-            raise RuntimeError("Market data unavailable (" + "; ".join(failures) + ")")
-        return events
-
-    async def started_events(self) -> list[MarketEvent]:
-        """Live or finished games from recent days, for picks logged late."""
-        today = utc_now().astimezone(EASTERN).date()
-        events: dict[str, MarketEvent] = {}
-        for sport in ("nfl", "nba"):
-            for days_back in range(STARTED_LOOKBACK_DAYS):
-                date = (today - timedelta(days=days_back)).strftime("%Y%m%d")
-                try:
-                    for event in await self.espn.fetch_started(sport, date):
-                        events[event.id] = event
-                except Exception as error:
-                    log.warning("ESPN fetch failed for %s %s: %s", sport, date, error)
-        return list(events.values())
+            raise RuntimeError("Game data unavailable (" + "; ".join(failures[:4]) + ")")
+        return sorted(events, key=lambda event: event.commence_time)
 
     async def sync_job(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         if self._sync.locked():
@@ -524,7 +561,7 @@ class DecisionBot:
     async def sync_markets(self) -> None:
         due = self.store.due_market_picks()
         for sport in sorted({pick["sport"] for pick in due}):
-            events = await self.odds.fetch(sport)
+            events = await self.lines.fetch(sport)
             for pick in (item for item in due if item["sport"] == sport):
                 event = match_event(
                     events,
@@ -691,7 +728,7 @@ def main() -> None:
             config.claude_timeout_seconds,
             config.claude_workdir,
         ),
-        odds=OddsClient(config.odds_api_key),
+        lines=SheetLines(config.google_credentials, config.lines_sheet_id),
         espn=EspnClient(),
     )
     bot.application().run_polling(allowed_updates=Update.ALL_TYPES)

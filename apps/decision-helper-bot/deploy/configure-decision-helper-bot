@@ -1,5 +1,5 @@
 #!/bin/bash
-# Prompt for the @decision_helpers_bot BotFather token and write Mel's env file.
+# Write Mel's env file (prompts for the @decision_helpers_bot token on first run).
 set -euo pipefail
 umask 077
 
@@ -9,12 +9,15 @@ if [[ "$EUID" -ne 0 ]]; then
 fi
 
 gateway_env="/home/receptionist2/.config/receptionist2/gateway.env"
-odds_env="/home/receptionist-agent/.config/wnba-poller/env"
+# BetOnline lines come from telegram-channel-forwarder's intake workbook; Mel
+# reads them with the forwarder's Google service account and never calls
+# The Odds API.
+forwarder_env="/home/forwarder/app/.env"
 config_dir="/home/receptionist-agent/.config/decision-helper-bot"
 env_file="$config_dir/env"
 
 read_value() {
-    sed -n "s/^$1=//p" "$2" 2>/dev/null | tail -1
+    sed -n "s/^$1=//p" "$2" 2>/dev/null | tail -1 | sed "s/^'\\(.*\\)'\$/\\1/; s/^\"\\(.*\\)\"\$/\\1/"
 }
 
 allowed_user_id="$(read_value TELEGRAM_ALLOWED_USER_ID "$gateway_env")"
@@ -23,20 +26,24 @@ if [[ ! "$allowed_user_id" =~ ^[1-9][0-9]*$ ]]; then
     exit 1
 fi
 
-read -r -s -p "BotFather token for @decision_helpers_bot: " token
-echo
+# Re-running keeps the existing token; only a first install prompts.
+token="$(read_value DECISION_HELPER_BOT_TOKEN "$env_file")"
+if [[ -z "$token" ]]; then
+    read -r -s -p "BotFather token for @decision_helpers_bot: " token
+    echo
+fi
 if [[ -z "$token" ]]; then
     echo "Token cannot be empty." >&2
     exit 1
 fi
 
-odds_api_key="$(read_value ODDS_API_KEY "$odds_env")"
-if [[ -z "$odds_api_key" ]]; then
-    read -r -s -p "The Odds API key: " odds_api_key
-    echo
+google_credentials="$(read_value GOOGLE_CREDENTIALS "$forwarder_env")"
+lines_sheet_id="$(read_value NBA_INTAKE_SHEET_ID "$forwarder_env")"
+if [[ -z "$lines_sheet_id" ]]; then
+    lines_sheet_id="$(read_value NFL_INTAKE_SHEET_ID "$forwarder_env")"
 fi
-if [[ -z "$odds_api_key" ]]; then
-    echo "The Odds API key cannot be empty." >&2
+if [[ -z "$google_credentials" || -z "$lines_sheet_id" ]]; then
+    echo "Could not load GOOGLE_CREDENTIALS and the intake sheet ID from $forwarder_env." >&2
     exit 1
 fi
 
@@ -47,7 +54,8 @@ cat >"$temporary" <<EOF
 DECISION_HELPER_BOT_TOKEN=$token
 DECISION_HELPER_EXPECTED_USERNAME=decision_helpers_bot
 TELEGRAM_ALLOWED_USER_ID=$allowed_user_id
-ODDS_API_KEY=$odds_api_key
+GOOGLE_CREDENTIALS=$google_credentials
+DECISION_HELPER_LINES_SHEET_ID=$lines_sheet_id
 DECISION_HELPER_STATE_DIR=/var/lib/decision-helper-bot
 DECISION_HELPER_CLAUDE_MODEL=claude-opus-5-5
 DECISION_HELPER_CLAUDE_EFFORT=medium

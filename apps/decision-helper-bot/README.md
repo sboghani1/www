@@ -4,11 +4,12 @@ Private Telegram bot `@decision_helpers_bot` (display name **Mel**). Send it
 voice notes about your NFL and NBA picks. For each voice note Mel asks, with
 buttons, whether to **Parse** it or **Trash** the audio. Parsed notes produce
 committed picks and tentative leans (tracked separately; every side you lean
-toward is kept so flips can be analyzed). Mel follows the market until kickoff
-or tip-off, grades results from ESPN, and reviews each decision after the
+toward is kept so flips can be analyzed). Mel follows the BetOnline line until
+kickoff or tip-off, grades results from ESPN, and reviews each decision after the
 game. Picks for games that already started in the last three days can be
-logged late; they are marked `[logged after start]`, use the line you state,
-and are graded on the next sync.
+logged late; they are marked `[logged after start]`, use the line you state
+(or BetOnline's closing line, marked `[BetOnline close]`), and are graded on
+the next sync.
 
 ## How it works
 
@@ -17,12 +18,19 @@ and are graded on the next sync.
    (`small.en`, CPU int8). It's free and audio never leaves the server. Voice notes,
    audio uploads (m4a/mp3/ogg), and audio documents are accepted, up to 20 MB.
    Plain text messages are treated as a transcript.
-2. **Text → picks with Claude.** The transcript and the upcoming games from
-   The Odds API are sent to Claude Code (`claude -p`, default
+2. **Text → picks with Claude.** The transcript and the candidate games (ESPN
+   scoreboards from three days back through the next eight days, with
+   BetOnline lines attached) are sent to Claude Code (`claude -p`, default
    `claude-opus-5-5`, medium effort). Claude returns strict JSON. Mel rejects
    any game or team that is not in the candidate list.
-3. **Market tracking.** The consensus line and price are saved when the pick is
-   made, then again at T-24h, 6h, 1h, and 10m. The last one is the closing line.
+3. **Market tracking (BetOnline only, no API credits).** Mel never calls The
+   Odds API. It reads BetOnline lines from the `nfl_games` / `nba_games` tabs
+   of telegram-channel-forwarder's intake workbook (written by its
+   `nfl-lines-fetcher` / `nba-lines-fetcher` timers), using the forwarder's
+   Google service account. The line and price are saved when the pick is made,
+   then re-read at T-24h, 6h, 1h, and 15 minutes after tip. The forwarder's
+   last poll lands in a game's final 12 minutes, so that post-tip read is
+   BetOnline's closing line.
 4. **Results.** ESPN final scores grade each pick and compute closing-line
    value (points for spreads and totals, implied probability for moneylines).
 5. **Post-game review.** Claude scores the process (1-5) using your original
@@ -78,9 +86,12 @@ receptionist's Opus agent, not with API billing:
    sudo /usr/local/sbin/configure-decision-helper-bot
    ```
 
-   It prompts for the BotFather token without echoing it. It reuses
-   Receptionist2's allowlisted Telegram user ID and the WNBA poller's
-   `ODDS_API_KEY`, then enables the service.
+   It prompts for the BotFather token without echoing it (re-runs keep the
+   existing token). It reuses Receptionist2's allowlisted Telegram user ID and
+   copies `GOOGLE_CREDENTIALS` plus the intake sheet ID
+   (`DECISION_HELPER_LINES_SHEET_ID`) from `/home/forwarder/app/.env`, then
+   enables the service. The installer runs it automatically when an older env
+   file lacks the sheet settings.
 
 Optional environment overrides (in
 `/home/receptionist-agent/.config/decision-helper-bot/env`):

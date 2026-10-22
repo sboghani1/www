@@ -454,10 +454,9 @@ class DecisionStore:
                 WHERE status='open'
                   AND next_market_check_at IS NOT NULL
                   AND next_market_check_at<=?
-                  AND commence_time>?
                 ORDER BY commence_time
                 """,
-                (current, current),
+                (current,),
             ).fetchall()
         return [dict(row) for row in rows]
 

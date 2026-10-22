@@ -127,6 +127,11 @@ install -m 0755 -o root -g root \
     "$script_dir/configure-decision-helper-bot" \
     /usr/local/sbin/configure-decision-helper-bot
 systemctl daemon-reload
+if [[ -s "$env_file" ]] && ! grep -q '^DECISION_HELPER_LINES_SHEET_ID=' "$env_file"; then
+    # Pre-sheet env (ODDS_API_KEY): rewrite it with the forwarder's sheet
+    # credentials; the configure script keeps the existing token.
+    /usr/local/sbin/configure-decision-helper-bot
+fi
 if [[ -s "$env_file" ]] || systemctl is-active --quiet decision-helper-bot.service; then
     systemctl enable decision-helper-bot.service
     systemctl restart decision-helper-bot.service

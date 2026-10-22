@@ -62,8 +62,10 @@ Use `clipboard-send` only after the user approves the exact outbound content.
 The private `@decision_helpers_bot` ("Mel") application lives in
 `apps/decision-helper-bot`. It transcribes NFL/NBA pick voice notes locally
 with faster-whisper, extracts and reviews picks through text-only Claude Code
-calls on the receptionist-agent subscription login, and grades them with ESPN
-and The Odds API.
+calls on the receptionist-agent subscription login, and grades them with ESPN.
+Lines are BetOnline only, read from telegram-channel-forwarder's `nfl_games` /
+`nba_games` Sheet tabs; Mel never calls The Odds API or anything that spends
+credits.
 
 Run its tests before committing:
 

@@ -28,7 +28,8 @@ class Config:
     allowed_user_id: int
     expected_username: str
     state_dir: Path
-    odds_api_key: str
+    google_credentials: str
+    lines_sheet_id: str
     claude_binary: str
     claude_model: str
     claude_effort: str
@@ -73,7 +74,8 @@ class Config:
             allowed_user_id=allowed_user_id,
             expected_username=expected_username,
             state_dir=state_dir,
-            odds_api_key=_required("ODDS_API_KEY"),
+            google_credentials=_required("GOOGLE_CREDENTIALS"),
+            lines_sheet_id=_required("DECISION_HELPER_LINES_SHEET_ID"),
             claude_binary=os.getenv("CLAUDE_BINARY", "/usr/bin/claude"),
             claude_model=os.getenv(
                 "DECISION_HELPER_CLAUDE_MODEL", "claude-opus-5-5"

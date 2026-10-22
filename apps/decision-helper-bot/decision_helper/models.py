@@ -62,7 +62,7 @@ class MarketEvent:
             "commence_time": self.commence_time,
             "away_team": self.away_team,
             "home_team": self.home_team,
-            "consensus": {
+            "betonline_lines": {
                 key: asdict(value) for key, value in self.markets.items()
             },
         }
