@@ -14,6 +14,7 @@ fi
 python_binary="${DECISION_HELPER_PYTHON:-/usr/local/bin/python3.12}"
 claude_binary="${CLAUDE_BINARY:-/usr/bin/claude}"
 whisper_model="${DECISION_HELPER_WHISPER_MODEL:-small.en}"
+claude_model="${DECISION_HELPER_CLAUDE_MODEL:-claude-opus-5-5}"
 if [[ ! -x "$python_binary" ]]; then
     echo "Required Python 3.12 binary is unavailable: $python_binary" >&2
     exit 1
@@ -96,14 +97,19 @@ print(f"Whisper model {sys.argv[1]} ready.")
 PY
 
 # Prove the subscription-backed Claude call path works from this account.
-as_agent "$release/.venv/bin/python" - "$claude_binary" "$state_dir/claude-workdir" <<'PY'
+as_agent "$release/.venv/bin/python" - "$claude_binary" "$state_dir/claude-workdir" "$claude_model" <<'PY'
 import asyncio, sys
 from pathlib import Path
 from decision_helper.claude import ClaudeClient
 
 async def main() -> None:
-    client = ClaudeClient(sys.argv[1], "claude-haiku-4-5", "low", 120, Path(sys.argv[2]))
-    payload = await client._run('Return exactly this JSON object and nothing else: {"ok": true}')
+    client = ClaudeClient(sys.argv[1], sys.argv[3], "low", 180, Path(sys.argv[2]))
+    payload = await client._run(
+        "You are the installer health check for Mel, a private Telegram bot that "
+        "uses Claude to parse sports-pick voice notes. The installer only needs "
+        "to confirm this Claude account responds. Reply with the JSON object "
+        '{"ok": true} and no other text.'
+    )
     if payload.get("ok") is not True:
         raise SystemExit(f"Unexpected Claude response: {payload}")
     print("Claude subscription call OK.")
