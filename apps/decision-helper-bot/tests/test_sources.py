@@ -170,3 +170,31 @@ def test_espn_client_uses_league_scoreboard() -> None:
     client = EspnClient(client=httpx.AsyncClient(transport=httpx.MockTransport(handler)))
     asyncio.run(client.fetch_finals("nba", "20261025"))
     assert seen == [("/apis/site/v2/sports/basketball/nba/scoreboard", "20261025")]
+
+
+def test_extraction_keeps_one_final_per_game_and_family() -> None:
+    from decision_helper.models import extraction_from_payload
+    from helpers import extraction_payload, make_events
+
+    events = make_events()
+    payload = extraction_payload()
+    first = payload["picks"][0]
+    payload["picks"] = [
+        dict(first, role="final"),
+        dict(first, selection="Kansas City Chiefs", line=-3.0, role="final"),
+        dict(first, pick_type="winner", selection="Buffalo Bills", line=None, role="earlier"),
+        payload["picks"][1],
+    ]
+    picks = extraction_from_payload(payload, events).picks
+    side = [p for p in picks if p.pick_type != "total"]
+    assert [p.role for p in side] == ["earlier", "earlier", "final"]
+    assert side[-1].selection == "Kansas City Chiefs"
+    assert [p.role for p in picks if p.pick_type == "total"] == ["final"]
+
+
+def test_extraction_prompt_carries_flip_history() -> None:
+    from decision_helper.claude import extraction_prompt
+    from helpers import make_events
+
+    prompt = extraction_prompt("t", make_events(), history={"flips": 3, "hurt": 2})
+    assert '"hurt": 2' in prompt and "role" in prompt

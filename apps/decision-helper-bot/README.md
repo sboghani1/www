@@ -3,8 +3,9 @@
 Private Telegram bot `@decision_helpers_bot` (display name **Mel**). Send it
 voice notes about your NFL and NBA picks. For each voice note Mel asks, with
 buttons, whether to **Parse** it or **Trash** the audio. Parsed notes produce
-committed picks and tentative leans (tracked separately; every side you lean
-toward is kept so flips can be analyzed). Mel follows the BetOnline line until
+committed picks and tentative leans (tracked separately). Each game has one
+decision per market family (side = moneyline/spread, and total). Sides you
+moved off are kept as that decision's path, so flips can be analyzed. Mel follows the BetOnline line until
 kickoff or tip-off, grades results from ESPN, and reviews each decision after the
 game. Picks for games that already started in the last three days can be
 logged late; they are marked `[logged after start]`, use the line you state
@@ -22,7 +23,12 @@ the next sync.
    scoreboards from three days back through the next eight days, with
    BetOnline lines attached) are sent to Claude Code (`claude -p`, default
    `claude-opus-5-5`, medium effort). Claude returns strict JSON. Mel rejects
-   any game or team that is not in the candidate list.
+   any game or team that is not in the candidate list. Each game and family
+   gets one `final` row, the position you ended on. Abandoned sides are
+   stored with `role='superseded'`, and so are views replaced by a later
+   note. Weighing the moneyline against the spread on the same team is one
+   decision, with the alternative noted. Your past flip record goes to Claude,
+   so the instant feedback can say how switching has worked for you.
 3. **Market tracking (BetOnline only, no API credits).** Mel never calls The
    Odds API. It reads BetOnline lines from the `nfl_games` / `nba_games` tabs
    of telegram-channel-forwarder's intake workbook (written by its
@@ -36,10 +42,14 @@ the next sync.
    on the next sync.
 4. **Results.** ESPN final scores grade each pick and compute closing-line
    value (points for spreads and totals, implied probability for moneylines).
-5. **Post-game review.** Claude scores the process (1-5) using your original
-   words, when you said them relative to the game, the result, and the market
-   move, and flags biases. Mel sends this
-   immediately after each game. There is no weekly report.
+   Superseded sides are graded too, as if kept, but only final positions
+   count toward the record.
+5. **Post-game review.** One review per decision. Claude scores the process
+   (1-5) using your original words, when you said them relative to the game,
+   the path (e.g. `Pistons to win (WIN) → Celtics to win (LOSS)`), the result,
+   and the market move, and flags biases. Mel sends this immediately after
+   each game. `/stats` adds a "Changing sides" section: flips that
+   helped or hurt, and first view vs. final position. There is no weekly report.
 
 ## Claude subscription auth
 

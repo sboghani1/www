@@ -35,9 +35,13 @@ def parse_json_object(text: str) -> dict[str, Any]:
 
 
 def extraction_prompt(
-    transcript: str, events: list[MarketEvent], now: datetime | None = None
+    transcript: str,
+    events: list[MarketEvent],
+    now: datetime | None = None,
+    history: dict[str, Any] | None = None,
 ) -> str:
     current = now or utc_now()
+    flip_history = json.dumps(history or {}, ensure_ascii=False, sort_keys=True)
     candidates = json.dumps(
         [
             {
@@ -64,10 +68,20 @@ BetOnline line. Convert only explicitly numeric confidence (for example 70%) to 
 Set "commitment" to "pick" when the speaker clearly commits to a side. Set it
 to "lean" when they favor a side tentatively ("leaning", "initial thoughts",
 "makes sense", "might", "maybe the right thing"). Leans are tracked separately
-from picks, so record them rather than dropping them. If the speaker moves
-between sides of the same market, record every side they favored as its own
-lean, in the order spoken, with the reasoning for each. A projection with no
+from picks, so record them rather than dropping them. A projection with no
 favored side (for example "I'd make it -2.5") is not a lean by itself.
+
+Keep the data to one decision per game per market family. The families are
+the side (winner and spread together) and the total.
+- Set "role" to "final" on exactly one row per game and family: the position
+  the speaker ended on.
+- If they moved between sides (Pistons, then Celtics; Over, then Under), add
+  each abandoned side as its own row with "role": "earlier", in the order
+  spoken, with the reasoning that led to it. The final row's reasoning should
+  say why they switched.
+- Weighing the moneyline against the spread on the same team is one decision,
+  not two rows. Use the market they favored, or "winner" if undecided, and
+  note the alternative in "uncertainties".
 
 Candidates with "already_started": true are live or finished games; their
 lines, when present, are BetOnline closing lines, not what the speaker saw.
@@ -85,6 +99,7 @@ Return one JSON object and no prose:
       "selection": "exact supplied team name|Over|Under",
       "line": 0.0|null,
       "commitment": "pick|lean",
+      "role": "final|earlier",
       "confidence_probability": 0.0|null,
       "confidence_label": "",
       "reasoning": "",
@@ -93,6 +108,13 @@ Return one JSON object and no prose:
   ],
   "immediate_feedback": "Brief process feedback grounded only in the transcript"
 }}
+
+If the speaker switches sides or is considering it, use the speaker's past
+side-change record below in immediate_feedback. Say how their past flips went
+and which reasons tended to help or hurt. Cite only numbers that appear
+there; if the record is empty, say there is no flip history yet.
+Past side changes (graded):
+{flip_history}
 
 Candidate events and BetOnline lines (spread/total point, American price):
 {candidates}
@@ -112,8 +134,10 @@ Review the recorded sports decision below. Separate process quality from the
 game result and luck. Reward explicit evidence, calibrated uncertainty,
 falsifiable reasoning, and price sensitivity. Do not claim facts absent from
 the record. Bias tags must be short reusable labels. A "lean" commitment was a
-tentative view rather than a committed pick; if the transcript shows the
-speaker moving between sides, judge whether the flip improved the decision.
+tentative view rather than a committed pick. "path" lists the earlier sides
+the speaker abandoned for this final position, each graded as if it had been
+kept. When path is non-empty, judge whether switching improved the decision
+and whether the reason for switching was sound, separately from luck.
 If logged_after_start is true, the pick was recorded after the game began; any
 line or price on it is BetOnline's closing line, not necessarily the number
 the speaker got. Judge the stated reasoning and do not penalize missing
@@ -252,9 +276,12 @@ class ClaudeClient:
         transcript: str,
         events: list[MarketEvent],
         recorded_at: datetime | None = None,
+        history: dict[str, Any] | None = None,
     ) -> Extraction:
         payload = await self._run(
-            extraction_prompt(transcript, events, now=recorded_at)
+            extraction_prompt(
+                transcript, events, now=recorded_at, history=history
+            )
         )
         return extraction_from_payload(payload, events)
 

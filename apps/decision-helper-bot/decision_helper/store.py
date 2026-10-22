@@ -19,6 +19,7 @@ from .models import (
     closing_value,
     grade_pick,
     json_array,
+    market_family,
     parse_timestamp,
     timestamp,
     utc_now,
@@ -173,7 +174,10 @@ class DecisionStore:
                         commitment IN ('pick','lean')
                     ),
                     ordinal INTEGER NOT NULL DEFAULT 0,
-                    logged_after_start INTEGER NOT NULL DEFAULT 0
+                    logged_after_start INTEGER NOT NULL DEFAULT 0,
+                    role TEXT NOT NULL DEFAULT 'final' CHECK(
+                        role IN ('final','superseded')
+                    )
                 );
 
                 CREATE INDEX IF NOT EXISTS picks_status_result
@@ -212,6 +216,11 @@ class DecisionStore:
                 connection.execute(
                     "ALTER TABLE picks ADD COLUMN logged_after_start INTEGER "
                     "NOT NULL DEFAULT 0"
+                )
+            if "role" not in columns:
+                connection.execute(
+                    "ALTER TABLE picks ADD COLUMN role TEXT NOT NULL DEFAULT "
+                    "'final' CHECK(role IN ('final','superseded'))"
                 )
             stale_before = timestamp(utc_now() - timedelta(hours=1))
             now = timestamp(utc_now())
@@ -432,6 +441,8 @@ class DecisionStore:
                             quote.bookmaker_count,
                         ),
                     )
+            for pick_id in saved_ids:
+                _refresh_roles(connection, pick_id)
             connection.execute(
                 """
                 UPDATE entries
@@ -595,11 +606,13 @@ class DecisionStore:
                 pick_price=row["price_at_pick"],
                 closing_price=row["closing_price"],
             )
+            # Superseded sides are graded for flip analysis but not reviewed;
+            # the final position's review covers the whole path.
             connection.execute(
                 """
                 UPDATE picks
                 SET status='final', result=?, away_score=?, home_score=?,
-                    closing_value=?, analysis_status='pending',
+                    closing_value=?, analysis_status=?,
                     next_analysis_at=?, settled_at=?,
                     next_market_check_at=NULL
                 WHERE id=?
@@ -609,7 +622,8 @@ class DecisionStore:
                     game.away_score,
                     game.home_score,
                     clv,
-                    now,
+                    "pending" if row["role"] == "final" else "complete",
+                    now if row["role"] == "final" else None,
                     now,
                     pick_id,
                 ),
@@ -630,6 +644,7 @@ class DecisionStore:
                 SELECT picks.*, entries.transcript
                 FROM picks JOIN entries ON entries.id=picks.entry_id
                 WHERE picks.analysis_status='pending'
+                  AND picks.role='final'
                   AND picks.next_analysis_at<=?
                 ORDER BY picks.settled_at, picks.id
                 LIMIT ?
@@ -736,6 +751,7 @@ class DecisionStore:
                 """,
                 (pick["id"],),
             )
+            _refresh_roles(connection, pick["id"])
             connection.commit()
         return self.resolve_pick(pick["id"])
 
@@ -769,6 +785,13 @@ class DecisionStore:
             ).fetchone()[0]
             if settled:
                 raise ValueError("That note already has settled picks")
+            voided = [
+                row[0]
+                for row in connection.execute(
+                    "SELECT id FROM picks WHERE entry_id=? AND status='open'",
+                    (entry_id,),
+                )
+            ]
             connection.execute(
                 """
                 UPDATE picks
@@ -777,6 +800,8 @@ class DecisionStore:
                 """,
                 (entry_id,),
             )
+            for pick_id in voided:
+                _refresh_roles(connection, pick_id)
             connection.execute(
                 """
                 UPDATE entries
@@ -791,10 +816,76 @@ class DecisionStore:
             connection.commit()
         return dict(row)
 
+    def decision_path(self, pick_id: str) -> list[dict[str, Any]]:
+        """Earlier sides abandoned on the way to this final position."""
+        with self.connect() as connection:
+            return [
+                dict(row)
+                for row in _group_rows(connection, pick_id)
+                if row["role"] == "superseded"
+            ]
+
+    def flip_stats(self, recent: int = 8) -> dict[str, Any]:
+        """How changing sides has gone: graded first view vs final position."""
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM picks
+                WHERE status='final' AND result IN ('win','loss','push')
+                ORDER BY created_at, ordinal, id
+                """
+            ).fetchall()
+        groups: dict[tuple, list[dict[str, Any]]] = {}
+        for row in rows:
+            groups.setdefault(_group_key(row), []).append(dict(row))
+        flips: list[dict[str, Any]] = []
+        first_record = Counter()
+        final_record = Counter()
+        for group in groups.values():
+            finals = [pick for pick in group if pick["role"] == "final"]
+            if not finals:
+                continue
+            first, final = group[0], finals[-1]
+            first_record[first["result"]] += 1
+            final_record[final["result"]] += 1
+            if first["selection"] == final["selection"]:
+                continue
+            outcome = (
+                "helped"
+                if final["result"] == "win" and first["result"] == "loss"
+                else "hurt"
+                if final["result"] == "loss" and first["result"] == "win"
+                else "no difference"
+            )
+            flips.append(
+                {
+                    "game": f"{final['away_team']} @ {final['home_team']}",
+                    "commence_time": final["commence_time"],
+                    "from": _describe_side(first),
+                    "to": _describe_side(final),
+                    "reason_for_switch": final["reasoning"],
+                    "first_result": first["result"],
+                    "final_result": final["result"],
+                    "outcome": outcome,
+                }
+            )
+        return {
+            "flips": len(flips),
+            "helped": sum(flip["outcome"] == "helped" for flip in flips),
+            "hurt": sum(flip["outcome"] == "hurt" for flip in flips),
+            "no_difference": sum(
+                flip["outcome"] == "no difference" for flip in flips
+            ),
+            "first_view_record": _record(first_record),
+            "final_position_record": _record(final_record),
+            "recent_flips": flips[-recent:],
+        }
+
     def stats(self, commitment: str = "pick") -> dict[str, Any]:
         with self.connect() as connection:
             rows = connection.execute(
-                "SELECT * FROM picks WHERE status!='void' AND commitment=?",
+                "SELECT * FROM picks WHERE status!='void' AND role='final' "
+                "AND commitment=?",
                 (commitment,),
             ).fetchall()
         picks = [dict(row) for row in rows]
@@ -854,3 +945,66 @@ class DecisionStore:
             "clv_count": len(clv_values),
             "biases": biases.most_common(5),
         }
+
+
+def _group_key(row: Any) -> tuple[str, str, str, str, str]:
+    return (
+        row["sport"],
+        row["away_team"],
+        row["home_team"],
+        row["commence_time"],
+        market_family(row["pick_type"]),
+    )
+
+
+def _group_rows(connection: sqlite3.Connection, pick_id: str) -> list[Any]:
+    """Non-void rows for the same game and market family, oldest first."""
+    anchor = connection.execute(
+        "SELECT * FROM picks WHERE id=?", (pick_id,)
+    ).fetchone()
+    if anchor is None:
+        return []
+    types = ("total",) if anchor["pick_type"] == "total" else ("winner", "spread")
+    return connection.execute(
+        f"""
+        SELECT * FROM picks
+        WHERE status!='void' AND sport=? AND away_team=? AND home_team=?
+          AND commence_time=?
+          AND pick_type IN ({",".join("?" * len(types))})
+        ORDER BY created_at, ordinal, id
+        """,
+        (
+            anchor["sport"],
+            anchor["away_team"],
+            anchor["home_team"],
+            anchor["commence_time"],
+            *types,
+        ),
+    ).fetchall()
+
+
+def _refresh_roles(connection: sqlite3.Connection, pick_id: str) -> None:
+    """The newest view of a game's side or total is final; older ones are
+    superseded. Settled decisions are left alone."""
+    rows = _group_rows(connection, pick_id)
+    if not rows or any(row["status"] == "final" for row in rows):
+        return
+    for row in rows:
+        connection.execute(
+            "UPDATE picks SET role=? WHERE id=?",
+            ("final" if row is rows[-1] else "superseded", row["id"]),
+        )
+
+
+def _describe_side(pick: dict[str, Any]) -> str:
+    if pick["pick_type"] == "winner":
+        return f"{pick['selection']} to win"
+    if pick["line"] is None:
+        return f"{pick['selection']} {pick['pick_type']}"
+    if pick["pick_type"] == "spread":
+        return f"{pick['selection']} {pick['line']:+g}"
+    return f"{pick['selection']} {pick['line']:g}"
+
+
+def _record(counter: Counter) -> str:
+    return f"{counter['win']}-{counter['loss']}-{counter['push']}"

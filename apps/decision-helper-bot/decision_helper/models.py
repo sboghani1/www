@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from typing import Any
 
@@ -10,6 +10,12 @@ from typing import Any
 SPORTS = {"nfl", "nba"}
 PICK_TYPES = {"winner", "spread", "total"}
 COMMITMENTS = {"pick", "lean"}
+ROLES = {"final", "earlier"}
+
+
+def market_family(pick_type: str) -> str:
+    """Winner and spread are both a side; one decision per game per family."""
+    return "total" if pick_type == "total" else "side"
 
 
 def utc_now() -> datetime:
@@ -80,6 +86,7 @@ class ExtractedPick:
     reasoning: str
     uncertainties: tuple[str, ...]
     commitment: str = "pick"
+    role: str = "final"
 
 
 @dataclass(frozen=True)
@@ -183,6 +190,9 @@ def extraction_from_payload(
         ).casefold()
         if commitment not in COMMITMENTS:
             raise ValueError(f"picks[{index}].commitment must be pick or lean")
+        role = _text(raw.get("role", "final"), f"picks[{index}].role").casefold()
+        if role not in ROLES:
+            raise ValueError(f"picks[{index}].role must be final or earlier")
         picks.append(
             ExtractedPick(
                 sport=sport,
@@ -191,6 +201,7 @@ def extraction_from_payload(
                 selection=selection,
                 line=line,
                 commitment=commitment,
+                role=role,
                 confidence_probability=confidence,
                 confidence_label=_text(
                     raw.get("confidence_label", ""),
@@ -212,13 +223,33 @@ def extraction_from_payload(
             )
         )
     return Extraction(
-        picks=tuple(picks),
+        picks=_one_final_per_decision(picks),
         immediate_feedback=_text(
             payload.get("immediate_feedback", ""),
             "immediate_feedback",
             required=False,
         ),
     )
+
+
+def _one_final_per_decision(
+    picks: list[ExtractedPick],
+) -> tuple[ExtractedPick, ...]:
+    """Each game/market family gets exactly one final row, placed last."""
+    groups: dict[tuple[str, str], list[ExtractedPick]] = {}
+    for pick in picks:
+        groups.setdefault(
+            (pick.event_id, market_family(pick.pick_type)), []
+        ).append(pick)
+    ordered: list[ExtractedPick] = []
+    for group in groups.values():
+        finals = [pick for pick in group if pick.role == "final"]
+        final = finals[-1] if finals else group[-1]
+        ordered.extend(
+            replace(pick, role="earlier") for pick in group if pick is not final
+        )
+        ordered.append(replace(final, role="final"))
+    return tuple(ordered)
 
 
 def review_from_payload(payload: dict[str, Any]) -> DecisionReview:

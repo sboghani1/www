@@ -34,7 +34,8 @@ class FakeClaude:
     def __init__(self) -> None:
         self.reviews: list[dict] = []
 
-    async def extract(self, transcript, events, recorded_at=None):
+    async def extract(self, transcript, events, recorded_at=None, history=None):
+        self.history = history
         self.recorded_at = recorded_at
         return extraction_from_payload(extraction_payload(), events)
 
@@ -200,14 +201,19 @@ def test_audio_is_kept_until_choice_and_trash_deletes_it(tmp_path: Path) -> None
         assert connection.execute("SELECT status FROM entries").fetchone()[0] == "trashed"
 
 
-def test_leans_are_saved_and_reported_separately(tmp_path: Path) -> None:
-    bot = make_bot(tmp_path, make_events())
+def test_flip_keeps_one_decision_per_game(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    events = make_events(now)
+    bot = make_bot(tmp_path, events)
     payload = extraction_payload()
-    payload["picks"][0]["commitment"] = "lean"
-    flipped = dict(payload["picks"][0], selection="Kansas City Chiefs", line=-2.5)
+    # Bills +3 lean first, then switched to Chiefs -2.5 (spoken in that order,
+    # Claude marks the Chiefs as final). The total and Celtics are separate.
+    payload["picks"][0].update(commitment="lean", role="earlier")
+    flipped = dict(payload["picks"][0], selection="Kansas City Chiefs", line=-2.5, role="final",
+                   reasoning="Switched after the line moved")
     payload["picks"].insert(1, flipped)
 
-    async def extract(transcript, events, recorded_at=None):
+    async def extract(transcript, events, recorded_at=None, history=None):
         return extraction_from_payload(payload, events)
 
     bot.claude.extract = extract
@@ -215,14 +221,82 @@ def test_leans_are_saved_and_reported_separately(tmp_path: Path) -> None:
     run_voice(bot, update)
 
     reply = update.message.reply_text.await_args_list[-1].args[0]
-    assert "Saved 2 pick(s) and 2 lean(s)" in reply
-    assert reply.index("Lean · NFL · Buffalo Bills @ Kansas City Chiefs: Buffalo Bills +3") < reply.index(
+    assert "Saved 2 pick(s), 1 lean(s), 1 earlier view(s) you moved off" in reply
+    assert reply.index("↩ Earlier view · Lean · NFL · Buffalo Bills @ Kansas City Chiefs: Buffalo Bills +3") < reply.index(
         "Lean · NFL · Buffalo Bills @ Kansas City Chiefs: Kansas City Chiefs -2.5"
     )
     assert bot.store.stats()["total"] == 2
-    assert bot.store.stats("lean")["total"] == 2
-    report = format_stats(bot.store.stats(), bot.store.stats("lean"))
-    assert "Committed picks" in report and "Leans (tracked separately)" in report
+    assert bot.store.stats("lean")["total"] == 1
+
+    # Chiefs win by 2: the abandoned Bills +3 would have won, the Chiefs -2.5 loses.
+    bot.espn.finals = [
+        FinalGame("401", "nfl", events[0].commence_time, "Buffalo Bills", "Kansas City Chiefs", 24, 26),
+        FinalGame("402", "nba", events[1].commence_time, "Boston Celtics", "Los Angeles Lakers", 99, 101),
+    ]
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE picks SET next_result_check_at=?", (timestamp(now - timedelta(minutes=1)),))
+        connection.commit()
+    asyncio.run(bot.sync_results())
+    sent = []
+
+    class FakeTelegram:
+        async def send_message(self, chat_id, text):
+            sent.append(text)
+
+    asyncio.run(bot.sync_reviews(FakeTelegram()))
+
+    side_reviews = [text for text in sent if "Buffalo Bills @ Kansas City Chiefs: Kansas City" in text]
+    assert len(sent) == 3 and len(side_reviews) == 1
+    assert "Path: Buffalo Bills +3 (WIN) → Kansas City Chiefs -2.5 (LOSS)" in side_reviews[0]
+    chiefs_review = next(r for r in bot.claude.reviews if r["selection"] == "Kansas City Chiefs")
+    assert chiefs_review["path"][0]["selection"] == "Buffalo Bills"
+    assert chiefs_review["path"][0]["result_if_kept"] == "win"
+    assert all(r["selection"] != "Buffalo Bills" for r in bot.claude.reviews)
+
+    leans = bot.store.stats("lean")
+    assert (leans["wins"], leans["losses"]) == (0, 1)
+    flips = bot.store.flip_stats()
+    assert (flips["flips"], flips["helped"], flips["hurt"]) == (1, 0, 1)
+    assert flips["recent_flips"][0]["from"] == "Buffalo Bills +3"
+    assert flips["recent_flips"][0]["reason_for_switch"] == "Switched after the line moved"
+    report = format_stats(bot.store.stats(), leans, flips)
+    assert "Flips: 1 · helped 0, hurt 1" in report
+
+    # The next note's parser sees the flip history.
+    seen = {}
+
+    async def spy(transcript, events, recorded_at=None, history=None):
+        seen["history"] = history
+        return extraction_from_payload(extraction_payload(), events)
+
+    bot.claude.extract = spy
+    run_voice(bot, voice_update(message_id=9))
+    assert seen["history"]["hurt"] == 1
+
+
+def test_later_note_supersedes_and_void_restores(tmp_path: Path) -> None:
+    bot = make_bot(tmp_path, make_events())
+    run_voice(bot, voice_update(message_id=1))
+    payload = extraction_payload()
+    payload["picks"] = [dict(payload["picks"][0], line=3.5, commitment="lean")]
+
+    async def extract(transcript, events, recorded_at=None, history=None):
+        return extraction_from_payload(payload, events)
+
+    bot.claude.extract = extract
+    run_voice(bot, voice_update(message_id=2))
+
+    def roles():
+        with bot.store.connect() as connection:
+            return {
+                (row["line"], row["status"]): row["role"]
+                for row in connection.execute("SELECT * FROM picks WHERE pick_type='spread'")
+            }
+
+    assert roles() == {(3.0, "open"): "superseded", (3.5, "open"): "final"}
+    newest = next(p for p in bot.store.recent() if p["line"] == 3.5)
+    bot.store.void(newest["id"][:8])
+    assert roles() == {(3.0, "open"): "final", (3.5, "void"): "final"}
 
 
 def test_reparse_voids_open_picks_and_reuses_transcript(tmp_path: Path) -> None:
@@ -357,7 +431,7 @@ def test_picks_for_started_games_are_logged_and_graded(tmp_path: Path) -> None:
     bot.espn.started = [tuesday]
     seen = {}
 
-    async def extract(transcript, events, recorded_at=None):
+    async def extract(transcript, events, recorded_at=None, history=None):
         seen["events"] = events
         return extraction_from_payload(
             {
@@ -561,7 +635,7 @@ def test_espn_games_carry_sheet_betonline_lines_and_closes(tmp_path: Path) -> No
     assert events["espn-90"].markets["total:Over"].point == 226.5
     assert events["espn-91"].markets == {}
 
-    async def extract(transcript, events, recorded_at=None):
+    async def extract(transcript, events, recorded_at=None, history=None):
         return extraction_from_payload(
             {
                 "picks": [

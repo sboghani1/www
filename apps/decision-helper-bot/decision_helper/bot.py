@@ -112,6 +112,8 @@ def describe_pick(pick: dict[str, Any]) -> str:
     elif pick["confidence_label"]:
         confidence = f" · {pick['confidence_label']}"
     label = "Lean · " if pick.get("commitment") == "lean" else ""
+    if pick.get("role") == "superseded":
+        label = "↩ Earlier view · " + label
     return (
         f"{pick['id'][:8]} · {label}{pick['sport'].upper()} · {matchup}: "
         f"{detail}{confidence}"
@@ -128,13 +130,17 @@ def format_saved(
         excerpt = excerpt[:597] + "..."
     lines = [f"📝 Heard: “{excerpt}”", ""]
     if picks:
-        committed = sum(pick.get("commitment") != "lean" for pick in picks)
+        finals = [pick for pick in picks if pick.get("role") != "superseded"]
+        committed = sum(pick.get("commitment") != "lean" for pick in finals)
         counts = []
         if committed:
             counts.append(f"{committed} pick(s)")
-        if len(picks) - committed:
-            counts.append(f"{len(picks) - committed} lean(s)")
-        lines.append(f"✅ Saved {' and '.join(counts)}:")
+        if len(finals) - committed:
+            counts.append(f"{len(finals) - committed} lean(s)")
+        earlier = len(picks) - len(finals)
+        if earlier:
+            counts.append(f"{earlier} earlier view(s) you moved off")
+        lines.append(f"✅ Saved {', '.join(counts)}:")
         lines.extend(f"• {describe_pick(pick)}" for pick in picks)
     else:
         lines.append(
@@ -155,7 +161,21 @@ def format_clv(pick: dict[str, Any]) -> str:
     return f"Closing-line value: {value:+g} points"
 
 
-def format_review(pick: dict[str, Any]) -> str:
+def _path_step(pick: dict[str, Any]) -> str:
+    if pick["pick_type"] == "winner":
+        side = f"{pick['selection']} to win"
+    elif pick["line"] is None:
+        side = f"{pick['selection']} {pick['pick_type']}"
+    elif pick["pick_type"] == "spread":
+        side = f"{pick['selection']} {pick['line']:+g}"
+    else:
+        side = f"{pick['selection']} {pick['line']:g}"
+    return f"{side} ({str(pick['result'] or 'open').upper()})"
+
+
+def format_review(
+    pick: dict[str, Any], path: list[dict[str, Any]] | None = None
+) -> str:
     result = str(pick["result"]).upper()
     tags = json.loads(pick["bias_tags_json"])
     lines = [
@@ -164,6 +184,13 @@ def format_review(pick: dict[str, Any]) -> str:
             f"Final: {pick['away_team']} {pick['away_score']} - "
             f"{pick['home_team']} {pick['home_score']}"
         ),
+    ]
+    if path:
+        lines.append(
+            "Path: "
+            + " → ".join(_path_step(step) for step in [*path, pick])
+        )
+    lines += [
         format_clv(pick),
         f"Process score: {pick['process_score']}/5",
         f"Luck vs. skill: {pick['luck_summary']}",
@@ -176,11 +203,29 @@ def format_review(pick: dict[str, Any]) -> str:
 
 
 def format_stats(
-    stats: dict[str, Any], leans: dict[str, Any] | None = None
+    stats: dict[str, Any],
+    leans: dict[str, Any] | None = None,
+    flips: dict[str, Any] | None = None,
 ) -> str:
     lines = ["📊 Mel decision report", *_stats_section("Committed picks", stats)]
     if leans is not None and leans["total"]:
         lines.extend(["", *_stats_section("Leans (tracked separately)", leans)])
+    if flips is not None and flips["final_position_record"] != "0-0-0":
+        lines.extend(
+            [
+                "",
+                "— Changing sides —",
+                (
+                    f"Flips: {flips['flips']} · helped {flips['helped']}, "
+                    f"hurt {flips['hurt']}, no difference "
+                    f"{flips['no_difference']}"
+                ),
+                (
+                    f"First view {flips['first_view_record']} vs final "
+                    f"position {flips['final_position_record']} (W-L-P)"
+                ),
+            ]
+        )
     return "\n".join(lines)
 
 
@@ -475,7 +520,10 @@ class DecisionBot:
                         "available to match your picks"
                     )
                 extraction = await self.claude.extract(
-                    transcript, events, recorded_at=recorded_at
+                    transcript,
+                    events,
+                    recorded_at=recorded_at,
+                    history=self.store.flip_stats(),
                 )
                 picks = self.store.save_extraction(
                     entry_id=entry_id,
@@ -639,6 +687,19 @@ class DecisionBot:
                     "closing_value",
                 )
             }
+            path = self.store.decision_path(pick["id"])
+            record["path"] = [
+                {
+                    "pick_type": step["pick_type"],
+                    "selection": step["selection"],
+                    "line": step["line"],
+                    "commitment": step["commitment"],
+                    "logged_at": step["created_at"],
+                    "reasoning": step["reasoning"],
+                    "result_if_kept": step["result"],
+                }
+                for step in path
+            ]
             record["logged_at"] = pick["created_at"]
             record["commence_time"] = pick["commence_time"]
             record["uncertainties"] = json.loads(pick["uncertainties_json"])
@@ -652,7 +713,7 @@ class DecisionBot:
             updated = self.store.complete_analysis(pick["id"], review)
             await bot.send_message(
                 chat_id=updated["telegram_chat_id"],
-                text=format_review(updated),
+                text=format_review(updated, path),
             )
             self.store.mark_feedback_sent(pick["id"])
 
@@ -679,7 +740,11 @@ class DecisionBot:
     ) -> None:
         del context
         await update.message.reply_text(
-            format_stats(self.store.stats(), self.store.stats("lean"))
+            format_stats(
+                self.store.stats(),
+                self.store.stats("lean"),
+                self.store.flip_stats(),
+            )
         )
 
     async def void(
