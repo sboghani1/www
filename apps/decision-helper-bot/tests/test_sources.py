@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 import httpx
 import pytest
 
-from decision_helper.espn import EspnClient, match_final, parse_finals
+from decision_helper.espn import EspnClient, match_final, parse_finals, parse_started_events
 from decision_helper.markets import (
     OddsClient,
     match_event,
@@ -125,6 +125,22 @@ def test_parse_finals_only_returns_completed_games() -> None:
         finals, away_team="Buffalo Bills", home_team="Kansas City Chiefs",
         commence_time="2026-10-25T20:25:00Z",
     ).id == "401"
+
+
+def test_parse_started_events_includes_live_and_final_games_only() -> None:
+    payload = espn_payload()
+    payload["events"][1]["competitions"][0]["competitors"] = [
+        {"homeAway": "home", "score": "50", "team": {"displayName": "Chicago Bulls"}},
+        {"homeAway": "away", "score": "48", "team": {"displayName": "Detroit Pistons"}},
+    ]
+    payload["events"].append(
+        {**payload["events"][0], "id": "403", "status": {"type": {"state": "pre"}}}
+    )
+    events = parse_started_events(payload, "nba")
+    assert [(event.id, event.away_team, event.home_team, event.markets) for event in events] == [
+        ("espn-401", "Buffalo Bills", "Kansas City Chiefs", {}),
+        ("espn-402", "Detroit Pistons", "Chicago Bulls", {}),
+    ]
 
 
 def test_espn_client_uses_league_scoreboard() -> None:

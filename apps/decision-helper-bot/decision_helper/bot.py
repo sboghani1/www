@@ -9,10 +9,11 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from telegram import BotCommand, Update
+from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ChatType
 from telegram.ext import (
     Application,
+    CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
     MessageHandler,
@@ -37,6 +38,7 @@ log = logging.getLogger("decision_helper")
 Handler = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
 EASTERN = ZoneInfo("America/New_York")
 CANDIDATE_WINDOW = timedelta(days=8)
+STARTED_LOOKBACK_DAYS = 3
 AUDIO_SUFFIXES = {
     "audio/aac": ".aac",
     "audio/flac": ".flac",
@@ -50,14 +52,27 @@ AUDIO_SUFFIXES = {
     "audio/x-wav": ".wav",
 }
 HELP_TEXT = (
-    "I'm Mel. Send a voice note (or text) with your NFL/NBA thoughts and "
-    "picks — winners, spreads, and totals. I save every pick automatically, "
-    "give quick feedback, track the market until kickoff/tip, and review "
-    "your process after each game.\n\n"
-    "/recent - latest 10 picks\n"
+    "I'm Mel. Send a voice note (or text) with your NFL/NBA thoughts — "
+    "winners, spreads, and totals. For each voice note I ask whether to "
+    "parse it or trash it. Committed picks and tentative leans are tracked "
+    "separately; I follow the market until kickoff/tip and review your "
+    "process after each game.\n\n"
+    "/recent - latest 10 picks and leans\n"
     "/stats - record, calibration, closing-line value, process, biases\n"
+    "/reparse - re-run parsing on your latest note\n"
     "/void <id-prefix> - remove a mis-parsed open pick"
 )
+
+
+def choice_keyboard(entry_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("🧠 Parse", callback_data=f"parse:{entry_id}"),
+                InlineKeyboardButton("🗑 Trash", callback_data=f"trash:{entry_id}"),
+            ]
+        ]
+    )
 
 
 def describe_pick(pick: dict[str, Any]) -> str:
@@ -80,6 +95,8 @@ def describe_pick(pick: dict[str, Any]) -> str:
         )
     if pick["line_source"] == "market":
         detail += " [market line]"
+    if pick.get("logged_after_start"):
+        detail += " [logged after start]"
     if pick["price_at_pick"] is not None:
         detail += f" ({pick['price_at_pick']:+d})"
     confidence = ""
@@ -87,8 +104,9 @@ def describe_pick(pick: dict[str, Any]) -> str:
         confidence = f" · {pick['confidence_probability']:.0%}"
     elif pick["confidence_label"]:
         confidence = f" · {pick['confidence_label']}"
+    label = "Lean · " if pick.get("commitment") == "lean" else ""
     return (
-        f"{pick['id'][:8]} · {pick['sport'].upper()} · {matchup}: "
+        f"{pick['id'][:8]} · {label}{pick['sport'].upper()} · {matchup}: "
         f"{detail}{confidence}"
     )
 
@@ -103,11 +121,17 @@ def format_saved(
         excerpt = excerpt[:597] + "..."
     lines = [f"📝 Heard: “{excerpt}”", ""]
     if picks:
-        lines.append(f"✅ Saved {len(picks)} pick(s):")
+        committed = sum(pick.get("commitment") != "lean" for pick in picks)
+        counts = []
+        if committed:
+            counts.append(f"{committed} pick(s)")
+        if len(picks) - committed:
+            counts.append(f"{len(picks) - committed} lean(s)")
+        lines.append(f"✅ Saved {' and '.join(counts)}:")
         lines.extend(f"• {describe_pick(pick)}" for pick in picks)
     else:
         lines.append(
-            "No gradeable NFL/NBA winner, spread, or total picks were found "
+            "No NFL/NBA winner, spread, or total picks or leans were found "
             "for upcoming games."
         )
     if feedback:
@@ -144,10 +168,19 @@ def format_review(pick: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def format_stats(stats: dict[str, Any]) -> str:
+def format_stats(
+    stats: dict[str, Any], leans: dict[str, Any] | None = None
+) -> str:
+    lines = ["📊 Mel decision report", *_stats_section("Committed picks", stats)]
+    if leans is not None and leans["total"]:
+        lines.extend(["", *_stats_section("Leans (tracked separately)", leans)])
+    return "\n".join(lines)
+
+
+def _stats_section(title: str, stats: dict[str, Any]) -> list[str]:
     decided = stats["wins"] + stats["losses"]
     lines = [
-        "📊 Mel decision report",
+        f"— {title} —",
         (
             f"Record: {stats['wins']}-{stats['losses']}-{stats['pushes']}"
             + (
@@ -180,7 +213,7 @@ def format_stats(stats: dict[str, Any]) -> str:
             "Recurring bias flags: "
             + ", ".join(f"{tag} ×{count}" for tag, count in stats["biases"])
         )
-    return "\n".join(lines)
+    return lines
 
 
 def telegram_audio(message: Any) -> tuple[Any, str, str] | None:
@@ -255,8 +288,9 @@ class DecisionBot:
             )
         await application.bot.set_my_commands(
             [
-                BotCommand("recent", "Show the latest picks"),
+                BotCommand("recent", "Show the latest picks and leans"),
                 BotCommand("stats", "Decision-quality report"),
+                BotCommand("reparse", "Re-run parsing on the latest note"),
                 BotCommand("void", "Remove a mis-parsed open pick"),
                 BotCommand("help", "How Mel works"),
             ]
@@ -310,12 +344,67 @@ class DecisionBot:
             telegram_chat_id=update.effective_chat.id,
             telegram_message_id=message.message_id,
             audio_kind=kind,
+            status="awaiting_choice",
+            audio_suffix=suffix,
         )
         if not created:
             return
-        await message.reply_text("🎧 Got it. Transcribing and parsing…")
+        audio_path = self.audio_path(entry)
+        try:
+            telegram_file = await media.get_file()
+            await telegram_file.download_to_drive(custom_path=audio_path)
+            if audio_path.stat().st_size > self.config.max_download_bytes:
+                raise RuntimeError("Downloaded audio exceeds 20 MB")
+        except Exception as error:
+            log.exception("Download failed for entry %s", entry["id"])
+            audio_path.unlink(missing_ok=True)
+            detail = str(error) or type(error).__name__
+            self.store.fail_entry(entry["id"], detail[:1000])
+            await message.reply_text(f"⚠️ I couldn't download that audio: {detail[:500]}")
+            return
+        await message.reply_text(
+            "🎧 Got it. Parse this note or trash the audio?",
+            reply_markup=choice_keyboard(entry["id"]),
+        )
+
+    def audio_path(self, entry: dict[str, Any]) -> Path:
+        return self.config.audio_dir / f"{entry['id']}{entry['audio_suffix']}"
+
+    async def choose(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        query = update.callback_query
+        action, _, entry_id = str(query.data).partition(":")
+        await query.answer()
+        entry = self.store.choose(entry_id, action)
+        if entry is None:
+            await query.edit_message_text("This note was already handled.")
+            return
+        audio_path = self.audio_path(entry)
+        if action == "trash":
+            audio_path.unlink(missing_ok=True)
+            await query.edit_message_text("🗑 Trashed. The audio was deleted.")
+            return
+        await query.edit_message_text("🧠 Transcribing and parsing…")
         context.application.create_task(
-            self._process(entry["id"], message, media=media, suffix=suffix)
+            self._process(entry_id, query.message, audio_path=audio_path)
+        )
+
+    async def reparse(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        latest = self.store.latest_entry()
+        if latest is None:
+            await update.message.reply_text("There is no saved note to reparse.")
+            return
+        try:
+            entry = self.store.reopen_entry(latest["id"])
+        except (LookupError, ValueError) as error:
+            await update.message.reply_text(str(error))
+            return
+        await update.message.reply_text("🔁 Reparsing your latest note…")
+        context.application.create_task(
+            self._process(entry["id"], update.message, text=entry["transcript"])
         )
 
     async def receive_text(
@@ -339,30 +428,23 @@ class DecisionBot:
         entry_id: str,
         message: Any,
         *,
-        media: Any = None,
-        suffix: str = "",
+        audio_path: Path | None = None,
         text: str | None = None,
     ) -> None:
-        audio_path: Path | None = None
         async with self._processing:
             try:
                 if text is None:
-                    audio_path = self.config.audio_dir / f"{entry_id}{suffix}"
-                    telegram_file = await media.get_file()
-                    await telegram_file.download_to_drive(
-                        custom_path=audio_path
-                    )
-                    if audio_path.stat().st_size > self.config.max_download_bytes:
-                        raise RuntimeError("Downloaded audio exceeds 20 MB")
                     transcript = await asyncio.to_thread(
                         self.transcriber.transcribe, audio_path
                     )
+                    # Keep the words even if parsing fails, so /reparse works.
+                    self.store.set_transcript(entry_id, transcript)
                 else:
                     transcript = text
                 events = await self.candidate_events()
                 if not events:
                     raise RuntimeError(
-                        "No upcoming NFL or NBA games with market data were "
+                        "No recent or upcoming NFL or NBA games were "
                         "available to match your picks"
                     )
                 extraction = await self.claude.extract(transcript, events)
@@ -406,9 +488,24 @@ class DecisionBot:
                 < parse_timestamp(event.commence_time)
                 <= now + CANDIDATE_WINDOW
             )
+        events.extend(await self.started_events())
         if not events and failures:
             raise RuntimeError("Market data unavailable (" + "; ".join(failures) + ")")
         return events
+
+    async def started_events(self) -> list[MarketEvent]:
+        """Live or finished games from recent days, for picks logged late."""
+        today = utc_now().astimezone(EASTERN).date()
+        events: dict[str, MarketEvent] = {}
+        for sport in ("nfl", "nba"):
+            for days_back in range(STARTED_LOOKBACK_DAYS):
+                date = (today - timedelta(days=days_back)).strftime("%Y%m%d")
+                try:
+                    for event in await self.espn.fetch_started(sport, date):
+                        events[event.id] = event
+                except Exception as error:
+                    log.warning("ESPN fetch failed for %s %s: %s", sport, date, error)
+        return list(events.values())
 
     async def sync_job(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         if self._sync.locked():
@@ -477,6 +574,8 @@ class DecisionBot:
                     "confidence_probability",
                     "confidence_label",
                     "reasoning",
+                    "commitment",
+                    "logged_after_start",
                     "result",
                     "away_score",
                     "home_score",
@@ -522,7 +621,9 @@ class DecisionBot:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         del context
-        await update.message.reply_text(format_stats(self.store.stats()))
+        await update.message.reply_text(
+            format_stats(self.store.stats(), self.store.stats("lean"))
+        )
 
     async def void(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -551,11 +652,17 @@ class DecisionBot:
             ("help", self.help),
             ("recent", self.recent),
             ("stats", self.stats),
+            ("reparse", self.reparse),
             ("void", self.void),
         ):
             application.add_handler(
                 CommandHandler(name, self.authorized(handler))
             )
+        application.add_handler(
+            CallbackQueryHandler(
+                self.authorized(self.choose), pattern=r"^(parse|trash):"
+            )
+        )
         application.add_handler(
             MessageHandler(
                 filters.VOICE | filters.AUDIO | filters.Document.AUDIO,

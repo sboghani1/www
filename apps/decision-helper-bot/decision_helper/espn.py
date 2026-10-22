@@ -5,7 +5,7 @@ from typing import Any
 
 import httpx
 
-from .models import FinalGame, parse_timestamp, team_matches
+from .models import FinalGame, MarketEvent, parse_timestamp, team_matches
 
 
 SCOREBOARD_URLS = {
@@ -18,6 +18,35 @@ SCOREBOARD_URLS = {
         "basketball/nba/scoreboard"
     ),
 }
+
+
+def parse_started_events(payload: Any, sport: str) -> list[MarketEvent]:
+    """Games that are live or final, offered as candidates for late-logged picks."""
+    if not isinstance(payload, dict) or not isinstance(payload.get("events"), list):
+        raise ValueError("ESPN response is missing an events list")
+    events: list[MarketEvent] = []
+    for event in payload["events"]:
+        try:
+            state = str(event["status"]["type"]["state"]).casefold()
+            if state not in {"in", "post"}:
+                continue
+            teams = {
+                str(competitor["homeAway"]): str(competitor["team"]["displayName"])
+                for competitor in event["competitions"][0]["competitors"]
+            }
+            events.append(
+                MarketEvent(
+                    id=f"espn-{event['id']}",
+                    sport=sport,
+                    commence_time=str(event["date"]),
+                    away_team=teams["away"],
+                    home_team=teams["home"],
+                    markets={},
+                )
+            )
+        except (IndexError, KeyError, TypeError):
+            continue
+    return events
 
 
 def parse_finals(payload: Any, sport: str) -> list[FinalGame]:
@@ -114,6 +143,12 @@ class EspnClient:
             await self.client.aclose()
 
     async def fetch_finals(self, sport: str, date: str) -> list[FinalGame]:
+        return parse_finals(await self._scoreboard(sport, date), sport)
+
+    async def fetch_started(self, sport: str, date: str) -> list[MarketEvent]:
+        return parse_started_events(await self._scoreboard(sport, date), sport)
+
+    async def _scoreboard(self, sport: str, date: str) -> Any:
         url = SCOREBOARD_URLS.get(sport)
         if url is None:
             raise ValueError("sport must be nfl or nba")
@@ -129,4 +164,4 @@ class EspnClient:
             raise RuntimeError(
                 f"ESPN scoreboard returned HTTP {response.status_code}"
             )
-        return parse_finals(response.json(), sport)
+        return response.json()

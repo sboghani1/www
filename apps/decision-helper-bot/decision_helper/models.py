@@ -9,6 +9,7 @@ from typing import Any
 
 SPORTS = {"nfl", "nba"}
 PICK_TYPES = {"winner", "spread", "total"}
+COMMITMENTS = {"pick", "lean"}
 
 
 def utc_now() -> datetime:
@@ -78,6 +79,7 @@ class ExtractedPick:
     confidence_label: str
     reasoning: str
     uncertainties: tuple[str, ...]
+    commitment: str = "pick"
 
 
 @dataclass(frozen=True)
@@ -176,6 +178,11 @@ def extraction_from_payload(
         uncertainties = raw.get("uncertainties", [])
         if not isinstance(uncertainties, list):
             raise ValueError(f"picks[{index}].uncertainties must be an array")
+        commitment = _text(
+            raw.get("commitment", "pick"), f"picks[{index}].commitment"
+        ).casefold()
+        if commitment not in COMMITMENTS:
+            raise ValueError(f"picks[{index}].commitment must be pick or lean")
         picks.append(
             ExtractedPick(
                 sport=sport,
@@ -183,6 +190,7 @@ def extraction_from_payload(
                 pick_type=pick_type,
                 selection=selection,
                 line=line,
+                commitment=commitment,
                 confidence_probability=confidence,
                 confidence_label=_text(
                     raw.get("confidence_label", ""),

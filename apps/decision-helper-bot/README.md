@@ -1,9 +1,14 @@
 # Mel — decision helper bot
 
 Private Telegram bot `@decision_helpers_bot` (display name **Mel**). Send it
-voice notes about your NFL and NBA picks. Mel transcribes them, saves every
-winner, spread, and total pick automatically, follows the market until kickoff
-or tip-off, grades results from ESPN, and reviews each decision after the game.
+voice notes about your NFL and NBA picks. For each voice note Mel asks, with
+buttons, whether to **Parse** it or **Trash** the audio. Parsed notes produce
+committed picks and tentative leans (tracked separately; every side you lean
+toward is kept so flips can be analyzed). Mel follows the market until kickoff
+or tip-off, grades results from ESPN, and reviews each decision after the
+game. Picks for games that already started in the last three days can be
+logged late; they are marked `[logged after start]`, use the line you state,
+and are graded on the next sync.
 
 ## How it works
 
@@ -43,8 +48,11 @@ receptionist's Opus agent, not with API billing:
 
 ## Bot commands
 
-- `/recent` - the 10 newest picks with status
-- `/stats` - record, Brier calibration, process score, CLV, and top bias flags
+- `/recent` - the 10 newest picks and leans with status
+- `/stats` - committed picks and leans: record, Brier calibration, process
+  score, CLV, and top bias flags
+- `/reparse` - re-run parsing on the latest saved transcript (voids its open
+  picks first)
 - `/void <id-prefix>` - drop a mis-parsed open pick
 - `/help`
 

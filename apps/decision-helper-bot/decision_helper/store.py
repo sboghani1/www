@@ -42,9 +42,61 @@ class DecisionStore:
         finally:
             connection.close()
 
+    def _migrate_entries(self) -> None:
+        """Rebuild a v1 entries table, whose status CHECK predates button choices."""
+        if not self.database_path.exists():
+            return
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT sql FROM sqlite_master WHERE type='table' AND name='entries'"
+            ).fetchone()
+            if row is None or "awaiting_choice" in row["sql"]:
+                return
+            connection.execute("PRAGMA foreign_keys=OFF")
+            connection.execute("BEGIN IMMEDIATE")
+            connection.execute(
+                """
+                CREATE TABLE entries_v2 (
+                    id TEXT PRIMARY KEY,
+                    telegram_chat_id INTEGER NOT NULL,
+                    telegram_message_id INTEGER NOT NULL,
+                    audio_kind TEXT NOT NULL,
+                    transcript TEXT NOT NULL DEFAULT '',
+                    immediate_feedback TEXT NOT NULL DEFAULT '',
+                    status TEXT NOT NULL CHECK(status IN (
+                        'awaiting_choice','processing','saved','failed',
+                        'trashed'
+                    )),
+                    error TEXT NOT NULL DEFAULT '',
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    audio_suffix TEXT NOT NULL DEFAULT '',
+                    UNIQUE(telegram_chat_id, telegram_message_id)
+                )
+                """
+            )
+            connection.execute(
+                """
+                INSERT INTO entries_v2(
+                    id, telegram_chat_id, telegram_message_id, audio_kind,
+                    transcript, immediate_feedback, status, error,
+                    created_at, updated_at
+                )
+                SELECT id, telegram_chat_id, telegram_message_id, audio_kind,
+                    transcript, immediate_feedback, status, error,
+                    created_at, updated_at
+                FROM entries
+                """
+            )
+            connection.execute("DROP TABLE entries")
+            connection.execute("ALTER TABLE entries_v2 RENAME TO entries")
+            connection.commit()
+            connection.execute("PRAGMA foreign_keys=ON")
+
     def initialize(self) -> None:
         self.database_path.parent.mkdir(parents=True, exist_ok=True)
         os.chmod(self.database_path.parent, 0o770)
+        self._migrate_entries()
         with self.connect() as connection:
             connection.executescript(
                 """
@@ -58,11 +110,13 @@ class DecisionStore:
                     transcript TEXT NOT NULL DEFAULT '',
                     immediate_feedback TEXT NOT NULL DEFAULT '',
                     status TEXT NOT NULL CHECK(status IN (
-                        'processing','saved','failed'
+                        'awaiting_choice','processing','saved','failed',
+                        'trashed'
                     )),
                     error TEXT NOT NULL DEFAULT '',
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
+                    audio_suffix TEXT NOT NULL DEFAULT '',
                     UNIQUE(telegram_chat_id, telegram_message_id)
                 );
 
@@ -114,7 +168,12 @@ class DecisionStore:
                     bias_tags_json TEXT NOT NULL DEFAULT '[]',
                     feedback_sent_at TEXT,
                     created_at TEXT NOT NULL,
-                    settled_at TEXT
+                    settled_at TEXT,
+                    commitment TEXT NOT NULL DEFAULT 'pick' CHECK(
+                        commitment IN ('pick','lean')
+                    ),
+                    ordinal INTEGER NOT NULL DEFAULT 0,
+                    logged_after_start INTEGER NOT NULL DEFAULT 0
                 );
 
                 CREATE INDEX IF NOT EXISTS picks_status_result
@@ -135,6 +194,25 @@ class DecisionStore:
                 );
                 """
             )
+            columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(picks)")
+            }
+            if "commitment" not in columns:
+                connection.execute(
+                    "ALTER TABLE picks ADD COLUMN commitment TEXT NOT NULL "
+                    "DEFAULT 'pick' CHECK(commitment IN ('pick','lean'))"
+                )
+            if "ordinal" not in columns:
+                connection.execute(
+                    "ALTER TABLE picks ADD COLUMN ordinal INTEGER NOT NULL "
+                    "DEFAULT 0"
+                )
+            if "logged_after_start" not in columns:
+                connection.execute(
+                    "ALTER TABLE picks ADD COLUMN logged_after_start INTEGER "
+                    "NOT NULL DEFAULT 0"
+                )
             stale_before = timestamp(utc_now() - timedelta(hours=1))
             now = timestamp(utc_now())
             connection.execute(
@@ -156,6 +234,8 @@ class DecisionStore:
         telegram_chat_id: int,
         telegram_message_id: int,
         audio_kind: str,
+        status: str = "processing",
+        audio_suffix: str = "",
     ) -> tuple[dict[str, Any], bool]:
         now = timestamp(utc_now())
         entry_id = str(uuid.uuid4())
@@ -164,14 +244,16 @@ class DecisionStore:
                 """
                 INSERT OR IGNORE INTO entries(
                     id, telegram_chat_id, telegram_message_id, audio_kind,
-                    status, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, 'processing', ?, ?)
+                    status, audio_suffix, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     entry_id,
                     telegram_chat_id,
                     telegram_message_id,
                     audio_kind,
+                    status,
+                    audio_suffix,
                     now,
                     now,
                 ),
@@ -186,6 +268,31 @@ class DecisionStore:
             ).fetchone()
             connection.commit()
         return dict(row), created
+
+    def choose(self, entry_id: str, choice: str) -> dict[str, Any] | None:
+        """Atomically resolve an awaiting voice note; None if already handled."""
+        status = {"parse": "processing", "trash": "trashed"}[choice]
+        with self.connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE entries SET status=?, updated_at=?
+                WHERE id=? AND status='awaiting_choice'
+                """,
+                (status, timestamp(utc_now()), entry_id),
+            )
+            row = connection.execute(
+                "SELECT * FROM entries WHERE id=?", (entry_id,)
+            ).fetchone()
+            connection.commit()
+        return dict(row) if cursor.rowcount == 1 else None
+
+    def set_transcript(self, entry_id: str, transcript: str) -> None:
+        with self.connect() as connection:
+            connection.execute(
+                "UPDATE entries SET transcript=?, updated_at=? WHERE id=?",
+                (transcript, timestamp(utc_now()), entry_id),
+            )
+            connection.commit()
 
     def fail_entry(self, entry_id: str, error: str) -> None:
         with self.connect() as connection:
@@ -220,12 +327,13 @@ class DecisionStore:
                 raise LookupError("Entry not found")
             if entry["status"] == "saved":
                 rows = connection.execute(
-                    "SELECT * FROM picks WHERE entry_id=? ORDER BY created_at",
+                    "SELECT * FROM picks WHERE entry_id=? AND status!='void' "
+                    "ORDER BY created_at, ordinal, id",
                     (entry_id,),
                 ).fetchall()
                 connection.commit()
                 return [dict(row) for row in rows]
-            for pick in extraction.picks:
+            for ordinal, pick in enumerate(extraction.picks):
                 event = by_id[pick.event_id]
                 quote = quote_for_pick(event, pick.pick_type, pick.selection)
                 line = pick.line
@@ -251,10 +359,11 @@ class DecisionStore:
                         confidence_probability, confidence_label, reasoning,
                         uncertainties_json, status, closing_line, closing_price,
                         closing_captured_at, next_market_check_at,
-                        next_result_check_at, analysis_status, created_at
+                        next_result_check_at, analysis_status, created_at,
+                        commitment, ordinal, logged_after_start
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                        'open', ?, ?, ?, ?, ?, 'not_ready', ?
+                        'open', ?, ?, ?, ?, ?, 'not_ready', ?, ?, ?, ?
                     )
                     """,
                     (
@@ -281,6 +390,9 @@ class DecisionStore:
                         next_market_check(event.commence_time, now=now_dt),
                         timestamp(commence + result_delay),
                         now,
+                        pick.commitment,
+                        ordinal,
+                        int(commence <= now_dt),
                     ),
                 )
                 if quote is not None:
@@ -315,7 +427,8 @@ class DecisionStore:
                 ),
             )
             rows = connection.execute(
-                "SELECT * FROM picks WHERE entry_id=? ORDER BY created_at, id",
+                "SELECT * FROM picks WHERE entry_id=? AND status!='void' "
+                    "ORDER BY created_at, ordinal, id",
                 (entry_id,),
             ).fetchall()
             connection.commit()
@@ -324,7 +437,8 @@ class DecisionStore:
     def entry_picks(self, entry_id: str) -> list[dict[str, Any]]:
         with self.connect() as connection:
             rows = connection.execute(
-                "SELECT * FROM picks WHERE entry_id=? ORDER BY created_at, id",
+                "SELECT * FROM picks WHERE entry_id=? AND status!='void' "
+                    "ORDER BY created_at, ordinal, id",
                 (entry_id,),
             ).fetchall()
         return [dict(row) for row in rows]
@@ -565,7 +679,7 @@ class DecisionStore:
             rows = connection.execute(
                 """
                 SELECT * FROM picks
-                ORDER BY created_at DESC, id DESC LIMIT ?
+                ORDER BY created_at DESC, ordinal DESC, id DESC LIMIT ?
                 """,
                 (limit,),
             ).fetchall()
@@ -606,10 +720,63 @@ class DecisionStore:
             connection.commit()
         return self.resolve_pick(pick["id"])
 
-    def stats(self) -> dict[str, Any]:
+    def latest_entry(self) -> dict[str, Any] | None:
+        with self.connect() as connection:
+            row = connection.execute(
+                """
+                SELECT * FROM entries
+                WHERE status!='processing' AND transcript!=''
+                ORDER BY created_at DESC, rowid DESC LIMIT 1
+                """
+            ).fetchone()
+        return dict(row) if row is not None else None
+
+    def reopen_entry(self, entry_id: str) -> dict[str, Any]:
+        """Void an entry's open picks so its saved transcript can be reparsed."""
+        with self.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            entry = connection.execute(
+                "SELECT * FROM entries WHERE id=?", (entry_id,)
+            ).fetchone()
+            if entry is None:
+                raise LookupError("Entry not found")
+            if entry["status"] == "processing":
+                raise ValueError("That note is still being processed")
+            if not entry["transcript"]:
+                raise ValueError("That note has no saved transcript")
+            settled = connection.execute(
+                "SELECT COUNT(*) FROM picks WHERE entry_id=? AND status='final'",
+                (entry_id,),
+            ).fetchone()[0]
+            if settled:
+                raise ValueError("That note already has settled picks")
+            connection.execute(
+                """
+                UPDATE picks
+                SET status='void', next_market_check_at=NULL
+                WHERE entry_id=? AND status='open'
+                """,
+                (entry_id,),
+            )
+            connection.execute(
+                """
+                UPDATE entries
+                SET status='processing', error='', updated_at=?
+                WHERE id=?
+                """,
+                (timestamp(utc_now()), entry_id),
+            )
+            row = connection.execute(
+                "SELECT * FROM entries WHERE id=?", (entry_id,)
+            ).fetchone()
+            connection.commit()
+        return dict(row)
+
+    def stats(self, commitment: str = "pick") -> dict[str, Any]:
         with self.connect() as connection:
             rows = connection.execute(
-                "SELECT * FROM picks WHERE status!='void'"
+                "SELECT * FROM picks WHERE status!='void' AND commitment=?",
+                (commitment,),
             ).fetchall()
         picks = [dict(row) for row in rows]
         finals = [
