@@ -192,9 +192,32 @@ def test_extraction_keeps_one_final_per_game_and_family() -> None:
     assert [p.role for p in picks if p.pick_type == "total"] == ["final"]
 
 
-def test_extraction_prompt_carries_flip_history() -> None:
+def test_extraction_prompt_carries_prior_views() -> None:
     from decision_helper.claude import extraction_prompt
     from helpers import make_events
 
-    prompt = extraction_prompt("t", make_events(), history={"flips": 3, "hurt": 2})
-    assert '"hurt": 2' in prompt and "role" in prompt
+    prior = {"nfl-1": {"decisions": [{"side": "Buffalo Bills +3"}], "game_notes": []}}
+    prompt = extraction_prompt("t", make_events(), prior_views=prior)
+    assert '"your_prior_views": {"decisions": [{"side": "Buffalo Bills +3"}]' in prompt
+    assert prompt.count("your_prior_views") == 2  # rules + one candidate
+    assert "immediate_feedback" not in prompt
+
+
+def test_game_notes_and_opinions_are_validated() -> None:
+    import pytest
+    from decision_helper.models import extraction_from_payload, opinion_from_payload
+    from helpers import make_events
+
+    events = make_events()
+    extraction = extraction_from_payload(
+        {"picks": [], "game_notes": [{"event_id": "nba-1", "summary": "Tatum questionable"}]}, events
+    )
+    assert extraction.game_notes[0].sport == "nba"
+    with pytest.raises(ValueError):
+        extraction_from_payload({"picks": [], "game_notes": [{"event_id": "x", "summary": "s"}]}, events)
+    opinion = opinion_from_payload(
+        {"critique": "c", "recommendation": "pass", "confidence_probability": None, "watch_for": ""}
+    )
+    assert opinion.confidence_probability is None
+    with pytest.raises(ValueError):
+        opinion_from_payload({"critique": "c", "recommendation": "r", "confidence_probability": 2})

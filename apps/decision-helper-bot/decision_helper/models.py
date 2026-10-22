@@ -90,9 +90,27 @@ class ExtractedPick:
 
 
 @dataclass(frozen=True)
+class GameNote:
+    """Thoughts on a game that state no side or total."""
+
+    sport: str
+    event_id: str
+    summary: str
+
+
+@dataclass(frozen=True)
 class Extraction:
     picks: tuple[ExtractedPick, ...]
     immediate_feedback: str
+    game_notes: tuple[GameNote, ...] = ()
+
+
+@dataclass(frozen=True)
+class Opinion:
+    critique: str
+    recommendation: str
+    confidence_probability: float | None
+    watch_for: str
 
 
 @dataclass(frozen=True)
@@ -222,12 +240,47 @@ def extraction_from_payload(
                 ),
             )
         )
+    raw_notes = payload.get("game_notes", [])
+    if not isinstance(raw_notes, list):
+        raise ValueError("game_notes must be an array")
+    notes: list[GameNote] = []
+    for index, raw in enumerate(raw_notes):
+        if not isinstance(raw, dict):
+            raise ValueError(f"game_notes[{index}] must be an object")
+        event_id = _text(raw.get("event_id"), f"game_notes[{index}].event_id")
+        event = by_id.get(event_id)
+        if event is None:
+            raise ValueError(f"game_notes[{index}].event_id is not a candidate")
+        summary = _text(
+            raw.get("summary", ""), f"game_notes[{index}].summary", required=False
+        )
+        if summary:
+            notes.append(GameNote(event.sport, event_id, summary))
     return Extraction(
         picks=_one_final_per_decision(picks),
         immediate_feedback=_text(
             payload.get("immediate_feedback", ""),
             "immediate_feedback",
             required=False,
+        ),
+        game_notes=tuple(notes),
+    )
+
+
+def opinion_from_payload(payload: dict[str, Any]) -> Opinion:
+    confidence = _number(
+        payload.get("confidence_probability"), "confidence_probability"
+    )
+    if confidence is not None and not 0.0 <= confidence <= 1.0:
+        raise ValueError("confidence_probability must be 0-1")
+    return Opinion(
+        critique=_text(payload.get("critique", ""), "critique"),
+        recommendation=_text(
+            payload.get("recommendation", ""), "recommendation"
+        ),
+        confidence_probability=confidence,
+        watch_for=_text(
+            payload.get("watch_for", ""), "watch_for", required=False
         ),
     )
 

@@ -196,6 +196,21 @@ class DecisionStore:
                     bookmaker_count INTEGER NOT NULL,
                     UNIQUE(pick_id, captured_at)
                 );
+
+                CREATE TABLE IF NOT EXISTS game_notes (
+                    id TEXT PRIMARY KEY,
+                    entry_id TEXT NOT NULL REFERENCES entries(id),
+                    sport TEXT NOT NULL,
+                    event_id TEXT NOT NULL,
+                    away_team TEXT NOT NULL,
+                    home_team TEXT NOT NULL,
+                    commence_time TEXT NOT NULL,
+                    kind TEXT NOT NULL CHECK(kind IN ('context','hindsight')),
+                    summary TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS game_notes_game
+                    ON game_notes(sport, away_team, home_team);
                 """
             )
             columns = {
@@ -362,6 +377,17 @@ class DecisionStore:
                 return [dict(row) for row in rows]
             for ordinal, pick in enumerate(extraction.picks):
                 event = by_id[pick.event_id]
+                if _settled(connection, event, pick.pick_type):
+                    # Already graded: keep the thought, but don't count it.
+                    _insert_note(
+                        connection,
+                        entry_id,
+                        event,
+                        "hindsight",
+                        _hindsight_summary(pick),
+                        logged,
+                    )
+                    continue
                 quote = quote_for_pick(event, pick.pick_type, pick.selection)
                 line = pick.line
                 line_source = "spoken" if line is not None else "none"
@@ -441,6 +467,16 @@ class DecisionStore:
                             quote.bookmaker_count,
                         ),
                     )
+            for note in extraction.game_notes:
+                event = by_id[note.event_id]
+                _insert_note(
+                    connection,
+                    entry_id,
+                    event,
+                    "hindsight" if _settled(connection, event) else "context",
+                    note.summary,
+                    logged,
+                )
             for pick_id in saved_ids:
                 _refresh_roles(connection, pick_id)
             connection.execute(
@@ -464,6 +500,123 @@ class DecisionStore:
             ).fetchall()
             connection.commit()
         return [dict(row) for row in rows]
+
+    def entry_notes(self, entry_id: str) -> list[dict[str, Any]]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM game_notes WHERE entry_id=? "
+                "ORDER BY created_at, rowid",
+                (entry_id,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def game_record(
+        self, sport: str, away_team: str, home_team: str, commence_time: str
+    ) -> dict[str, Any]:
+        """Everything the speaker said about one game, oldest first."""
+        with self.connect() as connection:
+            picks = _same_game(
+                connection.execute(
+                    """
+                    SELECT picks.*, entries.created_at AS note_at
+                    FROM picks JOIN entries ON entries.id=picks.entry_id
+                    WHERE picks.status!='void' AND picks.sport=?
+                      AND picks.away_team=? AND picks.home_team=?
+                    ORDER BY picks.created_at, picks.ordinal, picks.id
+                    """,
+                    (sport, away_team, home_team),
+                ).fetchall(),
+                commence_time,
+            )
+            notes = _same_game(
+                connection.execute(
+                    """
+                    SELECT * FROM game_notes
+                    WHERE sport=? AND away_team=? AND home_team=?
+                    ORDER BY created_at, rowid
+                    """,
+                    (sport, away_team, home_team),
+                ).fetchall(),
+                commence_time,
+            )
+            entry_ids = list(
+                dict.fromkeys(
+                    [row["entry_id"] for row in picks]
+                    + [row["entry_id"] for row in notes]
+                )
+            )
+            entries = (
+                connection.execute(
+                    f"""
+                    SELECT created_at, transcript FROM entries
+                    WHERE id IN ({",".join("?" * len(entry_ids))})
+                      AND transcript!=''
+                    ORDER BY created_at, rowid
+                    """,
+                    entry_ids,
+                ).fetchall()
+                if entry_ids
+                else []
+            )
+        return {
+            "decisions": [
+                {
+                    "logged_at": row["created_at"],
+                    "side": _describe_side(row),
+                    "pick_type": row["pick_type"],
+                    "commitment": row["commitment"],
+                    "role": row["role"],
+                    "confidence_probability": row["confidence_probability"],
+                    "confidence_label": row["confidence_label"],
+                    "price_at_pick": row["price_at_pick"],
+                    "reasoning": row["reasoning"],
+                    "uncertainties": json.loads(row["uncertainties_json"]),
+                    "result": row["result"],
+                }
+                for row in picks
+            ],
+            "game_notes": [
+                {
+                    "logged_at": row["created_at"],
+                    "kind": row["kind"],
+                    "summary": row["summary"],
+                }
+                for row in notes
+            ],
+            "notes": [
+                {"logged_at": row["created_at"], "transcript": row["transcript"]}
+                for row in entries
+            ],
+        }
+
+    def prior_views(
+        self, events: list[MarketEvent]
+    ) -> dict[str, dict[str, Any]]:
+        """Earlier recorded sides and notes for each candidate game."""
+        views: dict[str, dict[str, Any]] = {}
+        for event in events:
+            record = self.game_record(
+                event.sport, event.away_team, event.home_team, event.commence_time
+            )
+            if record["decisions"] or record["game_notes"]:
+                views[event.id] = {
+                    "decisions": [
+                        {
+                            key: decision[key]
+                            for key in (
+                                "logged_at",
+                                "side",
+                                "commitment",
+                                "role",
+                                "reasoning",
+                                "result",
+                            )
+                        }
+                        for decision in record["decisions"]
+                    ],
+                    "game_notes": record["game_notes"],
+                }
+        return views
 
     def entry_picks(self, entry_id: str) -> list[dict[str, Any]]:
         with self.connect() as connection:
@@ -698,13 +851,30 @@ class DecisionStore:
             raise LookupError("Pick not found")
         return dict(row)
 
-    def mark_feedback_sent(self, pick_id: str) -> None:
+    def recent_lessons(self, limit: int = 5) -> list[dict[str, Any]]:
+        """Most recent completed reviews of final decisions."""
         with self.connect() as connection:
-            connection.execute(
-                "UPDATE picks SET feedback_sent_at=? WHERE id=?",
-                (timestamp(utc_now()), pick_id),
-            )
-            connection.commit()
+            rows = connection.execute(
+                """
+                SELECT * FROM picks
+                WHERE role='final' AND analysis_status='complete'
+                  AND process_score IS NOT NULL
+                ORDER BY settled_at DESC, id DESC LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            {
+                "game": f"{row['away_team']} @ {row['home_team']}",
+                "side": _describe_side(row),
+                "result": row["result"],
+                "process_score": row["process_score"],
+                "what_worked": row["what_worked"],
+                "what_to_improve": row["what_to_improve"],
+                "bias_tags": json.loads(row["bias_tags_json"]),
+            }
+            for row in rows
+        ]
 
     def recent(self, limit: int = 10) -> list[dict[str, Any]]:
         if not 1 <= limit <= 50:
@@ -802,6 +972,9 @@ class DecisionStore:
             )
             for pick_id in voided:
                 _refresh_roles(connection, pick_id)
+            connection.execute(
+                "DELETE FROM game_notes WHERE entry_id=?", (entry_id,)
+            )
             connection.execute(
                 """
                 UPDATE entries
@@ -994,6 +1167,78 @@ def _refresh_roles(connection: sqlite3.Connection, pick_id: str) -> None:
             "UPDATE picks SET role=? WHERE id=?",
             ("final" if row is rows[-1] else "superseded", row["id"]),
         )
+
+
+def _same_game(rows: list[Any], commence_time: str) -> list[Any]:
+    """Rows whose start is within 12 hours (ESPN start times can shift)."""
+    anchor = parse_timestamp(commence_time)
+    return [
+        row
+        for row in rows
+        if abs(parse_timestamp(row["commence_time"]) - anchor)
+        < timedelta(hours=12)
+    ]
+
+
+def _settled(
+    connection: sqlite3.Connection,
+    event: MarketEvent,
+    pick_type: str | None = None,
+) -> bool:
+    """Whether this game (or market family) already has a graded decision."""
+    types = (
+        ("winner", "spread", "total")
+        if pick_type is None
+        else ("total",)
+        if pick_type == "total"
+        else ("winner", "spread")
+    )
+    rows = connection.execute(
+        f"""
+        SELECT commence_time FROM picks
+        WHERE status='final' AND sport=? AND away_team=? AND home_team=?
+          AND pick_type IN ({",".join("?" * len(types))})
+        """,
+        (event.sport, event.away_team, event.home_team, *types),
+    ).fetchall()
+    return bool(_same_game(rows, event.commence_time))
+
+
+def _insert_note(
+    connection: sqlite3.Connection,
+    entry_id: str,
+    event: MarketEvent,
+    kind: str,
+    summary: str,
+    created_at: str,
+) -> None:
+    connection.execute(
+        """
+        INSERT INTO game_notes(
+            id, entry_id, sport, event_id, away_team, home_team,
+            commence_time, kind, summary, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            str(uuid.uuid4()),
+            entry_id,
+            event.sport,
+            event.id,
+            event.away_team,
+            event.home_team,
+            event.commence_time,
+            kind,
+            summary,
+            created_at,
+        ),
+    )
+
+
+def _hindsight_summary(pick: Any) -> str:
+    side = _describe_side(
+        {"pick_type": pick.pick_type, "selection": pick.selection, "line": pick.line}
+    )
+    return f"After the result: {side}. {pick.reasoning}".strip()
 
 
 def _describe_side(pick: dict[str, Any]) -> str:

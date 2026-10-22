@@ -25,6 +25,7 @@ from .models import MarketEvent, MarketQuote, parse_timestamp
 SHEET_TABS = {"nfl": "nfl_games", "nba": "nba_games"}
 SNAPSHOT_TABS = {"nfl": "nfl_line_snapshots", "nba": "nba_line_snapshots"}
 LATEST_PREFIXES = ("latest_away_", "latest_home_", "latest_totals_")
+OPENING_PREFIXES = ("opening_away_", "opening_home_", "opening_totals_")
 SNAPSHOT_PREFIXES = ("away_game_", "home_game_", "totals_game_")
 BOOKMAKER = "BetOnline"
 CACHE_SECONDS = 60
@@ -206,6 +207,14 @@ class SheetLines:
         if as_of is None:
             return parse_rows(await self._rows(SHEET_TABS[sport]), sport)
         return parse_snapshots(await self._rows(SNAPSHOT_TABS[sport]), sport, as_of)
+
+    async def fetch_opening(self, sport: str) -> list[MarketEvent]:
+        """BetOnline's first recorded line for each game."""
+        if sport not in SHEET_TABS:
+            raise ValueError("sport must be nfl or nba")
+        return parse_rows(
+            await self._rows(SHEET_TABS[sport]), sport, prefixes=OPENING_PREFIXES
+        )
 
     async def close(self) -> None:
         return None

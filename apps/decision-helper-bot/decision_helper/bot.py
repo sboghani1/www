@@ -57,9 +57,12 @@ AUDIO_SUFFIXES = {
 HELP_TEXT = (
     "I'm Mel. Send a voice note (or text) with your NFL/NBA thoughts — "
     "winners, spreads, and totals. For each voice note I ask whether to "
-    "parse it or trash it. Committed picks and tentative leans are tracked "
-    "separately; I follow the market until kickoff/tip and review your "
-    "process after each game.\n\n"
+    "parse it or trash it. I just confirm what I recorded. Send as many notes "
+    "per game as you like: your latest side is your decision, earlier ones "
+    "form its path, and thoughts without a side are attached to the game. "
+    "I track BetOnline lines and grade and review every game quietly; see "
+    "/stats.\n\n"
+    "/games - today's and tomorrow's games; tap one for my opinion\n"
     "/recent - latest 10 picks and leans\n"
     "/stats - record, calibration, closing-line value, process, biases\n"
     "/reparse - re-run parsing on your latest note\n"
@@ -122,7 +125,7 @@ def describe_pick(pick: dict[str, Any]) -> str:
 
 def format_saved(
     picks: list[dict[str, Any]],
-    feedback: str,
+    notes: list[dict[str, Any]],
     transcript: str,
 ) -> str:
     excerpt = " ".join(transcript.split())
@@ -142,63 +145,95 @@ def format_saved(
             counts.append(f"{earlier} earlier view(s) you moved off")
         lines.append(f"✅ Saved {', '.join(counts)}:")
         lines.extend(f"• {describe_pick(pick)}" for pick in picks)
-    else:
+    elif not notes:
         lines.append(
-            "No NFL/NBA winner, spread, or total picks or leans were found "
-            "for upcoming games."
+            "No NFL/NBA games, sides, or totals were found in that note."
         )
-    if feedback:
-        lines.extend(["", f"🧠 {feedback}"])
+    if notes:
+        if picks:
+            lines.append("")
+        lines.append(f"📎 Attached {len(notes)} note(s) to games:")
+        for note in notes:
+            label = (
+                "after the result, not counted"
+                if note["kind"] == "hindsight"
+                else "context"
+            )
+            lines.append(
+                f"• {note['sport'].upper()} · {note['away_team']} @ "
+                f"{note['home_team']} ({label}): {note['summary']}"
+            )
     return "\n".join(lines)
 
 
-def format_clv(pick: dict[str, Any]) -> str:
-    value = pick["closing_value"]
-    if value is None:
-        return "Closing-line value: unavailable"
-    if pick["pick_type"] == "winner":
-        return f"Closing-line value: {value * 100:+.1f} pts implied probability"
-    return f"Closing-line value: {value:+g} points"
+def short_team(name: str) -> str:
+    return name.split()[-1] if name else name
 
 
-def _path_step(pick: dict[str, Any]) -> str:
-    if pick["pick_type"] == "winner":
-        side = f"{pick['selection']} to win"
-    elif pick["line"] is None:
-        side = f"{pick['selection']} {pick['pick_type']}"
-    elif pick["pick_type"] == "spread":
-        side = f"{pick['selection']} {pick['line']:+g}"
+def describe_lines(event: MarketEvent) -> str:
+    parts = []
+    for team in (event.away_team, event.home_team):
+        quote = event.markets.get(f"spread:{team}")
+        if quote is not None and quote.point is not None and quote.point < 0:
+            parts.append(f"{short_team(team)} {quote.point:+g}")
+            break
     else:
-        side = f"{pick['selection']} {pick['line']:g}"
-    return f"{side} ({str(pick['result'] or 'open').upper()})"
+        quote = event.markets.get(f"spread:{event.home_team}")
+        if quote is not None and quote.point == 0:
+            parts.append("pk")
+    total = event.markets.get("total:Over")
+    if total is not None and total.point is not None:
+        parts.append(f"o/u {total.point:g}")
+    return ", ".join(parts) or "no BetOnline line yet"
 
 
-def format_review(
-    pick: dict[str, Any], path: list[dict[str, Any]] | None = None
-) -> str:
-    result = str(pick["result"]).upper()
-    tags = json.loads(pick["bias_tags_json"])
-    lines = [
-        f"🏁 {result}: {describe_pick(pick)}",
-        (
-            f"Final: {pick['away_team']} {pick['away_score']} - "
-            f"{pick['home_team']} {pick['home_score']}"
-        ),
-    ]
-    if path:
-        lines.append(
-            "Path: "
-            + " → ".join(_path_step(step) for step in [*path, pick])
+def games_keyboard(events: list[MarketEvent]) -> InlineKeyboardMarkup:
+    rows = []
+    for event in events:
+        start = parse_timestamp(event.commence_time).astimezone(EASTERN)
+        label = (
+            f"{start:%a %-I:%M%p} {event.sport.upper()} "
+            f"{short_team(event.away_team)} @ {short_team(event.home_team)}"
         )
-    lines += [
-        format_clv(pick),
-        f"Process score: {pick['process_score']}/5",
-        f"Luck vs. skill: {pick['luck_summary']}",
-        f"✅ Worked: {pick['what_worked']}",
-        f"🔧 Improve: {pick['what_to_improve']}",
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    label, callback_data=f"game:{event.sport}:{event.id}"[:64]
+                )
+            ]
+        )
+    return InlineKeyboardMarkup(rows)
+
+
+def format_games(events: list[MarketEvent], now: datetime) -> str:
+    lines = ["🗓 Today's and tomorrow's games (BetOnline). Tap one for my take:"]
+    for event in events:
+        start = parse_timestamp(event.commence_time)
+        status = " · started" if start <= now else ""
+        lines.append(
+            f"• {start.astimezone(EASTERN):%a %-I:%M %p} {event.sport.upper()} "
+            f"{event.away_team} @ {event.home_team}: {describe_lines(event)}"
+            f"{status}"
+        )
+    return "\n".join(lines)
+
+
+def format_opinion(event: MarketEvent, opinion: Any) -> str:
+    confidence = (
+        f" ({opinion.confidence_probability:.0%})"
+        if opinion.confidence_probability is not None
+        else ""
+    )
+    lines = [
+        f"🎯 {event.sport.upper()} · {event.away_team} @ {event.home_team}",
+        f"Lines: {describe_lines(event)}",
+        "",
+        f"🔍 Your view: {opinion.critique}",
+        "",
+        f"💡 Mel's call{confidence}: {opinion.recommendation}",
     ]
-    if tags:
-        lines.append("Bias flags: " + ", ".join(tags))
+    if opinion.watch_for:
+        lines.append(f"👀 Watch for: {opinion.watch_for}")
     return "\n".join(lines)
 
 
@@ -352,6 +387,7 @@ class DecisionBot:
             )
         await application.bot.set_my_commands(
             [
+                BotCommand("games", "Today's and tomorrow's games; get my take"),
                 BotCommand("recent", "Show the latest picks and leans"),
                 BotCommand("stats", "Decision-quality report"),
                 BotCommand("reparse", "Re-run parsing on the latest note"),
@@ -523,7 +559,7 @@ class DecisionBot:
                     transcript,
                     events,
                     recorded_at=recorded_at,
-                    history=self.store.flip_stats(),
+                    prior_views=self.store.prior_views(events),
                 )
                 picks = self.store.save_extraction(
                     entry_id=entry_id,
@@ -535,7 +571,7 @@ class DecisionBot:
                 )
                 await message.reply_text(
                     format_saved(
-                        picks, extraction.immediate_feedback, transcript
+                        picks, self.store.entry_notes(entry_id), transcript
                     )
                 )
             except Exception as error:
@@ -550,20 +586,24 @@ class DecisionBot:
                     audio_path.unlink(missing_ok=True)
 
     async def candidate_events(
-        self, lines_as_of: datetime | None = None
+        self,
+        lines_as_of: datetime | None = None,
+        day_offsets: range | None = None,
     ) -> list[MarketEvent]:
         """ESPN games from the last few days through the next week, with
         BetOnline lines from the forwarder's sheet (no paid API calls).
 
         ``lines_as_of`` swaps in the lines BetOnline showed at that time.
+        ``day_offsets`` limits the ESPN days (ET, relative to today).
         """
         now = utc_now()
         today = now.astimezone(EASTERN).date()
+        offsets = day_offsets or range(
+            1 - STARTED_LOOKBACK_DAYS, CANDIDATE_WINDOW.days + 1
+        )
         dates = [
             (today + timedelta(days=offset)).strftime("%Y%m%d")
-            for offset in range(
-                1 - STARTED_LOOKBACK_DAYS, CANDIDATE_WINDOW.days + 1
-            )
+            for offset in offsets
         ]
         events: list[MarketEvent] = []
         failures: list[str] = []
@@ -611,18 +651,15 @@ class DecisionBot:
         return sorted(events, key=lambda event: event.commence_time)
 
     async def sync_job(self, context: ContextTypes.DEFAULT_TYPE) -> None:
+        del context
         if self._sync.locked():
             return
         async with self._sync:
-            for step in (self.sync_markets, self.sync_results):
+            for step in (self.sync_markets, self.sync_results, self.sync_reviews):
                 try:
                     await step()
                 except Exception:
                     log.exception("%s failed", step.__name__)
-            try:
-                await self.sync_reviews(context.bot)
-            except Exception:
-                log.exception("sync_reviews failed")
 
     async def sync_markets(self) -> None:
         due = self.store.due_market_picks()
@@ -661,7 +698,9 @@ class DecisionBot:
             else:
                 self.store.settle_pick(pick["id"], game)
 
-    async def sync_reviews(self, bot: Any) -> None:
+    async def sync_reviews(self) -> None:
+        """Grade each final decision's process. Reviews are stored for
+        /stats and opinions, not sent."""
         for pick in self.store.due_analysis():
             record = {
                 key: pick[key]
@@ -703,19 +742,126 @@ class DecisionBot:
             record["logged_at"] = pick["created_at"]
             record["commence_time"] = pick["commence_time"]
             record["uncertainties"] = json.loads(pick["uncertainties_json"])
-            record["full_transcript"] = pick["transcript"]
+            game = self.store.game_record(
+                pick["sport"],
+                pick["away_team"],
+                pick["home_team"],
+                pick["commence_time"],
+            )
+            record["all_notes_on_game"] = game["notes"] or [
+                {"logged_at": pick["created_at"], "transcript": pick["transcript"]}
+            ]
+            record["game_notes"] = game["game_notes"]
             try:
                 review = await self.claude.review(record)
             except Exception as error:
                 log.warning("Review failed for %s: %s", pick["id"], error)
                 self.store.defer_analysis(pick["id"])
                 continue
-            updated = self.store.complete_analysis(pick["id"], review)
-            await bot.send_message(
-                chat_id=updated["telegram_chat_id"],
-                text=format_review(updated, path),
+            self.store.complete_analysis(pick["id"], review)
+
+    def _today_and_tomorrow(
+        self, events: list[MarketEvent]
+    ) -> list[MarketEvent]:
+        today = utc_now().astimezone(EASTERN).date()
+        days = {today, today + timedelta(days=1)}
+        return [
+            event
+            for event in events
+            if parse_timestamp(event.commence_time).astimezone(EASTERN).date()
+            in days
+        ]
+
+    async def games(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        del context
+        try:
+            events = self._today_and_tomorrow(
+                await self.candidate_events(day_offsets=range(0, 2))
             )
-            self.store.mark_feedback_sent(pick["id"])
+        except Exception as error:
+            log.exception("Games list failed")
+            await update.message.reply_text(f"⚠️ Couldn't load games: {error}")
+            return
+        if not events:
+            await update.message.reply_text(
+                "No NFL or NBA games today or tomorrow."
+            )
+            return
+        await update.message.reply_text(
+            format_games(events, utc_now()),
+            reply_markup=games_keyboard(events),
+        )
+
+    async def choose_game(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        query = update.callback_query
+        await query.answer()
+        _, sport, event_id = str(query.data).split(":", 2)
+        context.application.create_task(
+            self._opinion(sport, event_id, query.message)
+        )
+
+    async def _opinion(self, sport: str, event_id: str, message: Any) -> None:
+        try:
+            events = await self.candidate_events(day_offsets=range(0, 2))
+            event = next(
+                (
+                    item
+                    for item in events
+                    if item.sport == sport and item.id.startswith(event_id)
+                ),
+                None,
+            )
+            if event is None:
+                await message.reply_text(
+                    "That game is no longer in today's or tomorrow's list."
+                )
+                return
+            thinking = await message.reply_text(
+                f"🤔 Thinking about {event.away_team} @ {event.home_team}…"
+            )
+            opinion = await self.claude.opinion(
+                await self.opinion_context(event)
+            )
+            await thinking.edit_text(format_opinion(event, opinion))
+        except Exception as error:
+            log.exception("Opinion failed for %s %s", sport, event_id)
+            detail = str(error) or type(error).__name__
+            await message.reply_text(f"⚠️ I couldn't form an opinion: {detail[:500]}")
+
+    async def opinion_context(self, event: MarketEvent) -> dict[str, Any]:
+        game = event.prompt_dict()
+        game["already_started"] = parse_timestamp(event.commence_time) <= utc_now()
+        try:
+            opening = match_event(
+                await self.lines.fetch_opening(event.sport),
+                event_id="",
+                away_team=event.away_team,
+                home_team=event.home_team,
+                commence_time=event.commence_time,
+            )
+        except Exception as error:
+            log.warning("Opening lines unavailable: %s", error)
+            opening = None
+        if opening is not None:
+            game["betonline_opening_lines"] = with_lines(
+                replace(event, markets={}), opening
+            ).prompt_dict()["betonline_lines"]
+        return {
+            "game": game,
+            "my_views": self.store.game_record(
+                event.sport, event.away_team, event.home_team, event.commence_time
+            ),
+            "track_record": {
+                "picks": self.store.stats(),
+                "leans": self.store.stats("lean"),
+                "side_changes": self.store.flip_stats(),
+                "recent_lessons": self.store.recent_lessons(),
+            },
+        }
 
     async def recent(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -772,6 +918,7 @@ class DecisionBot:
         for name, handler in (
             ("start", self.start),
             ("help", self.help),
+            ("games", self.games),
             ("recent", self.recent),
             ("stats", self.stats),
             ("reparse", self.reparse),
@@ -783,6 +930,11 @@ class DecisionBot:
         application.add_handler(
             CallbackQueryHandler(
                 self.authorized(self.choose), pattern=r"^(parse|trash):"
+            )
+        )
+        application.add_handler(
+            CallbackQueryHandler(
+                self.authorized(self.choose_game), pattern=r"^game:"
             )
         )
         application.add_handler(

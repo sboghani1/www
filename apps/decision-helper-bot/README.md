@@ -5,9 +5,11 @@ voice notes about your NFL and NBA picks. For each voice note Mel asks, with
 buttons, whether to **Parse** it or **Trash** the audio. Parsed notes produce
 committed picks and tentative leans (tracked separately). Each game has one
 decision per market family (side = moneyline/spread, and total). Sides you
-moved off are kept as that decision's path, so flips can be analyzed. Mel follows the BetOnline line until
-kickoff or tip-off, grades results from ESPN, and reviews each decision after the
-game. Picks for games that already started in the last three days can be
+moved off are kept as that decision's path, so flips can be analyzed. Mel only
+confirms what it recorded; it doesn't send analysis on input notes. It follows
+the BetOnline line until kickoff or tip-off, grades results from ESPN, and
+reviews each decision quietly after the game. `/games` lists today's and
+tomorrow's games, and tapping one gets Mel's opinion. Picks for games that already started in the last three days can be
 logged late; they are marked `[logged after start]`, use the line you state
 (or BetOnline's closing line, marked `[BetOnline close]`), and are graded on
 the next sync.
@@ -27,8 +29,13 @@ the next sync.
    gets one `final` row, the position you ended on. Abandoned sides are
    stored with `role='superseded'`, and so are views replaced by a later
    note. Weighing the moneyline against the spread on the same team is one
-   decision, with the alternative noted. Your past flip record goes to Claude,
-   so the instant feedback can say how switching has worked for you.
+   decision, with the alternative noted. You can send several notes per
+   game. Each candidate game carries your prior views on it (earlier sides
+   and notes), so "still on them" resolves to the right side. A note that
+   discusses a game without taking a side is stored in `game_notes` as
+   `context`. A side or note sent after the game is graded becomes a
+   `hindsight` note and is never counted as a decision. `/reparse` clears the
+   note's attachments before parsing again.
 3. **Market tracking (BetOnline only, no API credits).** Mel never calls The
    Odds API. It reads BetOnline lines from the `nfl_games` / `nba_games` tabs
    of telegram-channel-forwarder's intake workbook (written by its
@@ -44,11 +51,12 @@ the next sync.
    value (points for spreads and totals, implied probability for moneylines).
    Superseded sides are graded too, as if kept, but only final positions
    count toward the record.
-5. **Post-game review.** One review per decision. Claude scores the process
-   (1-5) using your original words, when you said them relative to the game,
-   the path (e.g. `Pistons to win (WIN) → Celtics to win (LOSS)`), the result,
-   and the market move, and flags biases. Mel sends this immediately after
-   each game. `/stats` adds a "Changing sides" section: flips that
+5. **Post-game review (silent).** One review per decision. Claude scores the
+   process (1-5) using the full transcript of every note you sent about the
+   game, the context notes, when you said them relative to the game, the path
+   (e.g. `Pistons to win (WIN) → Celtics to win (LOSS)`), the result, and the
+   market move, and flags biases. Reviews are stored, not sent. They feed
+   `/stats` and the lessons used in `/games` opinions. `/stats` adds a "Changing sides" section: flips that
    helped or hurt, and first view vs. final position. There is no weekly report.
 
 ## Claude subscription auth
@@ -68,8 +76,17 @@ receptionist's Opus agent, not with API billing:
   `/reauth` on the watchdog bot, the same as for the receptionist. Failed reviews
   retry automatically later.
 
+6. **Opinions (`/games`).** Lists all of today's and tomorrow's (ET) NFL and
+   NBA games with the BetOnline spread and total. Tapping a game sends Claude
+   the current and opening lines, everything you said about the game, your
+   record, flip history, bias flags, and recent review lessons. Mel replies
+   with a critique of your view and its own call (play with the worst line
+   worth taking, or pass), a confidence, and what would change it. Claude
+   has no news or injury feed.
+
 ## Bot commands
 
+- `/games` - today's and tomorrow's games; tap one for Mel's opinion
 - `/recent` - the 10 newest picks and leans with status
 - `/stats` - committed picks and leans: record, Brier calibration, process
   score, CLV, and top bias flags

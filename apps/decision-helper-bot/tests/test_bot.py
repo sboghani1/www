@@ -4,11 +4,12 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
-from decision_helper.bot import DecisionBot, format_review, format_stats
+from decision_helper.bot import DecisionBot, format_stats
 from decision_helper.config import Config
 from decision_helper.models import (
     DecisionReview,
     FinalGame,
+    Opinion,
     extraction_from_payload,
     timestamp,
 )
@@ -33,11 +34,16 @@ class FakeTranscriber:
 class FakeClaude:
     def __init__(self) -> None:
         self.reviews: list[dict] = []
+        self.opinions: list[dict] = []
 
-    async def extract(self, transcript, events, recorded_at=None, history=None):
-        self.history = history
+    async def extract(self, transcript, events, recorded_at=None, prior_views=None):
+        self.prior_views = prior_views
         self.recorded_at = recorded_at
         return extraction_from_payload(extraction_payload(), events)
+
+    async def opinion(self, context):
+        self.opinions.append(context)
+        return Opinion("You never priced it.", "Bills +2.5 or better.", 0.55, "Allen's ankle")
 
     async def review(self, record):
         self.reviews.append(record)
@@ -56,6 +62,9 @@ class FakeLines:
         self.as_of.append(as_of)
         source = self.historic if as_of is not None and self.historic is not None else self.events
         return [event for event in source if event.sport == sport]
+
+    async def fetch_opening(self, sport):
+        return [event for event in self.events if event.sport == sport]
 
     async def close(self):
         pass
@@ -169,7 +178,7 @@ def test_voice_note_waits_for_button_then_parses_and_deletes(tmp_path: Path) -> 
     assert "Saved 3 pick(s)" in replies[1]
     assert "Buffalo Bills +3" in replies[1]
     assert "Under 47.5 [BetOnline line]" in replies[1]
-    assert "Good specificity" in replies[1]
+    assert "🧠" not in replies[1] and "Good specificity" not in replies[1]
     assert not any(bot.config.audio_dir.iterdir())
     assert bot.lines.calls == ["nfl", "nba"]
 
@@ -213,7 +222,7 @@ def test_flip_keeps_one_decision_per_game(tmp_path: Path) -> None:
                    reasoning="Switched after the line moved")
     payload["picks"].insert(1, flipped)
 
-    async def extract(transcript, events, recorded_at=None, history=None):
+    async def extract(transcript, events, recorded_at=None, prior_views=None):
         return extraction_from_payload(payload, events)
 
     bot.claude.extract = extract
@@ -237,17 +246,9 @@ def test_flip_keeps_one_decision_per_game(tmp_path: Path) -> None:
         connection.execute("UPDATE picks SET next_result_check_at=?", (timestamp(now - timedelta(minutes=1)),))
         connection.commit()
     asyncio.run(bot.sync_results())
-    sent = []
+    asyncio.run(bot.sync_reviews())
 
-    class FakeTelegram:
-        async def send_message(self, chat_id, text):
-            sent.append(text)
-
-    asyncio.run(bot.sync_reviews(FakeTelegram()))
-
-    side_reviews = [text for text in sent if "Buffalo Bills @ Kansas City Chiefs: Kansas City" in text]
-    assert len(sent) == 3 and len(side_reviews) == 1
-    assert "Path: Buffalo Bills +3 (WIN) → Kansas City Chiefs -2.5 (LOSS)" in side_reviews[0]
+    assert len(bot.claude.reviews) == 3
     chiefs_review = next(r for r in bot.claude.reviews if r["selection"] == "Kansas City Chiefs")
     assert chiefs_review["path"][0]["selection"] == "Buffalo Bills"
     assert chiefs_review["path"][0]["result_if_kept"] == "win"
@@ -262,16 +263,6 @@ def test_flip_keeps_one_decision_per_game(tmp_path: Path) -> None:
     report = format_stats(bot.store.stats(), leans, flips)
     assert "Flips: 1 · helped 0, hurt 1" in report
 
-    # The next note's parser sees the flip history.
-    seen = {}
-
-    async def spy(transcript, events, recorded_at=None, history=None):
-        seen["history"] = history
-        return extraction_from_payload(extraction_payload(), events)
-
-    bot.claude.extract = spy
-    run_voice(bot, voice_update(message_id=9))
-    assert seen["history"]["hurt"] == 1
 
 
 def test_later_note_supersedes_and_void_restores(tmp_path: Path) -> None:
@@ -280,7 +271,7 @@ def test_later_note_supersedes_and_void_restores(tmp_path: Path) -> None:
     payload = extraction_payload()
     payload["picks"] = [dict(payload["picks"][0], line=3.5, commitment="lean")]
 
-    async def extract(transcript, events, recorded_at=None, history=None):
+    async def extract(transcript, events, recorded_at=None, prior_views=None):
         return extraction_from_payload(payload, events)
 
     bot.claude.extract = extract
@@ -431,7 +422,7 @@ def test_picks_for_started_games_are_logged_and_graded(tmp_path: Path) -> None:
     bot.espn.started = [tuesday]
     seen = {}
 
-    async def extract(transcript, events, recorded_at=None, history=None):
+    async def extract(transcript, events, recorded_at=None, prior_views=None):
         seen["events"] = events
         return extraction_from_payload(
             {
@@ -466,16 +457,10 @@ def test_picks_for_started_games_are_logged_and_graded(tmp_path: Path) -> None:
 
     bot.espn.finals = [FinalGame("77", "nba", tuesday.commence_time, "Detroit Pistons", "Chicago Bulls", 100, 110)]
     asyncio.run(bot.sync_results())
-    sent = []
-
-    class FakeTelegram:
-        async def send_message(self, chat_id, text):
-            sent.append(text)
-
-    asyncio.run(bot.sync_reviews(FakeTelegram()))
+    asyncio.run(bot.sync_reviews())
     assert bot.store.recent()[0]["result"] == "win"
+    assert bot.store.recent()[0]["analysis_status"] == "complete"
     assert bot.claude.reviews[0]["logged_after_start"] == 1
-    assert sent and sent[0].startswith("🏁 WIN")
 
 
 def test_failures_are_reported_and_audio_removed(tmp_path: Path) -> None:
@@ -529,14 +514,7 @@ def test_market_tracking_settlement_and_post_game_review(tmp_path: Path) -> None
         connection.execute("UPDATE picks SET next_result_check_at=?", (timestamp(now - timedelta(minutes=1)),))
         connection.commit()
     asyncio.run(bot.sync_results())
-
-    sent = []
-
-    class FakeTelegram:
-        async def send_message(self, chat_id, text):
-            sent.append((chat_id, text))
-
-    asyncio.run(bot.sync_reviews(FakeTelegram()))
+    asyncio.run(bot.sync_reviews())
 
     picks = {(p["pick_type"], p["selection"]): p for p in bot.store.recent()}
     spread = picks[("spread", "Buffalo Bills")]
@@ -546,9 +524,11 @@ def test_market_tracking_settlement_and_post_game_review(tmp_path: Path) -> None
     assert under["result"] == "loss"  # 50 > 47.5
     assert under["closing_value"] == 2.0  # took Under 47.5, closed 45.5
     assert picks[("winner", "Boston Celtics")]["result"] == "loss"
-    assert len(sent) == 3 and all(chat_id == 1 for chat_id, _ in sent)
-    assert "Process score: 4/5" in sent[0][1]
-    assert bot.claude.reviews[0]["full_transcript"].startswith("Bills plus three")
+    # Reviews are stored quietly, not sent.
+    assert len(bot.claude.reviews) == 3
+    assert spread["process_score"] == 4 and spread["feedback_sent_at"] is None
+    notes = bot.claude.reviews[0]["all_notes_on_game"]
+    assert len(notes) == 1 and notes[0]["transcript"].startswith("Bills plus three")
     assert bot.claude.reviews[0]["logged_at"] == spread["created_at"]
     assert bot.claude.reviews[0]["commence_time"] == events[0].commence_time
 
@@ -559,7 +539,6 @@ def test_market_tracking_settlement_and_post_game_review(tmp_path: Path) -> None
     assert stats["biases"] == [("overconfidence", 3)]
     report = format_stats(stats)
     assert "Record: 1-2-0" in report and "Beat the closing line" in report
-    assert "Bias flags: overconfidence" in format_review(spread)
 
 
 def test_review_failure_is_retried_later(tmp_path: Path) -> None:
@@ -577,7 +556,7 @@ def test_review_failure_is_retried_later(tmp_path: Path) -> None:
         raise RuntimeError("usage limit")
 
     bot.claude.review = failing_review
-    asyncio.run(bot.sync_reviews(SimpleNamespace(send_message=AsyncMock())))
+    asyncio.run(bot.sync_reviews())
     assert bot.store.due_analysis() == []
     with bot.store.connect() as connection:
         rows = connection.execute("SELECT analysis_status, analysis_attempts FROM picks WHERE status='final'").fetchall()
@@ -635,7 +614,7 @@ def test_espn_games_carry_sheet_betonline_lines_and_closes(tmp_path: Path) -> No
     assert events["espn-90"].markets["total:Over"].point == 226.5
     assert events["espn-91"].markets == {}
 
-    async def extract(transcript, events, recorded_at=None, history=None):
+    async def extract(transcript, events, recorded_at=None, prior_views=None):
         return extraction_from_payload(
             {
                 "picks": [
@@ -692,3 +671,109 @@ def test_sync_reads_the_close_after_tip(tmp_path: Path) -> None:
     spread = next(p for p in bot.store.recent() if p["pick_type"] == "spread")
     assert spread["closing_line"] == 1.0 and spread["closing_price"] == -105
     assert spread["next_market_check_at"] is None
+
+
+def bills_note(**changes) -> dict:
+    payload = extraction_payload()
+    payload["picks"] = [dict(payload["picks"][0], **changes)]
+    return payload
+
+
+def test_multiple_notes_build_one_game_record(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    events = make_events(now)
+    bot = make_bot(tmp_path, events)
+    payloads = [
+        bills_note(),
+        {"picks": [], "game_notes": [{"event_id": "nfl-1", "summary": "Worried about Allen's ankle"}]},
+        bills_note(reasoning="Still on the Bills after the injury report"),
+    ]
+    seen = []
+
+    async def extract(transcript, events, recorded_at=None, prior_views=None):
+        seen.append(prior_views)
+        return extraction_from_payload(payloads[len(seen) - 1], events)
+
+    bot.claude.extract = extract
+    updates = [voice_update(message_id=index) for index in (1, 2, 3)]
+    for update in updates:
+        run_voice(bot, update)
+
+    # The 2nd note has no side: it is attached to the game, not a pick.
+    second = updates[1].message.reply_text.await_args_list[-1].args[0]
+    assert "Attached 1 note(s)" in second and "Worried about Allen's ankle" in second
+    assert "No NFL/NBA" not in second
+    # The 3rd note's parser saw the earlier side and the context note.
+    prior = seen[2]["nfl-1"]
+    assert [d["side"] for d in prior["decisions"]] == ["Buffalo Bills +3"]
+    assert prior["game_notes"][0]["summary"] == "Worried about Allen's ankle"
+    assert seen[0] == {}
+
+    spreads = [p for p in bot.store.recent() if p["pick_type"] == "spread"]
+    assert sorted(p["role"] for p in spreads) == ["final", "superseded"]
+
+    bot.espn.finals = [FinalGame("401", "nfl", events[0].commence_time, "Buffalo Bills", "Kansas City Chiefs", 24, 26)]
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE picks SET next_result_check_at=?", (timestamp(now - timedelta(minutes=1)),))
+        connection.commit()
+    asyncio.run(bot.sync_results())
+    asyncio.run(bot.sync_reviews())
+
+    review = next(r for r in bot.claude.reviews if r["pick_type"] == "spread")
+    assert len(review["all_notes_on_game"]) == 3
+    assert review["game_notes"][0]["kind"] == "context"
+
+    # A note after the result is kept as hindsight, not a new decision.
+    payloads.append(bills_note(selection="Kansas City Chiefs", line=-2.5, reasoning="Knew it"))
+    late = voice_update(message_id=4)
+    run_voice(bot, late)
+    reply = late.message.reply_text.await_args_list[-1].args[0]
+    assert "after the result, not counted" in reply
+    assert len([p for p in bot.store.recent() if p["pick_type"] == "spread"]) == 2
+    assert bot.store.stats()["wins"] == 1
+    record = bot.store.game_record("nfl", "Buffalo Bills", "Kansas City Chiefs", events[0].commence_time)
+    assert record["game_notes"][-1]["kind"] == "hindsight"
+    assert "Kansas City Chiefs -2.5" in record["game_notes"][-1]["summary"]
+
+    # Reparsing drops the note's attachments before parsing it again.
+    bot.store.reopen_entry(bot.store.latest_entry()["id"])
+    assert bot.store.entry_notes(bot.store.latest_entry()["id"]) == []
+
+
+def test_games_lists_today_and_tomorrow_and_gives_opinion(tmp_path: Path) -> None:
+    from decision_helper.models import MarketEvent
+
+    now = datetime.now(UTC)
+    soon = MarketEvent(**{**make_events(now)[0].__dict__, "commence_time": timestamp(now + timedelta(hours=1))})
+    later = make_events(now + timedelta(days=3))[1]
+    bot = make_bot(tmp_path, [soon, later])
+    bot.espn.started = [soon, later]
+    run_voice(bot, voice_update())
+
+    reply = AsyncMock()
+    asyncio.run(bot.games(SimpleNamespace(message=SimpleNamespace(reply_text=reply)), SimpleNamespace()))
+    text = reply.await_args.args[0]
+    markup = reply.await_args.kwargs["reply_markup"]
+    assert "Buffalo Bills @ Kansas City Chiefs: Chiefs -2.5, o/u 47.5" in text
+    assert "Celtics" not in text
+    assert [row[0].callback_data for row in markup.inline_keyboard] == ["game:nfl:nfl-1"]
+
+    thinking = SimpleNamespace(edit_text=AsyncMock())
+    message = SimpleNamespace(reply_text=AsyncMock(return_value=thinking))
+    query = SimpleNamespace(data="game:nfl:nfl-1", answer=AsyncMock(), message=message)
+
+    async def scenario():
+        tasks = []
+        context = SimpleNamespace(application=SimpleNamespace(create_task=lambda coro: tasks.append(asyncio.ensure_future(coro))))
+        await bot.choose_game(SimpleNamespace(callback_query=query), context)
+        await asyncio.gather(*tasks)
+
+    asyncio.run(scenario())
+    context = bot.claude.opinions[0]
+    assert [d["side"] for d in context["my_views"]["decisions"]] == ["Buffalo Bills +3", "Under 47.5"]
+    assert context["my_views"]["notes"][0]["transcript"].startswith("Bills plus three")
+    assert "spread:Buffalo Bills" in context["game"]["betonline_opening_lines"]
+    assert "side_changes" in context["track_record"]
+    opinion = thinking.edit_text.await_args.args[0]
+    assert "🔍 Your view: You never priced it." in opinion
+    assert "💡 Mel's call (55%): Bills +2.5 or better." in opinion

@@ -63,6 +63,8 @@ The private `@decision_helpers_bot` ("Mel") application lives in
 `apps/decision-helper-bot`. It transcribes NFL/NBA pick voice notes locally
 with faster-whisper, extracts and reviews picks through text-only Claude Code
 calls on the receptionist-agent subscription login, and grades them with ESPN.
+Input notes get a confirmation only. Reviews are stored silently. `/games`
+gives Mel's opinion on a selected game.
 Lines are BetOnline only, read from telegram-channel-forwarder's `nfl_games` /
 `nba_games` Sheet tabs; Mel never calls The Odds API or anything that spends
 credits.
