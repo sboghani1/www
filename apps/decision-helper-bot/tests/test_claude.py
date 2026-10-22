@@ -41,6 +41,7 @@ def test_command_is_text_only_without_tools_or_permission_bypass() -> None:
 
 def test_parse_json_object_tolerates_fences() -> None:
     assert parse_json_object('```json\n{"a": 1}\n```') == {"a": 1}
+    assert parse_json_object('Here:\n{"a": {"b": 1}}\n\nNote: {see above}') == {"a": {"b": 1}}
     with pytest.raises(ValueError):
         parse_json_object("no json here")
 

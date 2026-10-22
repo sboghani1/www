@@ -153,11 +153,7 @@ class EspnClient:
         if url is None:
             raise ValueError("sport must be nfl or nba")
         try:
-            response = await self.client.get(
-                url,
-                params={"dates": date, "limit": "100"},
-                headers={"User-Agent": "decision-helper-bot/0.1"},
-            )
+            response = await self.client.get(url, params={"dates": date, "limit": "100"})
         except httpx.HTTPError as error:
             raise RuntimeError("ESPN scoreboard request failed") from error
         if not 200 <= response.status_code < 300:

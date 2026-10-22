@@ -25,10 +25,10 @@ def parse_json_object(text: str) -> dict[str, Any]:
         lines = normalized.splitlines()
         normalized = "\n".join(lines[1:-1]).strip()
     start = normalized.find("{")
-    end = normalized.rfind("}")
-    if start < 0 or end < start:
+    if start < 0:
         raise ValueError("Claude did not return a JSON object")
-    payload = json.loads(normalized[start : end + 1])
+    # Ignore any prose Claude adds after the object.
+    payload, _ = json.JSONDecoder().raw_decode(normalized, start)
     if not isinstance(payload, dict):
         raise ValueError("Claude response must be a JSON object")
     return payload
