@@ -5,7 +5,7 @@ import httpx
 import pytest
 
 from decision_helper.espn import EspnClient, match_final, parse_finals, parse_started_events
-from decision_helper.lines import SheetLines, parse_rows
+from decision_helper.lines import SheetLines, parse_rows, parse_snapshots
 from decision_helper.markets import match_event, next_market_check
 
 
@@ -52,6 +52,40 @@ def test_sheet_lines_reads_sport_tab_and_caches() -> None:
     asyncio.run(lines.fetch("nba"))
     asyncio.run(lines.fetch("nfl"))
     assert tabs == ["nba_games", "nfl_games"]
+
+
+def snapshot_rows() -> list[list[str]]:
+    away = AWAY.removeprefix("latest_")
+    home = HOME.removeprefix("latest_")
+    totals = TOTALS.removeprefix("latest_")
+    header = ["captured_at", "event_id", "commence_time_utc", "away_team", "home_team", "bookmaker", away, home, totals]
+
+    def row(at, spread, total):
+        return [at, "evt", "2026-10-23T00:15:00Z", "New England Patriots", "Chicago Bears", "BetOnline",
+                f"{spread},-110,130|nodata,nodata,nodata", f"{-spread},-110,-150|nodata,nodata,nodata",
+                f"{total},-110,-110"]
+
+    return [header, row("2026-10-21T18:00:00Z", 2.5, 44.5), row("2026-10-22T05:00:00Z", 3.0, 45.0),
+            row("2026-10-22T15:00:00Z", 3.5, 45.5), ["bad-time", "evt"]]
+
+
+def test_snapshots_give_the_line_at_note_time() -> None:
+    (event,) = parse_snapshots(snapshot_rows(), "nfl", datetime(2026, 10, 22, 6, 25, tzinfo=UTC))
+    assert event.markets["spread:New England Patriots"].point == 3.0
+    assert event.markets["spread:Chicago Bears"].point == -3.0
+    assert event.markets["total:Under"].point == 45.0
+    assert parse_snapshots(snapshot_rows(), "nfl", datetime(2026, 10, 20, tzinfo=UTC)) == []
+
+    tabs = []
+
+    def loader(tab):
+        tabs.append(tab)
+        return snapshot_rows()
+
+    lines = SheetLines(loader=loader)
+    (late,) = asyncio.run(lines.fetch("nfl", as_of=datetime(2026, 10, 22, 16, tzinfo=UTC)))
+    assert late.markets["spread:New England Patriots"].point == 3.5
+    assert tabs == ["nfl_line_snapshots"]
 
 
 def test_sheet_lines_surfaces_read_errors() -> None:

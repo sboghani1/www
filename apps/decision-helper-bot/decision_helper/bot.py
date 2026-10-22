@@ -5,7 +5,7 @@ import json
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -41,6 +41,7 @@ Handler = Callable[[Update, ContextTypes.DEFAULT_TYPE], Awaitable[None]]
 EASTERN = ZoneInfo("America/New_York")
 CANDIDATE_WINDOW = timedelta(days=8)
 STARTED_LOOKBACK_DAYS = 3
+HISTORIC_LINES_AFTER = timedelta(minutes=10)
 AUDIO_SUFFIXES = {
     "audio/aac": ".aac",
     "audio/flac": ".flac",
@@ -459,18 +460,30 @@ class DecisionBot:
                     self.store.set_transcript(entry_id, transcript)
                 else:
                     transcript = text
-                events = await self.candidate_events()
+                recorded_at = parse_timestamp(
+                    self.store.get_entry(entry_id)["created_at"]
+                )
+                # Reparsed or late-parsed notes use the lines from when they
+                # were recorded, not today's.
+                historic = utc_now() - recorded_at > HISTORIC_LINES_AFTER
+                events = await self.candidate_events(
+                    lines_as_of=recorded_at if historic else None
+                )
                 if not events:
                     raise RuntimeError(
                         "No recent or upcoming NFL or NBA games were "
                         "available to match your picks"
                     )
-                extraction = await self.claude.extract(transcript, events)
+                extraction = await self.claude.extract(
+                    transcript, events, recorded_at=recorded_at
+                )
                 picks = self.store.save_extraction(
                     entry_id=entry_id,
                     transcript=transcript,
                     extraction=extraction,
                     events=events,
+                    logged_at=recorded_at,
+                    refresh_market=historic,
                 )
                 await message.reply_text(
                     format_saved(
@@ -488,9 +501,14 @@ class DecisionBot:
                 if audio_path is not None:
                     audio_path.unlink(missing_ok=True)
 
-    async def candidate_events(self) -> list[MarketEvent]:
+    async def candidate_events(
+        self, lines_as_of: datetime | None = None
+    ) -> list[MarketEvent]:
         """ESPN games from the last few days through the next week, with
-        BetOnline lines from the forwarder's sheet (no paid API calls)."""
+        BetOnline lines from the forwarder's sheet (no paid API calls).
+
+        ``lines_as_of`` swaps in the lines BetOnline showed at that time.
+        """
         now = utc_now()
         today = now.astimezone(EASTERN).date()
         dates = [
@@ -503,7 +521,7 @@ class DecisionBot:
         failures: list[str] = []
         for sport in ("nfl", "nba"):
             try:
-                sheet = await self.lines.fetch(sport)
+                sheet = await self.lines.fetch(sport, as_of=lines_as_of)
             except Exception as error:
                 log.warning("Lines sheet read failed for %s: %s", sport, error)
                 failures.append(f"{sport.upper()} lines: {error}")
@@ -621,6 +639,8 @@ class DecisionBot:
                     "closing_value",
                 )
             }
+            record["logged_at"] = pick["created_at"]
+            record["commence_time"] = pick["commence_time"]
             record["uncertainties"] = json.loads(pick["uncertainties_json"])
             record["full_transcript"] = pick["transcript"]
             try:

@@ -30,11 +30,15 @@ the next sync.
    Google service account. The line and price are saved when the pick is made,
    then re-read at T-24h, 6h, 1h, and 15 minutes after tip. The forwarder's
    last poll lands in a game's final 12 minutes, so that post-tip read is
-   BetOnline's closing line.
+   BetOnline's closing line. Picks are timestamped when the note was sent.
+   A note parsed more than 10 minutes later (for example via `/reparse`) gets
+   the line from the `*_line_snapshots` tab at that time, then the current line
+   on the next sync.
 4. **Results.** ESPN final scores grade each pick and compute closing-line
    value (points for spreads and totals, implied probability for moneylines).
 5. **Post-game review.** Claude scores the process (1-5) using your original
-   words, the result, and the market move, and flags biases. Mel sends this
+   words, when you said them relative to the game, the result, and the market
+   move, and flags biases. Mel sends this
    immediately after each game. There is no weekly report.
 
 ## Claude subscription auth
@@ -60,7 +64,7 @@ receptionist's Opus agent, not with API billing:
 - `/stats` - committed picks and leans: record, Brier calibration, process
   score, CLV, and top bias flags
 - `/reparse` - re-run parsing on the latest saved transcript (voids its open
-  picks first)
+  picks first; keeps the note's original time and line)
 - `/void <id-prefix>` - drop a mis-parsed open pick
 - `/help`
 

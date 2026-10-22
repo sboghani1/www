@@ -286,6 +286,15 @@ class DecisionStore:
             connection.commit()
         return dict(row) if cursor.rowcount == 1 else None
 
+    def get_entry(self, entry_id: str) -> dict[str, Any]:
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM entries WHERE id=?", (entry_id,)
+            ).fetchone()
+        if row is None:
+            raise LookupError("Entry not found")
+        return dict(row)
+
     def set_transcript(self, entry_id: str, transcript: str) -> None:
         with self.connect() as connection:
             connection.execute(
@@ -313,10 +322,19 @@ class DecisionStore:
         transcript: str,
         extraction: Extraction,
         events: list[MarketEvent],
+        logged_at: datetime | None = None,
+        refresh_market: bool = False,
     ) -> list[dict[str, Any]]:
+        """Save picks as of ``logged_at`` (when the note was sent).
+
+        ``refresh_market`` means ``events`` hold historical lines, so the
+        current BetOnline line is re-read on the next sync.
+        """
         by_id = {event.id: event for event in events}
         now_dt = utc_now()
         now = timestamp(now_dt)
+        logged_dt = min(logged_at or now_dt, now_dt)
+        logged = timestamp(logged_dt)
         saved_ids: list[str] = []
         with self.connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
@@ -386,13 +404,15 @@ class DecisionStore:
                         json_array(pick.uncertainties),
                         quote.point if quote else None,
                         quote.price if quote else None,
-                        now if quote else None,
-                        next_market_check(event.commence_time, now=now_dt),
+                        logged if quote else None,
+                        now
+                        if refresh_market
+                        else next_market_check(event.commence_time, now=now_dt),
                         timestamp(commence + result_delay),
-                        now,
+                        logged,
                         pick.commitment,
                         ordinal,
-                        int(commence <= now_dt),
+                        int(commence <= logged_dt),
                     ),
                 )
                 if quote is not None:
@@ -406,7 +426,7 @@ class DecisionStore:
                         (
                             str(uuid.uuid4()),
                             pick_id,
-                            now,
+                            logged,
                             quote.point,
                             quote.price,
                             quote.bookmaker_count,

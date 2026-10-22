@@ -5,6 +5,8 @@ per game in ``nfl_games`` / ``nba_games``. The ``latest_*`` packed cells hold
 the newest pre-tip BetOnline line, so once a game starts they are its close.
 Packed cells look like ``spread,price,moneyline|h1...|q1...`` (sides) and
 ``total,over,under|...`` (totals), with ``nodata`` for missing values.
+``*_line_snapshots`` keeps every poll, so a past note can be matched to the
+line BetOnline showed when it was recorded.
 """
 
 from __future__ import annotations
@@ -14,12 +16,16 @@ import base64
 import json
 import time
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 
 from .models import MarketEvent, MarketQuote, parse_timestamp
 
 
 SHEET_TABS = {"nfl": "nfl_games", "nba": "nba_games"}
+SNAPSHOT_TABS = {"nfl": "nfl_line_snapshots", "nba": "nba_line_snapshots"}
+LATEST_PREFIXES = ("latest_away_", "latest_home_", "latest_totals_")
+SNAPSHOT_PREFIXES = ("away_game_", "home_game_", "totals_game_")
 BOOKMAKER = "BetOnline"
 CACHE_SECONDS = 60
 Rows = list[list[str]]
@@ -57,7 +63,12 @@ def _column(header: list[str], prefix: str) -> int:
     raise ValueError(f"lines tab is missing a {prefix}* column")
 
 
-def parse_rows(rows: Rows, sport: str) -> list[MarketEvent]:
+def parse_rows(
+    rows: Rows,
+    sport: str,
+    *,
+    prefixes: tuple[str, str, str] = LATEST_PREFIXES,
+) -> list[MarketEvent]:
     """MarketEvents (BetOnline game markets) from a ``*_games`` tab."""
     if not rows:
         return []
@@ -66,9 +77,9 @@ def parse_rows(rows: Rows, sport: str) -> list[MarketEvent]:
     for required in ("event_id", "commence_time_utc", "away_team", "home_team"):
         if required not in index:
             raise ValueError(f"lines tab is missing {required}")
-    away_column = _column(header, "latest_away_")
-    home_column = _column(header, "latest_home_")
-    totals_column = _column(header, "latest_totals_")
+    away_column = _column(header, prefixes[0])
+    home_column = _column(header, prefixes[1])
+    totals_column = _column(header, prefixes[2])
     events: list[MarketEvent] = []
     for row in rows[1:]:
         row = row + [""] * (len(header) - len(row))
@@ -114,6 +125,34 @@ def parse_rows(rows: Rows, sport: str) -> list[MarketEvent]:
     return sorted(events, key=lambda event: event.commence_time)
 
 
+def parse_snapshots(rows: Rows, sport: str, as_of: datetime) -> list[MarketEvent]:
+    """Each game's last BetOnline snapshot captured at or before ``as_of``."""
+    if not rows:
+        return []
+    header = rows[0]
+    if "captured_at" not in header or "event_id" not in header:
+        raise ValueError("snapshot tab is missing captured_at or event_id")
+    captured_column = header.index("captured_at")
+    event_column = header.index("event_id")
+    latest: dict[str, tuple[datetime, list[str]]] = {}
+    for row in rows[1:]:
+        row = row + [""] * (len(header) - len(row))
+        try:
+            captured = parse_timestamp(row[captured_column])
+        except ValueError:
+            continue
+        event_id = row[event_column].strip()
+        if not event_id or captured > as_of:
+            continue
+        if event_id not in latest or captured >= latest[event_id][0]:
+            latest[event_id] = (captured, row)
+    return parse_rows(
+        [header, *(row for _, row in latest.values())],
+        sport,
+        prefixes=SNAPSHOT_PREFIXES,
+    )
+
+
 def _gspread_loader(credentials_b64: str, sheet_id: str) -> Callable[[str], Rows]:
     def load(tab: str) -> Rows:
         import gspread
@@ -145,22 +184,28 @@ class SheetLines:
             loader = _gspread_loader(credentials_b64, sheet_id)
         self._load = loader
         self._cache_seconds = cache_seconds
-        self._cache: dict[str, tuple[float, list[MarketEvent]]] = {}
+        self._cache: dict[str, tuple[float, Rows]] = {}
 
-    async def fetch(self, sport: str) -> list[MarketEvent]:
-        tab = SHEET_TABS.get(sport)
-        if tab is None:
-            raise ValueError("sport must be nfl or nba")
-        cached = self._cache.get(sport)
+    async def _rows(self, tab: str) -> Rows:
+        cached = self._cache.get(tab)
         if cached is not None and time.monotonic() - cached[0] < self._cache_seconds:
             return cached[1]
         try:
             rows = await asyncio.to_thread(self._load, tab)
         except Exception as error:
             raise RuntimeError(f"BetOnline lines sheet read failed: {error}") from error
-        events = parse_rows(rows, sport)
-        self._cache[sport] = (time.monotonic(), events)
-        return events
+        self._cache[tab] = (time.monotonic(), rows)
+        return rows
+
+    async def fetch(
+        self, sport: str, *, as_of: datetime | None = None
+    ) -> list[MarketEvent]:
+        """Latest lines, or the lines BetOnline showed at ``as_of``."""
+        if sport not in SHEET_TABS:
+            raise ValueError("sport must be nfl or nba")
+        if as_of is None:
+            return parse_rows(await self._rows(SHEET_TABS[sport]), sport)
+        return parse_snapshots(await self._rows(SNAPSHOT_TABS[sport]), sport, as_of)
 
     async def close(self) -> None:
         return None

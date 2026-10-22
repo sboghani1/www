@@ -12,6 +12,7 @@ from decision_helper.models import (
     extraction_from_payload,
     timestamp,
 )
+from decision_helper.models import parse_timestamp as parse_ts
 from decision_helper.store import DecisionStore
 from helpers import extraction_payload, make_events
 
@@ -33,7 +34,8 @@ class FakeClaude:
     def __init__(self) -> None:
         self.reviews: list[dict] = []
 
-    async def extract(self, transcript, events):
+    async def extract(self, transcript, events, recorded_at=None):
+        self.recorded_at = recorded_at
         return extraction_from_payload(extraction_payload(), events)
 
     async def review(self, record):
@@ -42,13 +44,17 @@ class FakeClaude:
 
 
 class FakeLines:
-    def __init__(self, events) -> None:
+    def __init__(self, events, historic=None) -> None:
         self.events = events
+        self.historic = historic
         self.calls: list[str] = []
+        self.as_of: list = []
 
-    async def fetch(self, sport):
+    async def fetch(self, sport, as_of=None):
         self.calls.append(sport)
-        return [event for event in self.events if event.sport == sport]
+        self.as_of.append(as_of)
+        source = self.historic if as_of is not None and self.historic is not None else self.events
+        return [event for event in source if event.sport == sport]
 
     async def close(self):
         pass
@@ -201,7 +207,7 @@ def test_leans_are_saved_and_reported_separately(tmp_path: Path) -> None:
     flipped = dict(payload["picks"][0], selection="Kansas City Chiefs", line=-2.5)
     payload["picks"].insert(1, flipped)
 
-    async def extract(transcript, events):
+    async def extract(transcript, events, recorded_at=None):
         return extraction_from_payload(payload, events)
 
     bot.claude.extract = extract
@@ -240,6 +246,56 @@ def test_reparse_voids_open_picks_and_reuses_transcript(tmp_path: Path) -> None:
     with bot.store.connect() as connection:
         statuses = [row[0] for row in connection.execute("SELECT status FROM picks ORDER BY status")]
     assert statuses == ["open"] * 3 + ["void"] * 3
+
+
+def test_reparse_keeps_note_time_and_uses_lines_from_then(tmp_path: Path) -> None:
+    from dataclasses import replace
+
+    from decision_helper.models import MarketQuote
+
+    now = datetime.now(UTC)
+    events = make_events(now)
+    then = replace(
+        events[0],
+        markets={**events[0].markets, "total:Under": MarketQuote(48.5, -105, 1)},
+    )
+    bot = make_bot(tmp_path, events)
+    bot.lines.historic = [then, events[1]]
+    run_voice(bot, voice_update())
+    recorded = now - timedelta(hours=11)
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE entries SET created_at=?", (timestamp(recorded),))
+        connection.commit()
+    reply = AsyncMock()
+    tasks = []
+    context = SimpleNamespace(
+        application=SimpleNamespace(create_task=lambda coro: tasks.append(coro)),
+    )
+
+    async def scenario():
+        await bot.reparse(SimpleNamespace(message=SimpleNamespace(reply_text=reply)), context)
+        await asyncio.gather(*tasks)
+
+    asyncio.run(scenario())
+
+    assert bot.lines.as_of[:2] == [None, None]
+    assert bot.lines.as_of[2:] == [datetime.fromisoformat(timestamp(recorded).replace("Z", "+00:00"))] * 2
+    assert bot.claude.recorded_at == bot.lines.as_of[-1]
+    picks = {(p["pick_type"], p["selection"]): p for p in bot.store.recent()}
+    under = picks[("total", "Under")]
+    assert under["created_at"] == timestamp(recorded)
+    assert (under["line"], under["price_at_pick"]) == (48.5, -105)
+    assert under["closing_captured_at"] == timestamp(recorded)
+    # The current line is re-read on the next sync.
+    assert parse_ts(under["next_market_check_at"]) <= datetime.now(UTC)
+    asyncio.run(bot.sync_markets())
+    under = {(p["pick_type"], p["selection"]): p for p in bot.store.recent()}[("total", "Under")]
+    assert (under["closing_line"], under["line"]) == (47.5, 48.5)
+    with bot.store.connect() as connection:
+        captured = [row[0] for row in connection.execute(
+            "SELECT captured_at FROM market_snapshots WHERE pick_id=? ORDER BY captured_at", (under["id"],)
+        )]
+    assert captured[0] == timestamp(recorded) and len(captured) == 2
 
 
 def test_v1_database_is_migrated(tmp_path: Path) -> None:
@@ -301,7 +357,7 @@ def test_picks_for_started_games_are_logged_and_graded(tmp_path: Path) -> None:
     bot.espn.started = [tuesday]
     seen = {}
 
-    async def extract(transcript, events):
+    async def extract(transcript, events, recorded_at=None):
         seen["events"] = events
         return extraction_from_payload(
             {
@@ -419,6 +475,8 @@ def test_market_tracking_settlement_and_post_game_review(tmp_path: Path) -> None
     assert len(sent) == 3 and all(chat_id == 1 for chat_id, _ in sent)
     assert "Process score: 4/5" in sent[0][1]
     assert bot.claude.reviews[0]["full_transcript"].startswith("Bills plus three")
+    assert bot.claude.reviews[0]["logged_at"] == spread["created_at"]
+    assert bot.claude.reviews[0]["commence_time"] == events[0].commence_time
 
     stats = bot.store.stats()
     assert (stats["wins"], stats["losses"]) == (1, 2)
@@ -503,7 +561,7 @@ def test_espn_games_carry_sheet_betonline_lines_and_closes(tmp_path: Path) -> No
     assert events["espn-90"].markets["total:Over"].point == 226.5
     assert events["espn-91"].markets == {}
 
-    async def extract(transcript, events):
+    async def extract(transcript, events, recorded_at=None):
         return extraction_from_payload(
             {
                 "picks": [
