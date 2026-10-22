@@ -1,0 +1,137 @@
+#!/bin/bash
+# Install or update Mel (@decision_helpers_bot). Run as root, normally through
+# a transient unit:
+#   systemd-run --unit=decision-helper-install-$(date +%s) --collect --wait --pipe \
+#     /bin/bash /home/receptionist/repos/www/apps/decision-helper-bot/deploy/install-decision-helper-bot
+set -euo pipefail
+umask 022
+
+if [[ "$EUID" -ne 0 ]]; then
+    echo "Run as root." >&2
+    exit 1
+fi
+
+python_binary="${DECISION_HELPER_PYTHON:-/usr/local/bin/python3.12}"
+claude_binary="${CLAUDE_BINARY:-/usr/bin/claude}"
+whisper_model="${DECISION_HELPER_WHISPER_MODEL:-small.en}"
+if [[ ! -x "$python_binary" ]]; then
+    echo "Required Python 3.12 binary is unavailable: $python_binary" >&2
+    exit 1
+fi
+if [[ ! -x "$claude_binary" ]]; then
+    echo "Claude Code is unavailable: $claude_binary" >&2
+    exit 1
+fi
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+app_dir="$(cd "$script_dir/.." && pwd)"
+install_root="/opt/decision-helper-bot"
+releases="$install_root/releases"
+release="$releases/$(date -u +%Y%m%dT%H%M%SZ)-$$"
+state_dir="/var/lib/decision-helper-bot"
+config_dir="/home/receptionist-agent/.config/decision-helper-bot"
+env_file="$config_dir/env"
+
+as_agent() {
+    runuser -u receptionist-agent -- env -u ANTHROPIC_API_KEY \
+        -u ANTHROPIC_AUTH_TOKEN HOME=/home/receptionist-agent \
+        USER=receptionist-agent PATH=/usr/local/bin:/usr/bin:/bin "$@"
+}
+
+id receptionist-agent >/dev/null
+
+# Claude must be logged in with the subscription, not an API key.
+auth_json="$(as_agent "$claude_binary" auth status 2>/dev/null || true)"
+if ! "$python_binary" - "$auth_json" <<'PY'
+import json, sys
+try:
+    status = json.loads(sys.argv[1])
+except json.JSONDecodeError:
+    sys.exit("Could not read `claude auth status` for receptionist-agent.")
+if status.get("loggedIn") is not True:
+    sys.exit("Claude is not logged in for receptionist-agent. Use /reauth on the watchdog bot.")
+method = str(status.get("authMethod", "")).lower()
+if "api" in method and "key" in method:
+    sys.exit(f"Claude is using {method}; Mel requires the Claude subscription login.")
+print(f"Claude subscription login OK ({status.get('authMethod', 'unknown')}).")
+PY
+then
+    exit 1
+fi
+
+install -d -m 0755 -o root -g root "$install_root" "$releases"
+install -d -m 0700 -o receptionist-agent -g receptionist-agent \
+    "$config_dir" "$state_dir" "$state_dir/models"
+if [[ ! -e "$env_file" ]]; then
+    install -m 0600 -o receptionist-agent -g receptionist-agent \
+        /dev/null "$env_file"
+fi
+
+cleanup() {
+    rm -rf "$release"
+}
+trap cleanup ERR
+
+mkdir -p "$release"
+cp -a "$app_dir/." "$release/"
+rm -rf "$release/.venv" "$release/.pytest_cache"
+"$python_binary" -m venv "$release/.venv"
+"$release/.venv/bin/pip" install --quiet --upgrade pip
+"$release/.venv/bin/pip" install --quiet "$release[test]"
+(
+    cd "$release"
+    PYTHONDONTWRITEBYTECODE=1 \
+        "$release/.venv/bin/pytest" -p no:cacheprovider
+)
+chown -R root:root "$release"
+chmod -R go-w,a+rX "$release"
+
+# Download the local Whisper model now so the first voice note is fast and a
+# model problem fails the install instead of a user's message.
+as_agent "$release/.venv/bin/python" - "$whisper_model" "$state_dir/models" <<'PY'
+import sys
+from faster_whisper import WhisperModel
+WhisperModel(sys.argv[1], device="cpu", compute_type="int8", download_root=sys.argv[2])
+print(f"Whisper model {sys.argv[1]} ready.")
+PY
+
+# Prove the subscription-backed Claude call path works from this account.
+as_agent "$release/.venv/bin/python" - "$claude_binary" "$state_dir/claude-workdir" <<'PY'
+import asyncio, sys
+from pathlib import Path
+from decision_helper.claude import ClaudeClient
+
+async def main() -> None:
+    client = ClaudeClient(sys.argv[1], "claude-haiku-4-5", "low", 120, Path(sys.argv[2]))
+    payload = await client._run('Return exactly this JSON object and nothing else: {"ok": true}')
+    if payload.get("ok") is not True:
+        raise SystemExit(f"Unexpected Claude response: {payload}")
+    print("Claude subscription call OK.")
+
+asyncio.run(main())
+PY
+trap - ERR
+
+ln -sfn "$release" "$install_root/current.new"
+mv -Tf "$install_root/current.new" "$install_root/current"
+install -m 0644 -o root -g root \
+    "$script_dir/decision-helper-bot.service" \
+    /etc/systemd/system/decision-helper-bot.service
+install -m 0755 -o root -g root \
+    "$script_dir/configure-decision-helper-bot" \
+    /usr/local/sbin/configure-decision-helper-bot
+systemctl daemon-reload
+if [[ -s "$env_file" ]] || systemctl is-active --quiet decision-helper-bot.service; then
+    systemctl enable decision-helper-bot.service
+    systemctl restart decision-helper-bot.service
+    sleep 5
+    systemctl is-active --quiet decision-helper-bot.service
+fi
+
+current_release="$(readlink -f "$install_root/current")"
+find "$releases" -mindepth 1 -maxdepth 1 -type d -mtime +30 \
+    ! -path "$current_release" -exec rm -rf -- {} +
+echo "Installed Mel at $current_release."
+if [[ ! -s "$env_file" ]]; then
+    echo "Run /usr/local/sbin/configure-decision-helper-bot to set the token."
+fi

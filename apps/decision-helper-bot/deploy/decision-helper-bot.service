@@ -1,0 +1,58 @@
+[Unit]
+Description=Mel decision helper Telegram bot (@decision_helpers_bot)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Runs as the account that owns the Claude Code subscription login so Claude
+# calls use the same OAuth session as the Receptionist agent.
+User=receptionist-agent
+Group=receptionist-agent
+WorkingDirectory=/var/lib/decision-helper-bot
+Environment=HOME=/home/receptionist-agent
+Environment=USER=receptionist-agent
+Environment=PATH=/opt/decision-helper-bot/current/.venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=HF_HUB_DISABLE_TELEMETRY=1
+EnvironmentFile=-/home/receptionist-agent/.claude/auth.env
+EnvironmentFile=/home/receptionist-agent/.config/decision-helper-bot/env
+UnsetEnvironment=ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN
+StateDirectory=decision-helper-bot
+StateDirectoryMode=0700
+ExecStart=/opt/decision-helper-bot/current/.venv/bin/decision-helper-bot
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=30
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadOnlyPaths=/home/receptionist-agent/.config/decision-helper-bot
+# Claude Code refreshes OAuth tokens and writes session state here.
+ReadWritePaths=/home/receptionist-agent/.claude -/home/receptionist-agent/.claude.json -/home/receptionist-agent/.claude.json.backup
+ReadWritePaths=/var/lib/decision-helper-bot
+NoNewPrivileges=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+MemoryAccounting=true
+MemoryHigh=2G
+MemoryMax=3G
+TasksMax=256
+UMask=0077
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

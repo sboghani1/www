@@ -1,0 +1,62 @@
+#!/bin/bash
+# Prompt for the @decision_helpers_bot BotFather token and write Mel's env file.
+set -euo pipefail
+umask 077
+
+if [[ "$EUID" -ne 0 ]]; then
+    echo "Run as root." >&2
+    exit 1
+fi
+
+gateway_env="/home/receptionist2/.config/receptionist2/gateway.env"
+odds_env="/home/receptionist-agent/.config/wnba-poller/env"
+config_dir="/home/receptionist-agent/.config/decision-helper-bot"
+env_file="$config_dir/env"
+
+read_value() {
+    sed -n "s/^$1=//p" "$2" 2>/dev/null | tail -1
+}
+
+allowed_user_id="$(read_value TELEGRAM_ALLOWED_USER_ID "$gateway_env")"
+if [[ ! "$allowed_user_id" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Could not load TELEGRAM_ALLOWED_USER_ID from $gateway_env." >&2
+    exit 1
+fi
+
+read -r -s -p "BotFather token for @decision_helpers_bot: " token
+echo
+if [[ -z "$token" ]]; then
+    echo "Token cannot be empty." >&2
+    exit 1
+fi
+
+odds_api_key="$(read_value ODDS_API_KEY "$odds_env")"
+if [[ -z "$odds_api_key" ]]; then
+    read -r -s -p "The Odds API key: " odds_api_key
+    echo
+fi
+if [[ -z "$odds_api_key" ]]; then
+    echo "The Odds API key cannot be empty." >&2
+    exit 1
+fi
+
+install -d -m 0700 -o receptionist-agent -g receptionist-agent "$config_dir"
+temporary="$(mktemp)"
+trap 'rm -f "$temporary"' EXIT
+cat >"$temporary" <<EOF
+DECISION_HELPER_BOT_TOKEN=$token
+DECISION_HELPER_EXPECTED_USERNAME=decision_helpers_bot
+TELEGRAM_ALLOWED_USER_ID=$allowed_user_id
+ODDS_API_KEY=$odds_api_key
+DECISION_HELPER_STATE_DIR=/var/lib/decision-helper-bot
+DECISION_HELPER_CLAUDE_MODEL=claude-opus-5-5
+DECISION_HELPER_CLAUDE_EFFORT=medium
+DECISION_HELPER_WHISPER_MODEL=small.en
+EOF
+install -m 0600 -o receptionist-agent -g receptionist-agent \
+    "$temporary" "$env_file"
+systemctl enable decision-helper-bot.service
+systemctl restart decision-helper-bot.service
+sleep 5
+systemctl is-active --quiet decision-helper-bot.service
+echo "@decision_helpers_bot (Mel) configured and active."

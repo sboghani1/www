@@ -56,3 +56,24 @@ systemd-run --unit=telegram-clipboard-install-$(date +%s) --collect --wait --pip
 ```
 
 Use `clipboard-send` only after the user approves the exact outbound content.
+
+## Mel decision helper
+
+The private `@decision_helpers_bot` ("Mel") application lives in
+`apps/decision-helper-bot`. It transcribes NFL/NBA pick voice notes locally
+with faster-whisper, extracts and reviews picks through text-only Claude Code
+calls on the receptionist-agent subscription login, and grades them with ESPN
+and The Odds API.
+
+Run its tests before committing:
+
+```bash
+cd apps/decision-helper-bot && python -m pytest
+```
+
+Install or update it through a transient unit:
+
+```bash
+systemd-run --unit=decision-helper-bot-install-$(date +%s) --collect --wait --pipe \
+  /bin/bash /home/receptionist/repos/www/apps/decision-helper-bot/deploy/install-decision-helper-bot
+```
