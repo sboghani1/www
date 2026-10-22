@@ -777,3 +777,52 @@ def test_games_lists_today_and_tomorrow_and_gives_opinion(tmp_path: Path) -> Non
     opinion = thinking.edit_text.await_args.args[0]
     assert "🔍 Your view: You never priced it." in opinion
     assert "💡 Mel's call (55%): Bills +2.5 or better." in opinion
+
+
+def test_remove_button_deletes_note_even_after_grading(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    events = make_events(now)
+    bot = make_bot(tmp_path, events)
+    run_voice(bot, voice_update(message_id=1))
+    payload = bills_note(selection="Kansas City Chiefs", line=-2.5)
+
+    async def extract(transcript, events, recorded_at=None, prior_views=None):
+        return extraction_from_payload(payload, events)
+
+    bot.claude.extract = extract
+    second = voice_update(message_id=2)
+    run_voice(bot, second)
+    markup = second.message.reply_text.await_args_list[-1].kwargs["reply_markup"]
+    button = markup.inline_keyboard[0][0]
+    assert button.text == "🗑 Remove this note"
+
+    # Both views graded; the Chiefs (newest) is final and reviewed.
+    bot.espn.finals = [FinalGame("401", "nfl", events[0].commence_time, "Buffalo Bills", "Kansas City Chiefs", 24, 26)]
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE picks SET next_result_check_at=?", (timestamp(now - timedelta(minutes=1)),))
+        connection.commit()
+    asyncio.run(bot.sync_results())
+    asyncio.run(bot.sync_reviews())
+    assert sorted(r["selection"] for r in bot.claude.reviews) == ["Kansas City Chiefs", "Under"]
+
+    query = SimpleNamespace(
+        data=button.callback_data,
+        answer=AsyncMock(),
+        edit_message_reply_markup=AsyncMock(),
+        message=SimpleNamespace(reply_text=AsyncMock()),
+    )
+    asyncio.run(bot.remove(SimpleNamespace(callback_query=query), SimpleNamespace()))
+    assert "Removed that note and its 1 pick(s)" in query.message.reply_text.await_args.args[0]
+    query.edit_message_reply_markup.assert_awaited_with(reply_markup=None)
+
+    spreads = [p for p in bot.store.recent() if p["pick_type"] == "spread"]
+    assert [(p["selection"], p["role"], p["analysis_status"]) for p in spreads] == [
+        ("Buffalo Bills", "final", "pending")
+    ]
+    assert bot.store.stats()["wins"] == 1  # Bills +3 counts now
+    asyncio.run(bot.sync_reviews())
+    assert bot.claude.reviews[-1]["selection"] == "Buffalo Bills"
+    assert bot.store.latest_entry()["telegram_message_id"] == 1
+
+    asyncio.run(bot.remove(SimpleNamespace(callback_query=query), SimpleNamespace()))
+    assert query.message.reply_text.await_args.args[0] == "That note was already removed"

@@ -61,7 +61,7 @@ HELP_TEXT = (
     "per game as you like: your latest side is your decision, earlier ones "
     "form its path, and thoughts without a side are attached to the game. "
     "I track BetOnline lines and grade and review every game quietly; see "
-    "/stats.\n\n"
+    "/stats. Each saved note has a Remove button so you can redo it.\n\n"
     "/games - today's and tomorrow's games; tap one for my opinion\n"
     "/recent - latest 10 picks and leans\n"
     "/stats - record, calibration, closing-line value, process, biases\n"
@@ -78,6 +78,12 @@ def choice_keyboard(entry_id: str) -> InlineKeyboardMarkup:
                 InlineKeyboardButton("🗑 Trash", callback_data=f"trash:{entry_id}"),
             ]
         ]
+    )
+
+
+def remove_keyboard(entry_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [[InlineKeyboardButton("🗑 Remove this note", callback_data=f"remove:{entry_id}")]]
     )
 
 
@@ -490,6 +496,25 @@ class DecisionBot:
             self._process(entry_id, query.message, audio_path=audio_path)
         )
 
+    async def remove(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        del context
+        query = update.callback_query
+        await query.answer()
+        entry_id = str(query.data).partition(":")[2]
+        try:
+            picks = self.store.remove_entry(entry_id)
+        except ValueError as error:
+            await query.edit_message_reply_markup(reply_markup=None)
+            await query.message.reply_text(str(error))
+            return
+        await query.edit_message_reply_markup(reply_markup=None)
+        await query.message.reply_text(
+            f"🗑 Removed that note and its {len(picks)} pick(s)/lean(s). "
+            "Send it again with what you meant."
+        )
+
     async def reparse(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
@@ -572,7 +597,8 @@ class DecisionBot:
                 await message.reply_text(
                     format_saved(
                         picks, self.store.entry_notes(entry_id), transcript
-                    )
+                    ),
+                    reply_markup=remove_keyboard(entry_id),
                 )
             except Exception as error:
                 log.exception("Entry %s failed", entry_id)
@@ -935,6 +961,11 @@ class DecisionBot:
         application.add_handler(
             CallbackQueryHandler(
                 self.authorized(self.choose_game), pattern=r"^game:"
+            )
+        )
+        application.add_handler(
+            CallbackQueryHandler(
+                self.authorized(self.remove), pattern=r"^remove:"
             )
         )
         application.add_handler(

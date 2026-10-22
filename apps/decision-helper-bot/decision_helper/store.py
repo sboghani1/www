@@ -989,6 +989,49 @@ class DecisionStore:
             connection.commit()
         return dict(row)
 
+    def remove_entry(self, entry_id: str) -> list[dict[str, Any]]:
+        """Delete a parsed note: its picks (even graded ones), attached game
+        notes, and transcript, as if it was never sent. Returns the picks."""
+        with self.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            entry = connection.execute(
+                "SELECT * FROM entries WHERE id=?", (entry_id,)
+            ).fetchone()
+            if entry is None or entry["status"] != "saved":
+                raise ValueError("That note was already removed")
+            picks = connection.execute(
+                "SELECT * FROM picks WHERE entry_id=? AND status!='void'",
+                (entry_id,),
+            ).fetchall()
+            siblings = set()
+            for pick in picks:
+                for row in _group_rows(connection, pick["id"]):
+                    if row["entry_id"] != entry_id:
+                        siblings.add(row["id"])
+                        break
+            connection.execute(
+                "DELETE FROM market_snapshots WHERE pick_id IN "
+                "(SELECT id FROM picks WHERE entry_id=?)",
+                (entry_id,),
+            )
+            connection.execute("DELETE FROM picks WHERE entry_id=?", (entry_id,))
+            connection.execute(
+                "DELETE FROM game_notes WHERE entry_id=?", (entry_id,)
+            )
+            connection.execute(
+                """
+                UPDATE entries
+                SET status='trashed', transcript='', immediate_feedback='',
+                    updated_at=?
+                WHERE id=?
+                """,
+                (timestamp(utc_now()), entry_id),
+            )
+            for pick_id in siblings:
+                _refresh_roles(connection, pick_id, force=True)
+            connection.commit()
+        return [dict(row) for row in picks]
+
     def decision_path(self, pick_id: str) -> list[dict[str, Any]]:
         """Earlier sides abandoned on the way to this final position."""
         with self.connect() as connection:
@@ -1156,17 +1199,30 @@ def _group_rows(connection: sqlite3.Connection, pick_id: str) -> list[Any]:
     ).fetchall()
 
 
-def _refresh_roles(connection: sqlite3.Connection, pick_id: str) -> None:
+def _refresh_roles(
+    connection: sqlite3.Connection, pick_id: str, force: bool = False
+) -> None:
     """The newest view of a game's side or total is final; older ones are
-    superseded. Settled decisions are left alone."""
+    superseded. Settled decisions are left alone unless ``force``d (a removed
+    note); a graded row that becomes final is queued for review."""
     rows = _group_rows(connection, pick_id)
-    if not rows or any(row["status"] == "final" for row in rows):
+    if not rows or (
+        not force and any(row["status"] == "final" for row in rows)
+    ):
         return
     for row in rows:
-        connection.execute(
-            "UPDATE picks SET role=? WHERE id=?",
-            ("final" if row is rows[-1] else "superseded", row["id"]),
-        )
+        role = "final" if row is rows[-1] else "superseded"
+        connection.execute("UPDATE picks SET role=? WHERE id=?", (role, row["id"]))
+        if (
+            role == "final"
+            and row["status"] == "final"
+            and row["process_score"] is None
+        ):
+            connection.execute(
+                "UPDATE picks SET analysis_status='pending', "
+                "next_analysis_at=? WHERE id=?",
+                (timestamp(utc_now()), row["id"]),
+            )
 
 
 def _same_game(rows: list[Any], commence_time: str) -> list[Any]:

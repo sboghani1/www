@@ -93,6 +93,9 @@ receptionist's Opus agent, not with API billing:
 - `/reparse` - re-run parsing on the latest saved transcript (voids its open
   picks first; keeps the note's original time and line)
 - `/void <id-prefix>` - drop a mis-parsed open pick
+- **🗑 Remove this note** (button on each saved note) - deletes that note's
+  picks/leans (even graded ones), attached game notes, and transcript so you
+  can resend what you meant; an earlier view of the game becomes final again
 - `/help`
 
 ## Setup
