@@ -176,8 +176,9 @@ def test_voice_note_waits_for_button_then_parses_and_deletes(tmp_path: Path) -> 
     replies = [call.args[0] for call in update.message.reply_text.await_args_list]
     assert replies[0] == "🎧 Got it. Parse this note or trash the audio?"
     assert "Saved 3 pick(s)" in replies[1]
-    assert "Buffalo Bills +3" in replies[1]
-    assert "Under 47.5 [BetOnline line]" in replies[1]
+    assert "Buffalo Bills +3 (-110) [BetOnline spread Bills +2.5]" in replies[1]
+    assert "Under 47.5 [BetOnline line] (-110) [BetOnline spread Chiefs -2.5]" in replies[1]
+    assert "Boston Celtics to win (-150) · 70%" in replies[1]
     assert "🧠" not in replies[1] and "Good specificity" not in replies[1]
     assert not any(bot.config.audio_dir.iterdir())
     assert bot.lines.calls == ["nfl", "nba"]
@@ -375,7 +376,7 @@ def test_v1_database_is_migrated(tmp_path: Path) -> None:
             for row in connection.execute("SELECT name, sql FROM sqlite_master WHERE sql IS NOT NULL")
         }
     v1_picks = re.sub(
-        r",\s*commitment TEXT.*?logged_after_start INTEGER NOT NULL DEFAULT 0", "", schema["picks"], flags=re.S
+        r",\s*commitment TEXT.*?spread_at_pick REAL", "", schema["picks"], flags=re.S
     )
     v1_entries = (
         schema["entries"]
@@ -409,7 +410,7 @@ def test_v1_database_is_migrated(tmp_path: Path) -> None:
         ).fetchone()[0]
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(picks)")}
         assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
-    assert {"commitment", "ordinal", "logged_after_start"} <= columns
+    assert {"commitment", "ordinal", "logged_after_start", "role", "spread_team", "spread_at_pick"} <= columns
     assert store.reopen_entry("e1")["status"] == "processing"
 
 
@@ -531,6 +532,13 @@ def test_market_tracking_settlement_and_post_game_review(tmp_path: Path) -> None
     assert len(notes) == 1 and notes[0]["transcript"].startswith("Bills plus three")
     assert bot.claude.reviews[0]["logged_at"] == spread["created_at"]
     assert bot.claude.reviews[0]["commence_time"] == events[0].commence_time
+    # The spread from when the note was recorded is kept after the line moves.
+    assert (bot.claude.reviews[0]["spread_team"], bot.claude.reviews[0]["spread_at_pick"]) == ("Buffalo Bills", 2.5)
+    record = bot.store.game_record("nfl", "Buffalo Bills", "Kansas City Chiefs", events[0].commence_time)
+    assert [d["betonline_spread_at_pick"] for d in record["decisions"]] == [
+        {"team": "Buffalo Bills", "point": 2.5},
+        {"team": "Kansas City Chiefs", "point": -2.5},
+    ]
 
     stats = bot.store.stats()
     assert (stats["wins"], stats["losses"]) == (1, 2)

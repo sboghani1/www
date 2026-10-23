@@ -10,7 +10,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterator
 
-from .markets import next_market_check, quote_for_pick
+from .markets import next_market_check, quote_for_pick, spread_for_pick
 from .models import (
     DecisionReview,
     Extraction,
@@ -177,7 +177,9 @@ class DecisionStore:
                     logged_after_start INTEGER NOT NULL DEFAULT 0,
                     role TEXT NOT NULL DEFAULT 'final' CHECK(
                         role IN ('final','superseded')
-                    )
+                    ),
+                    spread_team TEXT,
+                    spread_at_pick REAL
                 );
 
                 CREATE INDEX IF NOT EXISTS picks_status_result
@@ -236,6 +238,11 @@ class DecisionStore:
                 connection.execute(
                     "ALTER TABLE picks ADD COLUMN role TEXT NOT NULL DEFAULT "
                     "'final' CHECK(role IN ('final','superseded'))"
+                )
+            if "spread_at_pick" not in columns:
+                connection.execute("ALTER TABLE picks ADD COLUMN spread_team TEXT")
+                connection.execute(
+                    "ALTER TABLE picks ADD COLUMN spread_at_pick REAL"
                 )
             stale_before = timestamp(utc_now() - timedelta(hours=1))
             now = timestamp(utc_now())
@@ -395,6 +402,9 @@ class DecisionStore:
                     line = quote.point
                     line_source = "market"
                 price = quote.price if quote is not None else None
+                spread_team, spread_point = spread_for_pick(
+                    event, pick.pick_type, pick.selection
+                ) or (None, None)
                 commence = parse_timestamp(event.commence_time)
                 result_delay = (
                     timedelta(hours=3, minutes=30)
@@ -413,10 +423,11 @@ class DecisionStore:
                         uncertainties_json, status, closing_line, closing_price,
                         closing_captured_at, next_market_check_at,
                         next_result_check_at, analysis_status, created_at,
-                        commitment, ordinal, logged_after_start
+                        commitment, ordinal, logged_after_start,
+                        spread_team, spread_at_pick
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                        'open', ?, ?, ?, ?, ?, 'not_ready', ?, ?, ?, ?
+                        'open', ?, ?, ?, ?, ?, 'not_ready', ?, ?, ?, ?, ?, ?
                     )
                     """,
                     (
@@ -448,6 +459,8 @@ class DecisionStore:
                         pick.commitment,
                         ordinal,
                         int(commence <= logged_dt),
+                        spread_team,
+                        spread_point,
                     ),
                 )
                 if quote is not None:
@@ -569,6 +582,7 @@ class DecisionStore:
                     "confidence_probability": row["confidence_probability"],
                     "confidence_label": row["confidence_label"],
                     "price_at_pick": row["price_at_pick"],
+                    "betonline_spread_at_pick": _spread_dict(row),
                     "reasoning": row["reasoning"],
                     "uncertainties": json.loads(row["uncertainties_json"]),
                     "result": row["result"],
@@ -1295,6 +1309,12 @@ def _hindsight_summary(pick: Any) -> str:
         {"pick_type": pick.pick_type, "selection": pick.selection, "line": pick.line}
     )
     return f"After the result: {side}. {pick.reasoning}".strip()
+
+
+def _spread_dict(pick: Any) -> dict[str, Any] | None:
+    if pick["spread_at_pick"] is None:
+        return None
+    return {"team": pick["spread_team"], "point": pick["spread_at_pick"]}
 
 
 def _describe_side(pick: dict[str, Any]) -> str:

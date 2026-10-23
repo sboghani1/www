@@ -18,6 +18,27 @@ def quote_for_pick(
     return event.markets.get(f"{pick_type}:{selection}")
 
 
+def spread_for_pick(
+    event: MarketEvent,
+    pick_type: str,
+    selection: str,
+) -> tuple[str, float] | None:
+    """BetOnline spread as (team, point): the picked team's for a side, the
+    favorite's for a total."""
+    teams = (
+        [selection]
+        if pick_type in {"winner", "spread"}
+        else [event.away_team, event.home_team]
+    )
+    priced = [
+        (team, quote.point)
+        for team in teams
+        if (quote := event.markets.get(f"spread:{team}")) is not None
+        and quote.point is not None
+    ]
+    return min(priced, key=lambda item: item[1], default=None)
+
+
 def match_event(
     events: list[MarketEvent],
     *,

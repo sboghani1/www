@@ -41,7 +41,10 @@ the next sync.
    of telegram-channel-forwarder's intake workbook (written by its
    `nfl-lines-fetcher` / `nba-lines-fetcher` timers), using the forwarder's
    Google service account. The line and price are saved when the pick is made,
-   then re-read at T-24h, 6h, 1h, and 15 minutes after tip. The forwarder's
+   along with the BetOnline spread at that moment (the picked team's for a
+   moneyline or spread, the favorite's for a total), shown as
+   `[BetOnline spread Bulls +3.5]` and given to reviews and `/games` opinions.
+   Lines are then re-read at T-24h, 6h, 1h, and 15 minutes after tip. The forwarder's
    last poll lands in a game's final 12 minutes, so that post-tip read is
    BetOnline's closing line. Picks are timestamped when the note was sent.
    A note parsed more than 10 minutes later (for example via `/reparse`) gets

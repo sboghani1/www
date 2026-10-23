@@ -6,7 +6,7 @@ import pytest
 
 from decision_helper.espn import EspnClient, match_final, parse_finals, parse_started_events
 from decision_helper.lines import SheetLines, parse_rows, parse_snapshots
-from decision_helper.markets import match_event, next_market_check
+from decision_helper.markets import match_event, next_market_check, spread_for_pick
 
 
 AWAY = "latest_away_game_spread_spreadprice_moneyline__h1_spread_spreadprice_moneyline__q1_spread_spreadprice_moneyline"
@@ -221,3 +221,23 @@ def test_game_notes_and_opinions_are_validated() -> None:
     assert opinion.confidence_probability is None
     with pytest.raises(ValueError):
         opinion_from_payload({"critique": "c", "recommendation": "r", "confidence_probability": 2})
+
+
+def test_spread_for_pick_is_the_side_or_the_favorite() -> None:
+    from decision_helper.models import MarketEvent, MarketQuote
+
+    def game(away: float | None, home: float | None) -> MarketEvent:
+        markets = {"winner:Miami Heat": MarketQuote(None, 110, 1)}
+        if away is not None:
+            markets["spread:Miami Heat"] = MarketQuote(away, -110, 1)
+        if home is not None:
+            markets["spread:Utah Jazz"] = MarketQuote(home, -110, 1)
+        return MarketEvent("e", "nba", "2026-10-25T23:00:00Z", "Miami Heat", "Utah Jazz", markets)
+
+    assert spread_for_pick(game(3.5, -3.5), "winner", "Miami Heat") == ("Miami Heat", 3.5)
+    assert spread_for_pick(game(3.5, -3.5), "spread", "Utah Jazz") == ("Utah Jazz", -3.5)
+    assert spread_for_pick(game(3.5, -3.5), "total", "Over") == ("Utah Jazz", -3.5)
+    assert spread_for_pick(game(-1.0, 1.0), "total", "Under") == ("Miami Heat", -1.0)
+    assert spread_for_pick(game(0.0, 0.0), "total", "Under")[1] == 0.0
+    assert spread_for_pick(game(None, None), "winner", "Miami Heat") is None
+    assert spread_for_pick(game(None, None), "total", "Over") is None
