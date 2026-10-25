@@ -36,6 +36,14 @@ the next sync.
    `context`. A side or note sent after the game is graded becomes a
    `hindsight` note and is never counted as a decision. `/reparse` clears the
    note's attachments before parsing again.
+
+   A side is saved as a spread unless you explicitly take the moneyline ("Jazz
+   to win", "moneyline"/"ML"). The line is only a number you say you are
+   taking; otherwise BetOnline's line is used. A number you project ("should
+   be like minus eight to nine and a half", "assuming they're +3.5") is saved
+   as your number (`my_line_low`/`my_line_high`, in the selected team's
+   spread or the projected total), shown as `[your number -9.5 to -8]`, and
+   compared with BetOnline's line in reviews and `/games` opinions.
 3. **Market tracking (BetOnline only, no API credits).** Mel never calls The
    Odds API. It reads BetOnline lines from the `nfl_games` / `nba_games` tabs
    of telegram-channel-forwarder's intake workbook (written by its
@@ -49,7 +57,8 @@ the next sync.
    BetOnline's closing line. Picks are timestamped when the note was sent.
    A note parsed more than 10 minutes later (for example via `/reparse`) gets
    the line from the `*_line_snapshots` tab at that time, then the current line
-   on the next sync.
+   on the next sync. A spread or total noted before BetOnline posts takes the
+   first line read after it posts.
 4. **Results.** ESPN final scores grade each pick and compute closing-line
    value (points for spreads and totals, implied probability for moneylines).
    Superseded sides are graded too, as if kept, but only final positions

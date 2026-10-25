@@ -49,6 +49,9 @@ def test_extraction_validates_and_normalizes() -> None:
     extraction = extraction_from_payload(extraction_payload(), make_events())
     assert len(extraction.picks) == 3
     assert extraction.picks[1].selection == "Under"
+    assert (extraction.picks[0].my_line_low, extraction.picks[0].my_line_high) == (3.5, 4.5)
+    assert (extraction.picks[1].my_line_low, extraction.picks[1].my_line_high) == (44, 44)
+    assert extraction.picks[2].my_line_low is None
 
 
 @pytest.mark.parametrize(

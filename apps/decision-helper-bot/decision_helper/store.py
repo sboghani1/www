@@ -179,7 +179,9 @@ class DecisionStore:
                         role IN ('final','superseded')
                     ),
                     spread_team TEXT,
-                    spread_at_pick REAL
+                    spread_at_pick REAL,
+                    my_line_low REAL,
+                    my_line_high REAL
                 );
 
                 CREATE INDEX IF NOT EXISTS picks_status_result
@@ -244,6 +246,9 @@ class DecisionStore:
                 connection.execute(
                     "ALTER TABLE picks ADD COLUMN spread_at_pick REAL"
                 )
+            if "my_line_low" not in columns:
+                connection.execute("ALTER TABLE picks ADD COLUMN my_line_low REAL")
+                connection.execute("ALTER TABLE picks ADD COLUMN my_line_high REAL")
             stale_before = timestamp(utc_now() - timedelta(hours=1))
             now = timestamp(utc_now())
             connection.execute(
@@ -424,10 +429,11 @@ class DecisionStore:
                         closing_captured_at, next_market_check_at,
                         next_result_check_at, analysis_status, created_at,
                         commitment, ordinal, logged_after_start,
-                        spread_team, spread_at_pick
+                        spread_team, spread_at_pick, my_line_low, my_line_high
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                        'open', ?, ?, ?, ?, ?, 'not_ready', ?, ?, ?, ?, ?, ?
+                        'open', ?, ?, ?, ?, ?, 'not_ready', ?, ?, ?, ?, ?, ?,
+                        ?, ?
                     )
                     """,
                     (
@@ -461,6 +467,8 @@ class DecisionStore:
                         int(commence <= logged_dt),
                         spread_team,
                         spread_point,
+                        pick.my_line_low,
+                        pick.my_line_high,
                     ),
                 )
                 if quote is not None:
@@ -583,6 +591,7 @@ class DecisionStore:
                     "confidence_label": row["confidence_label"],
                     "price_at_pick": row["price_at_pick"],
                     "betonline_spread_at_pick": _spread_dict(row),
+                    "my_number": _my_number(row),
                     "reasoning": row["reasoning"],
                     "uncertainties": json.loads(row["uncertainties_json"]),
                     "result": row["result"],
@@ -710,7 +719,29 @@ class DecisionStore:
                         pick_id,
                     ),
                 )
-            else:
+                # Noted before BetOnline posted: take the first line posted.
+                if (
+                    row["line"] is None
+                    and row["pick_type"] != "winner"
+                    and quote.point is not None
+                ):
+                    connection.execute(
+                        "UPDATE picks SET line=?, line_source='market' WHERE id=?",
+                        (quote.point, pick_id),
+                    )
+                if row["price_at_pick"] is None and quote.price is not None:
+                    connection.execute(
+                        "UPDATE picks SET price_at_pick=? WHERE id=?",
+                        (quote.price, pick_id),
+                    )
+            if event is not None and row["spread_at_pick"] is None:
+                spread = spread_for_pick(event, row["pick_type"], row["selection"])
+                if spread is not None:
+                    connection.execute(
+                        "UPDATE picks SET spread_team=?, spread_at_pick=? WHERE id=?",
+                        (spread[0], spread[1], pick_id),
+                    )
+            if quote is None:
                 connection.execute(
                     "UPDATE picks SET next_market_check_at=? WHERE id=?",
                     (
@@ -1315,6 +1346,12 @@ def _spread_dict(pick: Any) -> dict[str, Any] | None:
     if pick["spread_at_pick"] is None:
         return None
     return {"team": pick["spread_team"], "point": pick["spread_at_pick"]}
+
+
+def _my_number(pick: Any) -> dict[str, Any] | None:
+    if pick["my_line_low"] is None:
+        return None
+    return {"low": pick["my_line_low"], "high": pick["my_line_high"]}
 
 
 def _describe_side(pick: dict[str, Any]) -> str:

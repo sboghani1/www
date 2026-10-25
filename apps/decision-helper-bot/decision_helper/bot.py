@@ -121,6 +121,13 @@ def describe_pick(pick: dict[str, Any]) -> str:
     ):
         number = "pk" if spread == 0 else f"{short_team(pick['spread_team'])} {spread:+g}"
         detail += f" [BetOnline spread {number}]"
+    low, high = pick.get("my_line_low"), pick.get("my_line_high")
+    if low is not None:
+        fmt = "{:g}" if pick["pick_type"] == "total" else "{:+g}"
+        mine = fmt.format(low)
+        if high is not None and high != low:
+            mine += " to " + fmt.format(high)
+        detail += f" [your number {mine}]"
     confidence = ""
     if pick["confidence_probability"] is not None:
         confidence = f" · {pick['confidence_probability']:.0%}"
@@ -747,6 +754,8 @@ class DecisionBot:
                     "price_at_pick",
                     "spread_team",
                     "spread_at_pick",
+                    "my_line_low",
+                    "my_line_high",
                     "confidence_probability",
                     "confidence_label",
                     "reasoning",

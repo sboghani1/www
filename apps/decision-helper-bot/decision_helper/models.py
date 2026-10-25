@@ -87,6 +87,10 @@ class ExtractedPick:
     uncertainties: tuple[str, ...]
     commitment: str = "pick"
     role: str = "final"
+    # The speaker's own projected number, in the pick's market terms (the
+    # selection's spread for a side, the total for a total).
+    my_line_low: float | None = None
+    my_line_high: float | None = None
 
 
 @dataclass(frozen=True)
@@ -211,6 +215,14 @@ def extraction_from_payload(
         role = _text(raw.get("role", "final"), f"picks[{index}].role").casefold()
         if role not in ROLES:
             raise ValueError(f"picks[{index}].role must be final or earlier")
+        my_low = _number(raw.get("my_line_low"), f"picks[{index}].my_line_low")
+        my_high = _number(raw.get("my_line_high"), f"picks[{index}].my_line_high")
+        if my_low is None:
+            my_low = my_high
+        if my_high is None:
+            my_high = my_low
+        if my_low is not None and my_high is not None and my_low > my_high:
+            my_low, my_high = my_high, my_low
         picks.append(
             ExtractedPick(
                 sport=sport,
@@ -220,6 +232,8 @@ def extraction_from_payload(
                 line=line,
                 commitment=commitment,
                 role=role,
+                my_line_low=my_low,
+                my_line_high=my_high,
                 confidence_probability=confidence,
                 confidence_label=_text(
                     raw.get("confidence_label", ""),

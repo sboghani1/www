@@ -176,8 +176,8 @@ def test_voice_note_waits_for_button_then_parses_and_deletes(tmp_path: Path) -> 
     replies = [call.args[0] for call in update.message.reply_text.await_args_list]
     assert replies[0] == "🎧 Got it. Parse this note or trash the audio?"
     assert "Saved 3 pick(s)" in replies[1]
-    assert "Buffalo Bills +3 (-110) [BetOnline spread Bills +2.5]" in replies[1]
-    assert "Under 47.5 [BetOnline line] (-110) [BetOnline spread Chiefs -2.5]" in replies[1]
+    assert "Buffalo Bills +3 (-110) [BetOnline spread Bills +2.5] [your number +3.5 to +4.5]" in replies[1]
+    assert "Under 47.5 [BetOnline line] (-110) [BetOnline spread Chiefs -2.5] [your number 44]" in replies[1]
     assert "Boston Celtics to win (-150) · 70%" in replies[1]
     assert "🧠" not in replies[1] and "Good specificity" not in replies[1]
     assert not any(bot.config.audio_dir.iterdir())
@@ -376,7 +376,7 @@ def test_v1_database_is_migrated(tmp_path: Path) -> None:
             for row in connection.execute("SELECT name, sql FROM sqlite_master WHERE sql IS NOT NULL")
         }
     v1_picks = re.sub(
-        r",\s*commitment TEXT.*?spread_at_pick REAL", "", schema["picks"], flags=re.S
+        r",\s*commitment TEXT.*?my_line_high REAL", "", schema["picks"], flags=re.S
     )
     v1_entries = (
         schema["entries"]
@@ -410,7 +410,10 @@ def test_v1_database_is_migrated(tmp_path: Path) -> None:
         ).fetchone()[0]
         columns = {row["name"] for row in connection.execute("PRAGMA table_info(picks)")}
         assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
-    assert {"commitment", "ordinal", "logged_after_start", "role", "spread_team", "spread_at_pick"} <= columns
+    assert {
+        "commitment", "ordinal", "logged_after_start", "role", "spread_team",
+        "spread_at_pick", "my_line_low", "my_line_high",
+    } <= columns
     assert store.reopen_entry("e1")["status"] == "processing"
 
 
@@ -462,6 +465,63 @@ def test_picks_for_started_games_are_logged_and_graded(tmp_path: Path) -> None:
     assert bot.store.recent()[0]["result"] == "win"
     assert bot.store.recent()[0]["analysis_status"] == "complete"
     assert bot.claude.reviews[0]["logged_after_start"] == 1
+
+
+def test_side_noted_before_lines_post_takes_first_betonline_line(tmp_path: Path) -> None:
+    from decision_helper.models import MarketEvent, MarketQuote
+
+    events = make_events()
+    unposted = MarketEvent(**{**events[1].__dict__, "markets": {}})
+    bot = make_bot(tmp_path, [events[0], unposted])
+
+    async def extract(transcript, events, recorded_at=None, prior_views=None):
+        return extraction_from_payload(
+            {
+                "picks": [
+                    {
+                        "sport": "nba",
+                        "event_id": "nba-1",
+                        "pick_type": "spread",
+                        "selection": "Los Angeles Lakers",
+                        "line": None,
+                        "my_line_low": -8,
+                        "my_line_high": -9.5,
+                        "confidence_probability": 0.9,
+                        "confidence_label": "",
+                        "reasoning": "should be like minus eight to nine and a half",
+                        "uncertainties": [],
+                    }
+                ],
+                "immediate_feedback": "Logged.",
+            },
+            events,
+        )
+
+    bot.claude.extract = extract
+    update = voice_update()
+    run_voice(bot, update)
+    reply = update.message.reply_text.await_args_list[-1].args[0]
+    assert "Los Angeles Lakers spread (no line) [your number -9.5 to -8]" in reply
+    pick = bot.store.recent()[0]
+
+    posted = MarketEvent(
+        **{
+            **unposted.__dict__,
+            "markets": {
+                "spread:Los Angeles Lakers": MarketQuote(-6.5, -105, 1),
+                "spread:Boston Celtics": MarketQuote(6.5, -115, 1),
+            },
+        }
+    )
+    bot.store.record_market_snapshot(pick["id"], posted)
+    later = MarketEvent(
+        **{**posted.__dict__, "markets": {"spread:Los Angeles Lakers": MarketQuote(-7.5, -110, 1)}}
+    )
+    bot.store.record_market_snapshot(pick["id"], later)
+    pick = bot.store.recent()[0]
+    assert (pick["line"], pick["line_source"], pick["price_at_pick"]) == (-6.5, "market", -105)
+    assert (pick["spread_team"], pick["spread_at_pick"]) == ("Los Angeles Lakers", -6.5)
+    assert pick["closing_line"] == -7.5
 
 
 def test_failures_are_reported_and_audio_removed(tmp_path: Path) -> None:
@@ -538,6 +598,11 @@ def test_market_tracking_settlement_and_post_game_review(tmp_path: Path) -> None
     assert [d["betonline_spread_at_pick"] for d in record["decisions"]] == [
         {"team": "Buffalo Bills", "point": 2.5},
         {"team": "Kansas City Chiefs", "point": -2.5},
+    ]
+    assert bot.claude.reviews[0]["my_line_low"] == 3.5
+    assert [d["my_number"] for d in record["decisions"]] == [
+        {"low": 3.5, "high": 4.5},
+        {"low": 44, "high": 44},
     ]
 
     stats = bot.store.stats()
