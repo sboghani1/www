@@ -20,7 +20,11 @@ the next sync.
    local [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
    (`small.en`, CPU int8). It's free and audio never leaves the server. Voice notes,
    audio uploads (m4a/mp3/ogg), and audio documents are accepted, up to 20 MB.
-   Plain text messages are treated as a transcript.
+   Plain text messages are treated as a transcript. The audio of every parsed
+   note is kept in `/var/lib/decision-helper-bot/audio/<entry-id>.<ext>` and
+   its exact transcript in `entries.transcript`, so notes can be reparsed (or
+   re-transcribed) after a prompt or model change. Only **Trash** and
+   **Remove** delete them.
 2. **Text → picks with Claude.** The transcript and the candidate games (ESPN
    scoreboards from three days back through the next eight days, with
    BetOnline lines attached) are sent to Claude Code (`claude -p`, default
@@ -34,8 +38,11 @@ the next sync.
    and notes), so "still on them" resolves to the right side. A note that
    discusses a game without taking a side is stored in `game_notes` as
    `context`. A side or note sent after the game is graded becomes a
-   `hindsight` note and is never counted as a decision. `/reparse` clears the
-   note's attachments before parsing again.
+   `hindsight` note and is never counted as a decision. Reparsing a note
+   clears its picks (graded ones too) and attachments, then parses the saved
+   transcript again with the note's original time, BetOnline lines, and only
+   the views sent before it; new picks for finished games are re-graded from
+   ESPN on the next sync.
 
    A side is saved as a spread unless you explicitly take the moneyline ("Jazz
    to win", "moneyline"/"ML"). The line is only a number you say you are
@@ -102,12 +109,15 @@ receptionist's Opus agent, not with API billing:
 - `/recent` - the 10 newest picks and leans with status
 - `/stats` - committed picks and leans: record, Brier calibration, process
   score, CLV, and top bias flags
-- `/reparse` - re-run parsing on the latest saved transcript (voids its open
-  picks first; keeps the note's original time and line)
+- `/reparse` - re-run parsing on the latest saved transcript, or reply
+  `/reparse` to any of your voice/text notes to reparse that one (graded
+  notes included; keeps the note's original time and line)
 - `/void <id-prefix>` - drop a mis-parsed open pick
+- **🔁 Reparse** (button on each saved note) - same as replying `/reparse`
 - **🗑 Remove this note** (button on each saved note) - deletes that note's
-  picks/leans (even graded ones), attached game notes, and transcript so you
-  can resend what you meant; an earlier view of the game becomes final again
+  picks/leans (even graded ones), attached game notes, transcript, and audio
+  so you can resend what you meant; an earlier view of the game becomes final
+  again
 - `/help`
 
 ## Setup

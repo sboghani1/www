@@ -389,7 +389,7 @@ class DecisionStore:
                 return [dict(row) for row in rows]
             for ordinal, pick in enumerate(extraction.picks):
                 event = by_id[pick.event_id]
-                if _settled(connection, event, pick.pick_type):
+                if _settled(connection, event, pick.pick_type, as_of=logged):
                     # Already graded: keep the thought, but don't count it.
                     _insert_note(
                         connection,
@@ -494,12 +494,16 @@ class DecisionStore:
                     connection,
                     entry_id,
                     event,
-                    "hindsight" if _settled(connection, event) else "context",
+                    "hindsight"
+                    if _settled(connection, event, as_of=logged)
+                    else "context",
                     note.summary,
                     logged,
                 )
             for pick_id in saved_ids:
-                _refresh_roles(connection, pick_id)
+                # A reparsed note can land before graded views; ordering by
+                # note time decides which view is final.
+                _refresh_roles(connection, pick_id, force=True)
             connection.execute(
                 """
                 UPDATE entries
@@ -613,15 +617,25 @@ class DecisionStore:
         }
 
     def prior_views(
-        self, events: list[MarketEvent]
+        self, events: list[MarketEvent], before: datetime | None = None
     ) -> dict[str, dict[str, Any]]:
-        """Earlier recorded sides and notes for each candidate game."""
+        """Earlier recorded sides and notes for each candidate game (only
+        those sent before ``before``, so a reparsed note sees what it saw)."""
+        cutoff = before or utc_now()
+
+        def earlier(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+            return [
+                row for row in rows if parse_timestamp(row["logged_at"]) < cutoff
+            ]
+
         views: dict[str, dict[str, Any]] = {}
         for event in events:
             record = self.game_record(
                 event.sport, event.away_team, event.home_team, event.commence_time
             )
-            if record["decisions"] or record["game_notes"]:
+            decisions = earlier(record["decisions"])
+            notes = earlier(record["game_notes"])
+            if decisions or notes:
                 views[event.id] = {
                     "decisions": [
                         {
@@ -635,9 +649,9 @@ class DecisionStore:
                                 "result",
                             )
                         }
-                        for decision in record["decisions"]
+                        for decision in decisions
                     ],
-                    "game_notes": record["game_notes"],
+                    "game_notes": notes,
                 }
         return views
 
@@ -981,8 +995,21 @@ class DecisionStore:
             ).fetchone()
         return dict(row) if row is not None else None
 
+    def entry_for_message(
+        self, chat_id: int, message_id: int
+    ) -> dict[str, Any] | None:
+        """The note recorded from this Telegram message (a voice note or text)."""
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM entries WHERE telegram_chat_id=? "
+                "AND telegram_message_id=?",
+                (chat_id, message_id),
+            ).fetchone()
+        return dict(row) if row is not None else None
+
     def reopen_entry(self, entry_id: str) -> dict[str, Any]:
-        """Void an entry's open picks so its saved transcript can be reparsed."""
+        """Void an entry's picks, graded ones included, so its saved
+        transcript can be reparsed; the new picks are graded again."""
         with self.connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             entry = connection.execute(
@@ -994,16 +1021,10 @@ class DecisionStore:
                 raise ValueError("That note is still being processed")
             if not entry["transcript"]:
                 raise ValueError("That note has no saved transcript")
-            settled = connection.execute(
-                "SELECT COUNT(*) FROM picks WHERE entry_id=? AND status='final'",
-                (entry_id,),
-            ).fetchone()[0]
-            if settled:
-                raise ValueError("That note already has settled picks")
             voided = [
                 row[0]
                 for row in connection.execute(
-                    "SELECT id FROM picks WHERE entry_id=? AND status='open'",
+                    "SELECT id FROM picks WHERE entry_id=? AND status!='void'",
                     (entry_id,),
                 )
             ]
@@ -1011,12 +1032,12 @@ class DecisionStore:
                 """
                 UPDATE picks
                 SET status='void', next_market_check_at=NULL
-                WHERE entry_id=? AND status='open'
+                WHERE entry_id=? AND status!='void'
                 """,
                 (entry_id,),
             )
             for pick_id in voided:
-                _refresh_roles(connection, pick_id)
+                _refresh_roles(connection, pick_id, force=True)
             connection.execute(
                 "DELETE FROM game_notes WHERE entry_id=?", (entry_id,)
             )
@@ -1285,8 +1306,11 @@ def _settled(
     connection: sqlite3.Connection,
     event: MarketEvent,
     pick_type: str | None = None,
+    *,
+    as_of: str,
 ) -> bool:
-    """Whether this game (or market family) already has a graded decision."""
+    """Whether this game (or market family) had a graded decision by
+    ``as_of`` (when the note was sent), so a reparsed note keeps its role."""
     types = (
         ("winner", "spread", "total")
         if pick_type is None
@@ -1299,8 +1323,9 @@ def _settled(
         SELECT commence_time FROM picks
         WHERE status='final' AND sport=? AND away_team=? AND home_team=?
           AND pick_type IN ({",".join("?" * len(types))})
+          AND (settled_at IS NULL OR settled_at<=?)
         """,
-        (event.sport, event.away_team, event.home_team, *types),
+        (event.sport, event.away_team, event.home_team, *types, as_of),
     ).fetchall()
     return bool(_same_game(rows, event.commence_time))
 

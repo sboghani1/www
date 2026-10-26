@@ -61,11 +61,13 @@ HELP_TEXT = (
     "per game as you like: your latest side is your decision, earlier ones "
     "form its path, and thoughts without a side are attached to the game. "
     "I track BetOnline lines and grade and review every game quietly; see "
-    "/stats. Each saved note has a Remove button so you can redo it.\n\n"
+    "/stats. Each saved note has Reparse and Remove buttons, and I keep "
+    "your audio and its transcript so notes can be reparsed later.\n\n"
     "/games - today's and tomorrow's games; tap one for my opinion\n"
     "/recent - latest 10 picks and leans\n"
     "/stats - record, calibration, closing-line value, process, biases\n"
-    "/reparse - re-run parsing on your latest note\n"
+    "/reparse - re-run parsing on your latest note, or reply /reparse to "
+    "any of your notes\n"
     "/void <id-prefix> - remove a mis-parsed open pick"
 )
 
@@ -83,7 +85,12 @@ def choice_keyboard(entry_id: str) -> InlineKeyboardMarkup:
 
 def remove_keyboard(entry_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
-        [[InlineKeyboardButton("🗑 Remove this note", callback_data=f"remove:{entry_id}")]]
+        [
+            [
+                InlineKeyboardButton("🔁 Reparse", callback_data=f"reparse:{entry_id}"),
+                InlineKeyboardButton("🗑 Remove this note", callback_data=f"remove:{entry_id}"),
+            ]
+        ]
     )
 
 
@@ -409,7 +416,7 @@ class DecisionBot:
                 BotCommand("games", "Today's and tomorrow's games; get my take"),
                 BotCommand("recent", "Show the latest picks and leans"),
                 BotCommand("stats", "Decision-quality report"),
-                BotCommand("reparse", "Re-run parsing on the latest note"),
+                BotCommand("reparse", "Re-run parsing on the latest (or replied-to) note"),
                 BotCommand("void", "Remove a mis-parsed open pick"),
                 BotCommand("help", "How Mel works"),
             ]
@@ -522,6 +529,7 @@ class DecisionBot:
             await query.edit_message_reply_markup(reply_markup=None)
             await query.message.reply_text(str(error))
             return
+        self.audio_path(self.store.get_entry(entry_id)).unlink(missing_ok=True)
         await query.edit_message_reply_markup(reply_markup=None)
         await query.message.reply_text(
             f"🗑 Removed that note and its {len(picks)} pick(s)/lean(s). "
@@ -531,18 +539,43 @@ class DecisionBot:
     async def reparse(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
-        latest = self.store.latest_entry()
-        if latest is None:
-            await update.message.reply_text("There is no saved note to reparse.")
-            return
+        replied = update.message.reply_to_message
+        if replied is not None:
+            target = self.store.entry_for_message(
+                update.effective_chat.id, replied.message_id
+            )
+            if target is None:
+                await update.message.reply_text(
+                    "Reply /reparse to one of your own voice or text notes."
+                )
+                return
+        else:
+            target = self.store.latest_entry()
+            if target is None:
+                await update.message.reply_text("There is no saved note to reparse.")
+                return
+        await self._reparse(target["id"], update.message, context)
+
+    async def reparse_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        query = update.callback_query
+        await query.answer()
+        await self._reparse(
+            str(query.data).partition(":")[2], query.message, context
+        )
+
+    async def _reparse(
+        self, entry_id: str, message: Any, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         try:
-            entry = self.store.reopen_entry(latest["id"])
+            entry = self.store.reopen_entry(entry_id)
         except (LookupError, ValueError) as error:
-            await update.message.reply_text(str(error))
+            await message.reply_text(str(error))
             return
-        await update.message.reply_text("🔁 Reparsing your latest note…")
+        await message.reply_text("🔁 Reparsing that note…")
         context.application.create_task(
-            self._process(entry["id"], update.message, text=entry["transcript"])
+            self._process(entry["id"], message, text=entry["transcript"])
         )
 
     async def receive_text(
@@ -597,7 +630,7 @@ class DecisionBot:
                     transcript,
                     events,
                     recorded_at=recorded_at,
-                    prior_views=self.store.prior_views(events),
+                    prior_views=self.store.prior_views(events, before=recorded_at),
                 )
                 picks = self.store.save_extraction(
                     entry_id=entry_id,
@@ -620,9 +653,6 @@ class DecisionBot:
                 await message.reply_text(
                     f"⚠️ I couldn't save that one: {detail[:500]}"
                 )
-            finally:
-                if audio_path is not None:
-                    audio_path.unlink(missing_ok=True)
 
     async def candidate_events(
         self,
@@ -632,10 +662,11 @@ class DecisionBot:
         """ESPN games from the last few days through the next week, with
         BetOnline lines from the forwarder's sheet (no paid API calls).
 
-        ``lines_as_of`` swaps in the lines BetOnline showed at that time.
+        ``lines_as_of`` swaps in the lines BetOnline showed at that time, and
+        centers the window on it (a reparsed older note).
         ``day_offsets`` limits the ESPN days (ET, relative to today).
         """
-        now = utc_now()
+        now = lines_as_of or utc_now()
         today = now.astimezone(EASTERN).date()
         offsets = day_offsets or range(
             1 - STARTED_LOOKBACK_DAYS, CANDIDATE_WINDOW.days + 1
@@ -983,6 +1014,11 @@ class DecisionBot:
         application.add_handler(
             CallbackQueryHandler(
                 self.authorized(self.remove), pattern=r"^remove:"
+            )
+        )
+        application.add_handler(
+            CallbackQueryHandler(
+                self.authorized(self.reparse_button), pattern=r"^reparse:"
             )
         )
         application.add_handler(

@@ -167,7 +167,7 @@ async def tap(bot, update, markup, choice, context):
     return query
 
 
-def test_voice_note_waits_for_button_then_parses_and_deletes(tmp_path: Path) -> None:
+def test_voice_note_waits_for_button_then_parses_and_keeps_audio(tmp_path: Path) -> None:
     bot = make_bot(tmp_path, make_events())
     update = voice_update()
 
@@ -180,7 +180,10 @@ def test_voice_note_waits_for_button_then_parses_and_deletes(tmp_path: Path) -> 
     assert "Under 47.5 [BetOnline line] (-110) [BetOnline spread Chiefs -2.5] [your number 44]" in replies[1]
     assert "Boston Celtics to win (-150) · 70%" in replies[1]
     assert "🧠" not in replies[1] and "Good specificity" not in replies[1]
-    assert not any(bot.config.audio_dir.iterdir())
+    # The audio is kept for later reparsing or re-transcription.
+    entry = bot.store.latest_entry()
+    assert [p.name for p in bot.config.audio_dir.iterdir()] == [f"{entry['id']}.ogg"]
+    assert entry["transcript"].startswith("Bills plus three")
     assert bot.lines.calls == ["nfl", "nba"]
 
     # Telegram redelivery of the same message is ignored.
@@ -301,12 +304,12 @@ def test_reparse_voids_open_picks_and_reuses_transcript(tmp_path: Path) -> None:
     )
 
     async def scenario():
-        await bot.reparse(SimpleNamespace(message=SimpleNamespace(reply_text=reply)), context)
+        await bot.reparse(SimpleNamespace(message=SimpleNamespace(reply_text=reply, reply_to_message=None)), context)
         await asyncio.gather(*tasks)
 
     asyncio.run(scenario())
 
-    assert reply.await_args_list[0].args[0] == "🔁 Reparsing your latest note…"
+    assert reply.await_args_list[0].args[0] == "🔁 Reparsing that note…"
     assert "Saved 3 pick(s)" in reply.await_args_list[1].args[0]
     assert len(bot.transcriber.paths) == 1
     with bot.store.connect() as connection:
@@ -339,7 +342,7 @@ def test_reparse_keeps_note_time_and_uses_lines_from_then(tmp_path: Path) -> Non
     )
 
     async def scenario():
-        await bot.reparse(SimpleNamespace(message=SimpleNamespace(reply_text=reply)), context)
+        await bot.reparse(SimpleNamespace(message=SimpleNamespace(reply_text=reply, reply_to_message=None)), context)
         await asyncio.gather(*tasks)
 
     asyncio.run(scenario())
@@ -524,14 +527,15 @@ def test_side_noted_before_lines_post_takes_first_betonline_line(tmp_path: Path)
     assert pick["closing_line"] == -7.5
 
 
-def test_failures_are_reported_and_audio_removed(tmp_path: Path) -> None:
+def test_failures_are_reported_and_input_kept(tmp_path: Path) -> None:
     bot = make_bot(tmp_path, [])
     update = voice_update()
 
     run_voice(bot, update)
 
     assert "couldn't save" in update.message.reply_text.await_args_list[-1].args[0]
-    assert not any(bot.config.audio_dir.iterdir())
+    assert len(list(bot.config.audio_dir.iterdir())) == 1
+    assert bot.store.latest_entry()["transcript"].startswith("Bills plus three")
 
 
 def test_unauthorized_users_are_ignored(tmp_path: Path) -> None:
@@ -866,7 +870,7 @@ def test_remove_button_deletes_note_even_after_grading(tmp_path: Path) -> None:
     second = voice_update(message_id=2)
     run_voice(bot, second)
     markup = second.message.reply_text.await_args_list[-1].kwargs["reply_markup"]
-    button = markup.inline_keyboard[0][0]
+    button = markup.inline_keyboard[0][1]
     assert button.text == "🗑 Remove this note"
 
     # Both views graded; the Chiefs (newest) is final and reviewed.
@@ -887,6 +891,9 @@ def test_remove_button_deletes_note_even_after_grading(tmp_path: Path) -> None:
     asyncio.run(bot.remove(SimpleNamespace(callback_query=query), SimpleNamespace()))
     assert "Removed that note and its 1 pick(s)" in query.message.reply_text.await_args.args[0]
     query.edit_message_reply_markup.assert_awaited_with(reply_markup=None)
+    # The removed note's audio is deleted; the other note's is kept.
+    first = bot.store.latest_entry()
+    assert [p.name for p in bot.config.audio_dir.iterdir()] == [f"{first['id']}.ogg"]
 
     spreads = [p for p in bot.store.recent() if p["pick_type"] == "spread"]
     assert [(p["selection"], p["role"], p["analysis_status"]) for p in spreads] == [
@@ -899,3 +906,92 @@ def test_remove_button_deletes_note_even_after_grading(tmp_path: Path) -> None:
 
     asyncio.run(bot.remove(SimpleNamespace(callback_query=query), SimpleNamespace()))
     assert query.message.reply_text.await_args.args[0] == "That note was already removed"
+
+
+def test_any_note_can_be_reparsed_after_grading(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    events = make_events(now)
+    bot = make_bot(tmp_path, events)
+    run_voice(bot, voice_update(message_id=1))
+    payload = bills_note(selection="Kansas City Chiefs", line=-2.5)
+    seen = []
+
+    async def extract(transcript, events, recorded_at=None, prior_views=None):
+        seen.append(prior_views)
+        return extraction_from_payload(payload, events)
+
+    bot.claude.extract = extract
+    second = voice_update(message_id=2)
+    run_voice(bot, second)
+    note1 = timestamp(now - timedelta(hours=3))
+    with bot.store.connect() as connection:
+        for message_id, hours in ((1, 3), (2, 2)):
+            at = timestamp(now - timedelta(hours=hours))
+            connection.execute("UPDATE entries SET created_at=? WHERE telegram_message_id=?", (at, message_id))
+            connection.execute(
+                "UPDATE picks SET created_at=? WHERE entry_id=(SELECT id FROM entries WHERE telegram_message_id=?)",
+                (at, message_id),
+            )
+        connection.execute("UPDATE picks SET next_result_check_at=?", (timestamp(now - timedelta(minutes=1)),))
+        connection.commit()
+    bot.espn.finals = [
+        FinalGame("401", "nfl", events[0].commence_time, "Buffalo Bills", "Kansas City Chiefs", 24, 26),
+        FinalGame("402", "nba", events[1].commence_time, "Boston Celtics", "Los Angeles Lakers", 99, 101),
+    ]
+    asyncio.run(bot.sync_results())
+    asyncio.run(bot.sync_reviews())
+
+    # A newer prompt finds the speaker's own number in the first note.
+    payload = bills_note(my_line_low=4.5, my_line_high=4.5)
+    reply = AsyncMock()
+    tasks = []
+    context = SimpleNamespace(application=SimpleNamespace(create_task=lambda coro: tasks.append(coro)))
+
+    async def reparse_reply():
+        update = SimpleNamespace(
+            effective_chat=SimpleNamespace(id=1),
+            message=SimpleNamespace(reply_text=reply, reply_to_message=SimpleNamespace(message_id=1)),
+        )
+        await bot.reparse(update, context)
+        await asyncio.gather(*tasks)
+
+    asyncio.run(reparse_reply())
+    assert reply.await_args_list[0].args[0] == "🔁 Reparsing that note…"
+    assert "[your number +4.5]" in reply.await_args_list[1].args[0]
+    assert seen[-1] == {}  # The later Chiefs note is not shown to the earlier note.
+
+    def picks():
+        with bot.store.connect() as connection:
+            return [dict(row) for row in connection.execute("SELECT * FROM picks WHERE status!='void'")]
+
+    bills = next(p for p in picks() if p["selection"] == "Buffalo Bills")
+    chiefs = next(p for p in picks() if p["selection"] == "Kansas City Chiefs")
+    assert (bills["status"], bills["role"], bills["created_at"], bills["my_line_low"]) == (
+        "open", "superseded", note1, 4.5
+    )
+    assert (chiefs["status"], chiefs["role"]) == ("final", "final")
+    assert len(picks()) == 2  # The first note's Under and Celtics were reparsed away.
+    assert bot.store.entry_notes(bot.store.entry_for_message(1, 1)["id"]) == []
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE picks SET next_result_check_at=? WHERE status='open'", (timestamp(now),))
+        connection.commit()
+    asyncio.run(bot.sync_results())
+    bills = next(p for p in picks() if p["selection"] == "Buffalo Bills")
+    assert (bills["status"], bills["result"]) == ("final", "win")
+
+    # The Reparse button does the same for the second note, which sees the first.
+    payload = bills_note(selection="Kansas City Chiefs", line=-2.5)
+    markup = second.message.reply_text.await_args_list[-1].kwargs["reply_markup"]
+    button = markup.inline_keyboard[0][0]
+    assert button.text == "🔁 Reparse"
+    query = SimpleNamespace(data=button.callback_data, answer=AsyncMock(), message=SimpleNamespace(reply_text=AsyncMock()))
+    tasks.clear()
+
+    async def reparse_button():
+        await bot.reparse_button(SimpleNamespace(callback_query=query), context)
+        await asyncio.gather(*tasks)
+
+    asyncio.run(reparse_button())
+    assert [d["side"] for d in seen[-1]["nfl-1"]["decisions"]] == ["Buffalo Bills +3"]
+    chiefs = next(p for p in picks() if p["selection"] == "Kansas City Chiefs")
+    assert (chiefs["status"], chiefs["role"]) == ("open", "final")
