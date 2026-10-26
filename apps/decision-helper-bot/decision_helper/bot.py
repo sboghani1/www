@@ -147,7 +147,7 @@ def describe_pick(pick: dict[str, Any]) -> str:
         confidence = f" · {pick['confidence_probability']:.0%}"
     elif pick["confidence_label"]:
         confidence = f" · {pick['confidence_label']}"
-    label = "Lean · " if pick.get("commitment") == "lean" else ""
+    label = "Lean · " if pick.get("commitment") == "lean" else "Bet · "
     if pick.get("role") == "superseded":
         label = "↩ Earlier view · " + label
     return (
@@ -172,7 +172,7 @@ def format_saved(
         committed = sum(pick.get("commitment") != "lean" for pick in finals)
         counts = []
         if committed:
-            counts.append(f"{committed} pick(s)")
+            counts.append(f"{committed} bet(s)")
         if len(finals) - committed:
             counts.append(f"{len(finals) - committed} lean(s)")
         earlier = len(picks) - len(finals)
@@ -324,12 +324,15 @@ def format_learning(learning: dict[str, Any]) -> str:
 
 def format_stats(
     stats: dict[str, Any],
-    leans: dict[str, Any] | None = None,
+    bets: dict[str, Any] | None = None,
     flips: dict[str, Any] | None = None,
 ) -> str:
-    lines = ["📊 Mel decision report", *_stats_section("Committed picks", stats)]
-    if leans is not None and leans["total"]:
-        lines.extend(["", *_stats_section("Leans (tracked separately)", leans)])
+    lines = [
+        "📊 Mel decision report",
+        *_stats_section("All decisions (bets and leans)", stats),
+    ]
+    if bets is not None and bets["total"]:
+        lines.extend(["", *_stats_section("Bets only", bets)])
     if flips is not None and flips["final_position_record"] != "0-0-0":
         lines.extend(
             [
@@ -1007,8 +1010,8 @@ class DecisionBot:
                 event.sport, event.away_team, event.home_team, event.commence_time
             ),
             "track_record": {
-                "picks": self.store.stats(),
-                "leans": self.store.stats("lean"),
+                "all_decisions": self.store.stats(None),
+                "bets": self.store.stats("pick"),
                 "side_changes": self.store.flip_stats(),
                 "recent_lessons": self.store.recent_lessons(),
                 "daily_learnings": [
@@ -1090,7 +1093,7 @@ class DecisionBot:
                 finals[sport] = []
         games = []
         transcripts: dict[tuple[str, str], dict[str, str]] = {}
-        record = {"picks": [0, 0, 0], "leans": [0, 0, 0]}
+        record = {"all": [0, 0, 0], "bets": [0, 0, 0]}
         for (sport, away, home), start in sorted(starts.items(), key=lambda item: item[1]):
             game = self.store.game_record(sport, away, home, start, detailed=True)
             # One note often covers several games; list each transcript once.
@@ -1101,10 +1104,13 @@ class DecisionBot:
             )
             for decision in game["decisions"]:
                 decision["actual"] = actual_outcome(decision, home, final)
-                bucket = record.get(decision["commitment"] + "s")
-                if decision["role"] == "final" and bucket is not None:
-                    for index, result in enumerate(("win", "loss", "push")):
-                        bucket[index] += decision["result"] == result
+                if decision["role"] == "final":
+                    buckets = [record["all"]]
+                    if decision["commitment"] == "pick":
+                        buckets.append(record["bets"])
+                    for bucket in buckets:
+                        for index, result in enumerate(("win", "loss", "push")):
+                            bucket[index] += decision["result"] == result
             games.append(
                 {
                     "sport": sport,
@@ -1129,8 +1135,8 @@ class DecisionBot:
             },
             "prior_days": self.store.recent_learnings(7, before_day=day),
             "track_record": {
-                "picks": self.store.stats(),
-                "leans": self.store.stats("lean"),
+                "all_decisions": self.store.stats(None),
+                "bets": self.store.stats("pick"),
                 "side_changes": self.store.flip_stats(),
             },
         }
@@ -1180,8 +1186,8 @@ class DecisionBot:
         del context
         await update.message.reply_text(
             format_stats(
-                self.store.stats(),
-                self.store.stats("lean"),
+                self.store.stats(None),
+                self.store.stats("pick"),
                 self.store.flip_stats(),
             )
         )

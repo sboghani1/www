@@ -3,7 +3,10 @@
 Private Telegram bot `@decision_helpers_bot` (display name **Mel**). Send it
 voice notes about your NFL and NBA picks. For each voice note Mel asks, with
 buttons, whether to **Parse** it or **Trash** the audio. Parsed notes produce
-committed picks and tentative leans (tracked separately). Each game has one
+bets (only what you say you actually bet) and leans (every other view, however
+confident). Leans are graded, reviewed, and learned from exactly like bets;
+reviews and daily learnings also judge whether each bet's view was strong
+enough to bet. Each game has one
 decision per market family (side = moneyline/spread, and total). Sides you
 moved off are kept as that decision's path, so flips can be analyzed. Mel only
 confirms what it recorded; it doesn't send analysis on input notes. It follows
@@ -130,8 +133,8 @@ receptionist's Opus agent, not with API billing:
 
 - `/games` - today's and tomorrow's games; tap one for Mel's opinion
 - `/recent` - the 10 newest picks and leans with status
-- `/stats` - committed picks and leans: record, Brier calibration, process
-  score, CLV, and top bias flags
+- `/stats` - all decisions (bets and leans), then bets only: record, Brier
+  calibration, process score, CLV, and top bias flags
 - `/learnings [YYYY-MM-DD]` - the latest (or that ET day's) daily learnings
 - `/reparse` - re-run parsing on the latest saved transcript, or reply
   `/reparse` to any of your voice/text notes to reparse that one (graded

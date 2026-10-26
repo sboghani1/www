@@ -1343,12 +1343,13 @@ class DecisionStore:
             "recent_flips": flips[-recent:],
         }
 
-    def stats(self, commitment: str = "pick") -> dict[str, Any]:
+    def stats(self, commitment: str | None = "pick") -> dict[str, Any]:
+        """Final positions' record; commitment None covers bets and leans."""
         with self.connect() as connection:
             rows = connection.execute(
                 "SELECT * FROM picks WHERE status!='void' AND role='final' "
-                "AND commitment=?",
-                (commitment,),
+                "AND (? IS NULL OR commitment=?)",
+                (commitment, commitment),
             ).fetchall()
         picks = [dict(row) for row in rows]
         finals = [

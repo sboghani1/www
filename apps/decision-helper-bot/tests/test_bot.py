@@ -190,7 +190,7 @@ def test_voice_note_waits_for_button_then_parses_and_keeps_audio(tmp_path: Path)
 
     replies = [call.args[0] for call in update.message.reply_text.await_args_list]
     assert replies[0] == "🎧 Got it. Parse this note or trash the audio?"
-    assert "Saved 3 pick(s)" in replies[1]
+    assert "Saved 3 bet(s)" in replies[1]
     assert "Buffalo Bills +3 (-110) [BetOnline spread Bills +2.5] [your number +3.5 to +4.5]" in replies[1]
     assert "Under 47.5 [BetOnline line] (-110) [BetOnline spread Chiefs -2.5] [your number 44]" in replies[1]
     assert "Boston Celtics to win (-150) · 70%" in replies[1]
@@ -249,12 +249,13 @@ def test_flip_keeps_one_decision_per_game(tmp_path: Path) -> None:
     run_voice(bot, update)
 
     reply = update.message.reply_text.await_args_list[-1].args[0]
-    assert "Saved 2 pick(s), 1 lean(s), 1 earlier view(s) you moved off" in reply
+    assert "Saved 2 bet(s), 1 lean(s), 1 earlier view(s) you moved off" in reply
     assert reply.index("↩ Earlier view · Lean · NFL · Buffalo Bills @ Kansas City Chiefs: Buffalo Bills +3") < reply.index(
         "Lean · NFL · Buffalo Bills @ Kansas City Chiefs: Kansas City Chiefs -2.5"
     )
     assert bot.store.stats()["total"] == 2
     assert bot.store.stats("lean")["total"] == 1
+    assert bot.store.stats(None)["total"] == 3
 
     # Chiefs win by 2: the abandoned Bills +3 would have won, the Chiefs -2.5 loses.
     bot.espn.finals = [
@@ -279,8 +280,9 @@ def test_flip_keeps_one_decision_per_game(tmp_path: Path) -> None:
     assert (flips["flips"], flips["helped"], flips["hurt"]) == (1, 0, 1)
     assert flips["recent_flips"][0]["from"] == "Buffalo Bills +3"
     assert flips["recent_flips"][0]["reason_for_switch"] == "Switched after the line moved"
-    report = format_stats(bot.store.stats(), leans, flips)
+    report = format_stats(bot.store.stats(None), bot.store.stats("pick"), flips)
     assert "Flips: 1 · helped 0, hurt 1" in report
+    assert "All decisions (bets and leans)" in report and "Bets only" in report
 
 
 
@@ -325,7 +327,7 @@ def test_reparse_voids_open_picks_and_reuses_transcript(tmp_path: Path) -> None:
     asyncio.run(scenario())
 
     assert reply.await_args_list[0].args[0] == "🔁 Reparsing that note…"
-    assert "Saved 3 pick(s)" in reply.await_args_list[1].args[0]
+    assert "Saved 3 bet(s)" in reply.await_args_list[1].args[0]
     assert len(bot.transcriber.paths) == 1
     with bot.store.connect() as connection:
         statuses = [row[0] for row in connection.execute("SELECT status FROM picks ORDER BY status")]
@@ -1168,9 +1170,14 @@ def test_daily_learnings_wait_for_9am_and_grading_then_feed_opinions(tmp_path: P
     # The one note covering both games is listed once for the day.
     assert "notes" not in nfl
     assert [n["transcript"][:16] for n in context["transcripts"]] == ["Bills plus three"]
-    assert sum(map(int, context["day_record"]["picks"].split("-"))) + sum(
-        map(int, context["day_record"]["leans"].split("-"))
-    ) == 3
+    assert sum(map(int, context["day_record"]["all"].split("-"))) == 3
+    assert context["day_record"]["bets"] == "{}-{}-{}".format(
+        *(
+            sum(d["role"] == "final" and d["commitment"] == "pick" and d["result"] == r
+                for g in context["games"] for d in g["decisions"])
+            for r in ("win", "loss", "push")
+        )
+    )
 
     saved = bot.store.learning("2026-10-20")
     assert saved["rules_to_try"] == ["Write a number before every side"]
