@@ -2,6 +2,7 @@ import pytest
 
 from decision_helper.models import (
     closing_value,
+    expected_gap,
     extraction_from_payload,
     grade_pick,
     implied_probability,
@@ -155,6 +156,16 @@ def test_number_edge_favors_selection_when_positive() -> None:
     assert number_edge(pick_type="winner", selection="A", my_low=-3, my_high=-3, line=None,
                        spread_team="B", spread_point=-1.5) == 4.5
     assert number_edge(pick_type="spread", selection="A", my_low=None, my_high=None, line=-3) is None
+
+
+def test_expected_gap_is_market_minus_guess_in_selection_terms() -> None:
+    # Guessed Wizards -4.5; BetOnline Wizards +3: 7.5 more points than guessed.
+    assert expected_gap(pick_type="spread", selection="W", expected=-4.5, line=3) == 7.5
+    # Moneyline on A, guessed A -3, BetOnline B -1.5 (A +1.5).
+    assert expected_gap(pick_type="winner", selection="A", expected=-3, line=None,
+                        spread_team="B", spread_point=-1.5) == 4.5
+    assert expected_gap(pick_type="total", selection="Under", expected=235, line=233) == -2
+    assert expected_gap(pick_type="spread", selection="A", expected=None, line=-3) is None
 
 
 def test_learning_keeps_picker_signals() -> None:

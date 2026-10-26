@@ -192,8 +192,8 @@ def test_voice_note_waits_for_button_then_parses_and_keeps_audio(tmp_path: Path)
     replies = [call.args[0] for call in update.message.reply_text.await_args_list]
     assert replies[0] == "🎧 Got it. Parse this note or trash the audio?"
     assert "Saved 3 bet(s)" in replies[1]
-    assert "Buffalo Bills +3 (-110) [BetOnline spread Bills +2.5] [your number +3.5 to +4.5]" in replies[1]
-    assert "Under 47.5 [BetOnline line] (-110) [BetOnline spread Chiefs -2.5] [your number 44]" in replies[1]
+    assert "Buffalo Bills +3 (-110) [BetOnline spread Bills +2.5] [you project Chiefs by 3.5-4.5]" in replies[1]
+    assert "Under 47.5 [BetOnline line] (-110) [BetOnline spread Chiefs -2.5] [you project 44 total]" in replies[1]
     assert "Boston Celtics to win (-150) · 70%" in replies[1]
     assert "🧠" not in replies[1] and "Good specificity" not in replies[1]
     # The audio is kept for later reparsing or re-transcription.
@@ -606,7 +606,7 @@ def test_side_noted_before_lines_post_takes_first_betonline_line(tmp_path: Path)
     update = voice_update()
     run_voice(bot, update)
     reply = update.message.reply_text.await_args_list[-1].args[0]
-    assert "Los Angeles Lakers spread (no line) [your number -9.5 to -8]" in reply
+    assert "Los Angeles Lakers spread (no line) [you project Lakers by 8-9.5]" in reply
     pick = bot.store.recent()[0]
 
     posted = MarketEvent(
@@ -1059,7 +1059,7 @@ def test_any_note_can_be_reparsed_after_grading(tmp_path: Path) -> None:
 
     asyncio.run(reparse_reply())
     assert reply.await_args_list[0].args[0] == "🔁 Reparsing that note…"
-    assert "[your number +4.5]" in reply.await_args_list[1].args[0]
+    assert "[you project Chiefs by 4.5]" in reply.await_args_list[1].args[0]
     assert seen[-1] == {}  # The later Chiefs note is not shown to the earlier note.
 
     def picks():
@@ -1298,7 +1298,7 @@ def test_lean_tied_to_an_assumed_line_follows_the_number_at_the_real_line(tmp_pa
     # Number Bills +0.5 vs BetOnline Bills +2.5: still favors the Bills.
     keep = bills_note(commitment="lean", line=None, my_line_low=0.5, my_line_high=0.5, conditional_on_line=True)
     # Number Bills +6.5 vs BetOnline Bills +2.5: favors the Chiefs by 4.
-    flip = bills_note(commitment="lean", line=None, my_line_low=6.5, my_line_high=6.5, conditional_on_line=True)
+    flip = bills_note(commitment="lean", line=None, my_line_low=6.5, my_line_high=6.5, expected_line=-1.5, conditional_on_line=True)
     payloads = [keep, flip]
 
     async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
@@ -1311,12 +1311,35 @@ def test_lean_tied_to_an_assumed_line_follows_the_number_at_the_real_line(tmp_pa
     second = voice_update(message_id=2)
     run_voice(bot, second)
     reply = second.message.reply_text.await_args_list[1].args[0]
-    assert "Kansas City Chiefs -2.5 [BetOnline line]" in reply and "[your number -6.5]" in reply
+    assert "Kansas City Chiefs -2.5 [BetOnline line]" in reply and "[you project Chiefs by 6.5]" in reply
+    # Guessed Bills -1.5 (Chiefs +1.5); BetOnline has Chiefs -2.5.
+    assert "[you expected Chiefs +1.5; BetOnline 4 fewer points]" in reply
     assert "⚠️" not in reply
     with bot.store.connect() as connection:
         chiefs = connection.execute("SELECT * FROM picks WHERE selection='Kansas City Chiefs'").fetchone()
     assert (chiefs["commitment"], chiefs["role"]) == ("lean", "final")
-    assert "your number favors Kansas City Chiefs by 4" in chiefs["reasoning"]
+    assert "your projection favors Kansas City Chiefs by 4" in chiefs["reasoning"]
+    assert chiefs["expected_line"] == 1.5
+    record = bot.store.game_record("nfl", "Buffalo Bills", "Kansas City Chiefs", events[0].commence_time)
+    final = [d for d in record["decisions"] if d["role"] == "final"][0]
+    assert (final["expected_line"], final["line_vs_expected"], final["number_edge"]) == (1.5, -4, 4)
+
+
+def test_old_numbers_move_to_expected_line(tmp_path: Path) -> None:
+    events = make_events()
+    bot = make_bot(tmp_path, events)
+
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
+        return extraction_from_payload(bills_note(my_line_low=3.5, my_line_high=4.5), events)
+
+    bot.claude.extract = extract
+    run_voice(bot, voice_update())
+    with bot.store.connect() as connection:
+        connection.execute("ALTER TABLE picks DROP COLUMN expected_line")
+    bot.store.initialize()
+    with bot.store.connect() as connection:
+        row = connection.execute("SELECT * FROM picks").fetchone()
+    assert (row["expected_line"], row["my_line_low"], row["my_line_high"]) == (4, None, None)
 
 
 def test_saved_reply_flags_a_side_against_your_number(tmp_path: Path) -> None:
@@ -1329,6 +1352,6 @@ def test_saved_reply_flags_a_side_against_your_number(tmp_path: Path) -> None:
     bot.claude.extract = extract
     update = voice_update()
     run_voice(bot, update)
-    assert "⚠️ your number favors Chiefs by 4 at this line" in update.message.reply_text.await_args_list[1].args[0]
+    assert "⚠️ your projection favors Chiefs by 4 at this line" in update.message.reply_text.await_args_list[1].args[0]
     record = bot.store.game_record("nfl", "Buffalo Bills", "Kansas City Chiefs", events[0].commence_time)
     assert record["decisions"][0]["number_edge"] == -4

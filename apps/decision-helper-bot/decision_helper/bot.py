@@ -33,6 +33,7 @@ from .models import (
     other_side,
     parse_timestamp,
     pick_edge,
+    pick_expected_gap,
     team_matches,
     utc_now,
 )
@@ -134,6 +135,25 @@ def remove_keyboard(entry_id: str) -> InlineKeyboardMarkup:
     )
 
 
+def projection(pick: dict[str, Any], low: float, high: float | None) -> str:
+    """The projected result in words: 'Wizards by 10', 'Suns within 8',
+    '235 total'."""
+    high = low if high is None else high
+    if pick["pick_type"] == "total":
+        return f"{low:g} total" if low == high else f"{low:g}-{high:g} total"
+    selection = short_team(pick["selection"])
+    if high <= 0:
+        team = selection
+    elif low >= 0:
+        team = short_team(
+            other_side(pick["pick_type"], pick["selection"], pick["away_team"], pick["home_team"])
+        )
+    else:
+        return f"{selection} {low:+g} to {high:+g}"
+    a, b = sorted((abs(low), abs(high)))
+    return f"{team} by {a:g}" if a == b else f"{team} by {a:g}-{b:g}"
+
+
 def describe_pick(pick: dict[str, Any]) -> str:
     matchup = f"{pick['away_team']} @ {pick['home_team']}"
     if pick["pick_type"] == "winner":
@@ -168,21 +188,29 @@ def describe_pick(pick: dict[str, Any]) -> str:
     ):
         number = "pk" if spread == 0 else f"{short_team(pick['spread_team'])} {spread:+g}"
         detail += f" [BetOnline spread {number}]"
+    expected = pick.get("expected_line")
+    if expected is not None:
+        if pick["pick_type"] == "total":
+            detail += f" [you expected {expected:g}"
+            unit = "higher", "lower"
+        else:
+            detail += f" [you expected {short_team(pick['selection'])} {expected:+g}"
+            unit = "more points", "fewer points"
+        gap = pick_expected_gap(pick)
+        if gap:
+            detail += f"; BetOnline {abs(gap):g} {unit[0] if gap > 0 else unit[1]}"
+        detail += "]"
     low, high = pick.get("my_line_low"), pick.get("my_line_high")
     if low is not None:
-        fmt = "{:g}" if pick["pick_type"] == "total" else "{:+g}"
-        mine = fmt.format(low)
-        if high is not None and high != low:
-            mine += " to " + fmt.format(high)
-        detail += f" [your number {mine}]"
+        detail += f" [you project {projection(pick, low, high)}]"
         edge = pick_edge(pick)
         if edge is not None and edge < 0:
             other = other_side(
                 pick["pick_type"], pick["selection"], pick["away_team"], pick["home_team"]
             )
-            detail += f" ⚠️ your number favors {short_team(other)} by {-edge:g} at this line"
+            detail += f" ⚠️ your projection favors {short_team(other)} by {-edge:g} at this line"
         elif edge == 0:
-            detail += " ⚠️ no gap between your number and this line"
+            detail += " ⚠️ no gap between your projection and this line"
     confidence = ""
     if pick["confidence_probability"] is not None:
         confidence = f" · {pick['confidence_probability']:.0%}"
@@ -951,6 +979,7 @@ class DecisionBot:
                     "spread_at_pick",
                     "my_line_low",
                     "my_line_high",
+                    "expected_line",
                     "confidence_probability",
                     "confidence_label",
                     "reasoning",
@@ -979,6 +1008,7 @@ class DecisionBot:
             ]
             record["logged_at"] = pick["created_at"]
             record["number_edge"] = pick_edge(pick)
+            record["line_vs_expected"] = pick_expected_gap(pick)
             record["from_end_of_day_summary"] = pick.get("entry_mode") == "summary"
             record["commence_time"] = pick["commence_time"]
             record["uncertainties"] = json.loads(pick["uncertainties_json"])

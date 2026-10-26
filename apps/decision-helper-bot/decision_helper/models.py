@@ -87,10 +87,12 @@ class ExtractedPick:
     uncertainties: tuple[str, ...]
     commitment: str = "pick"
     role: str = "final"
-    # The speaker's own projected number, in the pick's market terms (the
-    # selection's spread for a side, the total for a total).
+    # The speaker's projected result, in the pick's market terms (the
+    # selection's spread for a side: -10 = wins by 10; points for a total).
     my_line_low: float | None = None
     my_line_high: float | None = None
+    # The speaker's blind guess of the market line, in the same terms.
+    expected_line: float | None = None
     # American odds the speaker says they got (end-of-day bet summaries).
     price: int | None = None
     # The side was tied to an assumed line ("Grizzlies, assuming +3.5").
@@ -267,6 +269,7 @@ def extraction_from_payload(
             my_high = my_low
         if my_low is not None and my_high is not None and my_low > my_high:
             my_low, my_high = my_high, my_low
+        expected = _number(raw.get("expected_line"), f"picks[{index}].expected_line")
         price = _number(raw.get("price"), f"picks[{index}].price")
         if price is not None and (price != int(price) or abs(price) < 100):
             raise ValueError(f"picks[{index}].price must be American odds")
@@ -281,6 +284,7 @@ def extraction_from_payload(
                 role=role,
                 my_line_low=my_low,
                 my_line_high=my_high,
+                expected_line=expected,
                 price=int(price) if price is not None else None,
                 conditional=raw.get("conditional_on_line") is True
                 and pick_type != "winner",
@@ -483,8 +487,8 @@ def number_edge(
     spread_team: str | None = None,
     spread_point: float | None = None,
 ) -> float | None:
-    """Points by which the speaker's own number favors ``selection`` over
-    BetOnline's line (negative: it favors the other side)."""
+    """Points by which the speaker's projected result favors ``selection``
+    over BetOnline's line (negative: it favors the other side)."""
     if my_low is None:
         return None
     mine = (my_low + (my_high if my_high is not None else my_low)) / 2
@@ -492,10 +496,42 @@ def number_edge(
         if line is None:
             return None
         return mine - line if selection == "Over" else line - mine
-    market = line if pick_type == "spread" else None
-    if market is None and spread_point is not None and spread_team:
-        market = spread_point if spread_team == selection else -spread_point
+    market = _selection_market(pick_type, selection, line, spread_team, spread_point)
     return None if market is None else market - mine
+
+
+def expected_gap(
+    *,
+    pick_type: str,
+    selection: str,
+    expected: float | None,
+    line: float | None,
+    spread_team: str | None = None,
+    spread_point: float | None = None,
+) -> float | None:
+    """BetOnline's line minus the speaker's guessed line, in the selection's
+    terms (positive: the market gives the selection more points than they
+    guessed; for a total, the market total is higher)."""
+    if expected is None:
+        return None
+    if pick_type == "total":
+        return None if line is None else line - expected
+    market = _selection_market(pick_type, selection, line, spread_team, spread_point)
+    return None if market is None else market - expected
+
+
+def _selection_market(
+    pick_type: str,
+    selection: str,
+    line: float | None,
+    spread_team: str | None,
+    spread_point: float | None,
+) -> float | None:
+    if pick_type == "spread" and line is not None:
+        return line
+    if spread_point is not None and spread_team:
+        return spread_point if spread_team == selection else -spread_point
+    return None
 
 
 def pick_edge(pick: Any) -> float | None:
@@ -504,6 +540,17 @@ def pick_edge(pick: Any) -> float | None:
         selection=pick["selection"],
         my_low=pick["my_line_low"],
         my_high=pick["my_line_high"],
+        line=pick["line"],
+        spread_team=pick["spread_team"],
+        spread_point=pick["spread_at_pick"],
+    )
+
+
+def pick_expected_gap(pick: Any) -> float | None:
+    return expected_gap(
+        pick_type=pick["pick_type"],
+        selection=pick["selection"],
+        expected=pick["expected_line"],
         line=pick["line"],
         spread_team=pick["spread_team"],
         spread_point=pick["spread_at_pick"],

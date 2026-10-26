@@ -59,23 +59,30 @@ the next sync.
 
    A side is saved as a spread unless you explicitly take the moneyline ("Jazz
    to win", "moneyline"/"ML"). The line is only a number you say you are
-   taking; otherwise BetOnline's line is used. A number you project ("should
-   be like minus eight to nine and a half", "assuming they're +3.5") is saved
-   as your number (`my_line_low`/`my_line_high`, in the selected team's
-   spread or the projected total), shown as `[your number -9.5 to -8]`, and
-   compared with BetOnline's line in reviews and `/games` opinions.
-   `number_edge` is the points by which your number favors the side at the
-   BetOnline line it was saved with (negative: it favors the other side), so
-   you never need to look the line up. The saved reply flags a side your
-   number opposes (`⚠️ your number favors Kings by 7.5 at this line`) or a
-   zero gap. A lean tied to an assumed line ("Grizzlies with the points,
-   assuming they're +3.5") is saved on the side your number favors at
-   BetOnline's actual line, with a note in its reasoning.
+   taking; otherwise BetOnline's line is used. Your blind guess of the line
+   ("they should be about -4.5", "assuming they're +3.5") is saved as
+   `expected_line`, and your projected result ("win by about 10", "keep it
+   within 8") as `my_line_low`/`my_line_high`, both in the selected team's
+   spread terms (or total points). The reply shows them as
+   `[you expected Wizards -4.5; BetOnline 7.5 more points]` and
+   `[you project Wizards by 10]`. `number_edge` is the points by which your
+   projected result favors the side at the BetOnline line it was saved with
+   (negative: it favors the other side), and `line_vs_expected` is
+   BetOnline's line minus your guess, a market read (trap or value) rather
+   than an edge. You never need to look the line up. The saved reply flags a
+   side your projection opposes (`⚠️ your projection favors Kings by 7.5 at
+   this line`) or a zero gap. A lean tied to an assumed line ("if the spread
+   is under 10, Suns cover"), or only a predicted winner ("Celtics 75%, win
+   by about 10"), is saved on the side your projection favors at BetOnline's
+   actual line, with a note in its reasoning. Numbers saved before
+   `expected_line` existed were guesses of the line and were moved there.
 
    Tracked pickers' views you cite (follows, fades, switches, pool
    consensus) are kept in the reasoning and treated as evidence, not a flaw.
    Reviews, opinions, and learnings judge when those signals should override
-   your number and track which ones have been right.
+   your view and track which ones have been right. Picker signals are
+   sport-specific: NBA notes usually cite none, so NFL pickers are never
+   applied to NBA games.
 
    **End-of-day summary.** At the end of a day, send a summary of the bets you
    actually placed and why, then tap **🧾 Parse as end of day** (or start a

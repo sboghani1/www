@@ -25,6 +25,7 @@ from .models import (
     number_edge,
     other_side,
     pick_edge,
+    pick_expected_gap,
     parse_timestamp,
     timestamp,
     utc_now,
@@ -188,7 +189,8 @@ class DecisionStore:
                     spread_team TEXT,
                     spread_at_pick REAL,
                     my_line_low REAL,
-                    my_line_high REAL
+                    my_line_high REAL,
+                    expected_line REAL
                 );
 
                 CREATE INDEX IF NOT EXISTS picks_status_result
@@ -299,6 +301,15 @@ class DecisionStore:
             if "my_line_low" not in columns:
                 connection.execute("ALTER TABLE picks ADD COLUMN my_line_low REAL")
                 connection.execute("ALTER TABLE picks ADD COLUMN my_line_high REAL")
+            if "expected_line" not in columns:
+                connection.execute("ALTER TABLE picks ADD COLUMN expected_line REAL")
+                # Numbers saved before this column were the speaker's guess
+                # of the line, not a projected result.
+                connection.execute(
+                    "UPDATE picks SET expected_line=(my_line_low+my_line_high)/2, "
+                    "my_line_low=NULL, my_line_high=NULL "
+                    "WHERE my_line_low IS NOT NULL"
+                )
             stale_before = timestamp(utc_now() - timedelta(hours=1))
             now = timestamp(utc_now())
             connection.execute(
@@ -482,6 +493,7 @@ class DecisionStore:
                 line_source = "spoken" if line is not None else "none"
                 price = quote.price if quote is not None else None
                 my_low, my_high = pick.my_line_low, pick.my_line_high
+                expected = pick.expected_line
                 view = (
                     _latest_view(connection, entry_id, event, pick, before=logged)
                     if summary
@@ -496,6 +508,8 @@ class DecisionStore:
                         price = view["price_at_pick"]
                     if my_low is None:
                         my_low, my_high = view["my_line_low"], view["my_line_high"]
+                    if expected is None:
+                        expected = view["expected_line"]
                 if line is None and quote is not None and quote.point is not None:
                     line = quote.point
                     line_source = "market"
@@ -523,11 +537,12 @@ class DecisionStore:
                         closing_captured_at, next_market_check_at,
                         next_result_check_at, analysis_status, created_at,
                         commitment, ordinal, logged_after_start,
-                        spread_team, spread_at_pick, my_line_low, my_line_high
+                        spread_team, spread_at_pick, my_line_low, my_line_high,
+                        expected_line
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                         'open', ?, ?, ?, ?, ?, 'not_ready', ?, ?, ?, ?, ?, ?,
-                        ?, ?
+                        ?, ?, ?
                     )
                     """,
                     (
@@ -563,6 +578,7 @@ class DecisionStore:
                         spread_point,
                         my_low,
                         my_high,
+                        expected,
                     ),
                 )
                 if quote is not None:
@@ -1813,6 +1829,8 @@ def _decision_dict(row: Any, detailed: bool) -> dict[str, Any]:
         "betonline_spread_at_pick": _spread_dict(row),
         "my_number": _my_number(row),
         "number_edge": pick_edge(row),
+        "expected_line": row["expected_line"],
+        "line_vs_expected": pick_expected_gap(row),
         "reasoning": row["reasoning"],
         "uncertainties": json.loads(row["uncertainties_json"]),
         "result": row["result"],
@@ -1842,8 +1860,8 @@ def _decision_dict(row: Any, detailed: bool) -> dict[str, Any]:
 
 
 def _resolve_conditional(event: MarketEvent, pick: Any) -> Any:
-    """A lean tied to an assumed line goes to the side the speaker's number
-    favors at BetOnline's actual line."""
+    """A lean tied to an assumed line, or only to a predicted winner, goes to
+    the side the speaker's projected result favors at BetOnline's line."""
     if not pick.conditional or pick.commitment != "lean" or pick.line is not None:
         return pick
     quote = quote_for_pick(event, pick.pick_type, pick.selection)
@@ -1859,18 +1877,22 @@ def _resolve_conditional(event: MarketEvent, pick: Any) -> Any:
         return pick
     other = other_side(pick.pick_type, pick.selection, event.away_team, event.home_team)
     low, high = pick.my_line_low, pick.my_line_high
+    expected = pick.expected_line
     if pick.pick_type == "spread":
         low, high = -high, -low
+        expected = -expected if expected is not None else None
     shown = f"{point:g}" if pick.pick_type == "total" else f"{point:+g}"
     return replace(
         pick,
         selection=other,
         my_line_low=low,
         my_line_high=high,
+        expected_line=expected,
         reasoning=(
-            f"{pick.reasoning} [Saved on {other}: you tied {pick.selection} "
-            f"to an assumed line, and at BetOnline's {pick.selection} {shown} "
-            f"your number favors {other} by {-edge:g}.]"
+            f"{pick.reasoning} [Saved on {other}: you did not take "
+            f"{pick.selection} at a set line, and at BetOnline's "
+            f"{pick.selection} {shown} your projection favors {other} by "
+            f"{-edge:g}.]"
         ).strip(),
     )
 
