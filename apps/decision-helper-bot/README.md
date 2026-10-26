@@ -64,6 +64,18 @@ the next sync.
    as your number (`my_line_low`/`my_line_high`, in the selected team's
    spread or the projected total), shown as `[your number -9.5 to -8]`, and
    compared with BetOnline's line in reviews and `/games` opinions.
+   `number_edge` is the points by which your number favors the side at the
+   BetOnline line it was saved with (negative: it favors the other side), so
+   you never need to look the line up. The saved reply flags a side your
+   number opposes (`⚠️ your number favors Kings by 7.5 at this line`) or a
+   zero gap. A lean tied to an assumed line ("Grizzlies with the points,
+   assuming they're +3.5") is saved on the side your number favors at
+   BetOnline's actual line, with a note in its reasoning.
+
+   Tracked pickers' views you cite (follows, fades, switches, pool
+   consensus) are kept in the reasoning and treated as evidence, not a flaw.
+   Reviews, opinions, and learnings judge when those signals should override
+   your number and track which ones have been right.
 
    **End-of-day summary.** At the end of a day, send a summary of the bets you
    actually placed and why, then tap **🧾 Parse as end of day** (or start a
@@ -139,7 +151,9 @@ receptionist's Opus agent, not with API billing:
    got, your own number, the closing line, the final score with each side's
    actual margin (or total points), and the post-game reviews. Claude writes a
    summary, what worked and didn't, your number vs. BetOnline's, flips,
-   calibration, 1-3 rules to try, and whether earlier rules were followed.
+   calibration, the tracked pickers' signals against your number (a running
+   tally of which were right), 1-3 rules to try, and whether earlier rules
+   were followed.
    A day waits until all its picks are graded and reviewed, or 9 ET the
    following day at the latest. One day runs per sync tick, oldest first, so
    past days backfill automatically. Learnings are stored (not sent) and shown

@@ -6,6 +6,7 @@ from decision_helper.models import (
     grade_pick,
     implied_probability,
     learning_from_payload,
+    number_edge,
     review_from_payload,
     summary_from_payload,
     team_matches,
@@ -142,3 +143,20 @@ def test_summary_bets_are_final_bets_with_optional_price() -> None:
         summary_from_payload({"picks": [bet]}, make_events())
     with pytest.raises(ValueError, match="price"):
         summary_from_payload({"bets": [dict(bet, price=-50)]}, make_events())
+
+
+def test_number_edge_favors_selection_when_positive() -> None:
+    # Lakers -6 at BetOnline, own number -8 to -9.5: 2.75 points of edge.
+    assert number_edge(pick_type="spread", selection="L", my_low=-9.5, my_high=-8, line=-6) == 2.75
+    # Grizzlies -4 at BetOnline, own number Grizzlies +3.5: favors the Kings.
+    assert number_edge(pick_type="spread", selection="G", my_low=3.5, my_high=3.5, line=-4) == -7.5
+    assert number_edge(pick_type="total", selection="Under", my_low=210, my_high=210, line=215) == 5
+    # Moneyline on A with B -1.5 at BetOnline, own number A -3.
+    assert number_edge(pick_type="winner", selection="A", my_low=-3, my_high=-3, line=None,
+                       spread_team="B", spread_point=-1.5) == 4.5
+    assert number_edge(pick_type="spread", selection="A", my_low=None, my_high=None, line=-3) is None
+
+
+def test_learning_keeps_picker_signals() -> None:
+    learning = learning_from_payload({"summary": "s", "picker_signals": "Fading Trent: 0-2"})
+    assert learning.as_dict()["picker_signals"] == "Fading Trent: 0-2"

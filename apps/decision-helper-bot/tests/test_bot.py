@@ -1204,6 +1204,7 @@ def test_daily_learnings_wait_for_9am_and_grading_then_feed_opinions(tmp_path: P
             "summary": "Priced the Bills well; forced the Celtics.",
             "did_not_work": ["Celtics ML with no number"],
             "rules_to_try": ["Write a number before every side"],
+            "picker_signals": "",
         }
     ]
 
@@ -1289,3 +1290,45 @@ def test_end_of_day_text_prefix() -> None:
     assert SUMMARY_TEXT.match("End of day summary: bet the Bills")
     assert SUMMARY_TEXT.match("end-of-the-day: two bets")
     assert not SUMMARY_TEXT.match("Bills plus three, end of day call")
+
+
+def test_lean_tied_to_an_assumed_line_follows_the_number_at_the_real_line(tmp_path: Path) -> None:
+    events = make_events()
+    bot = make_bot(tmp_path, events)
+    # Number Bills +0.5 vs BetOnline Bills +2.5: still favors the Bills.
+    keep = bills_note(commitment="lean", line=None, my_line_low=0.5, my_line_high=0.5, conditional_on_line=True)
+    # Number Bills +6.5 vs BetOnline Bills +2.5: favors the Chiefs by 4.
+    flip = bills_note(commitment="lean", line=None, my_line_low=6.5, my_line_high=6.5, conditional_on_line=True)
+    payloads = [keep, flip]
+
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
+        return extraction_from_payload(payloads.pop(0), events)
+
+    bot.claude.extract = extract
+    first = voice_update(message_id=1)
+    run_voice(bot, first)
+    assert "Buffalo Bills +2.5 [BetOnline line]" in first.message.reply_text.await_args_list[1].args[0]
+    second = voice_update(message_id=2)
+    run_voice(bot, second)
+    reply = second.message.reply_text.await_args_list[1].args[0]
+    assert "Kansas City Chiefs -2.5 [BetOnline line]" in reply and "[your number -6.5]" in reply
+    assert "⚠️" not in reply
+    with bot.store.connect() as connection:
+        chiefs = connection.execute("SELECT * FROM picks WHERE selection='Kansas City Chiefs'").fetchone()
+    assert (chiefs["commitment"], chiefs["role"]) == ("lean", "final")
+    assert "your number favors Kansas City Chiefs by 4" in chiefs["reasoning"]
+
+
+def test_saved_reply_flags_a_side_against_your_number(tmp_path: Path) -> None:
+    events = make_events()
+    bot = make_bot(tmp_path, events)
+
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
+        return extraction_from_payload(bills_note(commitment="lean", line=None, my_line_low=6.5, my_line_high=6.5), events)
+
+    bot.claude.extract = extract
+    update = voice_update()
+    run_voice(bot, update)
+    assert "⚠️ your number favors Chiefs by 4 at this line" in update.message.reply_text.await_args_list[1].args[0]
+    record = bot.store.game_record("nfl", "Buffalo Bills", "Kansas City Chiefs", events[0].commence_time)
+    assert record["decisions"][0]["number_edge"] == -4

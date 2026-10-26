@@ -73,6 +73,24 @@ def _clarification_block(clarification: str) -> str:
     )
 
 
+BETTOR_METHOD = """How this bettor works:
+- They write their own number (projected spread or total, and often a win
+  probability) blind, before looking at the line. The application records
+  BetOnline's line at that moment, so never tell them to look up or restate
+  the line. number_edge is the points by which their own number favors the
+  selection over that BetOnline line (negative: it favors the other side;
+  null: no number). Use it to judge whether the side matched their number.
+- They also track other pickers (named handicappers, fades of specific
+  pickers, pool consensus, picker switches and those pickers' records).
+  These signals are legitimate evidence, not a flaw: the goal is to learn
+  when the tracked pickers should steer them away from their own number and
+  when their own number should win. Never penalize a view for citing a
+  tracked picker. Judge whether the signal was specific and weighed sensibly
+  against their number, and note which signal and which side (their number or
+  the pickers) turned out right, so reliable and unreliable signals emerge
+  over time."""
+
+
 def extraction_prompt(
     transcript: str,
     events: list[MarketEvent],
@@ -112,6 +130,12 @@ probability ("70% chance to win") is confidence, not a moneyline choice, and
   spread (negative = favored; if they say the opponent should be -3.5, the
   selection's number is +3.5); for a total, the projected total points. Use
   null when they give no number.
+- Set "conditional_on_line": true when a side or total is tied to an assumed
+  line rather than taken at any number ("Grizzlies with the points, assuming
+  they're +3.5", "Over if it's around 215"), otherwise false. Record the
+  side as said; the application checks it against BetOnline's actual line.
+- Keep any other picker's view the speaker cites (who, which side, fade or
+  follow, the picker's record) in the reasoning.
 
 Set "commitment" to "pick" only when the speaker says they actually bet it
 ("I bet", "I placed", "I put money on", "I played"). Every other favored side
@@ -166,6 +190,7 @@ Return one JSON object and no prose:
       "line": 0.0|null,
       "my_line_low": 0.0|null,
       "my_line_high": 0.0|null,
+      "conditional_on_line": false,
       "commitment": "pick|lean",
       "role": "final|earlier",
       "confidence_probability": 0.0|null,
@@ -280,7 +305,10 @@ def review_prompt(pick: dict[str, Any]) -> str:
 Review the recorded sports decision below. Separate process quality from the
 game result and luck. Reward explicit evidence, calibrated uncertainty,
 falsifiable reasoning, and price sensitivity. Do not claim facts absent from
-the record. Bias tags must be short reusable labels. Commitment "lean" is a
+the record.
+
+{BETTOR_METHOD}
+ Bias tags must be short reusable labels. Commitment "lean" is a
 view the speaker held without betting; review it as rigorously as a bet.
 Commitment "pick" means they actually bet it; also judge whether the view
 (its edge versus BetOnline, conviction, and reasoning) was strong enough to
@@ -288,8 +316,9 @@ justify betting. If from_end_of_day_summary is true, the bet was reported in
 the speaker's end-of-day summary of placed bets: its reasoning is why they
 bet, logged_at is when they reported it (the bet was placed pregame), and
 "path" holds the leans that preceded it. Judge whether the bet followed
-their own earlier view and number or departed from it (another side, a worse
-number, no edge), and whether the stated reason for betting was sound.
+their own earlier view and number, or a tracked picker's signal, or departed
+from both (another side, a worse number, no edge), and whether the stated
+reason for betting was sound.
 "path" lists the earlier sides
 the speaker abandoned for this final position, each graded as if it had been
 kept. When path is non-empty, judge whether switching improved the decision
@@ -303,8 +332,9 @@ the timing. All market lines are BetOnline's. spread_team/spread_at_pick
 is BetOnline's spread when the note was recorded (the picked team's for a
 side, the favorite's for a total). my_line_low/my_line_high is the speaker's
 own projected number in the pick's terms (selection's spread, or total
-points); compare it with the BetOnline number to judge whether they found a
-real edge or ignored their own number. logged_at is when the
+points); number_edge already compares it with that BetOnline number, so judge whether
+they found a real edge, ignored their own number, or had a picker signal
+that justified overriding it. logged_at is when the
 speaker recorded the thought and commence_time is kickoff/tip (both UTC); use
 them when judging timing, such as how far before the game a view was formed.
 "all_notes_on_game" holds the full transcript of every note the speaker sent
@@ -351,12 +381,16 @@ Write two parts.
    only numbers from track_record. If they have no view yet, say so and say
    what they should pin down.
 2. recommendation: your own call. Give a specific play (market, side, and the
-   worst line or price worth taking) or "pass", and why. You have no injury,
+   worst line or price worth taking) or "pass", and why. Weigh the bettor's
+   own number against the tracked pickers' signals in their notes, using
+   daily_learnings' picker_signals on which signals have been reliable. You have no injury,
    news, or stats feed, so reason from the lines, line movement, and the
    bettor's stated information, and say what news would change the call.
 
 Be direct and concise (critique and recommendation under 90 words each). Do
 not invent facts that are not in the record. All lines are BetOnline's.
+
+{BETTOR_METHOD}
 
 Return one JSON object and no prose:
 {{
@@ -400,7 +434,8 @@ The record below holds:
   they bet with what they leaned, and look for recurring wrong-bet patterns
   (betting without an edge versus their own number, betting against their
   lean, chasing, taking worse numbers), using prior_days to say whether a
-  pattern is repeating.
+  pattern is repeating. Whether a bet followed a tracked picker is not a
+  wrong-bet pattern by itself; judge whether that signal was a good one.
   "logged_after_start" was recorded after tip. When it is false the view was pregame even if logged_at is
   later (entered late), so do not penalize the timing.
   Games with no decisions are worth judging too (a pass, or a view never
@@ -414,6 +449,8 @@ The record below holds:
   rules they were asked to try.
 - "track_record": their overall graded record, flips, and bias flags.
 
+{BETTOR_METHOD}
+
 Separate process from luck. Find patterns across games, not a recap of each.
 Be specific and cite games and numbers from the record only; do not invent
 facts. Fields:
@@ -425,7 +462,14 @@ facts. Fields:
 - flips: whether changing sides helped and whether the reasons were sound.
   Empty if none.
 - calibration: whether stated confidence matched results, with numbers.
-- rules_to_try: 1-3 concrete, checkable rules for the next slate.
+- picker_signals: the tracked pickers' signals cited that day (follows, fades,
+  switches, consensus), whether each agreed or disagreed with their own
+  number, and which turned out right. Use prior_days' picker_signals to keep
+  a running tally of which signals have been reliable and when they should
+  override the bettor's number. Empty if none were cited.
+- rules_to_try: 1-3 concrete, checkable rules for the next slate. They may
+  say when to let a specific picker signal override their number. Never ask
+  them to look up or write down the BetOnline line; it is recorded for them.
 - earlier_rules_followed: whether rules from prior_days were followed today
   and how that went. Empty if there are no prior days.
 
@@ -437,6 +481,7 @@ Return one JSON object and no prose:
   "my_number_vs_market": "",
   "flips": "",
   "calibration": "",
+  "picker_signals": "",
   "rules_to_try": [],
   "earlier_rules_followed": ""
 }}

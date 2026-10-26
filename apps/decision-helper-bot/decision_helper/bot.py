@@ -27,7 +27,15 @@ from .config import Config
 from .espn import EspnClient, match_final
 from .lines import SheetLines
 from .markets import match_event
-from .models import FinalGame, MarketEvent, parse_timestamp, team_matches, utc_now
+from .models import (
+    FinalGame,
+    MarketEvent,
+    other_side,
+    parse_timestamp,
+    pick_edge,
+    team_matches,
+    utc_now,
+)
 from .store import DecisionStore
 from .transcribe import WhisperTranscriber
 
@@ -167,6 +175,14 @@ def describe_pick(pick: dict[str, Any]) -> str:
         if high is not None and high != low:
             mine += " to " + fmt.format(high)
         detail += f" [your number {mine}]"
+        edge = pick_edge(pick)
+        if edge is not None and edge < 0:
+            other = other_side(
+                pick["pick_type"], pick["selection"], pick["away_team"], pick["home_team"]
+            )
+            detail += f" ⚠️ your number favors {short_team(other)} by {-edge:g} at this line"
+        elif edge == 0:
+            detail += " ⚠️ no gap between your number and this line"
     confidence = ""
     if pick["confidence_probability"] is not None:
         confidence = f" · {pick['confidence_probability']:.0%}"
@@ -341,6 +357,7 @@ def format_learning(learning: dict[str, Any]) -> str:
     para("🔢 Your number vs BetOnline:", learning["my_number_vs_market"])
     para("🔄 Flips:", learning["flips"])
     para("🎯 Calibration:", learning["calibration"])
+    para("👥 Pickers vs your number:", learning.get("picker_signals", ""))
     para("📏 Earlier rules:", learning["earlier_rules_followed"])
     bullets("🧪 Rules to try", learning["rules_to_try"])
     text = "\n".join(lines)
@@ -961,6 +978,7 @@ class DecisionBot:
                 for step in path
             ]
             record["logged_at"] = pick["created_at"]
+            record["number_edge"] = pick_edge(pick)
             record["from_end_of_day_summary"] = pick.get("entry_mode") == "summary"
             record["commence_time"] = pick["commence_time"]
             record["uncertainties"] = json.loads(pick["uncertainties_json"])
@@ -1093,6 +1111,7 @@ class DecisionBot:
                         key: item[key]
                         for key in ("day", "summary", "did_not_work", "rules_to_try")
                     }
+                    | {"picker_signals": item.get("picker_signals", "")}
                     for item in self.store.recent_learnings(3)
                 ],
             },

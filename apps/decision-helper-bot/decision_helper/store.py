@@ -4,6 +4,7 @@ import json
 import os
 import sqlite3
 import uuid
+from dataclasses import replace
 from collections import Counter
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
@@ -21,6 +22,9 @@ from .models import (
     grade_pick,
     json_array,
     market_family,
+    number_edge,
+    other_side,
+    pick_edge,
     parse_timestamp,
     timestamp,
     utc_now,
@@ -471,6 +475,8 @@ class DecisionStore:
                         logged,
                     )
                     continue
+                if not summary:
+                    pick = _resolve_conditional(event, pick)
                 quote = quote_for_pick(event, pick.pick_type, pick.selection)
                 line = pick.line
                 line_source = "spoken" if line is not None else "none"
@@ -1806,6 +1812,7 @@ def _decision_dict(row: Any, detailed: bool) -> dict[str, Any]:
         "price_at_pick": row["price_at_pick"],
         "betonline_spread_at_pick": _spread_dict(row),
         "my_number": _my_number(row),
+        "number_edge": pick_edge(row),
         "reasoning": row["reasoning"],
         "uncertainties": json.loads(row["uncertainties_json"]),
         "result": row["result"],
@@ -1832,6 +1839,40 @@ def _decision_dict(row: Any, detailed: bool) -> dict[str, Any]:
             ),
         )
     return decision
+
+
+def _resolve_conditional(event: MarketEvent, pick: Any) -> Any:
+    """A lean tied to an assumed line goes to the side the speaker's number
+    favors at BetOnline's actual line."""
+    if not pick.conditional or pick.commitment != "lean" or pick.line is not None:
+        return pick
+    quote = quote_for_pick(event, pick.pick_type, pick.selection)
+    point = quote.point if quote is not None else None
+    edge = number_edge(
+        pick_type=pick.pick_type,
+        selection=pick.selection,
+        my_low=pick.my_line_low,
+        my_high=pick.my_line_high,
+        line=point,
+    )
+    if edge is None or edge >= 0:
+        return pick
+    other = other_side(pick.pick_type, pick.selection, event.away_team, event.home_team)
+    low, high = pick.my_line_low, pick.my_line_high
+    if pick.pick_type == "spread":
+        low, high = -high, -low
+    shown = f"{point:g}" if pick.pick_type == "total" else f"{point:+g}"
+    return replace(
+        pick,
+        selection=other,
+        my_line_low=low,
+        my_line_high=high,
+        reasoning=(
+            f"{pick.reasoning} [Saved on {other}: you tied {pick.selection} "
+            f"to an assumed line, and at BetOnline's {pick.selection} {shown} "
+            f"your number favors {other} by {-edge:g}.]"
+        ).strip(),
+    )
 
 
 def _my_number(pick: Any) -> dict[str, Any] | None:

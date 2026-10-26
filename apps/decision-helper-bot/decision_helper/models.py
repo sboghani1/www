@@ -93,6 +93,8 @@ class ExtractedPick:
     my_line_high: float | None = None
     # American odds the speaker says they got (end-of-day bet summaries).
     price: int | None = None
+    # The side was tied to an assumed line ("Grizzlies, assuming +3.5").
+    conditional: bool = False
 
 
 @dataclass(frozen=True)
@@ -163,6 +165,7 @@ class DailyLearning:
     calibration: str
     rules_to_try: tuple[str, ...]
     earlier_rules_followed: str
+    picker_signals: str = ""
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -174,6 +177,7 @@ class DailyLearning:
             "calibration": self.calibration,
             "rules_to_try": list(self.rules_to_try),
             "earlier_rules_followed": self.earlier_rules_followed,
+            "picker_signals": self.picker_signals,
         }
 
 
@@ -278,6 +282,8 @@ def extraction_from_payload(
                 my_line_low=my_low,
                 my_line_high=my_high,
                 price=int(price) if price is not None else None,
+                conditional=raw.get("conditional_on_line") is True
+                and pick_type != "winner",
                 confidence_probability=confidence,
                 confidence_label=_text(
                     raw.get("confidence_label", ""),
@@ -457,6 +463,50 @@ def learning_from_payload(payload: dict[str, Any]) -> DailyLearning:
         calibration=text("calibration"),
         rules_to_try=items("rules_to_try", 3),
         earlier_rules_followed=text("earlier_rules_followed"),
+        picker_signals=text("picker_signals"),
+    )
+
+
+def other_side(pick_type: str, selection: str, away: str, home: str) -> str:
+    if pick_type == "total":
+        return "Under" if selection == "Over" else "Over"
+    return home if selection == away else away
+
+
+def number_edge(
+    *,
+    pick_type: str,
+    selection: str,
+    my_low: float | None,
+    my_high: float | None,
+    line: float | None,
+    spread_team: str | None = None,
+    spread_point: float | None = None,
+) -> float | None:
+    """Points by which the speaker's own number favors ``selection`` over
+    BetOnline's line (negative: it favors the other side)."""
+    if my_low is None:
+        return None
+    mine = (my_low + (my_high if my_high is not None else my_low)) / 2
+    if pick_type == "total":
+        if line is None:
+            return None
+        return mine - line if selection == "Over" else line - mine
+    market = line if pick_type == "spread" else None
+    if market is None and spread_point is not None and spread_team:
+        market = spread_point if spread_team == selection else -spread_point
+    return None if market is None else market - mine
+
+
+def pick_edge(pick: Any) -> float | None:
+    return number_edge(
+        pick_type=pick["pick_type"],
+        selection=pick["selection"],
+        my_low=pick["my_line_low"],
+        my_high=pick["my_line_high"],
+        line=pick["line"],
+        spread_team=pick["spread_team"],
+        spread_point=pick["spread_at_pick"],
     )
 
 
