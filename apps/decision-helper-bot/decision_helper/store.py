@@ -912,11 +912,11 @@ class DecisionStore:
             rows = connection.execute(
                 """
                 SELECT sport, away_team, home_team, commence_time, status,
-                       analysis_status
+                       analysis_status, analysis_attempts
                 FROM picks WHERE status!='void'
                 UNION ALL
                 SELECT sport, away_team, home_team, commence_time,
-                       'final', 'complete'
+                       'final', 'complete', 0
                 FROM game_notes
                 """
             ).fetchall()

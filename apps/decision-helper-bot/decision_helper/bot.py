@@ -44,6 +44,7 @@ STARTED_LOOKBACK_DAYS = 3
 HISTORIC_LINES_AFTER = timedelta(minutes=10)
 LEARNING_HOUR = 9  # Eastern; a day's learnings run the next morning
 LEARNING_RETRY = timedelta(minutes=30)
+LEARNING_REVIEW_ATTEMPTS = 3  # a late day still waits on reviews until they fail this often
 TELEGRAM_LIMIT = 4096
 AUDIO_SUFFIXES = {
     "audio/aac": ".aac",
@@ -1006,7 +1007,7 @@ class DecisionBot:
     def due_learning_day(self, now: datetime | None = None) -> str | None:
         """The oldest Eastern day with thoughts but no learnings, once it is
         past 9 ET the next morning and every pick is graded and reviewed (or
-        a day later regardless). Days run oldest first."""
+        a day later, if no review is still retrying). Days run oldest first."""
         current = (now or utc_now()).astimezone(EASTERN)
         done = self.store.learning_days()
         days: dict[str, list[dict[str, Any]]] = {}
@@ -1026,7 +1027,13 @@ class DecisionBot:
                 row["status"] == "final" and row["analysis_status"] != "pending"
                 for row in days[day]
             )
-            return day if settled or current >= ready_at + timedelta(days=1) else None
+            reviewing = any(
+                row["analysis_status"] == "pending"
+                and row["analysis_attempts"] < LEARNING_REVIEW_ATTEMPTS
+                for row in days[day]
+            )
+            overdue = current >= ready_at + timedelta(days=1) and not reviewing
+            return day if settled or overdue else None
         return None
 
     async def sync_learnings(self) -> None:

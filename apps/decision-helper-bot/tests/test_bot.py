@@ -1031,6 +1031,18 @@ def test_daily_learnings_wait_for_9am_and_grading_then_feed_opinions(tmp_path: P
     # Nothing is due before the games are graded and reviewed (unless a day late).
     assert bot.due_learning_day(at("2026-10-21T14:00:00Z")) is None
     assert bot.due_learning_day(at("2026-10-22T14:00:00Z")) == "2026-10-20"
+    # A late day still waits for a review that is retrying, until it fails 3 times.
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE picks SET status='final', analysis_status='pending', analysis_attempts=2")
+        connection.commit()
+    assert bot.due_learning_day(at("2026-10-22T14:00:00Z")) is None
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE picks SET analysis_attempts=3")
+        connection.commit()
+    assert bot.due_learning_day(at("2026-10-22T14:00:00Z")) == "2026-10-20"
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE picks SET status='open', analysis_status='not_ready', analysis_attempts=0")
+        connection.commit()
 
     bot.espn.finals = [
         FinalGame("401", "nfl", nfl_start, "Buffalo Bills", "Kansas City Chiefs", 24, 26),
