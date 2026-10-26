@@ -5,6 +5,7 @@ from decision_helper.models import (
     extraction_from_payload,
     grade_pick,
     implied_probability,
+    learning_from_payload,
     review_from_payload,
     team_matches,
 )
@@ -95,3 +96,21 @@ def test_review_validation() -> None:
 def test_team_matching_handles_espn_variants() -> None:
     assert team_matches("LA Clippers", "Los Angeles Clippers")
     assert not team_matches("Los Angeles Rams", "Los Angeles Chargers")
+
+
+def test_learning_validation() -> None:
+    learning = learning_from_payload(
+        {
+            "summary": "Good day",
+            "worked": ["a", "", "b"],
+            "did_not_work": None,
+            "flips": None,
+            "rules_to_try": ["1", "2", "3", "4"],
+        }
+    )
+    assert learning.worked == ("a", "b") and learning.did_not_work == ()
+    assert learning.flips == "" and learning.rules_to_try == ("1", "2", "3")
+    with pytest.raises(ValueError):
+        learning_from_payload({"summary": ""})
+    with pytest.raises(ValueError):
+        learning_from_payload({"summary": "x", "worked": "not a list"})

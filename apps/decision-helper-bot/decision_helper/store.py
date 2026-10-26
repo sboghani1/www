@@ -215,6 +215,12 @@ class DecisionStore:
                 );
                 CREATE INDEX IF NOT EXISTS game_notes_game
                     ON game_notes(sport, away_team, home_team);
+
+                CREATE TABLE IF NOT EXISTS daily_learnings (
+                    day TEXT PRIMARY KEY,
+                    learning_json TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
                 """
             )
             columns = {
@@ -536,9 +542,16 @@ class DecisionStore:
         return [dict(row) for row in rows]
 
     def game_record(
-        self, sport: str, away_team: str, home_team: str, commence_time: str
+        self,
+        sport: str,
+        away_team: str,
+        home_team: str,
+        commence_time: str,
+        *,
+        detailed: bool = False,
     ) -> dict[str, Any]:
-        """Everything the speaker said about one game, oldest first."""
+        """Everything the speaker said about one game, oldest first.
+        ``detailed`` adds lines, closing value, and post-game reviews."""
         with self.connect() as connection:
             picks = _same_game(
                 connection.execute(
@@ -584,24 +597,7 @@ class DecisionStore:
                 else []
             )
         return {
-            "decisions": [
-                {
-                    "logged_at": row["created_at"],
-                    "side": _describe_side(row),
-                    "pick_type": row["pick_type"],
-                    "commitment": row["commitment"],
-                    "role": row["role"],
-                    "confidence_probability": row["confidence_probability"],
-                    "confidence_label": row["confidence_label"],
-                    "price_at_pick": row["price_at_pick"],
-                    "betonline_spread_at_pick": _spread_dict(row),
-                    "my_number": _my_number(row),
-                    "reasoning": row["reasoning"],
-                    "uncertainties": json.loads(row["uncertainties_json"]),
-                    "result": row["result"],
-                }
-                for row in picks
-            ],
+            "decisions": [_decision_dict(row, detailed) for row in picks],
             "game_notes": [
                 {
                     "logged_at": row["created_at"],
@@ -909,6 +905,67 @@ class DecisionStore:
         if row is None:
             raise LookupError("Pick not found")
         return dict(row)
+
+    def discussed_games(self) -> list[dict[str, Any]]:
+        """Every live pick and game note with its game and grading state."""
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT sport, away_team, home_team, commence_time, status,
+                       analysis_status
+                FROM picks WHERE status!='void'
+                UNION ALL
+                SELECT sport, away_team, home_team, commence_time,
+                       'final', 'complete'
+                FROM game_notes
+                """
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def save_learning(self, day: str, learning: dict[str, Any]) -> None:
+        with self.connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO daily_learnings(day, learning_json, created_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(day) DO UPDATE SET
+                    learning_json=excluded.learning_json,
+                    created_at=excluded.created_at
+                """,
+                (day, json.dumps(learning, ensure_ascii=False),
+                 timestamp(utc_now())),
+            )
+            connection.commit()
+
+    def learning_days(self) -> set[str]:
+        with self.connect() as connection:
+            rows = connection.execute("SELECT day FROM daily_learnings").fetchall()
+        return {row["day"] for row in rows}
+
+    def recent_learnings(
+        self, limit: int = 7, before_day: str | None = None
+    ) -> list[dict[str, Any]]:
+        """Daily learnings, newest first (only days before ``before_day``)."""
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM daily_learnings
+                WHERE day<? ORDER BY day DESC LIMIT ?
+                """,
+                (before_day or "9999-99-99", limit),
+            ).fetchall()
+        return [
+            {"day": row["day"], **json.loads(row["learning_json"])}
+            for row in rows
+        ]
+
+    def learning(self, day: str | None = None) -> dict[str, Any] | None:
+        """One day's learnings, or the latest when ``day`` is None."""
+        if day is None:
+            latest = self.recent_learnings(1)
+            return latest[0] if latest else None
+        found = self.recent_learnings(1, before_day=day + "~")
+        return found[0] if found and found[0]["day"] == day else None
 
     def recent_lessons(self, limit: int = 5) -> list[dict[str, Any]]:
         """Most recent completed reviews of final decisions."""
@@ -1371,6 +1428,46 @@ def _spread_dict(pick: Any) -> dict[str, Any] | None:
     if pick["spread_at_pick"] is None:
         return None
     return {"team": pick["spread_team"], "point": pick["spread_at_pick"]}
+
+
+def _decision_dict(row: Any, detailed: bool) -> dict[str, Any]:
+    decision = {
+        "logged_at": row["created_at"],
+        "side": _describe_side(row),
+        "pick_type": row["pick_type"],
+        "commitment": row["commitment"],
+        "role": row["role"],
+        "confidence_probability": row["confidence_probability"],
+        "confidence_label": row["confidence_label"],
+        "price_at_pick": row["price_at_pick"],
+        "betonline_spread_at_pick": _spread_dict(row),
+        "my_number": _my_number(row),
+        "reasoning": row["reasoning"],
+        "uncertainties": json.loads(row["uncertainties_json"]),
+        "result": row["result"],
+    }
+    if detailed:
+        decision.update(
+            selection=row["selection"],
+            line=row["line"],
+            line_source=row["line_source"],
+            logged_after_start=bool(row["logged_after_start"]),
+            closing_line=row["closing_line"],
+            closing_price=row["closing_price"],
+            closing_value=row["closing_value"],
+            review=(
+                {
+                    "process_score": row["process_score"],
+                    "luck_summary": row["luck_summary"],
+                    "what_worked": row["what_worked"],
+                    "what_to_improve": row["what_to_improve"],
+                    "bias_tags": json.loads(row["bias_tags_json"]),
+                }
+                if row["process_score"] is not None
+                else None
+            ),
+        )
+    return decision
 
 
 def _my_number(pick: Any) -> dict[str, Any] | None:

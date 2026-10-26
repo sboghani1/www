@@ -77,6 +77,7 @@ the next sync.
    market move, and flags biases. Reviews are stored, not sent. They feed
    `/stats` and the lessons used in `/games` opinions. `/stats` adds a "Changing sides" section: flips that
    helped or hurt, and first view vs. final position. There is no weekly report.
+   Each review also sees the rules from the last three daily learnings.
 
 ## Claude subscription auth
 
@@ -101,7 +102,19 @@ receptionist's Opus agent, not with API billing:
    record, flip history, bias flags, and recent review lessons. Mel replies
    with a critique of your view and its own call (play with the worst line
    worth taking, or pass), a confidence, and what would change it. Claude
-   has no news or injury feed.
+   has no news or injury feed. It also sees the last three days of learnings
+   (summary, what didn't work, rules to try).
+7. **Daily learnings (silent).** At 9:00 ET each morning Mel studies the
+   previous ET day: every game you talked about (picks, leans, passes, and
+   context notes), the full transcripts, the BetOnline line and spread you
+   got, your own number, the closing line, the final score with each side's
+   actual margin (or total points), and the post-game reviews. Claude writes a
+   summary, what worked and didn't, your number vs. BetOnline's, flips,
+   calibration, 1-3 rules to try, and whether earlier rules were followed.
+   A day waits until all its picks are graded and reviewed, or 9 ET the
+   following day at the latest. One day runs per sync tick, oldest first, so
+   past days backfill automatically. Learnings are stored (not sent) and shown
+   with `/learnings`.
 
 ## Bot commands
 
@@ -109,6 +122,7 @@ receptionist's Opus agent, not with API billing:
 - `/recent` - the 10 newest picks and leans with status
 - `/stats` - committed picks and leans: record, Brier calibration, process
   score, CLV, and top bias flags
+- `/learnings [YYYY-MM-DD]` - the latest (or that ET day's) daily learnings
 - `/reparse` - re-run parsing on the latest saved transcript, or reply
   `/reparse` to any of your voice/text notes to reparse that one (graded
   notes included; keeps the note's original time and line)

@@ -5,7 +5,7 @@ import json
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import replace
-from datetime import datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -26,7 +26,7 @@ from .config import Config
 from .espn import EspnClient, match_final
 from .lines import SheetLines
 from .markets import match_event
-from .models import MarketEvent, parse_timestamp, utc_now
+from .models import FinalGame, MarketEvent, parse_timestamp, team_matches, utc_now
 from .store import DecisionStore
 from .transcribe import WhisperTranscriber
 
@@ -42,6 +42,9 @@ EASTERN = ZoneInfo("America/New_York")
 CANDIDATE_WINDOW = timedelta(days=8)
 STARTED_LOOKBACK_DAYS = 3
 HISTORIC_LINES_AFTER = timedelta(minutes=10)
+LEARNING_HOUR = 9  # Eastern; a day's learnings run the next morning
+LEARNING_RETRY = timedelta(minutes=30)
+TELEGRAM_LIMIT = 4096
 AUDIO_SUFFIXES = {
     "audio/aac": ".aac",
     "audio/flac": ".flac",
@@ -61,11 +64,14 @@ HELP_TEXT = (
     "per game as you like: your latest side is your decision, earlier ones "
     "form its path, and thoughts without a side are attached to the game. "
     "I track BetOnline lines and grade and review every game quietly; see "
-    "/stats. Each saved note has Reparse and Remove buttons, and I keep "
+    "/stats. Each morning I study the previous day's thoughts and results "
+    "for learnings (/learnings) and use them in my opinions. Each saved note has Reparse and Remove buttons, and I keep "
     "your audio and its transcript so notes can be reparsed later.\n\n"
     "/games - today's and tomorrow's games; tap one for my opinion\n"
     "/recent - latest 10 picks and leans\n"
     "/stats - record, calibration, closing-line value, process, biases\n"
+    "/learnings [YYYY-MM-DD] - what a day of decisions taught (latest by "
+    "default; I write one each morning at 9 ET)\n"
     "/reparse - re-run parsing on your latest note, or reply /reparse to "
     "any of your notes\n"
     "/void <id-prefix> - remove a mis-parsed open pick"
@@ -263,6 +269,46 @@ def format_opinion(event: MarketEvent, opinion: Any) -> str:
     return "\n".join(lines)
 
 
+def eastern_day(commence_time: str) -> str:
+    return parse_timestamp(commence_time).astimezone(EASTERN).date().isoformat()
+
+
+def actual_outcome(
+    decision: dict[str, Any], home_team: str, final: FinalGame | None
+) -> dict[str, int] | None:
+    """The selection's final margin, or the game's total points."""
+    if final is None:
+        return None
+    if decision["pick_type"] == "total":
+        return {"total_points": final.away_score + final.home_score}
+    margin = final.home_score - final.away_score
+    if not team_matches(decision["selection"], home_team):
+        margin = -margin
+    return {"selection_margin": margin}
+
+
+def format_learning(learning: dict[str, Any]) -> str:
+    lines = [f"📓 Learnings for {learning['day']}", "", learning["summary"]]
+
+    def bullets(title: str, items: list[str]) -> None:
+        if items:
+            lines.extend(["", title, *(f"• {item}" for item in items)])
+
+    def para(title: str, text: str) -> None:
+        if text:
+            lines.extend(["", f"{title} {text}"])
+
+    bullets("✅ Worked", learning["worked"])
+    bullets("❌ Didn't work", learning["did_not_work"])
+    para("🔢 Your number vs BetOnline:", learning["my_number_vs_market"])
+    para("🔄 Flips:", learning["flips"])
+    para("🎯 Calibration:", learning["calibration"])
+    para("📏 Earlier rules:", learning["earlier_rules_followed"])
+    bullets("🧪 Rules to try", learning["rules_to_try"])
+    text = "\n".join(lines)
+    return text if len(text) <= TELEGRAM_LIMIT else text[: TELEGRAM_LIMIT - 1] + "…"
+
+
 def format_stats(
     stats: dict[str, Any],
     leans: dict[str, Any] | None = None,
@@ -378,6 +424,7 @@ class DecisionBot:
         self.espn = espn
         self._processing = asyncio.Lock()
         self._sync = asyncio.Lock()
+        self._learning_retry_at: datetime | None = None
 
     def authorized(self, handler: Handler) -> Handler:
         async def wrapped(
@@ -416,6 +463,7 @@ class DecisionBot:
                 BotCommand("games", "Today's and tomorrow's games; get my take"),
                 BotCommand("recent", "Show the latest picks and leans"),
                 BotCommand("stats", "Decision-quality report"),
+                BotCommand("learnings", "Learnings from a day of decisions"),
                 BotCommand("reparse", "Re-run parsing on the latest (or replied-to) note"),
                 BotCommand("void", "Remove a mis-parsed open pick"),
                 BotCommand("help", "How Mel works"),
@@ -725,7 +773,12 @@ class DecisionBot:
         if self._sync.locked():
             return
         async with self._sync:
-            for step in (self.sync_markets, self.sync_results, self.sync_reviews):
+            for step in (
+                self.sync_markets,
+                self.sync_results,
+                self.sync_reviews,
+                self.sync_learnings,
+            ):
                 try:
                     await step()
                 except Exception:
@@ -826,6 +879,12 @@ class DecisionBot:
                 {"logged_at": pick["created_at"], "transcript": pick["transcript"]}
             ]
             record["game_notes"] = game["game_notes"]
+            record["recent_daily_rules"] = [
+                {"day": item["day"], "rules_to_try": item["rules_to_try"]}
+                for item in self.store.recent_learnings(
+                    3, before_day=eastern_day(pick["commence_time"])
+                )
+            ]
             try:
                 review = await self.claude.review(record)
             except Exception as error:
@@ -934,8 +993,144 @@ class DecisionBot:
                 "leans": self.store.stats("lean"),
                 "side_changes": self.store.flip_stats(),
                 "recent_lessons": self.store.recent_lessons(),
+                "daily_learnings": [
+                    {
+                        key: item[key]
+                        for key in ("day", "summary", "did_not_work", "rules_to_try")
+                    }
+                    for item in self.store.recent_learnings(3)
+                ],
             },
         }
+
+    def due_learning_day(self, now: datetime | None = None) -> str | None:
+        """The oldest Eastern day with thoughts but no learnings, once it is
+        past 9 ET the next morning and every pick is graded and reviewed (or
+        a day later regardless). Days run oldest first."""
+        current = (now or utc_now()).astimezone(EASTERN)
+        done = self.store.learning_days()
+        days: dict[str, list[dict[str, Any]]] = {}
+        for row in self.store.discussed_games():
+            days.setdefault(eastern_day(row["commence_time"]), []).append(row)
+        for day in sorted(days):
+            if day in done:
+                continue
+            ready_at = datetime.combine(
+                date.fromisoformat(day) + timedelta(days=1),
+                time(LEARNING_HOUR),
+                EASTERN,
+            )
+            if current < ready_at:
+                return None
+            settled = all(
+                row["status"] == "final" and row["analysis_status"] != "pending"
+                for row in days[day]
+            )
+            return day if settled or current >= ready_at + timedelta(days=1) else None
+        return None
+
+    async def sync_learnings(self) -> None:
+        """Write one day's learnings per tick, so past days backfill in order.
+        Stored for /learnings, opinions, and reviews; never sent."""
+        now = utc_now()
+        if self._learning_retry_at is not None and now < self._learning_retry_at:
+            return
+        day = self.due_learning_day(now)
+        if day is None:
+            return
+        try:
+            learning = await self.claude.learnings(await self.learning_context(day))
+        except Exception:
+            self._learning_retry_at = now + LEARNING_RETRY
+            raise
+        self._learning_retry_at = None
+        self.store.save_learning(day, learning.as_dict())
+        log.info("Saved daily learnings for %s", day)
+
+    async def learning_context(self, day: str) -> dict[str, Any]:
+        starts: dict[tuple[str, str, str], str] = {}
+        for row in self.store.discussed_games():
+            if eastern_day(row["commence_time"]) == day:
+                starts.setdefault(
+                    (row["sport"], row["away_team"], row["home_team"]),
+                    row["commence_time"],
+                )
+        finals: dict[str, list[FinalGame]] = {}
+        for sport in sorted({key[0] for key in starts}):
+            try:
+                finals[sport] = await self.espn.fetch_finals(
+                    sport, day.replace("-", "")
+                )
+            except Exception as error:
+                log.warning("Finals unavailable for %s %s: %s", sport, day, error)
+                finals[sport] = []
+        games = []
+        transcripts: dict[tuple[str, str], dict[str, str]] = {}
+        record = {"picks": [0, 0, 0], "leans": [0, 0, 0]}
+        for (sport, away, home), start in sorted(starts.items(), key=lambda item: item[1]):
+            game = self.store.game_record(sport, away, home, start, detailed=True)
+            # One note often covers several games; list each transcript once.
+            for note in game.pop("notes"):
+                transcripts.setdefault((note["logged_at"], note["transcript"]), note)
+            final = match_final(
+                finals[sport], away_team=away, home_team=home, commence_time=start
+            )
+            for decision in game["decisions"]:
+                decision["actual"] = actual_outcome(decision, home, final)
+                bucket = record.get(decision["commitment"] + "s")
+                if decision["role"] == "final" and bucket is not None:
+                    for index, result in enumerate(("win", "loss", "push")):
+                        bucket[index] += decision["result"] == result
+            games.append(
+                {
+                    "sport": sport,
+                    "game": f"{away} @ {home}",
+                    "start": start,
+                    "final_score": (
+                        {away: final.away_score, home: final.home_score}
+                        if final is not None
+                        else None
+                    ),
+                    **game,
+                }
+            )
+        return {
+            "day": day,
+            "games": games,
+            "transcripts": sorted(
+                transcripts.values(), key=lambda note: note["logged_at"]
+            ),
+            "day_record": {
+                name: "{}-{}-{}".format(*counts) for name, counts in record.items()
+            },
+            "prior_days": self.store.recent_learnings(7, before_day=day),
+            "track_record": {
+                "picks": self.store.stats(),
+                "leans": self.store.stats("lean"),
+                "side_changes": self.store.flip_stats(),
+            },
+        }
+
+    async def learnings(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        day = context.args[0] if context.args else None
+        if day is not None:
+            try:
+                day = date.fromisoformat(day).isoformat()
+            except ValueError:
+                await update.message.reply_text("Usage: /learnings [YYYY-MM-DD]")
+                return
+        learning = self.store.learning(day)
+        if learning is None:
+            await update.message.reply_text(
+                f"No learnings for {day} yet."
+                if day
+                else "No daily learnings yet; the first comes the morning "
+                "after a day with notes."
+            )
+            return
+        await update.message.reply_text(format_learning(learning))
 
     async def recent(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -995,6 +1190,7 @@ class DecisionBot:
             ("games", self.games),
             ("recent", self.recent),
             ("stats", self.stats),
+            ("learnings", self.learnings),
             ("reparse", self.reparse),
             ("void", self.void),
         ):

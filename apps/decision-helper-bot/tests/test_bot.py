@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock
 from decision_helper.bot import DecisionBot, format_stats
 from decision_helper.config import Config
 from decision_helper.models import (
+    DailyLearning,
     DecisionReview,
     FinalGame,
     Opinion,
@@ -35,6 +36,7 @@ class FakeClaude:
     def __init__(self) -> None:
         self.reviews: list[dict] = []
         self.opinions: list[dict] = []
+        self.learning_contexts: list[dict] = []
 
     async def extract(self, transcript, events, recorded_at=None, prior_views=None):
         self.prior_views = prior_views
@@ -48,6 +50,19 @@ class FakeClaude:
     async def review(self, record):
         self.reviews.append(record)
         return DecisionReview(4, "Covered comfortably", "Specific edge", "Quantify weather", ("overconfidence",))
+
+    async def learnings(self, context):
+        self.learning_contexts.append(context)
+        return DailyLearning(
+            "Priced the Bills well; forced the Celtics.",
+            ("Took +3 against your +3.5-4.5 number",),
+            ("Celtics ML with no number",),
+            "Your Bills number beat the close.",
+            "",
+            "70% on the Celtics was too high.",
+            ("Write a number before every side",),
+            "",
+        )
 
 
 class FakeLines:
@@ -995,3 +1010,95 @@ def test_any_note_can_be_reparsed_after_grading(tmp_path: Path) -> None:
     assert [d["side"] for d in seen[-1]["nfl-1"]["decisions"]] == ["Buffalo Bills +3"]
     chiefs = next(p for p in picks() if p["selection"] == "Kansas City Chiefs")
     assert (chiefs["status"], chiefs["role"]) == ("open", "final")
+
+
+def test_daily_learnings_wait_for_9am_and_grading_then_feed_opinions(tmp_path: Path, monkeypatch) -> None:
+    import decision_helper.bot as bot_module
+
+    events = make_events()
+    bot = make_bot(tmp_path, events)
+    run_voice(bot, voice_update())
+    nfl_start, nba_start = "2026-10-20T17:00:00Z", "2026-10-20T23:30:00Z"  # 1:00 and 7:30 PM ET
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE picks SET commence_time=? WHERE sport='nfl'", (nfl_start,))
+        connection.execute("UPDATE picks SET commence_time=? WHERE sport='nba'", (nba_start,))
+        connection.execute("UPDATE picks SET next_result_check_at=?", ("2026-10-20T00:00:00Z",))
+        connection.commit()
+
+    def at(text):
+        return parse_ts(text)
+
+    # Nothing is due before the games are graded and reviewed (unless a day late).
+    assert bot.due_learning_day(at("2026-10-21T14:00:00Z")) is None
+    assert bot.due_learning_day(at("2026-10-22T14:00:00Z")) == "2026-10-20"
+
+    bot.espn.finals = [
+        FinalGame("401", "nfl", nfl_start, "Buffalo Bills", "Kansas City Chiefs", 24, 26),
+        FinalGame("402", "nba", nba_start, "Boston Celtics", "Los Angeles Lakers", 99, 101),
+    ]
+    asyncio.run(bot.sync_results())
+    asyncio.run(bot.sync_reviews())
+    # Graded and reviewed: due at 9 ET the next morning (13:00Z in EDT), not before.
+    assert bot.due_learning_day(at("2026-10-21T12:59:00Z")) is None
+    assert bot.due_learning_day(at("2026-10-21T13:00:00Z")) == "2026-10-20"
+
+    monkeypatch.setattr(bot_module, "utc_now", lambda: at("2026-10-21T13:05:00Z"))
+
+    async def failing(context):
+        raise RuntimeError("usage limit")
+
+    working = bot.claude.learnings
+    bot.claude.learnings = failing
+    try:
+        asyncio.run(bot.sync_learnings())
+    except RuntimeError:
+        pass
+    bot.claude.learnings = working
+    asyncio.run(bot.sync_learnings())  # backs off after a failure
+    assert bot.store.learning() is None
+    monkeypatch.setattr(bot_module, "utc_now", lambda: at("2026-10-21T13:40:00Z"))
+    asyncio.run(bot.sync_learnings())
+
+    context = bot.claude.learning_contexts[0]
+    assert context["day"] == "2026-10-20" and context["prior_days"] == []
+    nfl, nba = context["games"]
+    assert nfl["final_score"] == {"Buffalo Bills": 24, "Kansas City Chiefs": 26}
+    decisions = {d["selection"]: d for d in nfl["decisions"]}
+    assert decisions["Buffalo Bills"]["actual"] == {"selection_margin": -2}
+    assert decisions["Buffalo Bills"]["my_number"] == {"low": 3.5, "high": 4.5}
+    assert decisions["Buffalo Bills"]["review"]["process_score"] == 4
+    assert "closing_value" in decisions["Buffalo Bills"]
+    assert decisions["Under"]["actual"] == {"total_points": 50}
+    assert nba["decisions"][0]["actual"] == {"selection_margin": -2}
+    # The one note covering both games is listed once for the day.
+    assert "notes" not in nfl
+    assert [n["transcript"][:16] for n in context["transcripts"]] == ["Bills plus three"]
+    assert sum(map(int, context["day_record"]["picks"].split("-"))) + sum(
+        map(int, context["day_record"]["leans"].split("-"))
+    ) == 3
+
+    saved = bot.store.learning("2026-10-20")
+    assert saved["rules_to_try"] == ["Write a number before every side"]
+    assert bot.due_learning_day(at("2026-10-23T14:00:00Z")) is None
+    asyncio.run(bot.sync_learnings())
+    assert len(bot.claude.learning_contexts) == 1
+
+    reply = AsyncMock()
+    update = SimpleNamespace(message=SimpleNamespace(reply_text=reply))
+    asyncio.run(bot.learnings(update, SimpleNamespace(args=[])))
+    text = reply.await_args.args[0]
+    assert text.startswith("📓 Learnings for 2026-10-20")
+    assert "🧪 Rules to try\n• Write a number before every side" in text
+    assert "🔄" not in text  # empty sections are skipped
+    asyncio.run(bot.learnings(update, SimpleNamespace(args=["2026-10-19"])))
+    assert reply.await_args.args[0] == "No learnings for 2026-10-19 yet."
+
+    context = asyncio.run(bot.opinion_context(events[0]))
+    assert context["track_record"]["daily_learnings"] == [
+        {
+            "day": "2026-10-20",
+            "summary": "Priced the Bills well; forced the Celtics.",
+            "did_not_work": ["Celtics ML with no number"],
+            "rules_to_try": ["Write a number before every side"],
+        }
+    ]

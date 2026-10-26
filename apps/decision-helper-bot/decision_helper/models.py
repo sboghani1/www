@@ -137,6 +137,30 @@ class DecisionReview:
     bias_tags: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class DailyLearning:
+    summary: str
+    worked: tuple[str, ...]
+    did_not_work: tuple[str, ...]
+    my_number_vs_market: str
+    flips: str
+    calibration: str
+    rules_to_try: tuple[str, ...]
+    earlier_rules_followed: str
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "summary": self.summary,
+            "worked": list(self.worked),
+            "did_not_work": list(self.did_not_work),
+            "my_number_vs_market": self.my_number_vs_market,
+            "flips": self.flips,
+            "calibration": self.calibration,
+            "rules_to_try": list(self.rules_to_try),
+            "earlier_rules_followed": self.earlier_rules_followed,
+        }
+
+
 def _text(value: Any, field: str, *, required: bool = True) -> str:
     if not isinstance(value, str):
         raise ValueError(f"{field} must be a string")
@@ -334,6 +358,29 @@ def review_from_payload(payload: dict[str, Any]) -> DecisionReview:
             payload.get("what_to_improve", ""), "what_to_improve"
         ),
         bias_tags=tuple(_text(tag, "bias_tags") for tag in raw_tags),
+    )
+
+
+def learning_from_payload(payload: dict[str, Any]) -> DailyLearning:
+    def items(field: str, limit: int) -> tuple[str, ...]:
+        raw = payload.get(field) or []
+        if not isinstance(raw, list):
+            raise ValueError(f"{field} must be an array")
+        cleaned = (_text(item, field, required=False) for item in raw)
+        return tuple(item for item in cleaned if item)[:limit]
+
+    def text(field: str) -> str:
+        return _text(payload.get(field) or "", field, required=False)
+
+    return DailyLearning(
+        summary=_text(payload.get("summary", ""), "summary"),
+        worked=items("worked", 5),
+        did_not_work=items("did_not_work", 5),
+        my_number_vs_market=text("my_number_vs_market"),
+        flips=text("flips"),
+        calibration=text("calibration"),
+        rules_to_try=items("rules_to_try", 3),
+        earlier_rules_followed=text("earlier_rules_followed"),
     )
 
 
