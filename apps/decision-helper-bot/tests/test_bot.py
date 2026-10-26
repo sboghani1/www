@@ -38,7 +38,7 @@ class FakeClaude:
         self.opinions: list[dict] = []
         self.learning_contexts: list[dict] = []
 
-    async def extract(self, transcript, events, recorded_at=None, prior_views=None):
+    async def extract(self, transcript, events, recorded_at=None, prior_views=None, clarification=""):
         self.prior_views = prior_views
         self.recorded_at = recorded_at
         return extraction_from_payload(extraction_payload(), events)
@@ -241,7 +241,7 @@ def test_flip_keeps_one_decision_per_game(tmp_path: Path) -> None:
                    reasoning="Switched after the line moved")
     payload["picks"].insert(1, flipped)
 
-    async def extract(transcript, events, recorded_at=None, prior_views=None):
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
         return extraction_from_payload(payload, events)
 
     bot.claude.extract = extract
@@ -290,7 +290,7 @@ def test_later_note_supersedes_and_void_restores(tmp_path: Path) -> None:
     payload = extraction_payload()
     payload["picks"] = [dict(payload["picks"][0], line=3.5, commitment="lean")]
 
-    async def extract(transcript, events, recorded_at=None, prior_views=None):
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
         return extraction_from_payload(payload, events)
 
     bot.claude.extract = extract
@@ -396,11 +396,14 @@ def test_v1_database_is_migrated(tmp_path: Path) -> None:
     v1_picks = re.sub(
         r",\s*commitment TEXT.*?my_line_high REAL", "", schema["picks"], flags=re.S
     )
-    v1_entries = (
+    v1_entries = re.sub(
+        r",\s*pregame INTEGER.*?clarification TEXT NOT NULL DEFAULT ''",
+        "",
         schema["entries"]
         .replace("'awaiting_choice',", "")
         .replace(",\n                        'trashed'", "")
-        .replace("audio_suffix TEXT NOT NULL DEFAULT '',", "")
+        .replace("audio_suffix TEXT NOT NULL DEFAULT '',", ""),
+        flags=re.S,
     )
     assert "commitment" not in v1_picks and "awaiting_choice" not in v1_entries
 
@@ -444,7 +447,7 @@ def test_picks_for_started_games_are_logged_and_graded(tmp_path: Path) -> None:
     bot.espn.started = [tuesday]
     seen = {}
 
-    async def extract(transcript, events, recorded_at=None, prior_views=None):
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
         seen["events"] = events
         return extraction_from_payload(
             {
@@ -485,6 +488,86 @@ def test_picks_for_started_games_are_logged_and_graded(tmp_path: Path) -> None:
     assert bot.claude.reviews[0]["logged_after_start"] == 1
 
 
+def test_pregame_and_clarification_survive_reparse(tmp_path: Path) -> None:
+    from decision_helper.models import MarketEvent, MarketQuote
+
+    now = datetime.now(UTC)
+    tuesday = MarketEvent(
+        "espn-77", "nba", timestamp(now - timedelta(hours=26)), "Detroit Pistons", "Chicago Bulls",
+        {"spread:Chicago Bulls": MarketQuote(-4.5, -110, 1), "spread:Detroit Pistons": MarketQuote(4.5, -110, 1)},
+    )
+    bot = make_bot(tmp_path, [tuesday])
+    bot.espn.started = [tuesday]
+    seen = []
+
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
+        seen.append(clarification)
+        pick = {
+            "sport": "nba", "event_id": "espn-77", "pick_type": "spread", "selection": "Chicago Bulls",
+            "line": None, "confidence_probability": None, "confidence_label": "", "reasoning": "", "uncertainties": [],
+        }
+        return extraction_from_payload({"picks": [pick] if clarification else []}, events)
+
+    bot.claude.extract = extract
+    update = voice_update()
+    run_voice(bot, update)
+    entry = bot.store.latest_entry()
+    assert seen == [""] and bot.store.recent() == []
+
+    with bot.store.connect() as connection:
+        connection.execute(
+            "UPDATE entries SET pregame=1, clarification='I bet the Bulls spread before tip' WHERE id=?",
+            (entry["id"],),
+        )
+        connection.commit()
+    bot.store.reopen_entry(entry["id"])
+    asyncio.run(bot._process(entry["id"], update.message, text=entry["transcript"]))
+    assert seen[-1] == "I bet the Bulls spread before tip"
+    pick = bot.store.recent()[0]
+    assert pick["logged_after_start"] == 0 and pick["line"] == -4.5
+
+    # Logged after tip, the line is the close, so there is no closing value.
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE picks SET closing_line=-6.5, closing_price=-110")
+        connection.commit()
+    bot.espn.finals = [FinalGame("77", "nba", tuesday.commence_time, "Detroit Pistons", "Chicago Bulls", 100, 110)]
+    asyncio.run(bot.sync_results())
+    pick = bot.store.recent()[0]
+    assert pick["result"] == "win" and pick["closing_value"] is None
+
+
+def test_pass_cancels_earlier_view_until_removed(tmp_path: Path) -> None:
+    events = make_events()
+    bot = make_bot(tmp_path, events)
+    payloads = [
+        {"picks": [dict(p, commitment="lean") for p in extraction_payload()["picks"][:2]]},
+        {"picks": [], "passes": [{"event_id": "nfl-1", "market": "side", "reasoning": "Too much Allen risk"}]},
+    ]
+
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
+        bot.claude.seen_prior = prior_views
+        return extraction_from_payload(payloads.pop(0), events)
+
+    bot.claude.extract = extract
+    run_voice(bot, voice_update(message_id=1))
+    second = voice_update(message_id=2)
+    run_voice(bot, second)
+
+    reply = second.message.reply_text.await_args_list[-1].args[0]
+    assert "🚫 Passed" in reply and "Too much Allen risk" in reply and "No NFL/NBA" not in reply
+    spreads = [p for p in bot.store.recent() if p["pick_type"] == "spread"]
+    assert [p["role"] for p in spreads] == ["superseded"]
+    record = bot.store.game_record("nfl", "Buffalo Bills", "Kansas City Chiefs", events[0].commence_time)
+    assert record["passes"][0]["market"] == "side"
+    assert len(record["notes"]) == 2
+    # The total is a separate market and stays live.
+    assert [p["role"] for p in bot.store.recent() if p["pick_type"] == "total"] == ["final"]
+
+    bot.store.remove_entry(bot.store.latest_entry()["id"])
+    assert [p["role"] for p in bot.store.recent() if p["pick_type"] == "spread"] == ["final"]
+    assert bot.store.game_record("nfl", "Buffalo Bills", "Kansas City Chiefs", events[0].commence_time)["passes"] == []
+
+
 def test_side_noted_before_lines_post_takes_first_betonline_line(tmp_path: Path) -> None:
     from decision_helper.models import MarketEvent, MarketQuote
 
@@ -492,7 +575,7 @@ def test_side_noted_before_lines_post_takes_first_betonline_line(tmp_path: Path)
     unposted = MarketEvent(**{**events[1].__dict__, "markets": {}})
     bot = make_bot(tmp_path, [events[0], unposted])
 
-    async def extract(transcript, events, recorded_at=None, prior_views=None):
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
         return extraction_from_payload(
             {
                 "picks": [
@@ -706,7 +789,7 @@ def test_espn_games_carry_sheet_betonline_lines_and_closes(tmp_path: Path) -> No
     assert events["espn-90"].markets["total:Over"].point == 226.5
     assert events["espn-91"].markets == {}
 
-    async def extract(transcript, events, recorded_at=None, prior_views=None):
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
         return extraction_from_payload(
             {
                 "picks": [
@@ -782,7 +865,7 @@ def test_multiple_notes_build_one_game_record(tmp_path: Path) -> None:
     ]
     seen = []
 
-    async def extract(transcript, events, recorded_at=None, prior_views=None):
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
         seen.append(prior_views)
         return extraction_from_payload(payloads[len(seen) - 1], events)
 
@@ -878,7 +961,7 @@ def test_remove_button_deletes_note_even_after_grading(tmp_path: Path) -> None:
     run_voice(bot, voice_update(message_id=1))
     payload = bills_note(selection="Kansas City Chiefs", line=-2.5)
 
-    async def extract(transcript, events, recorded_at=None, prior_views=None):
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
         return extraction_from_payload(payload, events)
 
     bot.claude.extract = extract
@@ -931,7 +1014,7 @@ def test_any_note_can_be_reparsed_after_grading(tmp_path: Path) -> None:
     payload = bills_note(selection="Kansas City Chiefs", line=-2.5)
     seen = []
 
-    async def extract(transcript, events, recorded_at=None, prior_views=None):
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
         seen.append(prior_views)
         return extraction_from_payload(payload, events)
 

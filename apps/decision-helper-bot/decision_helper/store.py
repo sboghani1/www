@@ -221,8 +221,39 @@ class DecisionStore:
                     learning_json TEXT NOT NULL,
                     created_at TEXT NOT NULL
                 );
+
+                CREATE TABLE IF NOT EXISTS passes (
+                    id TEXT PRIMARY KEY,
+                    entry_id TEXT NOT NULL REFERENCES entries(id),
+                    sport TEXT NOT NULL,
+                    event_id TEXT NOT NULL,
+                    away_team TEXT NOT NULL,
+                    home_team TEXT NOT NULL,
+                    commence_time TEXT NOT NULL,
+                    market TEXT NOT NULL CHECK(market IN ('side','total')),
+                    reasoning TEXT NOT NULL DEFAULT '',
+                    created_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS passes_game
+                    ON passes(sport, away_team, home_team);
                 """
             )
+            entry_columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(entries)")
+            }
+            if "pregame" not in entry_columns:
+                # Speaker corrections that survive reparses: the note holds
+                # views from before tip even if it was sent later, and words
+                # the transcript missed.
+                connection.execute(
+                    "ALTER TABLE entries ADD COLUMN pregame INTEGER NOT NULL "
+                    "DEFAULT 0"
+                )
+                connection.execute(
+                    "ALTER TABLE entries ADD COLUMN clarification TEXT NOT NULL "
+                    "DEFAULT ''"
+                )
             columns = {
                 row["name"]
                 for row in connection.execute("PRAGMA table_info(picks)")
@@ -470,7 +501,7 @@ class DecisionStore:
                         logged,
                         pick.commitment,
                         ordinal,
-                        int(commence <= logged_dt),
+                        int(commence <= logged_dt and not entry["pregame"]),
                         spread_team,
                         spread_point,
                         pick.my_line_low,
@@ -506,10 +537,59 @@ class DecisionStore:
                     note.summary,
                     logged,
                 )
+            passed: list[tuple[MarketEvent, str]] = []
+            for item in extraction.passes:
+                event = by_id[item.event_id]
+                if _settled(
+                    connection,
+                    event,
+                    "total" if item.market == "total" else "spread",
+                    as_of=logged,
+                ):
+                    _insert_note(
+                        connection,
+                        entry_id,
+                        event,
+                        "hindsight",
+                        f"Passed on the {item.market}"
+                        + (f": {item.reasoning}" if item.reasoning else ""),
+                        logged,
+                    )
+                    continue
+                connection.execute(
+                    """
+                    INSERT INTO passes(
+                        id, entry_id, sport, event_id, away_team, home_team,
+                        commence_time, market, reasoning, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        str(uuid.uuid4()),
+                        entry_id,
+                        event.sport,
+                        event.id,
+                        event.away_team,
+                        event.home_team,
+                        event.commence_time,
+                        item.market,
+                        item.reasoning,
+                        logged,
+                    ),
+                )
+                passed.append((event, item.market))
             for pick_id in saved_ids:
                 # A reparsed note can land before graded views; ordering by
                 # note time decides which view is final.
                 _refresh_roles(connection, pick_id, force=True)
+            for event, market in passed:
+                _refresh_game(
+                    connection,
+                    event.sport,
+                    event.away_team,
+                    event.home_team,
+                    event.commence_time,
+                    market,
+                )
             connection.execute(
                 """
                 UPDATE entries
@@ -577,10 +657,22 @@ class DecisionStore:
                 ).fetchall(),
                 commence_time,
             )
+            passes = _same_game(
+                connection.execute(
+                    """
+                    SELECT * FROM passes
+                    WHERE sport=? AND away_team=? AND home_team=?
+                    ORDER BY created_at, rowid
+                    """,
+                    (sport, away_team, home_team),
+                ).fetchall(),
+                commence_time,
+            )
             entry_ids = list(
                 dict.fromkeys(
                     [row["entry_id"] for row in picks]
                     + [row["entry_id"] for row in notes]
+                    + [row["entry_id"] for row in passes]
                 )
             )
             entries = (
@@ -605,6 +697,14 @@ class DecisionStore:
                     "summary": row["summary"],
                 }
                 for row in notes
+            ],
+            "passes": [
+                {
+                    "logged_at": row["created_at"],
+                    "market": row["market"],
+                    "reasoning": row["reasoning"],
+                }
+                for row in passes
             ],
             "notes": [
                 {"logged_at": row["created_at"], "transcript": row["transcript"]}
@@ -631,7 +731,8 @@ class DecisionStore:
             )
             decisions = earlier(record["decisions"])
             notes = earlier(record["game_notes"])
-            if decisions or notes:
+            passes = earlier(record["passes"])
+            if decisions or notes or passes:
                 views[event.id] = {
                     "decisions": [
                         {
@@ -648,8 +749,17 @@ class DecisionStore:
                         for decision in decisions
                     ],
                     "game_notes": notes,
+                    **({"passes": passes} if passes else {}),
                 }
         return views
+
+    def entry_passes(self, entry_id: str) -> list[dict[str, Any]]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM passes WHERE entry_id=? ORDER BY created_at, rowid",
+                (entry_id,),
+            ).fetchall()
+        return [dict(row) for row in rows]
 
     def entry_picks(self, entry_id: str) -> list[dict[str, Any]]:
         with self.connect() as connection:
@@ -806,13 +916,20 @@ class DecisionStore:
                 away_score=game.away_score,
                 home_score=game.home_score,
             )
-            clv = closing_value(
-                pick_type=row["pick_type"],
-                selection=row["selection"],
-                pick_line=row["line"],
-                closing_line=row["closing_line"],
-                pick_price=row["price_at_pick"],
-                closing_price=row["closing_price"],
+            clv = (
+                None
+                # Logged at or after tip: the line is the close, so CLV is 0
+                # by construction and says nothing.
+                if parse_timestamp(row["created_at"])
+                >= parse_timestamp(row["commence_time"])
+                else closing_value(
+                    pick_type=row["pick_type"],
+                    selection=row["selection"],
+                    pick_line=row["line"],
+                    closing_line=row["closing_line"],
+                    pick_price=row["price_at_pick"],
+                    closing_price=row["closing_price"],
+                )
             )
             # Superseded sides are graded for flip analysis but not reviewed;
             # the final position's review covers the whole path.
@@ -918,6 +1035,10 @@ class DecisionStore:
                 SELECT sport, away_team, home_team, commence_time,
                        'final', 'complete', 0
                 FROM game_notes
+                UNION ALL
+                SELECT sport, away_team, home_team, commence_time,
+                       'final', 'complete', 0
+                FROM passes
                 """
             ).fetchall()
         return [dict(row) for row in rows]
@@ -1095,6 +1216,7 @@ class DecisionStore:
             )
             for pick_id in voided:
                 _refresh_roles(connection, pick_id, force=True)
+            _drop_passes(connection, entry_id)
             connection.execute(
                 "DELETE FROM game_notes WHERE entry_id=?", (entry_id,)
             )
@@ -1152,6 +1274,7 @@ class DecisionStore:
             )
             for pick_id in siblings:
                 _refresh_roles(connection, pick_id, force=True)
+            _drop_passes(connection, entry_id)
             connection.commit()
         return [dict(row) for row in picks]
 
@@ -1333,8 +1456,22 @@ def _refresh_roles(
         not force and any(row["status"] == "final" for row in rows)
     ):
         return
+    passed_at = _latest_pass(
+        connection,
+        rows[-1]["sport"],
+        rows[-1]["away_team"],
+        rows[-1]["home_team"],
+        rows[-1]["commence_time"],
+        market_family(rows[-1]["pick_type"]),
+    )
     for row in rows:
-        role = "final" if row is rows[-1] else "superseded"
+        # A pass newer than every view leaves the game with no position.
+        role = (
+            "final"
+            if row is rows[-1]
+            and (passed_at is None or passed_at < row["created_at"])
+            else "superseded"
+        )
         connection.execute("UPDATE picks SET role=? WHERE id=?", (role, row["id"]))
         if (
             role == "final"
@@ -1346,6 +1483,66 @@ def _refresh_roles(
                 "next_analysis_at=? WHERE id=?",
                 (timestamp(utc_now()), row["id"]),
             )
+        elif role == "superseded" and row["analysis_status"] == "pending":
+            # Only final positions are reviewed.
+            connection.execute(
+                "UPDATE picks SET analysis_status='complete', "
+                "next_analysis_at=NULL WHERE id=?",
+                (row["id"],),
+            )
+
+
+def _latest_pass(
+    connection: sqlite3.Connection,
+    sport: str,
+    away_team: str,
+    home_team: str,
+    commence_time: str,
+    market: str,
+) -> str | None:
+    row = connection.execute(
+        """
+        SELECT MAX(created_at) FROM passes
+        WHERE sport=? AND away_team=? AND home_team=? AND commence_time=?
+          AND market=?
+        """,
+        (sport, away_team, home_team, commence_time, market),
+    ).fetchone()
+    return row[0]
+
+
+def _drop_passes(connection: sqlite3.Connection, entry_id: str) -> None:
+    rows = connection.execute(
+        "SELECT sport, away_team, home_team, commence_time, market "
+        "FROM passes WHERE entry_id=?",
+        (entry_id,),
+    ).fetchall()
+    connection.execute("DELETE FROM passes WHERE entry_id=?", (entry_id,))
+    for row in rows:
+        _refresh_game(connection, *tuple(row))
+
+
+def _refresh_game(
+    connection: sqlite3.Connection,
+    sport: str,
+    away_team: str,
+    home_team: str,
+    commence_time: str,
+    market: str,
+) -> None:
+    """Re-rank one game's side or total after a pass was added or removed."""
+    types = ("total",) if market == "total" else ("winner", "spread")
+    row = connection.execute(
+        f"""
+        SELECT id FROM picks
+        WHERE status!='void' AND sport=? AND away_team=? AND home_team=?
+          AND commence_time=? AND pick_type IN ({",".join("?" * len(types))})
+        LIMIT 1
+        """,
+        (sport, away_team, home_team, commence_time, *types),
+    ).fetchone()
+    if row is not None:
+        _refresh_roles(connection, row[0], force=True)
 
 
 def _same_game(rows: list[Any], commence_time: str) -> list[Any]:

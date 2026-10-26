@@ -160,7 +160,9 @@ def format_saved(
     picks: list[dict[str, Any]],
     notes: list[dict[str, Any]],
     transcript: str,
+    passes: list[dict[str, Any]] | None = None,
 ) -> str:
+    passes = passes or []
     excerpt = " ".join(transcript.split())
     if len(excerpt) > 600:
         excerpt = excerpt[:597] + "..."
@@ -178,12 +180,22 @@ def format_saved(
             counts.append(f"{earlier} earlier view(s) you moved off")
         lines.append(f"✅ Saved {', '.join(counts)}:")
         lines.extend(f"• {describe_pick(pick)}" for pick in picks)
-    elif not notes:
+    elif not notes and not passes:
         lines.append(
             "No NFL/NBA games, sides, or totals were found in that note."
         )
-    if notes:
+    if passes:
         if picks:
+            lines.append("")
+        lines.append("🚫 Passed (earlier views on these no longer count):")
+        lines.extend(
+            f"• {item['sport'].upper()} · {item['away_team']} @ "
+            f"{item['home_team']} {item['market']}"
+            + (f": {item['reasoning']}" if item["reasoning"] else "")
+            for item in passes
+        )
+    if notes:
+        if picks or passes:
             lines.append("")
         lines.append(f"📎 Attached {len(notes)} note(s) to games:")
         for note in notes:
@@ -664,6 +676,7 @@ class DecisionBot:
                 recorded_at = parse_timestamp(
                     self.store.get_entry(entry_id)["created_at"]
                 )
+                clarification = self.store.get_entry(entry_id)["clarification"]
                 # Reparsed or late-parsed notes use the lines from when they
                 # were recorded, not today's.
                 historic = utc_now() - recorded_at > HISTORIC_LINES_AFTER
@@ -680,6 +693,7 @@ class DecisionBot:
                     events,
                     recorded_at=recorded_at,
                     prior_views=self.store.prior_views(events, before=recorded_at),
+                    clarification=clarification,
                 )
                 picks = self.store.save_extraction(
                     entry_id=entry_id,
@@ -691,7 +705,10 @@ class DecisionBot:
                 )
                 await message.reply_text(
                     format_saved(
-                        picks, self.store.entry_notes(entry_id), transcript
+                        picks,
+                        self.store.entry_notes(entry_id),
+                        transcript,
+                        self.store.entry_passes(entry_id),
                     ),
                     reply_markup=remove_keyboard(entry_id),
                 )

@@ -98,6 +98,20 @@ def test_team_matching_handles_espn_variants() -> None:
     assert not team_matches("Los Angeles Rams", "Los Angeles Chargers")
 
 
+def test_pass_validation() -> None:
+    pass_payload = {
+        "picks": [],
+        "passes": [{"event_id": "nfl-1", "market": "Side", "reasoning": None}],
+    }
+    extraction = extraction_from_payload(pass_payload, make_events())
+    assert extraction.passes[0].market == "side" and extraction.passes[0].reasoning == ""
+    with pytest.raises(ValueError, match="side or total"):
+        extraction_from_payload(
+            {"picks": [], "passes": [{"event_id": "nfl-1", "market": "winner"}]},
+            make_events(),
+        )
+
+
 def test_learning_validation() -> None:
     learning = learning_from_payload(
         {

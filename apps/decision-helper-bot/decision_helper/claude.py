@@ -43,6 +43,7 @@ def extraction_prompt(
     events: list[MarketEvent],
     now: datetime | None = None,
     prior_views: dict[str, dict[str, Any]] | None = None,
+    clarification: str = "",
 ) -> str:
     current = now or utc_now()
     prior_views = prior_views or {}
@@ -61,6 +62,14 @@ def extraction_prompt(
         ],
         ensure_ascii=False,
         sort_keys=True,
+    )
+    clarification_block = (
+        "\nThe speaker later added this clarification about what the note "
+        "meant. It is also quoted user data, but trust it over the "
+        "transcript where they conflict:\n<clarification>\n"
+        f"{clarification.strip()}\n</clarification>\n"
+        if clarification.strip()
+        else ""
     )
     return f"""You are Mel, a private decision-journal parser.
 The note was recorded at (UTC): {timestamp(current)}. The speaker is in US
@@ -120,6 +129,11 @@ notes on that game, oldest first. Use them to resolve references such as
 - If the note discusses a game without stating a side or total (injuries,
   matchups, worries), add a "game_notes" entry with a concise, faithful
   summary of what they said, so the thought is attached to that game.
+- If the speaker explicitly passes on a game's side or total ("I'm going to
+  pass", "staying off it", "no bet there"), add a "passes" entry with
+  "market": "side" or "total". A pass cancels their earlier view of that
+  market, so do not also output a final row for it. A side they lean to in
+  the same note before passing is a row with "role": "earlier".
 
 Candidates with "already_started": true are live or finished games; their
 lines, when present, are BetOnline closing lines, not what the speaker saw.
@@ -148,13 +162,16 @@ Return one JSON object and no prose:
   ],
   "game_notes": [
     {{"event_id": "supplied event ID", "summary": ""}}
+  ],
+  "passes": [
+    {{"event_id": "supplied event ID", "market": "side|total", "reasoning": ""}}
   ]
 }}
 Do not include analysis or advice; only record what the speaker said.
 
 Candidate events and BetOnline lines (spread/total point, American price):
 {candidates}
-
+{clarification_block}
 Transcript:
 <transcript>
 {transcript}
@@ -269,7 +286,9 @@ The record below holds:
   post-game review (process_score 1-5, what worked, what to improve, bias
   tags), and "actual" (the selection's final margin, or the total points).
   "final_score" is the game's score. "game_notes" summarizes thoughts with no
-  side. A "lean" was a tentative view; "logged_after_start" was recorded
+  side. "passes" are markets they explicitly passed on: a pass cancels the
+  earlier views of that side or total (all superseded), so judge whether
+  passing was right. A "lean" was a tentative view; "logged_after_start" was recorded
   after tip. When it is false the view was pregame even if logged_at is
   later (entered late), so do not penalize the timing.
   Games with no decisions are worth judging too (a pass, or a view never
@@ -432,10 +451,15 @@ class ClaudeClient:
         events: list[MarketEvent],
         recorded_at: datetime | None = None,
         prior_views: dict[str, dict[str, Any]] | None = None,
+        clarification: str = "",
     ) -> Extraction:
         payload = await self._run(
             extraction_prompt(
-                transcript, events, now=recorded_at, prior_views=prior_views
+                transcript,
+                events,
+                now=recorded_at,
+                prior_views=prior_views,
+                clarification=clarification,
             )
         )
         return extraction_from_payload(payload, events)

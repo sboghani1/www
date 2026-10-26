@@ -103,10 +103,22 @@ class GameNote:
 
 
 @dataclass(frozen=True)
+class Pass:
+    """The speaker explicitly passing on a game's side or total, which
+    cancels their earlier view of that market."""
+
+    sport: str
+    event_id: str
+    market: str
+    reasoning: str
+
+
+@dataclass(frozen=True)
 class Extraction:
     picks: tuple[ExtractedPick, ...]
     immediate_feedback: str
     game_notes: tuple[GameNote, ...] = ()
+    passes: tuple[Pass, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -294,6 +306,32 @@ def extraction_from_payload(
         )
         if summary:
             notes.append(GameNote(event.sport, event_id, summary))
+    raw_passes = payload.get("passes") or []
+    if not isinstance(raw_passes, list):
+        raise ValueError("passes must be an array")
+    passes: list[Pass] = []
+    for index, raw in enumerate(raw_passes):
+        if not isinstance(raw, dict):
+            raise ValueError(f"passes[{index}] must be an object")
+        event_id = _text(raw.get("event_id"), f"passes[{index}].event_id")
+        event = by_id.get(event_id)
+        if event is None:
+            raise ValueError(f"passes[{index}].event_id is not a candidate")
+        market = _text(raw.get("market"), f"passes[{index}].market").casefold()
+        if market not in {"side", "total"}:
+            raise ValueError(f"passes[{index}].market must be side or total")
+        passes.append(
+            Pass(
+                event.sport,
+                event_id,
+                market,
+                _text(
+                    raw.get("reasoning") or "",
+                    f"passes[{index}].reasoning",
+                    required=False,
+                ),
+            )
+        )
     return Extraction(
         picks=_one_final_per_decision(picks),
         immediate_feedback=_text(
@@ -302,6 +340,7 @@ def extraction_from_payload(
             required=False,
         ),
         game_notes=tuple(notes),
+        passes=tuple(passes),
     )
 
 

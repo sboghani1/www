@@ -37,12 +37,22 @@ the next sync.
    game. Each candidate game carries your prior views on it (earlier sides
    and notes), so "still on them" resolves to the right side. A note that
    discusses a game without taking a side is stored in `game_notes` as
-   `context`. A side or note sent after the game is graded becomes a
+   `context`. Explicitly passing on a side or total ("I'm going to pass")
+   is stored in `passes`; it cancels your earlier views on that market (all
+   become superseded, so the game has no position) until a later note takes
+   a side again. A side or note sent after the game is graded becomes a
    `hindsight` note and is never counted as a decision. Reparsing a note
-   clears its picks (graded ones too) and attachments, then parses the saved
+   clears its picks (graded ones too), passes, and attachments, then parses the saved
    transcript again with the note's original time, BetOnline lines, and only
    the views sent before it; new picks for finished games are re-graded from
    ESPN on the next sync.
+
+   Two per-note corrections in `entries` survive reparses: `pregame=1` means
+   the note holds views from before tip even though it was sent later (no
+   `[logged after start]` mark), and `clarification` is extra speaker text
+   (for example "I bet the Seahawks spread") that the parser trusts over the
+   transcript. Views logged at or after tip have no closing-line value, since
+   their line is the close.
 
    A side is saved as a spread unless you explicitly take the moneyline ("Jazz
    to win", "moneyline"/"ML"). The line is only a number you say you are
