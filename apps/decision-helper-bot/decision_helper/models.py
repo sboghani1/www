@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import asdict, dataclass, replace
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 
@@ -91,6 +91,8 @@ class ExtractedPick:
     # selection's spread for a side, the total for a total).
     my_line_low: float | None = None
     my_line_high: float | None = None
+    # American odds the speaker says they got (end-of-day bet summaries).
+    price: int | None = None
 
 
 @dataclass(frozen=True)
@@ -119,6 +121,8 @@ class Extraction:
     immediate_feedback: str
     game_notes: tuple[GameNote, ...] = ()
     passes: tuple[Pass, ...] = ()
+    # The US Eastern day an end-of-day bet summary covers (YYYY-MM-DD).
+    summary_day: str = ""
 
 
 @dataclass(frozen=True)
@@ -259,6 +263,9 @@ def extraction_from_payload(
             my_high = my_low
         if my_low is not None and my_high is not None and my_low > my_high:
             my_low, my_high = my_high, my_low
+        price = _number(raw.get("price"), f"picks[{index}].price")
+        if price is not None and (price != int(price) or abs(price) < 100):
+            raise ValueError(f"picks[{index}].price must be American odds")
         picks.append(
             ExtractedPick(
                 sport=sport,
@@ -270,6 +277,7 @@ def extraction_from_payload(
                 role=role,
                 my_line_low=my_low,
                 my_line_high=my_high,
+                price=int(price) if price is not None else None,
                 confidence_probability=confidence,
                 confidence_label=_text(
                     raw.get("confidence_label", ""),
@@ -342,6 +350,35 @@ def extraction_from_payload(
         game_notes=tuple(notes),
         passes=tuple(passes),
     )
+
+
+def summary_from_payload(
+    payload: dict[str, Any],
+    events: list[MarketEvent],
+) -> Extraction:
+    """An end-of-day summary: every row is a placed bet and its own final
+    position."""
+    bets = payload.get("bets")
+    if not isinstance(bets, list):
+        raise ValueError("bets must be an array")
+    extraction = extraction_from_payload(
+        {
+            "picks": [
+                {**bet, "commitment": "pick", "role": "final"}
+                if isinstance(bet, dict)
+                else bet
+                for bet in bets
+            ],
+            "game_notes": payload.get("game_notes", []),
+        },
+        events,
+    )
+    day = payload.get("day")
+    try:
+        day = date.fromisoformat(day).isoformat() if isinstance(day, str) else ""
+    except ValueError:
+        day = ""
+    return replace(extraction, summary_day=day)
 
 
 def opinion_from_payload(payload: dict[str, Any]) -> Opinion:

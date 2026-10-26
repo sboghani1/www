@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterator
+from zoneinfo import ZoneInfo
 
 from .markets import next_market_check, quote_for_pick, spread_for_pick
 from .models import (
@@ -24,6 +25,8 @@ from .models import (
     timestamp,
     utc_now,
 )
+
+EASTERN = ZoneInfo("America/New_York")
 
 
 class DecisionStore:
@@ -254,6 +257,12 @@ class DecisionStore:
                     "ALTER TABLE entries ADD COLUMN clarification TEXT NOT NULL "
                     "DEFAULT ''"
                 )
+            if "mode" not in entry_columns:
+                # 'summary' is an end-of-day summary of placed bets.
+                connection.execute(
+                    "ALTER TABLE entries ADD COLUMN mode TEXT NOT NULL "
+                    "DEFAULT 'note' CHECK(mode IN ('note','summary'))"
+                )
             columns = {
                 row["name"]
                 for row in connection.execute("PRAGMA table_info(picks)")
@@ -309,6 +318,7 @@ class DecisionStore:
         audio_kind: str,
         status: str = "processing",
         audio_suffix: str = "",
+        mode: str = "note",
     ) -> tuple[dict[str, Any], bool]:
         now = timestamp(utc_now())
         entry_id = str(uuid.uuid4())
@@ -317,8 +327,8 @@ class DecisionStore:
                 """
                 INSERT OR IGNORE INTO entries(
                     id, telegram_chat_id, telegram_message_id, audio_kind,
-                    status, audio_suffix, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    status, audio_suffix, created_at, updated_at, mode, pregame
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     entry_id,
@@ -329,6 +339,9 @@ class DecisionStore:
                     audio_suffix,
                     now,
                     now,
+                    mode,
+                    # Summarized bets were placed before their games.
+                    int(mode == "summary"),
                 ),
             )
             created = cursor.rowcount == 1
@@ -343,15 +356,24 @@ class DecisionStore:
         return dict(row), created
 
     def choose(self, entry_id: str, choice: str) -> dict[str, Any] | None:
-        """Atomically resolve an awaiting voice note; None if already handled."""
-        status = {"parse": "processing", "trash": "trashed"}[choice]
+        """Atomically resolve an awaiting voice note; None if already handled.
+        "summary" parses it as an end-of-day summary of placed bets."""
+        status = {
+            "parse": "processing",
+            "summary": "processing",
+            "trash": "trashed",
+        }[choice]
+        summary = choice == "summary"
         with self.connect() as connection:
             cursor = connection.execute(
                 """
-                UPDATE entries SET status=?, updated_at=?
+                UPDATE entries
+                SET status=?, updated_at=?,
+                    mode=CASE WHEN ? THEN 'summary' ELSE mode END,
+                    pregame=CASE WHEN ? THEN 1 ELSE pregame END
                 WHERE id=? AND status='awaiting_choice'
                 """,
-                (status, timestamp(utc_now()), entry_id),
+                (status, timestamp(utc_now()), summary, summary, entry_id),
             )
             row = connection.execute(
                 "SELECT * FROM entries WHERE id=?", (entry_id,)
@@ -367,6 +389,13 @@ class DecisionStore:
         if row is None:
             raise LookupError("Entry not found")
         return dict(row)
+
+    def get_pick(self, pick_id: str) -> dict[str, Any] | None:
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM picks WHERE id=? AND status!='void'", (pick_id,)
+            ).fetchone()
+        return None if row is None else dict(row)
 
     def set_transcript(self, entry_id: str, transcript: str) -> None:
         with self.connect() as connection:
@@ -424,9 +453,14 @@ class DecisionStore:
                 ).fetchall()
                 connection.commit()
                 return [dict(row) for row in rows]
+            summary = entry["mode"] == "summary"
             for ordinal, pick in enumerate(extraction.picks):
                 event = by_id[pick.event_id]
-                if _settled(connection, event, pick.pick_type, as_of=logged):
+                # Summarized bets were placed before the game, so they count
+                # even when the game was already graded.
+                if not summary and _settled(
+                    connection, event, pick.pick_type, as_of=logged
+                ):
                     # Already graded: keep the thought, but don't count it.
                     _insert_note(
                         connection,
@@ -440,10 +474,27 @@ class DecisionStore:
                 quote = quote_for_pick(event, pick.pick_type, pick.selection)
                 line = pick.line
                 line_source = "spoken" if line is not None else "none"
+                price = quote.price if quote is not None else None
+                my_low, my_high = pick.my_line_low, pick.my_line_high
+                view = (
+                    _latest_view(connection, entry_id, event, pick, before=logged)
+                    if summary
+                    else None
+                )
+                if view is not None:
+                    # A bet with no stated line was taken at the speaker's
+                    # latest view of that side.
+                    if line is None and view["line"] is not None:
+                        line, line_source = view["line"], view["line_source"]
+                    if line == view["line"] and view["price_at_pick"] is not None:
+                        price = view["price_at_pick"]
+                    if my_low is None:
+                        my_low, my_high = view["my_line_low"], view["my_line_high"]
                 if line is None and quote is not None and quote.point is not None:
                     line = quote.point
                     line_source = "market"
-                price = quote.price if quote is not None else None
+                if pick.price is not None:
+                    price = pick.price
                 spread_team, spread_point = spread_for_pick(
                     event, pick.pick_type, pick.selection
                 ) or (None, None)
@@ -504,8 +555,8 @@ class DecisionStore:
                         int(commence <= logged_dt and not entry["pregame"]),
                         spread_team,
                         spread_point,
-                        pick.my_line_low,
-                        pick.my_line_high,
+                        my_low,
+                        my_high,
                     ),
                 )
                 if quote is not None:
@@ -590,6 +641,12 @@ class DecisionStore:
                     event.commence_time,
                     market,
                 )
+            if summary:
+                # New bets change those days' story; relearn them.
+                _forget_learnings(
+                    connection,
+                    [by_id[pick.event_id].commence_time for pick in extraction.picks],
+                )
             connection.execute(
                 """
                 UPDATE entries
@@ -636,7 +693,8 @@ class DecisionStore:
             picks = _same_game(
                 connection.execute(
                     """
-                    SELECT picks.*, entries.created_at AS note_at
+                    SELECT picks.*, entries.created_at AS note_at,
+                           entries.mode AS entry_mode
                     FROM picks JOIN entries ON entries.id=picks.entry_id
                     WHERE picks.status!='void' AND picks.sport=?
                       AND picks.away_team=? AND picks.home_team=?
@@ -916,12 +974,18 @@ class DecisionStore:
                 away_score=game.away_score,
                 home_score=game.home_score,
             )
+            from_summary = connection.execute(
+                "SELECT mode='summary' FROM entries WHERE id=?",
+                (row["entry_id"],),
+            ).fetchone()[0]
             clv = (
                 None
                 # Logged at or after tip: the line is the close, so CLV is 0
-                # by construction and says nothing.
+                # by construction and says nothing. Summarized bets were
+                # placed pregame at the line they carry.
                 if parse_timestamp(row["created_at"])
                 >= parse_timestamp(row["commence_time"])
+                and not from_summary
                 else closing_value(
                     pick_type=row["pick_type"],
                     selection=row["selection"],
@@ -966,7 +1030,7 @@ class DecisionStore:
         with self.connect() as connection:
             rows = connection.execute(
                 """
-                SELECT picks.*, entries.transcript
+                SELECT picks.*, entries.transcript, entries.mode AS entry_mode
                 FROM picks JOIN entries ON entries.id=picks.entry_id
                 WHERE picks.analysis_status='pending'
                   AND picks.role='final'
@@ -1278,6 +1342,62 @@ class DecisionStore:
             connection.commit()
         return [dict(row) for row in picks]
 
+    def omitted_bets(self, entry_id: str, day: str) -> list[dict[str, Any]]:
+        """Bets on ``day``'s games (US Eastern) that are still final
+        positions but were not in this end-of-day summary."""
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM picks
+                WHERE status!='void' AND role='final' AND commitment='pick'
+                  AND entry_id!=?
+                ORDER BY commence_time, created_at, id
+                """,
+                (entry_id,),
+            ).fetchall()
+        return [
+            dict(row) for row in rows if _eastern_day(row["commence_time"]) == day
+        ]
+
+    def make_lean(self, pick_id: str) -> dict[str, Any]:
+        """The speaker says a recorded bet was only a lean. The note keeps a
+        clarification so a reparse agrees, and the decision is re-reviewed."""
+        with self.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT * FROM picks WHERE id=? AND status!='void'", (pick_id,)
+            ).fetchone()
+            if row is None:
+                raise LookupError("That bet no longer exists")
+            connection.execute(
+                "UPDATE picks SET commitment='lean' WHERE id=?", (pick_id,)
+            )
+            note = f"{_describe_side(row)} was a lean, not a bet."
+            connection.execute(
+                """
+                UPDATE entries
+                SET clarification=TRIM(clarification || ' ' || ?), updated_at=?
+                WHERE id=?
+                """,
+                (note, timestamp(utc_now()), row["entry_id"]),
+            )
+            if row["role"] == "final" and row["status"] == "final":
+                connection.execute(
+                    """
+                    UPDATE picks
+                    SET analysis_status='pending', analysis_attempts=0,
+                        next_analysis_at=?
+                    WHERE id=?
+                    """,
+                    (timestamp(utc_now()), pick_id),
+                )
+            _forget_learnings(connection, [row["commence_time"]])
+            updated = connection.execute(
+                "SELECT * FROM picks WHERE id=?", (pick_id,)
+            ).fetchone()
+            connection.commit()
+        return dict(updated)
+
     def decision_path(self, pick_id: str) -> list[dict[str, Any]]:
         """Earlier sides abandoned on the way to this final position."""
         with self.connect() as connection:
@@ -1408,6 +1528,50 @@ class DecisionStore:
             "clv_count": len(clv_values),
             "biases": biases.most_common(5),
         }
+
+
+def _eastern_day(commence_time: str) -> str:
+    return parse_timestamp(commence_time).astimezone(EASTERN).date().isoformat()
+
+
+def _forget_learnings(
+    connection: sqlite3.Connection, commence_times: list[str]
+) -> None:
+    """Drop those days' learnings so they are written again."""
+    for day in {_eastern_day(start) for start in commence_times}:
+        connection.execute("DELETE FROM daily_learnings WHERE day=?", (day,))
+
+
+def _latest_view(
+    connection: sqlite3.Connection,
+    entry_id: str,
+    event: MarketEvent,
+    pick: Any,
+    *,
+    before: str,
+) -> Any | None:
+    """The speaker's latest earlier view of this exact side or total."""
+    rows = _same_game(
+        connection.execute(
+            """
+            SELECT * FROM picks
+            WHERE status!='void' AND entry_id!=? AND sport=? AND away_team=?
+              AND home_team=? AND pick_type=? AND selection=? AND created_at<?
+            ORDER BY created_at DESC, ordinal DESC, id DESC
+            """,
+            (
+                entry_id,
+                event.sport,
+                event.away_team,
+                event.home_team,
+                pick.pick_type,
+                pick.selection,
+                before,
+            ),
+        ).fetchall(),
+        event.commence_time,
+    )
+    return rows[0] if rows else None
 
 
 def _group_key(row: Any) -> tuple[str, str, str, str, str]:
@@ -1634,6 +1798,8 @@ def _decision_dict(row: Any, detailed: bool) -> dict[str, Any]:
         "side": _describe_side(row),
         "pick_type": row["pick_type"],
         "commitment": row["commitment"],
+        "from_end_of_day_summary": "entry_mode" in row.keys()
+        and row["entry_mode"] == "summary",
         "role": row["role"],
         "confidence_probability": row["confidence_probability"],
         "confidence_label": row["confidence_label"],

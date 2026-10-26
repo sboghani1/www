@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from collections.abc import Awaitable, Callable
 from dataclasses import replace
 from datetime import date, datetime, time, timedelta
@@ -46,6 +47,7 @@ LEARNING_HOUR = 9  # Eastern; a day's learnings run the next morning
 LEARNING_RETRY = timedelta(minutes=30)
 LEARNING_REVIEW_ATTEMPTS = 3  # a late day still waits on reviews until they fail this often
 TELEGRAM_LIMIT = 4096
+SUMMARY_DAY_ROLLOVER = timedelta(hours=6)  # a 1 AM summary is about yesterday
 AUDIO_SUFFIXES = {
     "audio/aac": ".aac",
     "audio/flac": ".flac",
@@ -68,6 +70,10 @@ HELP_TEXT = (
     "/stats. Each morning I study the previous day's thoughts and results "
     "for learnings (/learnings) and use them in my opinions. Each saved note has Reparse and Remove buttons, and I keep "
     "your audio and its transcript so notes can be reparsed later.\n\n"
+    "🧾 End of day: send a summary of the bets you actually placed and why, "
+    "and tap \"Parse as end of day\" (or start a text with \"End of day "
+    "summary\"). Those become your bets, compared against your leans; I ask "
+    "about any recorded bet the summary leaves out.\n\n"
     "/games - today's and tomorrow's games; tap one for my opinion\n"
     "/recent - latest 10 picks and leans\n"
     "/stats - record, calibration, closing-line value, process, biases\n"
@@ -85,9 +91,28 @@ def choice_keyboard(entry_id: str) -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton("🧠 Parse", callback_data=f"parse:{entry_id}"),
                 InlineKeyboardButton("🗑 Trash", callback_data=f"trash:{entry_id}"),
+            ],
+            [
+                InlineKeyboardButton(
+                    "🧾 Parse as end of day", callback_data=f"summary:{entry_id}"
+                ),
+            ],
+        ]
+    )
+
+
+def omitted_keyboard(pick_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("✅ Still a bet", callback_data=f"keepbet:{pick_id}"),
+                InlineKeyboardButton("↩️ It was a lean", callback_data=f"waslean:{pick_id}"),
             ]
         ]
     )
+
+
+SUMMARY_TEXT = re.compile(r"^\W*end[\s-]*of[\s-]*(the[\s-]*)?day\b", re.IGNORECASE)
 
 
 def remove_keyboard(entry_id: str) -> InlineKeyboardMarkup:
@@ -575,10 +600,35 @@ class DecisionBot:
             audio_path.unlink(missing_ok=True)
             await query.edit_message_text("🗑 Trashed. The audio was deleted.")
             return
-        await query.edit_message_text("🧠 Transcribing and parsing…")
+        await query.edit_message_text(
+            "🧾 Transcribing and parsing your end-of-day summary…"
+            if action == "summary"
+            else "🧠 Transcribing and parsing…"
+        )
         context.application.create_task(
             self._process(entry_id, query.message, audio_path=audio_path)
         )
+
+    async def omitted_bet(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        del context
+        query = update.callback_query
+        await query.answer()
+        action, _, pick_id = str(query.data).partition(":")
+        if action == "keepbet":
+            pick = self.store.get_pick(pick_id)
+            if pick is None:
+                await query.edit_message_text("That bet no longer exists.")
+                return
+            await query.edit_message_text(f"✅ Kept as a bet:\n{describe_pick(pick)}")
+            return
+        try:
+            pick = self.store.make_lean(pick_id)
+        except LookupError as error:
+            await query.edit_message_text(str(error))
+            return
+        await query.edit_message_text(f"↩️ Changed to a lean:\n{describe_pick(pick)}")
 
     async def remove(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -646,14 +696,18 @@ class DecisionBot:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         message = update.message
+        summary = bool(SUMMARY_TEXT.match(message.text or ""))
         entry, created = self.store.create_entry(
             telegram_chat_id=update.effective_chat.id,
             telegram_message_id=message.message_id,
             audio_kind="text",
+            mode="summary" if summary else "note",
         )
         if not created:
             return
-        await message.reply_text("📝 Parsing…")
+        await message.reply_text(
+            "🧾 Parsing your end-of-day summary…" if summary else "📝 Parsing…"
+        )
         context.application.create_task(
             self._process(entry["id"], message, text=message.text)
         )
@@ -679,7 +733,9 @@ class DecisionBot:
                 recorded_at = parse_timestamp(
                     self.store.get_entry(entry_id)["created_at"]
                 )
-                clarification = self.store.get_entry(entry_id)["clarification"]
+                entry = self.store.get_entry(entry_id)
+                clarification = entry["clarification"]
+                summary = entry["mode"] == "summary"
                 # Reparsed or late-parsed notes use the lines from when they
                 # were recorded, not today's.
                 historic = utc_now() - recorded_at > HISTORIC_LINES_AFTER
@@ -691,7 +747,8 @@ class DecisionBot:
                         "No recent or upcoming NFL or NBA games were "
                         "available to match your picks"
                     )
-                extraction = await self.claude.extract(
+                parse = self.claude.summary if summary else self.claude.extract
+                extraction = await parse(
                     transcript,
                     events,
                     recorded_at=recorded_at,
@@ -706,15 +763,31 @@ class DecisionBot:
                     logged_at=recorded_at,
                     refresh_market=historic,
                 )
-                await message.reply_text(
-                    format_saved(
-                        picks,
-                        self.store.entry_notes(entry_id),
-                        transcript,
-                        self.store.entry_passes(entry_id),
-                    ),
-                    reply_markup=remove_keyboard(entry_id),
+                reply = format_saved(
+                    picks,
+                    self.store.entry_notes(entry_id),
+                    transcript,
+                    self.store.entry_passes(entry_id),
                 )
+                if summary:
+                    day = extraction.summary_day or max(
+                        (eastern_day(pick["commence_time"]) for pick in picks),
+                        default=(recorded_at - SUMMARY_DAY_ROLLOVER)
+                        .astimezone(EASTERN)
+                        .date()
+                        .isoformat(),
+                    )
+                    reply = f"🧾 End-of-day summary for {day}\n\n{reply}"
+                await message.reply_text(
+                    reply, reply_markup=remove_keyboard(entry_id)
+                )
+                if summary:
+                    for pick in self.store.omitted_bets(entry_id, day):
+                        await message.reply_text(
+                            "❓ Your end-of-day summary didn't mention this "
+                            f"bet:\n{describe_pick(pick)}\nIs it still a bet?",
+                            reply_markup=omitted_keyboard(pick["id"]),
+                        )
             except Exception as error:
                 log.exception("Entry %s failed", entry_id)
                 detail = str(error) or type(error).__name__
@@ -888,6 +961,7 @@ class DecisionBot:
                 for step in path
             ]
             record["logged_at"] = pick["created_at"]
+            record["from_end_of_day_summary"] = pick.get("entry_mode") == "summary"
             record["commence_time"] = pick["commence_time"]
             record["uncertainties"] = json.loads(pick["uncertainties_json"])
             game = self.store.game_record(
@@ -1229,7 +1303,12 @@ class DecisionBot:
             )
         application.add_handler(
             CallbackQueryHandler(
-                self.authorized(self.choose), pattern=r"^(parse|trash):"
+                self.authorized(self.choose), pattern=r"^(parse|trash|summary):"
+            )
+        )
+        application.add_handler(
+            CallbackQueryHandler(
+                self.authorized(self.omitted_bet), pattern=r"^(keepbet|waslean):"
             )
         )
         application.add_handler(

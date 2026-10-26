@@ -64,6 +64,22 @@ the next sync.
    as your number (`my_line_low`/`my_line_high`, in the selected team's
    spread or the projected total), shown as `[your number -9.5 to -8]`, and
    compared with BetOnline's line in reviews and `/games` opinions.
+
+   **End-of-day summary.** At the end of a day, send a summary of the bets you
+   actually placed and why, then tap **🧾 Parse as end of day** (or start a
+   text message with "End of day summary"). It is stored with
+   `entries.mode='summary'` and parsed by a separate prompt in which every
+   item is a placed bet (`commitment='pick'`) and becomes that game's final
+   position. Earlier leans stay in the path as superseded, so reviews and
+   daily learnings can judge whether the lean justified the bet. Summary bets
+   count even for games already graded, are never marked as logged after
+   start, and keep closing-line value. Line: the line you say; otherwise your
+   latest lean's line and price on that side; otherwise BetOnline's
+   (closing) line. A spoken price overrides. That day's learning is
+   regenerated. Mel then asks about each recorded bet on that day's games
+   that the summary did not mention: **✅ Still a bet** or **↩️ It was a
+   lean**. The second button makes it a lean, adds a clarification to its
+   note so a reparse agrees, and re-queues its review.
 3. **Market tracking (BetOnline only, no API credits).** Mel never calls The
    Odds API. It reads BetOnline lines from the `nfl_games` / `nba_games` tabs
    of telegram-channel-forwarder's intake workbook (written by its

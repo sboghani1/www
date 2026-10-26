@@ -4,7 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
-from decision_helper.bot import DecisionBot, format_stats
+from decision_helper.bot import SUMMARY_TEXT, DecisionBot, eastern_day, format_stats
 from decision_helper.config import Config
 from decision_helper.models import (
     DailyLearning,
@@ -12,6 +12,7 @@ from decision_helper.models import (
     FinalGame,
     Opinion,
     extraction_from_payload,
+    summary_from_payload,
     timestamp,
 )
 from decision_helper.models import parse_timestamp as parse_ts
@@ -170,8 +171,8 @@ def run_voice(bot: DecisionBot, update, choice: str = "parse") -> None:
 
 
 async def tap(bot, update, markup, choice, context):
-    data = {button.text: button.callback_data for button in markup.inline_keyboard[0]}
-    button = data["🧠 Parse" if choice == "parse" else "🗑 Trash"]
+    data = {button.text: button.callback_data for row in markup.inline_keyboard for button in row}
+    button = data[{"parse": "🧠 Parse", "trash": "🗑 Trash", "summary": "🧾 Parse as end of day"}[choice]]
     query = SimpleNamespace(
         data=button,
         answer=AsyncMock(),
@@ -399,7 +400,7 @@ def test_v1_database_is_migrated(tmp_path: Path) -> None:
         r",\s*commitment TEXT.*?my_line_high REAL", "", schema["picks"], flags=re.S
     )
     v1_entries = re.sub(
-        r",\s*pregame INTEGER.*?clarification TEXT NOT NULL DEFAULT ''",
+        r",\s*pregame INTEGER.*?CHECK\(mode IN \('note','summary'\)\)",
         "",
         schema["entries"]
         .replace("'awaiting_choice',", "")
@@ -427,6 +428,7 @@ def test_v1_database_is_migrated(tmp_path: Path) -> None:
     latest = store.latest_entry()
     assert latest["transcript"] == "Patriots at Bears"
     assert latest["audio_suffix"] == ""
+    assert latest["mode"] == "note"
     with store.connect() as connection:
         assert "awaiting_choice" in connection.execute(
             "SELECT sql FROM sqlite_master WHERE name='entries'"
@@ -1204,3 +1206,86 @@ def test_daily_learnings_wait_for_9am_and_grading_then_feed_opinions(tmp_path: P
             "rules_to_try": ["Write a number before every side"],
         }
     ]
+
+
+def test_end_of_day_summary_turns_leans_into_bets_and_asks_about_omitted_bets(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    events = make_events(now)
+    bot = make_bot(tmp_path, events)
+    day = eastern_day(events[0].commence_time)
+    payload = extraction_payload()
+    payload["picks"] = [
+        dict(payload["picks"][0], commitment="lean"),
+        dict(payload["picks"][1], commitment="pick", line=47.5),
+    ]
+
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
+        return extraction_from_payload(payload, events)
+
+    bot.claude.extract = extract
+    run_voice(bot, voice_update(message_id=1))
+    earlier = timestamp(now - timedelta(hours=1))
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE entries SET created_at=?", (earlier,))
+        connection.execute("UPDATE picks SET created_at=?, next_result_check_at=?", (earlier, earlier))
+        connection.execute("UPDATE picks SET price_at_pick=-105 WHERE selection='Buffalo Bills'")
+        connection.commit()
+    bot.espn.finals = [
+        FinalGame("401", "nfl", events[0].commence_time, "Buffalo Bills", "Kansas City Chiefs", 24, 26),
+    ]
+    asyncio.run(bot.sync_results())
+    asyncio.run(bot.sync_reviews())
+    with bot.store.connect() as connection:
+        connection.execute("INSERT INTO daily_learnings VALUES (?, '{}', ?)", (day, earlier))
+        connection.commit()
+
+    async def summary(transcript, events, recorded_at=None, prior_views=None, clarification=""):
+        bet = dict(extraction_payload()["picks"][0], line=None, my_line_low=None, my_line_high=None)
+        return summary_from_payload({"day": day, "bets": [dict(bet, reasoning="$50, Chiefs secondary")]}, events)
+
+    bot.claude.summary = summary
+    update = voice_update(message_id=2)
+    run_voice(bot, update, choice="summary")
+
+    replies = update.message.reply_text.await_args_list
+    assert replies[1].args[0].startswith(f"🧾 End-of-day summary for {day}")
+    omitted = replies[-1]
+    assert "didn't mention this bet" in omitted.args[0] and "Under 47.5" in omitted.args[0]
+
+    def rows():
+        with bot.store.connect() as connection:
+            return [dict(row) for row in connection.execute("SELECT * FROM picks WHERE status!='void' ORDER BY created_at")]
+
+    lean, under, bet = rows()
+    assert (lean["commitment"], lean["role"]) == ("lean", "superseded")
+    assert (bet["commitment"], bet["role"], bet["status"]) == ("pick", "final", "open")
+    # The bet was taken at the lean's line and price.
+    assert (bet["line"], bet["line_source"], bet["price_at_pick"]) == (3.0, "spoken", -105)
+    assert (bet["my_line_low"], bet["my_line_high"], bet["logged_after_start"]) == (3.5, 4.5, 0)
+    assert bot.store.entry_for_message(1, 2)["mode"] == "summary"
+    with bot.store.connect() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM daily_learnings").fetchone()[0] == 0
+        connection.execute("UPDATE picks SET next_result_check_at=? WHERE status='open'", (earlier,))
+        connection.commit()
+    asyncio.run(bot.sync_results())
+    asyncio.run(bot.sync_reviews())
+    assert bot.claude.reviews[-1]["from_end_of_day_summary"] is True
+    assert next(p for p in rows() if p["id"] == bet["id"])["result"] == "win"
+
+    async def answer(action):
+        data = {b.text: b.callback_data for b in omitted.kwargs["reply_markup"].inline_keyboard[0]}[action]
+        query = SimpleNamespace(data=data, answer=AsyncMock(), edit_message_text=AsyncMock())
+        await bot.omitted_bet(SimpleNamespace(callback_query=query), None)
+        return query.edit_message_text.await_args.args[0]
+
+    assert asyncio.run(answer("✅ Still a bet")).startswith("✅ Kept as a bet:")
+    assert asyncio.run(answer("↩️ It was a lean")).startswith("↩️ Changed to a lean:")
+    under = next(p for p in rows() if p["id"] == under["id"])
+    assert (under["commitment"], under["analysis_status"]) == ("lean", "pending")
+    assert bot.store.entry_for_message(1, 1)["clarification"] == "Under 47.5 was a lean, not a bet."
+
+
+def test_end_of_day_text_prefix() -> None:
+    assert SUMMARY_TEXT.match("End of day summary: bet the Bills")
+    assert SUMMARY_TEXT.match("end-of-the-day: two bets")
+    assert not SUMMARY_TEXT.match("Bills plus three, end of day call")

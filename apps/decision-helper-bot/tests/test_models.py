@@ -7,6 +7,7 @@ from decision_helper.models import (
     implied_probability,
     learning_from_payload,
     review_from_payload,
+    summary_from_payload,
     team_matches,
 )
 from helpers import extraction_payload, make_events
@@ -128,3 +129,16 @@ def test_learning_validation() -> None:
         learning_from_payload({"summary": ""})
     with pytest.raises(ValueError):
         learning_from_payload({"summary": "x", "worked": "not a list"})
+
+
+def test_summary_bets_are_final_bets_with_optional_price() -> None:
+    bet = dict(extraction_payload()["picks"][0], commitment="lean", role="earlier", price=-105)
+    summary = summary_from_payload({"day": "2026-10-25", "bets": [bet]}, make_events())
+    pick = summary.picks[0]
+    assert (pick.commitment, pick.role, pick.price) == ("pick", "final", -105)
+    assert summary.summary_day == "2026-10-25"
+    assert summary_from_payload({"day": "yesterday", "bets": []}, make_events()).summary_day == ""
+    with pytest.raises(ValueError, match="bets must be an array"):
+        summary_from_payload({"picks": [bet]}, make_events())
+    with pytest.raises(ValueError, match="price"):
+        summary_from_payload({"bets": [dict(bet, price=-50)]}, make_events())
