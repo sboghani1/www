@@ -80,8 +80,8 @@ HELP_TEXT = (
     "for learnings (/learnings) and use them in my opinions. Each saved note has Reparse and Remove buttons, and I keep "
     "your audio and its transcript so notes can be reparsed later.\n\n"
     "🧾 End of day: send a summary of the bets you actually placed and why, "
-    "and tap \"Parse as end of day\" (or start a text with \"End of day "
-    "summary\"). Those become your bets, compared against your leans; I ask "
+    "and tap \"Parse as end of day\" (or just start the note or text with "
+    "\"End of day summary\"). Those become your bets, compared against your leans; I ask "
     "about any recorded bet the summary leaves out.\n\n"
     "/games - today's and tomorrow's games; tap one for my opinion\n"
     "/recent - latest 10 picks and leans\n"
@@ -797,6 +797,10 @@ class DecisionBot:
                     self.store.set_transcript(entry_id, transcript)
                 else:
                     transcript = text
+                # A spoken "End of day summary…" is a summary even if the
+                # plain Parse button was tapped.
+                if SUMMARY_TEXT.match(transcript):
+                    self.store.mark_summary(entry_id)
                 recorded_at = parse_timestamp(
                     self.store.get_entry(entry_id)["created_at"]
                 )

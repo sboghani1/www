@@ -1292,6 +1292,27 @@ def test_end_of_day_text_prefix() -> None:
     assert not SUMMARY_TEXT.match("Bills plus three, end of day call")
 
 
+def test_spoken_end_of_day_summary_is_a_summary_even_after_plain_parse(tmp_path: Path) -> None:
+    events = make_events()
+    bot = make_bot(tmp_path, events)
+    bot.transcriber.transcribe = lambda path: "End of day summary. I bet the Bills plus three."
+    used = []
+
+    async def summary(transcript, events, recorded_at=None, prior_views=None, clarification=""):
+        used.append(transcript)
+        bet = extraction_payload()["picks"][0]
+        return summary_from_payload({"day": eastern_day(events[0].commence_time), "bets": [bet]}, events)
+
+    bot.claude.summary = summary
+    update = voice_update()
+    run_voice(bot, update, choice="parse")
+
+    assert used == ["End of day summary. I bet the Bills plus three."]
+    entry = bot.store.latest_entry()
+    assert (entry["mode"], entry["pregame"]) == ("summary", 1)
+    assert update.message.reply_text.await_args_list[-1].args[0].startswith("🧾 End-of-day summary for")
+
+
 def test_lean_tied_to_an_assumed_line_follows_the_number_at_the_real_line(tmp_path: Path) -> None:
     events = make_events()
     bot = make_bot(tmp_path, events)

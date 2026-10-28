@@ -426,6 +426,15 @@ class DecisionStore:
             )
             connection.commit()
 
+    def mark_summary(self, entry_id: str) -> None:
+        with self.connect() as connection:
+            connection.execute(
+                "UPDATE entries SET mode='summary', pregame=1, updated_at=? "
+                "WHERE id=?",
+                (timestamp(utc_now()), entry_id),
+            )
+            connection.commit()
+
     def fail_entry(self, entry_id: str, error: str) -> None:
         with self.connect() as connection:
             connection.execute(

@@ -92,7 +92,8 @@ the next sync.
 
    **End-of-day summary.** At the end of a day, send a summary of the bets you
    actually placed and why, then tap **🧾 Parse as end of day** (or start a
-   text message with "End of day summary"). It is stored with
+   text message or voice note with "End of day summary"; a spoken one is
+   still treated as a summary if you tap the plain Parse button). It is stored with
    `entries.mode='summary'` and parsed by a separate prompt in which every
    item is a placed bet (`commitment='pick'`) and becomes that game's final
    position. Earlier leans stay in the path as superseded, so reviews and
