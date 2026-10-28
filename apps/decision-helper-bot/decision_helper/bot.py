@@ -200,6 +200,8 @@ def describe_pick(pick: dict[str, Any]) -> str:
         if gap:
             detail += f"; BetOnline {abs(gap):g} {unit[0] if gap > 0 else unit[1]}"
         detail += "]"
+    elif pick.get("expected_line_words"):
+        detail += f" [you expected: “{pick['expected_line_words']}”]"
     low, high = pick.get("my_line_low"), pick.get("my_line_high")
     if low is not None:
         detail += f" [you project {projection(pick, low, high)}]"
@@ -230,6 +232,8 @@ def format_saved(
     notes: list[dict[str, Any]],
     transcript: str,
     passes: list[dict[str, Any]] | None = None,
+    *,
+    flag_missing: bool = True,
 ) -> str:
     passes = passes or []
     excerpt = " ".join(transcript.split())
@@ -277,6 +281,24 @@ def format_saved(
                 f"• {note['sport'].upper()} · {note['away_team']} @ "
                 f"{note['home_team']} ({label}): {note['summary']}"
             )
+    missing = [
+        pick
+        for pick in picks
+        if flag_missing
+        and pick.get("role") != "superseded"
+        and pick["pick_type"] != "total"
+        and pick.get("expected_line") is None
+    ]
+    if missing:
+        lines.append("")
+        lines.append("❓ No expected spread heard:")
+        for pick in missing:
+            said = pick.get("expected_line_words")
+            lines.append(
+                f"• {pick['away_team']} @ {pick['home_team']}"
+                + (f" (you said “{said}”)" if said else "")
+            )
+        lines.append("If you had one, send an updated note with it.")
     return "\n".join(lines)
 
 
@@ -813,6 +835,7 @@ class DecisionBot:
                     self.store.entry_notes(entry_id),
                     transcript,
                     self.store.entry_passes(entry_id),
+                    flag_missing=not summary,
                 )
                 if summary:
                     day = extraction.summary_day or max(
@@ -980,6 +1003,7 @@ class DecisionBot:
                     "my_line_low",
                     "my_line_high",
                     "expected_line",
+                    "expected_line_words",
                     "confidence_probability",
                     "confidence_label",
                     "reasoning",

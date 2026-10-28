@@ -190,7 +190,8 @@ class DecisionStore:
                     spread_at_pick REAL,
                     my_line_low REAL,
                     my_line_high REAL,
-                    expected_line REAL
+                    expected_line REAL,
+                    expected_line_words TEXT NOT NULL DEFAULT ''
                 );
 
                 CREATE INDEX IF NOT EXISTS picks_status_result
@@ -309,6 +310,11 @@ class DecisionStore:
                     "UPDATE picks SET expected_line=(my_line_low+my_line_high)/2, "
                     "my_line_low=NULL, my_line_high=NULL "
                     "WHERE my_line_low IS NOT NULL"
+                )
+            if "expected_line_words" not in columns:
+                connection.execute(
+                    "ALTER TABLE picks ADD COLUMN expected_line_words TEXT "
+                    "NOT NULL DEFAULT ''"
                 )
             stale_before = timestamp(utc_now() - timedelta(hours=1))
             now = timestamp(utc_now())
@@ -494,6 +500,7 @@ class DecisionStore:
                 price = quote.price if quote is not None else None
                 my_low, my_high = pick.my_line_low, pick.my_line_high
                 expected = pick.expected_line
+                expected_words = pick.expected_line_words
                 view = (
                     _latest_view(connection, entry_id, event, pick, before=logged)
                     if summary
@@ -508,8 +515,9 @@ class DecisionStore:
                         price = view["price_at_pick"]
                     if my_low is None:
                         my_low, my_high = view["my_line_low"], view["my_line_high"]
-                    if expected is None:
+                    if expected is None and not expected_words:
                         expected = view["expected_line"]
+                        expected_words = view["expected_line_words"]
                 if line is None and quote is not None and quote.point is not None:
                     line = quote.point
                     line_source = "market"
@@ -538,11 +546,11 @@ class DecisionStore:
                         next_result_check_at, analysis_status, created_at,
                         commitment, ordinal, logged_after_start,
                         spread_team, spread_at_pick, my_line_low, my_line_high,
-                        expected_line
+                        expected_line, expected_line_words
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                         'open', ?, ?, ?, ?, ?, 'not_ready', ?, ?, ?, ?, ?, ?,
-                        ?, ?, ?
+                        ?, ?, ?, ?
                     )
                     """,
                     (
@@ -579,6 +587,7 @@ class DecisionStore:
                         my_low,
                         my_high,
                         expected,
+                        expected_words,
                     ),
                 )
                 if quote is not None:
@@ -1830,6 +1839,7 @@ def _decision_dict(row: Any, detailed: bool) -> dict[str, Any]:
         "my_number": _my_number(row),
         "number_edge": pick_edge(row),
         "expected_line": row["expected_line"],
+        "expected_line_words": row["expected_line_words"],
         "line_vs_expected": pick_expected_gap(row),
         "reasoning": row["reasoning"],
         "uncertainties": json.loads(row["uncertainties_json"]),

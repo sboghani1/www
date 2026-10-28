@@ -93,6 +93,8 @@ class ExtractedPick:
     my_line_high: float | None = None
     # The speaker's blind guess of the market line, in the same terms.
     expected_line: float | None = None
+    # Their words about the expected line when they gave no number.
+    expected_line_words: str = ""
     # American odds the speaker says they got (end-of-day bet summaries).
     price: int | None = None
     # The side was tied to an assumed line ("Grizzlies, assuming +3.5").
@@ -285,6 +287,13 @@ def extraction_from_payload(
                 my_line_low=my_low,
                 my_line_high=my_high,
                 expected_line=expected,
+                expected_line_words=""
+                if expected is not None
+                else _text(
+                    raw.get("expected_line_words") or "",
+                    f"picks[{index}].expected_line_words",
+                    required=False,
+                ),
                 price=int(price) if price is not None else None,
                 conditional=raw.get("conditional_on_line") is True
                 and pick_type != "winner",

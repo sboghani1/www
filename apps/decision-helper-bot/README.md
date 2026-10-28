@@ -76,6 +76,12 @@ the next sync.
    by about 10"), is saved on the side your projection favors at BetOnline's
    actual line, with a note in its reasoning. Numbers saved before
    `expected_line` existed were guesses of the line and were moved there.
+   When you describe the expected line only in words ("small home
+   favorites", "bigger than I thought"), the words are kept as
+   `expected_line_words`, never converted to a number, and treated as a
+   directional read separate from games with a stated spread. The saved reply
+   then lists `❓ No expected spread heard` for each such side, so you can send
+   an updated note with the number if you have one (the newest view wins).
 
    Tracked pickers' views you cite (follows, fades, switches, pool
    consensus) are kept in the reasoning and treated as evidence, not a flaw.

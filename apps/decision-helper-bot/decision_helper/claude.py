@@ -89,6 +89,12 @@ BETTOR_METHOD = """How this bettor works:
   (a trap, news) or that they found value; learn which from results. The
   expected line is not their fair number, so never call it "their number"
   or ask them to reconcile it with their margin or win probability.
+- expected_line_words holds their expectation in words when they gave no
+  number ("small home favorites", "bigger than the line"). Use it as a
+  directional read only, as said: never convert it to a number, and keep
+  those decisions separate from ones with a numeric expected_line when
+  tallying gaps or patterns. Never ask them to state numbers they did not
+  give; the application already asks.
 - In NFL notes they track other pickers (named handicappers, fades of
   specific pickers, pool consensus, picker switches and those pickers'
   records). These signals are legitimate evidence, not a flaw: the goal is to
@@ -137,7 +143,15 @@ probability ("70% chance to win") is confidence, not a moneyline choice, and
   favorites", "assuming they're +3.5", "total around 235"). It is never the
   line. Express it in the pick's terms: the selected team's spread (negative
   = favored; if they say the opponent should be -3.5, the selection's is
-  +3.5), or total points; the midpoint of a range; null if none.
+  +3.5), or total points; the midpoint of a range; null if none. The speaker
+  almost always states one, so search the whole note for each game's spoken
+  number, including words ("minus two", "three and a half", "pick-up" or
+  "pick'em" = 0) and numbers said in another sentence or after the side.
+  Use only a number they actually said; never turn size words ("small",
+  "medium-sized", "bigger than that") into a number.
+- "expected_line_words": when they describe the expected line without a
+  number, their words, quoted concisely ("Nets small home favorites",
+  "Lakers slightly bigger home favorites than I thought"); otherwise "".
 - "my_line_low"/"my_line_high": their projected result only, never the
   expected line or the win probability. For a side, the selected team's
   margin in spread terms: "win by about 10" is -10, "win by 7 or 8" is -8 to
@@ -208,6 +222,7 @@ Return one JSON object and no prose:
       "my_line_low": 0.0|null,
       "my_line_high": 0.0|null,
       "expected_line": 0.0|null,
+      "expected_line_words": "",
       "conditional_on_line": false,
       "commitment": "pick|lean",
       "role": "final|earlier",

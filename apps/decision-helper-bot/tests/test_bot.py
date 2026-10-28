@@ -1355,3 +1355,29 @@ def test_saved_reply_flags_a_side_against_your_number(tmp_path: Path) -> None:
     assert "⚠️ your projection favors Chiefs by 4 at this line" in update.message.reply_text.await_args_list[1].args[0]
     record = bot.store.game_record("nfl", "Buffalo Bills", "Kansas City Chiefs", events[0].commence_time)
     assert record["decisions"][0]["number_edge"] == -4
+
+
+def test_saved_reply_asks_for_a_missing_expected_spread(tmp_path: Path) -> None:
+    events = make_events()
+    bot = make_bot(tmp_path, events)
+    payloads = [
+        bills_note(commitment="lean", expected_line_words="Chiefs small home favorites"),
+        bills_note(commitment="lean", expected_line=1.5, expected_line_words="ignored"),
+    ]
+
+    async def extract(transcript, events, recorded_at=None, prior_views=None, clarification=""):
+        return extraction_from_payload(payloads.pop(0), events)
+
+    bot.claude.extract = extract
+    first = voice_update(message_id=1)
+    run_voice(bot, first)
+    reply = first.message.reply_text.await_args_list[1].args[0]
+    assert "[you expected: “Chiefs small home favorites”]" in reply
+    assert "❓ No expected spread heard:\n• Buffalo Bills @ Kansas City Chiefs (you said “Chiefs small home favorites”)" in reply
+    record = bot.store.game_record("nfl", "Buffalo Bills", "Kansas City Chiefs", events[0].commence_time)
+    assert record["decisions"][0]["expected_line_words"] == "Chiefs small home favorites"
+    assert record["decisions"][0]["expected_line"] is None
+    second = voice_update(message_id=2)
+    run_voice(bot, second)
+    reply = second.message.reply_text.await_args_list[1].args[0]
+    assert "❓" not in reply and "ignored" not in reply
