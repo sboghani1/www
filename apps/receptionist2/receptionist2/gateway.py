@@ -13,6 +13,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from telegram import (
+    BotCommand,
+    BotCommandScopeAllPrivateChats,
+    BotCommandScopeChat,
     ForceReply,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -50,6 +53,12 @@ from .investigation import investigation_prompt
 from .nfl_audio import audio_review_prompt, remove_audio_files, telegram_audio
 from .resources import resource_summary
 from .scheduling import next_run
+from .tombstone import (
+    continuation_name,
+    resume_prompt,
+    tombstone_path,
+    write_prompt,
+)
 from .voice import transcript_preview, voice_prompt
 
 logging.basicConfig(
@@ -64,6 +73,36 @@ DIAGNOSE_PATTERN = re.compile(rf"^deploy:diagnose:{UUID}$")
 RETRY_PATTERN = re.compile(rf"^r2:retry:{UUID}$")
 NEW_CHAT_CALLBACK = "r2:newchat"
 VOICE_PATTERN = re.compile(rf"^r2:voice:(?:run|trash):{UUID}$")
+TOMB_PATTERN = re.compile(rf"^r2:tomb:(?:new|del|delyes|keep):{UUID}$")
+# The ☰ menu. Every command still works when typed; these are the common ones.
+PRIVATE_MENU = (
+    ("new", "Start a new conversation"),
+    ("tombstone", "Hand this chat off to a fresh one"),
+    ("instructions", "Standing instructions for this chat"),
+    ("chats", "Chat topics in the group"),
+    ("sessions", "List conversations"),
+    ("switch", "Switch conversation"),
+    ("status", "Queue, worker, and session status"),
+    ("stop", "Stop the active run"),
+    ("model", "Model for new runs"),
+    ("effort", "Effort for new runs"),
+    ("topics", "Recent topics and context usage"),
+    ("recover", "Reconcile stuck work"),
+    ("investigate", "Structured investigation run"),
+    ("schedules", "Recurring tasks"),
+    ("help", "All commands"),
+)
+GROUP_MENU = (
+    ("tombstone", "Hand this chat off to a fresh one"),
+    ("instructions", "Standing instructions for this chat"),
+    ("new", "Open a new chat: /new <name>"),
+    ("chats", "Every chat and its state"),
+    ("status", "Status of this chat"),
+    ("stop", "Stop this chat's run"),
+    ("model", "Model for this chat"),
+    ("effort", "Effort for this chat"),
+    ("help", "All commands"),
+)
 TRANSCRIBE_TIMEOUT_SECONDS = 15 * 60
 INSTRUCTIONS_MAX_CHARS = 3500
 HUB_NAME = "📋 Chats"
@@ -126,7 +165,9 @@ HELP_TEXT = (
     "Voice notes and audio files are transcribed on the server; tap Run to "
     "send the transcript to this chat's agent or Trash to delete it.\n\n"
     "/instructions [text|skill path|clear] — standing instructions every run "
-    "in this chat follows\n\n"
+    "in this chat follows\n"
+    "/tombstone — write everything about this chat to a file, then continue "
+    "in a fresh chat that starts from it and delete this one\n\n"
     "Any other text is passed unchanged as the next agent prompt.\n\n"
     "/chats — every chat topic in the Receptionist2 group and its state. "
     "In the group, each topic is its own conversation: type a name in "
@@ -295,6 +336,7 @@ class Gateway:
         )
         for note in self.database.transcribing_voice_notes():
             self._start_transcription(application.bot, note)
+        await self._set_menus(application.bot)
         if self.config.group_chat_id:
             try:
                 await self.ensure_hub(application.bot)
@@ -304,6 +346,20 @@ class Gateway:
                     "with Manage Topics and Pin Messages?): %s",
                     error,
                 )
+
+    async def _set_menus(self, bot) -> None:
+        try:
+            await bot.set_my_commands(
+                [BotCommand(*item) for item in PRIVATE_MENU],
+                scope=BotCommandScopeAllPrivateChats(),
+            )
+            if self.config.group_chat_id:
+                await bot.set_my_commands(
+                    [BotCommand(*item) for item in GROUP_MENU],
+                    scope=BotCommandScopeChat(self.config.group_chat_id),
+                )
+        except TelegramError as error:
+            log.warning("Could not set the command menu: %s", error)
 
     def hub_thread(self) -> int | None:
         value = self.database.get_state(
@@ -375,7 +431,9 @@ class Gateway:
             if "not modified" not in str(error).lower():
                 raise
 
-    async def open_topic(self, bot, *, user_id: int, name: str) -> dict:
+    async def open_topic(
+        self, bot, *, user_id: int, name: str, greeting: str | None = None
+    ) -> dict:
         """A new chat topic named with a fruit and the user's name for it."""
         chat_id = self.config.group_chat_id
         name = self._fruit_name(user_id, name)
@@ -391,7 +449,7 @@ class Gateway:
         try:
             await bot.send_message(
                 chat_id,
-                f"{name} is ready. Send your first message here.",
+                greeting or f"{name} is ready. Send your first message here.",
                 message_thread_id=topic.message_thread_id,
             )
         except TelegramError as error:
@@ -1802,6 +1860,213 @@ class Gateway:
             raise
         self.database.set_voice_note_run(note_id, run["id"])
 
+    async def tombstone(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        """Have this chat write a handoff file for a fresh chat."""
+        session = self.context_session(update)
+        if session is None:
+            await self._topic_only(update, "/tombstone")
+            return
+        path = tombstone_path(
+            self.config.tombstone_dir, session["id"], datetime.now(UTC)
+        )
+        run = self.database.enqueue_run(
+            session_id=session["id"],
+            user_id=update.effective_user.id,
+            chat_id=update.effective_chat.id,
+            source="message",
+            prompt=write_prompt(path, session["display_name"]),
+        )
+        self.database.update_session(
+            session["id"], tombstone_path=str(path), tombstone_run_id=run["id"]
+        )
+        await update.message.reply_text(
+            f"🪦 Writing the tombstone for {session['display_name']} · run "
+            f"{run['id'][:8]}. When it's saved you can continue in a new chat."
+        )
+
+    async def tomb_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        query = update.callback_query
+        _, _, action, session_id = str(query.data).split(":", 3)
+        try:
+            old = self.database.get_session(session_id)
+        except LookupError:
+            await query.answer("That chat no longer exists.")
+            return
+        if action == "new":
+            await self._continue_from_tombstone(update, context, old)
+        elif action == "del":
+            await query.answer()
+            await query.edit_message_text(
+                f"Delete {old['display_name']}? "
+                + (
+                    "This removes all of its messages permanently."
+                    if old["telegram_thread_id"]
+                    else "The session is archived and can't be switched to."
+                )
+                + f" The tombstone stays at {old['tombstone_path']}.",
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "🗑 Yes, delete",
+                                callback_data=f"r2:tomb:delyes:{session_id}",
+                            ),
+                            InlineKeyboardButton(
+                                "Keep", callback_data=f"r2:tomb:keep:{session_id}"
+                            ),
+                        ]
+                    ]
+                ),
+            )
+        elif action == "keep":
+            await query.answer("Kept.")
+            await query.edit_message_text(
+                self._continued_text(old), reply_markup=self._delete_markup(old)
+            )
+        else:
+            await self._delete_chat(update, context, old)
+
+    def _continued_text(self, old: dict) -> str:
+        successor = self.database.get_session(old["successor_session_id"])
+        where = (
+            topic_link(
+                int(successor["telegram_chat_id"]),
+                int(successor["telegram_thread_id"]),
+            )
+            if successor["telegram_thread_id"]
+            else f"session {successor['id'][:8]}, now the active one here"
+        )
+        return (
+            f"🪦 Tombstone saved:\n{old['tombstone_path']}\n\n"
+            f"➕ Continued in {successor['display_name']}: {where}"
+        )
+
+    @staticmethod
+    def _delete_markup(old: dict) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "🗑 Delete this chat",
+                        callback_data=f"r2:tomb:del:{old['id']}",
+                    )
+                ]
+            ]
+        )
+
+    async def _continue_from_tombstone(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE, old: dict
+    ) -> None:
+        query = update.callback_query
+        if old.get("successor_session_id"):
+            await query.answer("Already continued.")
+            await query.edit_message_text(
+                self._continued_text(old), reply_markup=self._delete_markup(old)
+            )
+            return
+        path = old.get("tombstone_path")
+        if not path or not Path(path).is_file():
+            await query.answer("The tombstone file is missing.", show_alert=True)
+            return
+        user_id = update.effective_user.id
+        name = continuation_name(
+            old["display_name"].split(" ", 1)[1]
+            if old["telegram_thread_id"] and has_fruit(old["display_name"])
+            else old["display_name"]
+        )
+        if old["telegram_thread_id"]:
+            try:
+                new = await self.open_topic(
+                    context.bot,
+                    user_id=user_id,
+                    name=name,
+                    greeting=(
+                        f"🪦 Continuing from {old['display_name']}'s tombstone. "
+                        "Reading it now…"
+                    ),
+                )
+            except TelegramError as error:
+                await query.answer(f"Could not open a topic: {error}", show_alert=True)
+                return
+            chat_id = self.config.group_chat_id
+        else:
+            chat_id = update.effective_chat.id
+            new = self.database.create_session(
+                user_id, chat_id, name=name, model=old["model"], effort=old["effort"]
+            )
+        self.database.set_session_runtime(
+            user_id, model=old["model"], effort=old["effort"], session_id=new["id"]
+        )
+        if old.get("instructions"):
+            self.database.set_session_instructions(new["id"], old["instructions"])
+        self.database.update_session(old["id"], successor_session_id=new["id"])
+        self.database.update_session(new["id"], predecessor_session_id=old["id"])
+        self.database.enqueue_run(
+            session_id=new["id"],
+            user_id=user_id,
+            chat_id=chat_id,
+            source="message",
+            prompt=resume_prompt(Path(path)),
+        )
+        await query.answer(f"Continuing in {new['display_name']}")
+        await query.edit_message_text(
+            self._continued_text(self.database.get_session(old["id"])),
+            reply_markup=self._delete_markup(old),
+        )
+
+    async def _delete_chat(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE, old: dict
+    ) -> None:
+        query = update.callback_query
+        if self.database.session_running(old["id"]):
+            await query.answer(
+                "This chat still has a queued or running run. Stop it first.",
+                show_alert=True,
+            )
+            return
+        if not old["telegram_thread_id"]:
+            if old["status"] == "active":
+                user = self.database.get_user_state(update.effective_user.id)
+                if user["active_session_id"] == old["id"]:
+                    await query.answer(
+                        "That is still the active session.", show_alert=True
+                    )
+                    return
+            self.database.update_session(old["id"], status="archived")
+            await query.answer("Archived.")
+            await query.edit_message_text(
+                f"🗑 Archived {old['display_name']}. The tombstone stays at "
+                f"{old['tombstone_path']}."
+            )
+            return
+        chat_id = int(old["telegram_chat_id"])
+        try:
+            await context.bot.delete_forum_topic(
+                chat_id, int(old["telegram_thread_id"])
+            )
+        except TelegramError as error:
+            await query.answer(f"Could not delete the topic: {error}", show_alert=True)
+            return
+        self.database.set_topic_open(chat_id, int(old["telegram_thread_id"]), False)
+        await query.answer("Deleted.")
+        successor_id = old.get("successor_session_id")
+        if successor_id:
+            successor = self.database.get_session(successor_id)
+            if successor["telegram_thread_id"]:
+                try:
+                    await context.bot.send_message(
+                        chat_id,
+                        f"🗑 Deleted {old['display_name']}. Its tombstone: "
+                        f"{old['tombstone_path']}",
+                        message_thread_id=int(successor["telegram_thread_id"]),
+                    )
+                except TelegramError as error:
+                    log.warning("Could not confirm the deletion: %s", error)
+
     async def instructions(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
@@ -2146,9 +2411,10 @@ def build_application(config: GatewayConfig) -> Application:
     ]
     commands.append(("chats", gateway.chats))
     commands.append(("instructions", gateway.instructions))
+    commands.append(("tombstone", gateway.tombstone))
     group_commands = {
         "help", "new", "stop", "status", "model", "effort", "chats",
-        "instructions",
+        "instructions", "tombstone",
     }
     for name, handler in commands:
         application.add_handler(
@@ -2176,6 +2442,12 @@ def build_application(config: GatewayConfig) -> Application:
         CallbackQueryHandler(
             gateway.authorized(gateway.voice_button, group=True),
             pattern=VOICE_PATTERN,
+        )
+    )
+    application.add_handler(
+        CallbackQueryHandler(
+            gateway.authorized(gateway.tomb_button, group=True),
+            pattern=TOMB_PATTERN,
         )
     )
     application.add_handler(

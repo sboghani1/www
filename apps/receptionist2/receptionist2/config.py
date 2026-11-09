@@ -41,6 +41,10 @@ class CommonConfig:
     def database_path(self) -> Path:
         return self.state_dir / "receptionist2.db"
 
+    @property
+    def tombstone_dir(self) -> Path:
+        return self.repo_root / ".receptionist" / "tombstones"
+
     @classmethod
     def from_env(cls) -> "CommonConfig":
         return cls(

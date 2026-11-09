@@ -303,6 +303,12 @@ class Database:
                 ("sessions", "title_pending", "INTEGER NOT NULL DEFAULT 0"),
                 # Standing per-chat instructions, set with /instructions.
                 ("sessions", "instructions", "TEXT"),
+                # Tombstone handoff: the latest tombstone and its run, and
+                # the chat that continues from it.
+                ("sessions", "tombstone_path", "TEXT"),
+                ("sessions", "tombstone_run_id", "TEXT"),
+                ("sessions", "successor_session_id", "TEXT"),
+                ("sessions", "predecessor_session_id", "TEXT"),
                 ("runs", "telegram_thread_id", "INTEGER"),
                 ("outbox", "telegram_thread_id", "INTEGER"),
             ):
@@ -2156,6 +2162,33 @@ class Database:
                     "ORDER BY created_at"
                 )
             ]
+
+    def update_session(self, session_id: str, **values: Any) -> None:
+        allowed = {
+            "tombstone_path",
+            "tombstone_run_id",
+            "successor_session_id",
+            "predecessor_session_id",
+            "status",
+        }
+        assert values and set(values) <= allowed, values
+        assignments = ", ".join(f"{key}=?" for key in values)
+        with self.connect() as connection:
+            connection.execute(
+                f"UPDATE sessions SET {assignments}, updated_at=? WHERE id=?",
+                (*values.values(), utc_now(), session_id),
+            )
+            connection.commit()
+
+    def session_running(self, session_id: str) -> bool:
+        with self.connect() as connection:
+            return bool(
+                connection.execute(
+                    "SELECT 1 FROM runs WHERE session_id=? "
+                    "AND status IN ('queued','running') LIMIT 1",
+                    (session_id,),
+                ).fetchone()
+            )
 
     def set_session_instructions(
         self, session_id: str, instructions: str | None

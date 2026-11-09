@@ -44,6 +44,7 @@ Primary bot:
 - `/chats` lists every chat topic in the Receptionist2 group with its state
 - `/instructions [text|skill path|clear]` sets standing instructions that
   every run in the current chat (private chat or topic) follows
+- `/tombstone` hands the current chat off to a fresh one (see Tombstones)
 
 Watchdog bot:
 
@@ -78,6 +79,24 @@ instead. Maintenance removes voice audio after 14 days.
 
 When the active session's context is nearly full, the gateway offers to start
 a new session before continuing.
+
+## Tombstones
+
+`/tombstone` (in the ☰ menu of the private chat and the group) queues a run
+in the current chat's own conversation that follows
+`skills/receptionist2-tombstone/SKILL.md` and writes everything about the
+chat (goal, quoted requirements, decisions, what was done, current state,
+open problems, next steps, pending questions, references) to
+`/home/receptionist/repos/.receptionist/tombstones/<session>-<time>.md`.
+When the file exists the chat offers **➕ Continue in a new chat**: a new
+topic named like the old one with a new fruit and `²` (`³`, …), or a new
+private session, with the same model, effort, and `/instructions`. Its first
+run reads the tombstone and replies `Picked up: … Next: …` without starting
+work. The old chat then offers **🗑 Delete this chat** (with confirmation;
+refused while it has queued or running runs). That deletes the topic and its
+messages, or archives a private session. Tombstone files are kept.
+
+The gateway sets the ☰ command menu for private chats and the group on start.
 
 ## Group chats
 

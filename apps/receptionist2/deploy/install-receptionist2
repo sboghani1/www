@@ -107,6 +107,8 @@ install -d -m 0700 -o receptionist2 -g receptionist2 \
 install -d -m 0750 -o root -g receptionist2-state /etc/receptionist2
 install -d -m 2770 -o receptionist-agent -g receptionist-ipc \
     "$workspace_root/.receptionist/deploy-requests"
+install -d -m 2770 -o receptionist-agent -g receptionist2-state \
+    "$workspace_root/.receptionist/tombstones"
 
 for unit in \
     receptionist2-gateway.service \

@@ -187,6 +187,8 @@ class Worker:
                         else {}
                     ),
                 )
+                if not recovered.get("is_error"):
+                    self._offer_continuation(self.database.get_run(run["id"]))
             else:
                 self._finish_run(
                     run["id"],
@@ -383,6 +385,7 @@ class Worker:
                 **common,
             )
             self._continue_investigation(run, result.final_response)
+            self._offer_continuation(run)
             return
         self._finish_run(
             run["id"],
@@ -469,6 +472,46 @@ class Worker:
             "queued.",
             kind="investigation",
             run_id=continuation["id"],
+        )
+
+    def _offer_continuation(self, run: dict[str, Any]) -> None:
+        """After a tombstone run, offer to continue in a fresh chat."""
+        if not run.get("session_id"):
+            return
+        session = self.database.get_session(run["session_id"])
+        path = session.get("tombstone_path")
+        # Matched by prompt, not run id, so /recover retries count too.
+        prompt = str(run.get("exact_prompt") or "")
+        if (
+            not path
+            or "Write the tombstone" not in prompt
+            or f"TOMBSTONE_PATH={path}" not in prompt
+        ):
+            return
+        chat_id = int(run["telegram_chat_id"])
+        if not Path(path).is_file():
+            self.database.enqueue_outbox(
+                chat_id,
+                f"❌ The tombstone was not written to {path}. Send /tombstone "
+                "again.",
+                kind="tombstone",
+                run_id=run["id"],
+            )
+            return
+        self.database.enqueue_outbox(
+            chat_id,
+            f"🪦 Tombstone saved:\n{path}\n\nContinue in a new chat with a "
+            "fresh context window that starts from it.",
+            kind="tombstone",
+            run_id=run["id"],
+            reply_markup=[
+                [
+                    {
+                        "text": "➕ Continue in a new chat",
+                        "callback_data": f"r2:tomb:new:{session['id']}",
+                    }
+                ]
+            ],
         )
 
     async def _watch_cancel(
