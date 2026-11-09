@@ -11,8 +11,15 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import (
+    BotCommand,
+    ForceReply,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Update,
+)
 from telegram.constants import ChatType
+from telegram.error import BadRequest
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -22,6 +29,19 @@ from telegram.ext import (
     filters,
 )
 
+from .bait import (
+    BaitStore,
+    board_keyboard,
+    confirmation_keyboard,
+    decode_line,
+    describe_bait,
+    format_bait_stats,
+    format_board,
+    format_confirmation,
+    format_latest,
+    latest_keyboard,
+    side_quote,
+)
 from .claude import ClaudeClient
 from .config import Config
 from .espn import EspnClient, match_final
@@ -90,7 +110,11 @@ HELP_TEXT = (
     "default; I write one each morning at 9 ET)\n"
     "/reparse - re-run parsing on your latest note, or reply /reparse to "
     "any of your notes\n"
-    "/void <id-prefix> - remove a mis-parsed open pick"
+    "/void <id-prefix> - remove a mis-parsed open pick\n\n"
+    "🎣 Bait: /bait shows the day's NBA lines; tap the side that looks too "
+    "easy to pass up. Tag why or reply to my confirmation with a reason "
+    "(optional). Tap 🔄 Latest line later: if the number moved, take the bait "
+    "again or pass. /baitstats shows which kinds of bait win and lose."
 )
 
 
@@ -533,6 +557,7 @@ class DecisionBot:
         self._processing = asyncio.Lock()
         self._sync = asyncio.Lock()
         self._learning_retry_at: datetime | None = None
+        self.baits = BaitStore(store)
 
     def authorized(self, handler: Handler) -> Handler:
         async def wrapped(
@@ -559,6 +584,7 @@ class DecisionBot:
 
     async def post_init(self, application: Application) -> None:
         self.store.initialize()
+        self.baits.initialize()
         self.config.audio_dir.mkdir(parents=True, exist_ok=True)
         identity = await application.bot.get_me()
         if identity.username != self.config.expected_username:
@@ -574,6 +600,8 @@ class DecisionBot:
                 BotCommand("learnings", "Learnings from a day of decisions"),
                 BotCommand("reparse", "Re-run parsing on the latest (or replied-to) note"),
                 BotCommand("void", "Remove a mis-parsed open pick"),
+                BotCommand("bait", "Today's NBA lines; mark the tempting side"),
+                BotCommand("baitstats", "Which kinds of bait win and lose"),
                 BotCommand("help", "How Mel works"),
             ]
         )
@@ -620,6 +648,11 @@ class DecisionBot:
             await message.reply_text(
                 "That audio is larger than Telegram's 20 MB bot download "
                 "limit. Split it into shorter voice notes."
+            )
+            return
+        if self._replied_bait(message) is not None:
+            context.application.create_task(
+                self._bait_voice_reason(message, media, suffix)
             )
             return
         entry, created = self.store.create_entry(
@@ -763,6 +796,8 @@ class DecisionBot:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         message = update.message
+        if await self._bait_reason(message, message.text or ""):
+            return
         summary = bool(SUMMARY_TEXT.match(message.text or ""))
         entry, created = self.store.create_entry(
             telegram_chat_id=update.effective_chat.id,
@@ -872,6 +907,7 @@ class DecisionBot:
         self,
         lines_as_of: datetime | None = None,
         day_offsets: range | None = None,
+        sports: tuple[str, ...] = ("nfl", "nba"),
     ) -> list[MarketEvent]:
         """ESPN games from the last few days through the next week, with
         BetOnline lines from the forwarder's sheet (no paid API calls).
@@ -879,6 +915,7 @@ class DecisionBot:
         ``lines_as_of`` swaps in the lines BetOnline showed at that time, and
         centers the window on it (a reparsed older note).
         ``day_offsets`` limits the ESPN days (ET, relative to today).
+        ``sports`` limits the leagues.
         """
         now = lines_as_of or utc_now()
         today = now.astimezone(EASTERN).date()
@@ -891,7 +928,7 @@ class DecisionBot:
         ]
         events: list[MarketEvent] = []
         failures: list[str] = []
-        for sport in ("nfl", "nba"):
+        for sport in sports:
             try:
                 sheet = await self.lines.fetch(sport, as_of=lines_as_of)
             except Exception as error:
@@ -944,6 +981,7 @@ class DecisionBot:
                 self.sync_results,
                 self.sync_reviews,
                 self.sync_learnings,
+                self.sync_baits,
             ):
                 try:
                     await step()
@@ -1356,6 +1394,270 @@ class DecisionBot:
             return
         await update.message.reply_text(f"Voided {describe_pick(pick)}")
 
+    # --- Bait tracker ----------------------------------------------------
+
+    async def bait_events(self) -> list[MarketEvent]:
+        """The NBA slate to bait: today's (ET) games, or tomorrow's once
+        every game today has tipped."""
+        events = await self.candidate_events(
+            day_offsets=range(0, 2), sports=("nba",)
+        )
+        now = utc_now()
+        days = sorted(
+            {
+                parse_timestamp(event.commence_time).astimezone(EASTERN).date()
+                for event in events
+                if parse_timestamp(event.commence_time) > now
+            }
+        )
+        if not days:
+            return []
+        return [
+            event
+            for event in events
+            if parse_timestamp(event.commence_time).astimezone(EASTERN).date()
+            == days[0]
+        ]
+
+    async def _bait_event(self, event_id: str) -> MarketEvent | None:
+        return next(
+            (
+                event
+                for event in await self.bait_events()
+                if event.id.startswith(event_id)
+            ),
+            None,
+        )
+
+    def _board(self, events: list[MarketEvent]) -> tuple[str, InlineKeyboardMarkup]:
+        baited = self.baits.baited_events(event.id for event in events)
+        now = utc_now()
+        return (
+            format_board(events, baited, now, EASTERN),
+            board_keyboard(events, baited, now),
+        )
+
+    async def bait_board(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        del context
+        try:
+            events = await self.bait_events()
+        except Exception as error:
+            log.exception("Bait board failed")
+            await update.message.reply_text(f"⚠️ Couldn't load NBA lines: {error}")
+            return
+        if not events:
+            await update.message.reply_text("No NBA games left today or tomorrow.")
+            return
+        text, keyboard = self._board(events)
+        await update.message.reply_text(text, reply_markup=keyboard)
+
+    async def bait_take(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        """A side tapped on the board (``bait``), again after a line check
+        (``baitre``), or dropped (``baitpass``)."""
+        del context
+        query = update.callback_query
+        source, side, line, event_id = str(query.data).split(":", 3)
+        try:
+            event = await self._bait_event(event_id)
+        except Exception as error:
+            log.exception("Bait lines failed")
+            await query.answer(f"Couldn't load NBA lines: {error}"[:200], show_alert=True)
+            return
+        if event is None or parse_timestamp(event.commence_time) <= utc_now():
+            await query.answer("That game has tipped off; bait closes at tip.", show_alert=True)
+            return
+        await query.answer()
+        team = event.away_team if side == "a" else event.home_team
+        # Record the number on the button you tapped; its price only if
+        # BetOnline still shows that number.
+        number = decode_line(line)
+        pick_type = "winner" if number is None else "spread"
+        current_type, current_line, price = side_quote(event, team)
+        if (current_type, current_line) != (pick_type, number):
+            price = None
+        bait, created = self.baits.record(
+            event,
+            action="pass" if source == "baitpass" else "take",
+            selection=team,
+            pick_type=pick_type,
+            line=number,
+            price=price,
+        )
+        try:
+            if source == "bait":
+                text, keyboard = self._board(await self.bait_events())
+                await query.edit_message_text(text, reply_markup=keyboard)
+            else:
+                await query.edit_message_reply_markup(reply_markup=None)
+        except BadRequest as error:  # unchanged message
+            log.info("Bait message not edited: %s", error)
+        if not created:
+            await query.message.reply_text(
+                "Already logged. Tap 🔄 Latest line on its confirmation to "
+                "check for a move."
+            )
+            return
+        sent = await query.message.reply_text(
+            format_confirmation(bait, self.baits.game_history(event.id), EASTERN),
+            reply_markup=confirmation_keyboard(bait),
+        )
+        self.baits.link_message(sent.message_id, bait["id"])
+
+    async def bait_latest(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        del context
+        query = update.callback_query
+        _, event_id = str(query.data).split(":", 1)
+        try:
+            event = await self._bait_event(event_id)
+        except Exception as error:
+            log.exception("Bait lines failed")
+            await query.answer(f"Couldn't load NBA lines: {error}"[:200], show_alert=True)
+            return
+        if event is None or parse_timestamp(event.commence_time) <= utc_now():
+            await query.answer("That game has tipped off; bait closes at tip.", show_alert=True)
+            return
+        history = self.baits.game_history(event.id)
+        if not history:
+            await query.answer("No bait on this game yet.", show_alert=True)
+            return
+        await query.answer()
+        text, _ = format_latest(event, history, EASTERN)
+        await query.message.reply_text(
+            text, reply_markup=latest_keyboard(event, history[-1])
+        )
+
+    async def bait_tag(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        del context
+        query = update.callback_query
+        _, tag, bait_id = str(query.data).split(":", 2)
+        try:
+            bait = self.baits.toggle_tag(bait_id, tag)
+        except (LookupError, ValueError) as error:
+            await query.answer(str(error), show_alert=True)
+            return
+        await query.answer()
+        await query.edit_message_text(
+            format_confirmation(bait, self.baits.game_history(bait["event_id"]), EASTERN),
+            reply_markup=confirmation_keyboard(bait),
+        )
+
+    async def bait_why(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        del context
+        query = update.callback_query
+        _, bait_id = str(query.data).split(":", 1)
+        bait = self.baits.get(bait_id)
+        if bait is None:
+            await query.answer("Bait not found", show_alert=True)
+            return
+        await query.answer()
+        prompt = await query.message.reply_text(
+            f"✍️ Why does {describe_bait(bait)} look so tempting? Type it or "
+            "send a voice note.",
+            reply_markup=ForceReply(input_field_placeholder="Why it's tempting"),
+        )
+        self.baits.link_message(prompt.message_id, bait_id)
+
+    def _replied_bait(self, message: Any) -> dict[str, Any] | None:
+        reply_to = getattr(message, "reply_to_message", None)
+        if reply_to is None:
+            return None
+        return self.baits.for_message(reply_to.message_id)
+
+    async def _bait_reason(self, message: Any, text: str) -> bool:
+        """A text reply to a bait confirmation or reason prompt is its
+        reason, not a note to parse."""
+        bait = self._replied_bait(message)
+        if bait is None or not text.strip():
+            return False
+        bait = self.baits.add_reason(bait["id"], text)
+        await self._confirm_reason(message, bait)
+        return True
+
+    async def _bait_voice_reason(self, message: Any, media: Any, suffix: str) -> None:
+        bait = self._replied_bait(message)
+        directory = self.config.state_dir / "bait-audio"
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / f"{bait['id']}-{message.message_id}{suffix}"
+        try:
+            telegram_file = await media.get_file()
+            await telegram_file.download_to_drive(custom_path=path)
+            async with self._processing:
+                text = await asyncio.to_thread(self.transcriber.transcribe, path)
+            if not text.strip():
+                raise RuntimeError("I couldn't hear any words")
+            bait = self.baits.add_reason(bait["id"], text)
+            await self._confirm_reason(message, bait)
+        except Exception as error:
+            log.exception("Bait voice reason failed")
+            detail = str(error) or type(error).__name__
+            await message.reply_text(f"⚠️ I couldn't save that reason: {detail[:300]}")
+        finally:
+            path.unlink(missing_ok=True)
+
+    async def _confirm_reason(self, message: Any, bait: dict[str, Any]) -> None:
+        await message.reply_text(
+            f"📝 Reason saved for {describe_bait(bait)}: "
+            f"{bait['reason'].replace(chr(10), ' · ')}"[:TELEGRAM_LIMIT]
+        )
+
+    async def bait_stats(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        del context
+        await update.message.reply_text(
+            format_bait_stats(self.baits.all(), EASTERN)[:TELEGRAM_LIMIT]
+        )
+
+    async def sync_baits(self) -> None:
+        """Save each baited side's closing number, then grade it."""
+        closes = self.baits.due_closes()
+        sheet: list[MarketEvent] | None = None
+        if closes:
+            try:
+                sheet = await self.lines.fetch("nba")
+            except Exception as error:  # grade anyway; the close waits
+                log.warning("Bait closing lines failed: %s", error)
+        if sheet is not None:
+            for bait in closes:
+                line = match_event(
+                    sheet,
+                    event_id=bait["event_id"],
+                    away_team=bait["away_team"],
+                    home_team=bait["home_team"],
+                    commence_time=bait["commence_time"],
+                )
+                side = "away" if bait["selection"] == bait["away_team"] else "home"
+                self.baits.record_close(bait["id"], line, side)
+        cache: dict[str, list[FinalGame]] = {}
+        for bait in self.baits.due_results():
+            date = (
+                parse_timestamp(bait["commence_time"])
+                .astimezone(EASTERN)
+                .strftime("%Y%m%d")
+            )
+            if date not in cache:
+                cache[date] = await self.espn.fetch_finals(bait["sport"], date)
+            game = match_final(
+                cache[date],
+                away_team=bait["away_team"],
+                home_team=bait["home_team"],
+                commence_time=bait["commence_time"],
+            )
+            if game is None:
+                self.baits.defer_result(bait["id"])
+            else:
+                self.baits.settle(bait["id"], game)
+
     def application(self) -> Application:
         application = (
             Application.builder()
@@ -1374,6 +1676,8 @@ class DecisionBot:
             ("learnings", self.learnings),
             ("reparse", self.reparse),
             ("void", self.void),
+            ("bait", self.bait_board),
+            ("baitstats", self.bait_stats),
         ):
             application.add_handler(
                 CommandHandler(name, self.authorized(handler))
@@ -1403,6 +1707,17 @@ class DecisionBot:
                 self.authorized(self.reparse_button), pattern=r"^reparse:"
             )
         )
+        for pattern, handler in (
+            (r"^bait:", self.bait_take),
+            (r"^baitre:", self.bait_take),
+            (r"^baitpass:", self.bait_take),
+            (r"^baitline:", self.bait_latest),
+            (r"^baittag:", self.bait_tag),
+            (r"^baitwhy:", self.bait_why),
+        ):
+            application.add_handler(
+                CallbackQueryHandler(self.authorized(handler), pattern=pattern)
+            )
         application.add_handler(
             MessageHandler(
                 filters.VOICE | filters.AUDIO | filters.Document.AUDIO,

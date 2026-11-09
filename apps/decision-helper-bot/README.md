@@ -173,6 +173,31 @@ receptionist's Opus agent, not with API billing:
    past days backfill automatically. Learnings are stored (not sent) and shown
    with `/learnings`.
 
+8. **Bait tracker (`/bait`).** A separate log of NBA sides that look too
+   easy to pass up, to learn which kinds of "easy" picks lose. `/bait` lists
+   the day's NBA games (ET; tomorrow's once every game today has tipped) with
+   BetOnline's spread for both sides. Tap the tempting side to log it at the
+   number on the button. A game with no spread is a pick'em, graded on the
+   moneyline. The confirmation has optional reason tags (star/big name,
+   number too cheap, hot team, opponent is bad, home/road spot, injury news,
+   bounce-back, rest/schedule) and **✍️ Add a reason**. A text or voice reply
+   to the confirmation or the reason prompt is saved as the reason (voice is
+   transcribed, and the audio is deleted). It never becomes a parsed note.
+   A baited game's board button becomes **🔄 Latest line**: Mel shows
+   whether the number moved since your last tap and offers both sides again
+   at the current number ("taking the bait" again is a new row with its own
+   line) or **🙅 Not tempted anymore**, which is graded as the side you
+   dropped. Bait closes at tip. After tip Mel saves BetOnline's closing
+   number for the side, and ESPN grades it. `/baitstats` shows records for
+   first looks vs. re-takes (better number, chased a worse number, switched
+   sides), favorite/underdog by spread size, home/away, whether the market
+   moved toward or away from the bait by tip, each tag, with/without a
+   written reason, and how passes would have done, plus the latest graded
+   bait with their reasons. Baits live in the `baits` table (every tap keeps
+   both sides' spreads, moneylines, and the total in `lines_json`). They are
+   separate from picks and leans and don't feed reviews, opinions, or
+   learnings.
+
 ## Bot commands
 
 - `/games` - today's and tomorrow's games; tap one for Mel's opinion
@@ -184,6 +209,8 @@ receptionist's Opus agent, not with API billing:
   `/reparse` to any of your voice/text notes to reparse that one (graded
   notes included; keeps the note's original time and line)
 - `/void <id-prefix>` - drop a mis-parsed open pick
+- `/bait` - the day's NBA lines; tap the side that looks too easy
+- `/baitstats` - which kinds of bait win and lose
 - **🔁 Reparse** (button on each saved note) - same as replying `/reparse`
 - **🗑 Remove this note** (button on each saved note) - deletes that note's
   picks/leans (even graded ones), attached game notes, transcript, and audio
