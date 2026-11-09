@@ -11,8 +11,11 @@ anything not written in it is lost.
 
 ## Writing (`TOMBSTONE_PATH=...` with "Write the tombstone")
 
-First follow `www/apps/receptionist2/skills/receptionist2-knowledge-transfer/SKILL.md`
-so the reusable lessons of this chat outlive it in `www/knowledge_base`.
+First prepare a knowledge-transfer proposal as described under "From a
+tombstone" in
+`www/apps/receptionist2/skills/receptionist2-knowledge-transfer/SKILL.md`, so
+the reusable lessons of this chat outlive it. Do not edit the knowledge base
+now; the user gives feedback on the proposal in the next chat.
 
 Then write one Markdown file at exactly `TOMBSTONE_PATH`, creating nothing
 else.
@@ -40,9 +43,12 @@ Use these sections, in order, and write "None." for an empty one:
 9. `## Pending questions` — anything waiting on the user.
 10. `## Key references` — files, docs, commands, and links the next agent
     should read first, including the knowledge-base topics that apply.
+11. `## Pending knowledge transfer` — the knowledge-transfer proposal (files
+    to add or edit, the learnings for each, and topic-boundary suggestions),
+    or "None."
 
-Then reply in a few lines: the path, a one-line summary, and the
-knowledge-base topics updated. Do not start any of the next steps.
+Then reply in two or three lines: the path and a one-line summary. Do not
+start any of the next steps.
 
 ## Resuming (`TOMBSTONE_PATH=...` with "Continue from the tombstone")
 
@@ -51,5 +57,7 @@ conversation: its requirements and preferences bind you as if the user had
 just said them. Check that anything it calls current (branches, running
 jobs, files) still holds before relying on it. Reply briefly with
 `Picked up:` (the goal and current state in one or two lines), `Next:` (the
-first next steps), and any pending questions. Do not start the next steps
-until the user replies.
+first next steps), and any pending questions. If the tombstone has a pending
+knowledge transfer, present that proposal and ask for feedback on it (Turn 2
+of the knowledge-transfer skill follows the user's answer). Do not start the
+next steps until the user replies.

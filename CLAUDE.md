@@ -5,8 +5,10 @@
 `knowledge_base/` holds reusable, general understanding of this repo and its
 infrastructure. Read `knowledge_base/0index.md` first and then the topics
 relevant to your task. Record new reusable learnings there by following
-`apps/receptionist2/skills/receptionist2-knowledge-transfer/SKILL.md`; the
-index's writing rules apply, and this repository is public.
+`apps/receptionist2/skills/receptionist2-knowledge-transfer/SKILL.md`: propose
+the files to add or edit and wait for the user's feedback on topic boundaries
+before writing. The index's writing rules apply, and this repository is
+public.
 
 ## Telegram receptionist
 

@@ -79,7 +79,7 @@ TOMB_PATTERN = re.compile(rf"^r2:tomb:(?:new|del|delyes|keep):{UUID}$")
 PRIVATE_MENU = (
     ("new", "Start a new conversation"),
     ("tombstone", "Hand this chat off to a fresh one"),
-    ("knowledge_transfer", "Save reusable learnings to the knowledge base"),
+    ("knowledge_transfer", "Propose learnings for the knowledge base"),
     ("instructions", "Standing instructions for this chat"),
     ("chats", "Chat topics in the group"),
     ("sessions", "List conversations"),
@@ -96,7 +96,7 @@ PRIVATE_MENU = (
 )
 GROUP_MENU = (
     ("tombstone", "Hand this chat off to a fresh one"),
-    ("knowledge_transfer", "Save reusable learnings to the knowledge base"),
+    ("knowledge_transfer", "Propose learnings for the knowledge base"),
     ("instructions", "Standing instructions for this chat"),
     ("new", "Open a new chat: /new <name>"),
     ("chats", "Every chat and its state"),
@@ -171,8 +171,8 @@ HELP_TEXT = (
     "in this chat follows\n"
     "/tombstone — write everything about this chat to a file, then continue "
     "in a fresh chat that starts from it and delete this one\n"
-    "/knowledge_transfer [focus] — record this chat's reusable learnings in "
-    "www/knowledge_base\n\n"
+    "/knowledge_transfer [focus] — propose this chat's reusable learnings for "
+    "www/knowledge_base; they are written after your feedback\n\n"
     "Any other text is passed unchanged as the next agent prompt.\n\n"
     "/chats — every chat topic in the Receptionist2 group and its state. "
     "In the group, each topic is its own conversation: type a name in "
@@ -1908,8 +1908,8 @@ class Gateway:
             prompt=knowledge_transfer_prompt(focus),
         )
         await update.message.reply_text(
-            f"📚 Recording what {session['display_name']} learned in "
-            f"www/knowledge_base · run {run['id'][:8]}."
+            f"📚 {session['display_name']} will propose knowledge-base "
+            f"changes for your feedback before writing · run {run['id'][:8]}."
         )
 
     async def tomb_button(

@@ -65,6 +65,15 @@ operator detail is in `apps/receptionist2/README.md`; this is the mental model.
 fresh chat (same name, new fruit, ² ³ …) that inherits model, effort, and
 instructions and resumes from the file. The old chat can then delete itself.
 Tombstones carry session state; reusable lessons go to this knowledge base.
+A tombstone includes a pending knowledge-transfer proposal that the next chat
+presents for the user's feedback before anything is written here.
+
+## Knowledge transfer
+
+`/knowledge_transfer [focus]` runs
+`skills/receptionist2-knowledge-transfer/SKILL.md` in the current chat. It
+proposes files to add or edit and topic splits or merges, waits for the
+user's feedback, then writes, commits, and pushes only `knowledge_base/`.
 
 ## Deploying
 

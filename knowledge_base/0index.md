@@ -19,9 +19,11 @@ then only the topics relevant to the task and their useful connections.
   security details. Say where such things live instead.
 - **Concise.** Short sections, exact names (paths, units, commands), no
   narration.
-- Use the `receptionist2-knowledge-transfer` skill
-  (`apps/receptionist2/skills/receptionist2-knowledge-transfer/SKILL.md`) to
-  add learnings; `/knowledge_transfer` runs it from any Receptionist2 chat.
+- **Propose, then write.** Use the `receptionist2-knowledge-transfer` skill
+  (`apps/receptionist2/skills/receptionist2-knowledge-transfer/SKILL.md`;
+  `/knowledge_transfer` runs it from any Receptionist2 chat). It first
+  proposes the files to add or edit and how topics should be split or
+  merged; nothing is written until the user gives feedback.
 
 ## Topics
 

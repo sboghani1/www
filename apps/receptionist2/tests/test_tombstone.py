@@ -286,7 +286,7 @@ def test_knowledge_transfer_runs_in_the_current_chat(tmp_path: Path) -> None:
     assert run["session_id"] == topic["id"] and run["telegram_thread_id"] == 11
     assert KT_SKILL in run["exact_prompt"]
     assert run["exact_prompt"].endswith("KNOWLEDGE_TRANSFER\nFOCUS=the sandbox fix")
-    assert reply.startswith("📚 Recording what 🍓 A learned")
+    assert reply.startswith("📚 🍓 A will propose knowledge-base changes")
     assert "knowledge_transfer" in dict(PRIVATE_MENU) and "knowledge_transfer" in dict(GROUP_MENU)
     for skill in (KT_SKILL, SKILL):
         assert (REPO / skill.removeprefix("www/")).is_file()
