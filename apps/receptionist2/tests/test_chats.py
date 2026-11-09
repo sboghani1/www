@@ -475,21 +475,17 @@ def test_startup_refreshes_the_pinned_hub_text(tmp_path: Path) -> None:
 
     gateway, database, bot = make_gateway(tmp_path)
     edits = []
-    pinned = SimpleNamespace(
-        message_id=9, text="old wording", from_user=SimpleNamespace(id=55)
-    )
-    bot.id = 55
-
-    async def get_chat(chat_id):
-        return SimpleNamespace(pinned_message=pinned)
 
     async def edit_message_text(text, **kwargs):
+        if edits:
+            raise BadRequest("Message is not modified")
         edits.append((text, kwargs["message_id"]))
-        pinned.text = text
 
-    bot.get_chat = get_chat
     bot.edit_message_text = edit_message_text
 
     assert asyncio.run(gateway.ensure_hub(bot)) == HUB
+    assert edits == []
+    database.set_state(f"group_hub_message:{GROUP}", "9")
+    asyncio.run(gateway.ensure_hub(bot))
     asyncio.run(gateway.ensure_hub(bot))
     assert edits == [(HUB_TEXT, 9)]

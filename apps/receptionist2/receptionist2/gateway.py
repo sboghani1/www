@@ -312,6 +312,9 @@ class Gateway:
                 [[InlineKeyboardButton("➕", callback_data=NEW_CHAT_CALLBACK)]]
             ),
         )
+        self.database.set_state(
+            f"group_hub_message:{chat_id}", str(sent.message_id)
+        )
         try:
             await bot.pin_chat_message(
                 chat_id, sent.message_id, disable_notification=True
@@ -336,23 +339,24 @@ class Gateway:
 
     async def _refresh_hub_text(self, bot) -> None:
         """Keep the pinned hub message's wording current across releases."""
-        chat = await bot.get_chat(self.config.group_chat_id)
-        pinned = chat.pinned_message
-        if (
-            pinned is None
-            or pinned.from_user is None
-            or pinned.from_user.id != bot.id
-            or pinned.text == HUB_TEXT
-        ):
-            return
-        await bot.edit_message_text(
-            HUB_TEXT,
-            chat_id=self.config.group_chat_id,
-            message_id=pinned.message_id,
-            reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton("➕", callback_data=NEW_CHAT_CALLBACK)]]
-            ),
+        # getChat does not report pins inside forum topics, so the id is kept.
+        message_id = self.database.get_state(
+            f"group_hub_message:{self.config.group_chat_id}", ""
         )
+        if not message_id:
+            return
+        try:
+            await bot.edit_message_text(
+                HUB_TEXT,
+                chat_id=self.config.group_chat_id,
+                message_id=int(message_id),
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("➕", callback_data=NEW_CHAT_CALLBACK)]]
+                ),
+            )
+        except BadRequest as error:
+            if "not modified" not in str(error).lower():
+                raise
 
     async def open_topic(self, bot, *, user_id: int, name: str) -> dict:
         """A new chat topic named with a fruit and the user's name for it."""
