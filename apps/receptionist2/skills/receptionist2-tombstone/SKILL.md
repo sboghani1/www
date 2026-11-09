@@ -11,7 +11,11 @@ anything not written in it is lost.
 
 ## Writing (`TOMBSTONE_PATH=...` with "Write the tombstone")
 
-Write one Markdown file at exactly `TOMBSTONE_PATH`, creating nothing else.
+First follow `www/apps/receptionist2/skills/receptionist2-knowledge-transfer/SKILL.md`
+so the reusable lessons of this chat outlive it in `www/knowledge_base`.
+
+Then write one Markdown file at exactly `TOMBSTONE_PATH`, creating nothing
+else.
 Reconstruct the whole conversation, not just the latest turn. Be specific:
 exact paths, branches, commit hashes, unit names, IDs, URLs, commands, and
 numbers. Never include secrets or tokens; say where they live instead.
@@ -35,10 +39,10 @@ Use these sections, in order, and write "None." for an empty one:
    without asking.
 9. `## Pending questions` — anything waiting on the user.
 10. `## Key references` — files, docs, commands, and links the next agent
-    should read first.
+    should read first, including the knowledge-base topics that apply.
 
-Then reply in two or three lines: the path and a one-line summary. Do not
-start any of the next steps.
+Then reply in a few lines: the path, a one-line summary, and the
+knowledge-base topics updated. Do not start any of the next steps.
 
 ## Resuming (`TOMBSTONE_PATH=...` with "Continue from the tombstone")
 

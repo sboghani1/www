@@ -53,6 +53,7 @@ from .investigation import investigation_prompt
 from .nfl_audio import audio_review_prompt, remove_audio_files, telegram_audio
 from .resources import resource_summary
 from .scheduling import next_run
+from .knowledge import knowledge_transfer_prompt
 from .tombstone import (
     continuation_name,
     resume_prompt,
@@ -78,6 +79,7 @@ TOMB_PATTERN = re.compile(rf"^r2:tomb:(?:new|del|delyes|keep):{UUID}$")
 PRIVATE_MENU = (
     ("new", "Start a new conversation"),
     ("tombstone", "Hand this chat off to a fresh one"),
+    ("knowledge_transfer", "Save reusable learnings to the knowledge base"),
     ("instructions", "Standing instructions for this chat"),
     ("chats", "Chat topics in the group"),
     ("sessions", "List conversations"),
@@ -94,6 +96,7 @@ PRIVATE_MENU = (
 )
 GROUP_MENU = (
     ("tombstone", "Hand this chat off to a fresh one"),
+    ("knowledge_transfer", "Save reusable learnings to the knowledge base"),
     ("instructions", "Standing instructions for this chat"),
     ("new", "Open a new chat: /new <name>"),
     ("chats", "Every chat and its state"),
@@ -167,7 +170,9 @@ HELP_TEXT = (
     "/instructions [text|skill path|clear] — standing instructions every run "
     "in this chat follows\n"
     "/tombstone — write everything about this chat to a file, then continue "
-    "in a fresh chat that starts from it and delete this one\n\n"
+    "in a fresh chat that starts from it and delete this one\n"
+    "/knowledge_transfer [focus] — record this chat's reusable learnings in "
+    "www/knowledge_base\n\n"
     "Any other text is passed unchanged as the next agent prompt.\n\n"
     "/chats — every chat topic in the Receptionist2 group and its state. "
     "In the group, each topic is its own conversation: type a name in "
@@ -1886,6 +1891,27 @@ class Gateway:
             f"{run['id'][:8]}. When it's saved you can continue in a new chat."
         )
 
+    async def knowledge_transfer(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        """Have this chat record its reusable learnings in the knowledge base."""
+        session = self.context_session(update)
+        if session is None:
+            await self._topic_only(update, "/knowledge_transfer")
+            return
+        focus = re.sub(r"^/\S+", "", update.message.text, count=1).strip()
+        run = self.database.enqueue_run(
+            session_id=session["id"],
+            user_id=update.effective_user.id,
+            chat_id=update.effective_chat.id,
+            source="message",
+            prompt=knowledge_transfer_prompt(focus),
+        )
+        await update.message.reply_text(
+            f"📚 Recording what {session['display_name']} learned in "
+            f"www/knowledge_base · run {run['id'][:8]}."
+        )
+
     async def tomb_button(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
@@ -2412,9 +2438,10 @@ def build_application(config: GatewayConfig) -> Application:
     commands.append(("chats", gateway.chats))
     commands.append(("instructions", gateway.instructions))
     commands.append(("tombstone", gateway.tombstone))
+    commands.append(("knowledge_transfer", gateway.knowledge_transfer))
     group_commands = {
         "help", "new", "stop", "status", "model", "effort", "chats",
-        "instructions", "tombstone",
+        "instructions", "tombstone", "knowledge_transfer",
     }
     for name, handler in commands:
         application.add_handler(

@@ -266,3 +266,31 @@ def test_a_retried_tombstone_run_still_offers_to_continue(tmp_path: Path) -> Non
     )
     worker._offer_continuation(other)
     assert database.claim_outbox() is None
+
+
+def test_knowledge_transfer_runs_in_the_current_chat(tmp_path: Path) -> None:
+    from receptionist2.knowledge import SKILL as KT_SKILL
+
+    gateway, database, worker, bot = setup(tmp_path)
+    topic = database.create_topic_session(
+        user_id=USER, chat_id=GROUP, thread_id=11, name="🍓 A",
+        model="claude-test", effort="high",
+    )
+    reply = command(
+        gateway,
+        gateway.knowledge_transfer,
+        Message("/knowledge_transfer\nthe sandbox fix", 11),
+        GROUP,
+    )
+    run = database.claim_next_run()
+    assert run["session_id"] == topic["id"] and run["telegram_thread_id"] == 11
+    assert KT_SKILL in run["exact_prompt"]
+    assert run["exact_prompt"].endswith("KNOWLEDGE_TRANSFER\nFOCUS=the sandbox fix")
+    assert reply.startswith("📚 Recording what 🍓 A learned")
+    assert "knowledge_transfer" in dict(PRIVATE_MENU) and "knowledge_transfer" in dict(GROUP_MENU)
+    for skill in (KT_SKILL, SKILL):
+        assert (REPO / skill.removeprefix("www/")).is_file()
+    index = (REPO / "knowledge_base" / "0index.md").read_text()
+    for topic_file in (REPO / "knowledge_base").glob("*.md"):
+        if topic_file.name != "0index.md":
+            assert f"`{topic_file.name}`" in index

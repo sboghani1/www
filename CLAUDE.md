@@ -1,5 +1,13 @@
 # www monorepo
 
+## Knowledge base
+
+`knowledge_base/` holds reusable, general understanding of this repo and its
+infrastructure. Read `knowledge_base/0index.md` first and then the topics
+relevant to your task. Record new reusable learnings there by following
+`apps/receptionist2/skills/receptionist2-knowledge-transfer/SKILL.md`; the
+index's writing rules apply, and this repository is public.
+
 ## Telegram receptionist
 
 The application lives in `apps/telegram-receptionist`.

@@ -45,6 +45,11 @@ Primary bot:
 - `/instructions [text|skill path|clear]` sets standing instructions that
   every run in the current chat (private chat or topic) follows
 - `/tombstone` hands the current chat off to a fresh one (see Tombstones)
+- `/knowledge_transfer [focus]` has the current chat record its reusable
+  learnings in `www/knowledge_base` (skill
+  `skills/receptionist2-knowledge-transfer/SKILL.md`), committing and pushing
+  only that folder. New conversations read `knowledge_base/0index.md` during
+  bootstrap, and `/tombstone` runs a knowledge transfer before writing.
 
 Watchdog bot:
 

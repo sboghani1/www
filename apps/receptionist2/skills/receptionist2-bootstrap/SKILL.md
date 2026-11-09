@@ -13,7 +13,9 @@ Before acting on the user's first request in a provider session:
    configured model and effort, queued work, and recurring schedules.
 4. If required context is missing or contradictory, report the exact gap and do
    not claim readiness.
-5. Do not repeat the manifest to the user. Once validated, perform the user's
+5. Read `www/knowledge_base/0index.md`, then the topics relevant to the
+   user's request, and rely on them (rechecking anything that looks stale).
+6. Do not repeat the manifest to the user. Once validated, perform the user's
    request normally.
 
 The database and scheduler are authoritative for queued and recurring work.
