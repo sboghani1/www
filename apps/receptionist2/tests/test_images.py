@@ -152,7 +152,7 @@ def test_unsupported_image_document_is_refused(tmp_path) -> None:
 def test_image_helpers() -> None:
     assert telegram_image(Message(1, document=Media(mime_type="image/png"))).suffix == ".png"
     assert telegram_image(Message(1, document=Media(mime_type="application/pdf"))) is None
-    assert image_prompt("", ["/a.png"]).startswith("No message came with this.")
+    assert image_prompt("", ["/a.png"]).startswith("The user shared this with no comment.")
     assert image_summary("", 1) == "📷 image"
     assert image_summary(" why? ", 2) == "📷 2 images: why?"
 

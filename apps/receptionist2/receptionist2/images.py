@@ -16,9 +16,10 @@ IMAGE_SUFFIXES = {
     "image/webp": ".webp",
     "image/gif": ".gif",
 }
+# Adapted from the forwarder fleet's no-comment share nudge.
 NO_CAPTION_REQUEST = (
-    "No message came with this. Work out what it shows and respond to what "
-    "it needs."
+    "The user shared this with no comment. Work out from the image what it "
+    "is about. If what they want is clear, do it; otherwise ask, briefly."
 )
 
 
