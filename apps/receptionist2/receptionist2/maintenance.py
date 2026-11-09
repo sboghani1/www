@@ -71,6 +71,12 @@ def run_maintenance(
         if image_dir.is_dir()
         else []
     )
+    voice_dir = state_dir / "voice"
+    voice_files = (
+        [path for path in voice_dir.iterdir() if path.is_file()]
+        if voice_dir.is_dir()
+        else []
+    )
     database = Database(database_path)
     database.initialize()
     pruned = database.prune(days=record_days)
@@ -82,6 +88,9 @@ def run_maintenance(
         ),
         "images_removed": remove_older_than(
             image_files, run_artifact_days, now
+        ),
+        "voice_removed": remove_older_than(
+            voice_files, run_artifact_days, now
         ),
         "pruned": pruned,
     }

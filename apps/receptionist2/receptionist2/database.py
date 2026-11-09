@@ -301,6 +301,8 @@ class Database:
                 ("sessions", "telegram_thread_id", "INTEGER"),
                 # Unused since chats are named by the user; kept for old rows.
                 ("sessions", "title_pending", "INTEGER NOT NULL DEFAULT 0"),
+                # Standing per-chat instructions, set with /instructions.
+                ("sessions", "instructions", "TEXT"),
                 ("runs", "telegram_thread_id", "INTEGER"),
                 ("outbox", "telegram_thread_id", "INTEGER"),
             ):
@@ -312,6 +314,28 @@ class Database:
                     connection.execute(
                         f"ALTER TABLE {table} ADD COLUMN {column} {kind}"
                     )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS voice_notes (
+                    id TEXT PRIMARY KEY,
+                    session_id TEXT NOT NULL REFERENCES sessions(id),
+                    telegram_user_id INTEGER NOT NULL,
+                    telegram_chat_id INTEGER NOT NULL,
+                    telegram_message_id INTEGER NOT NULL,
+                    status_message_id INTEGER,
+                    local_path TEXT,
+                    transcript TEXT,
+                    status TEXT NOT NULL CHECK(status IN (
+                        'transcribing','ready','failed','queued','trashed'
+                    )),
+                    error TEXT,
+                    run_id TEXT REFERENCES runs(id),
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    UNIQUE(telegram_chat_id, telegram_message_id)
+                )
+                """
+            )
             connection.execute(
                 """
                 CREATE UNIQUE INDEX IF NOT EXISTS sessions_topic
@@ -2052,6 +2076,96 @@ class Database:
                     (user_id,),
                 )
             ]
+
+    def create_voice_note(
+        self,
+        *,
+        session_id: str,
+        user_id: int,
+        chat_id: int,
+        message_id: int,
+    ) -> tuple[dict[str, Any], bool]:
+        """Register a voice note once per Telegram message."""
+        note_id = str(uuid.uuid4())
+        now = utc_now()
+        with self.connect() as connection:
+            created = connection.execute(
+                """
+                INSERT OR IGNORE INTO voice_notes(
+                    id, session_id, telegram_user_id, telegram_chat_id,
+                    telegram_message_id, status, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, 'transcribing', ?, ?)
+                """,
+                (note_id, session_id, user_id, chat_id, message_id, now, now),
+            ).rowcount
+            row = connection.execute(
+                """
+                SELECT * FROM voice_notes
+                WHERE telegram_chat_id=? AND telegram_message_id=?
+                """,
+                (chat_id, message_id),
+            ).fetchone()
+            connection.commit()
+        return dict(row), bool(created)
+
+    def update_voice_note(self, note_id: str, **values: Any) -> None:
+        allowed = {"status_message_id", "local_path", "transcript", "status", "error"}
+        assert values and set(values) <= allowed, values
+        assignments = ", ".join(f"{key}=?" for key in values)
+        with self.connect() as connection:
+            connection.execute(
+                f"UPDATE voice_notes SET {assignments}, updated_at=? WHERE id=?",
+                (*values.values(), utc_now(), note_id),
+            )
+            connection.commit()
+
+    def voice_note(self, note_id: str) -> dict[str, Any] | None:
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM voice_notes WHERE id=?", (note_id,)
+            ).fetchone()
+        return dict(row) if row else None
+
+    def claim_voice_note(self, note_id: str, status: str) -> dict[str, Any] | None:
+        """Move a ready note to queued or trashed exactly once."""
+        with self.connect() as connection:
+            updated = connection.execute(
+                """
+                UPDATE voice_notes SET status=?, updated_at=?
+                WHERE id=? AND status='ready'
+                """,
+                (status, utc_now(), note_id),
+            ).rowcount
+            connection.commit()
+        return self.voice_note(note_id) if updated else None
+
+    def set_voice_note_run(self, note_id: str, run_id: str) -> None:
+        with self.connect() as connection:
+            connection.execute(
+                "UPDATE voice_notes SET run_id=?, updated_at=? WHERE id=?",
+                (run_id, utc_now(), note_id),
+            )
+            connection.commit()
+
+    def transcribing_voice_notes(self) -> list[dict[str, Any]]:
+        with self.connect() as connection:
+            return [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT * FROM voice_notes WHERE status='transcribing' "
+                    "ORDER BY created_at"
+                )
+            ]
+
+    def set_session_instructions(
+        self, session_id: str, instructions: str | None
+    ) -> None:
+        with self.connect() as connection:
+            connection.execute(
+                "UPDATE sessions SET instructions=?, updated_at=? WHERE id=?",
+                (instructions, utc_now(), session_id),
+            )
+            connection.commit()
 
     def enqueue_outbox(
         self,

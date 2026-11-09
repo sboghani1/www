@@ -9,6 +9,7 @@ description = "Durable Telegram control plane for coding-agent work"
 requires-python = ">=3.12"
 dependencies = [
   "apscheduler>=3.10,<4",
+  "faster-whisper>=1.1,<2",
   "python-telegram-bot[job-queue]>=22.0,<23",
 ]
 

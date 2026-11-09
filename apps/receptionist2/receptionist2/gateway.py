@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import os
 import random
 import re
+import sys
 import time
 import uuid
 from datetime import UTC, datetime
@@ -47,6 +50,7 @@ from .investigation import investigation_prompt
 from .nfl_audio import audio_review_prompt, remove_audio_files, telegram_audio
 from .resources import resource_summary
 from .scheduling import next_run
+from .voice import transcript_preview, voice_prompt
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
@@ -59,6 +63,9 @@ ROLLOVER_PATTERN = re.compile(rf"^session:(?:new|continue):{UUID}$")
 DIAGNOSE_PATTERN = re.compile(rf"^deploy:diagnose:{UUID}$")
 RETRY_PATTERN = re.compile(rf"^r2:retry:{UUID}$")
 NEW_CHAT_CALLBACK = "r2:newchat"
+VOICE_PATTERN = re.compile(rf"^r2:voice:(?:run|trash):{UUID}$")
+TRANSCRIBE_TIMEOUT_SECONDS = 15 * 60
+INSTRUCTIONS_MAX_CHARS = 3500
 HUB_NAME = "📋 Chats"
 FRUITS = (
     "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓",
@@ -68,16 +75,16 @@ FRUITS = (
 TOPIC_NAME_MAX_CHARS = 120
 NAME_PROMPT = "Name for the new chat?"
 NAME_FIRST_TEXT = (
-    "Name the chat first: type its name here or tap ➕, then send the image "
-    "inside the new topic."
+    "Name the chat first: type its name here or tap ➕, then send it inside "
+    "the new topic."
 )
 HUB_TEXT = (
     "📋 Chats\n\n"
     "Each topic in this group is its own Receptionist2 conversation, and up "
     "to two of them work at once. To open one, type its name here (or tap "
     "➕), then write inside the new topic. Close a topic to archive it.\n\n"
-    "In a topic: /stop, /status, /model, /effort. Anywhere: /chats, "
-    "/new <name>."
+    "Voice notes and screenshots work in any topic. In a topic: /stop, "
+    "/status, /model, /effort, /instructions. Anywhere: /chats, /new <name>."
 )
 # No set-gid bit: the gateway unit's RestrictSUIDSGID=true rejects it with
 # EPERM. Its Group=receptionist2-state already gives new files the shared
@@ -116,6 +123,10 @@ HELP_TEXT = (
     "Telegram reports their exact revision, command, and result.\n\n"
     "Photos and image files (screenshots work well; send several as one "
     "album) go to the agent with their caption as the request.\n\n"
+    "Voice notes and audio files are transcribed on the server; tap Run to "
+    "send the transcript to this chat's agent or Trash to delete it.\n\n"
+    "/instructions [text|skill path|clear] — standing instructions every run "
+    "in this chat follows\n\n"
     "Any other text is passed unchanged as the next agent prompt.\n\n"
     "/chats — every chat topic in the Receptionist2 group and its state. "
     "In the group, each topic is its own conversation: type a name in "
@@ -260,6 +271,10 @@ class Gateway:
         self._progress_edits: dict[str, float] = {}
         self._albums: dict[str, dict] = {}
         self._refused_albums: set[str] = set()
+        # Whisper is CPU-heavy: transcribe one voice note at a time.
+        self._transcribe_lock = asyncio.Semaphore(1)
+        self._voice_tasks: set[asyncio.Task] = set()
+        self._downloading: set[str] = set()
 
     async def post_init(self, application: Application) -> None:
         self.database.initialize()
@@ -278,6 +293,8 @@ class Gateway:
         application.job_queue.run_repeating(
             self.update_progress, interval=10, first=2
         )
+        for note in self.database.transcribing_voice_notes():
+            self._start_transcription(application.bot, note)
         if self.config.group_chat_id:
             try:
                 await self.ensure_hub(application.bot)
@@ -1529,6 +1546,298 @@ class Gateway:
             temp_path.unlink(missing_ok=True)
         return final_path
 
+    async def _topic_session_for(self, message, user_id: int) -> dict:
+        """The session of the topic a message is in, adopting or reopening it."""
+        chat_id = self.config.group_chat_id
+        thread = thread_of(message)
+        session = self.database.topic_session(chat_id, thread)
+        if session is None:
+            created = getattr(message.reply_to_message, "forum_topic_created", None)
+            return await self.adopt_topic(
+                message.get_bot(),
+                user_id,
+                thread,
+                created.name if created else f"Topic {thread}",
+            )
+        if session["status"] != "active":
+            try:
+                await message.get_bot().reopen_forum_topic(chat_id, thread)
+            except TelegramError as error:
+                log.warning("Could not reopen topic %s: %s", thread, error)
+            session = self.database.set_topic_open(chat_id, thread, True)
+        return session
+
+    async def audio_receive(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        """Voice notes and audio files: transcribe, then offer Run or Trash."""
+        message = update.effective_message
+        user_id = update.effective_user.id
+        chat_id = update.effective_chat.id
+        in_group = self.in_group(update)
+        if not in_group and self.database.active_nfl_audio_collection(
+            user_id, chat_id
+        ):
+            await self.nfl_audio_receive(update, context)
+            return
+        selected = telegram_audio(message)
+        if selected is None:
+            await message.reply_text(
+                "That file isn't audio or an image. Send a voice note, an "
+                "audio file, or a screenshot."
+            )
+            return
+        if in_group and self.is_hub(thread_of(message)):
+            await message.reply_text(NAME_FIRST_TEXT)
+            return
+        if (
+            selected.duration_seconds is not None
+            and selected.duration_seconds
+            > self.config.nfl_audio_max_duration_seconds
+        ):
+            await message.reply_text("That audio is longer than an hour.")
+            return
+        size = getattr(selected.media, "file_size", None)
+        if size is not None and size > self.config.nfl_audio_max_bytes:
+            await message.reply_text("That audio is larger than 20 MB.")
+            return
+        session = (
+            await self._topic_session_for(message, user_id)
+            if in_group
+            else self.database.active_session(user_id)
+        )
+        note, created = self.database.create_voice_note(
+            session_id=session["id"],
+            user_id=user_id,
+            chat_id=chat_id,
+            message_id=message.message_id,
+        )
+        # A redelivered update is dropped unless its first attempt died
+        # before the audio was saved (a gateway crash mid-download).
+        unfinished = (
+            note["status"] == "transcribing"
+            and not note["local_path"]
+            and note["id"] not in self._downloading
+        )
+        if not created and not unfinished:
+            return
+        self._downloading.add(note["id"])
+        try:
+            await self._download_note(message, note, selected)
+        finally:
+            self._downloading.discard(note["id"])
+
+    async def _download_note(self, message, note: dict, selected) -> None:
+        bot = message.get_bot()
+        status_id = note.get("status_message_id")
+        if not status_id:
+            status = await message.reply_text("🎧 Transcribing…")
+            status_id = status.message_id
+            self.database.update_voice_note(note["id"], status_message_id=status_id)
+        try:
+            path = await self._store_voice(selected)
+        except (OSError, TelegramError, ValueError) as error:
+            log.exception("Could not store voice note")
+            self.database.update_voice_note(
+                note["id"], status="failed", error=str(error)
+            )
+            await self._show_voice_status(
+                bot, note, status_id, f"❌ Could not save that audio: {error}"
+            )
+            return
+        self.database.update_voice_note(note["id"], local_path=str(path))
+        self._start_transcription(bot, self.database.voice_note(note["id"]))
+
+    async def _show_voice_status(
+        self, bot, note: dict, status_id, text: str, markup=None
+    ) -> None:
+        if not status_id:
+            return
+        try:
+            await bot.edit_message_text(
+                text,
+                chat_id=int(note["telegram_chat_id"]),
+                message_id=int(status_id),
+                reply_markup=markup,
+            )
+        except TelegramError as error:
+            log.warning("Could not update the voice note message: %s", error)
+
+    async def _store_voice(self, selected) -> Path:
+        directory = self.config.voice_dir
+        directory.mkdir(parents=True, exist_ok=True, mode=SHARED_DIR_MODE)
+        directory.chmod(SHARED_DIR_MODE)
+        final_path = directory / f"{uuid.uuid4()}{selected.suffix}"
+        temp_path = directory / f".{final_path.name}.part"
+        try:
+            telegram_file = await selected.media.get_file()
+            await telegram_file.download_to_drive(custom_path=temp_path)
+            if temp_path.stat().st_size > self.config.nfl_audio_max_bytes:
+                raise ValueError("the audio exceeded the 20 MB limit")
+            temp_path.chmod(0o660)
+            temp_path.replace(final_path)
+        finally:
+            temp_path.unlink(missing_ok=True)
+        return final_path
+
+    def _start_transcription(self, bot, note: dict) -> None:
+        task = asyncio.create_task(self._transcribe_note(bot, note))
+        self._voice_tasks.add(task)
+        task.add_done_callback(self._voice_tasks.discard)
+
+    async def _run_whisper(self, path: str) -> dict:
+        """Transcribe in a subprocess so the model is freed afterwards."""
+        process = await asyncio.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "receptionist2.voice",
+            path,
+            self.config.whisper_model,
+            str(self.config.whisper_dir),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            # The unit's home is read-only; keep Hugging Face's cache writable.
+            env={**os.environ, "HF_HOME": str(self.config.whisper_dir / "hf-home")},
+        )
+        try:
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(), TRANSCRIBE_TIMEOUT_SECONDS
+            )
+        except TimeoutError:
+            process.kill()
+            await process.wait()
+            return {"error": "Transcription took longer than 15 minutes."}
+        try:
+            return json.loads(stdout.decode().strip().splitlines()[-1])
+        except (IndexError, json.JSONDecodeError):
+            return {
+                "error": (stderr.decode(errors="replace").strip()[-500:])
+                or f"Transcriber exited with {process.returncode}"
+            }
+
+    async def _transcribe_note(self, bot, note: dict) -> None:
+        if not note.get("local_path") or not Path(note["local_path"]).exists():
+            self.database.update_voice_note(
+                note["id"], status="failed", error="The audio file is missing."
+            )
+            await self._show_voice_status(
+                bot,
+                note,
+                note.get("status_message_id"),
+                "❌ The audio was lost during a restart; send it again.",
+            )
+            return
+        async with self._transcribe_lock:
+            result = await self._run_whisper(note["local_path"])
+        transcript = str(result.get("transcript") or "").strip()
+        if transcript:
+            self.database.update_voice_note(
+                note["id"], status="ready", transcript=transcript
+            )
+            text = f"🎧 Heard:\n{transcript_preview(transcript)}"
+            markup = InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "▶️ Run", callback_data=f"r2:voice:run:{note['id']}"
+                        ),
+                        InlineKeyboardButton(
+                            "🗑 Trash", callback_data=f"r2:voice:trash:{note['id']}"
+                        ),
+                    ]
+                ]
+            )
+        else:
+            error = str(result.get("error") or "No transcript was produced.")
+            self.database.update_voice_note(note["id"], status="failed", error=error)
+            Path(note["local_path"]).unlink(missing_ok=True)
+            text, markup = f"❌ Could not transcribe that audio: {error}", None
+        await self._show_voice_status(
+            bot, note, note.get("status_message_id"), text, markup
+        )
+
+    async def voice_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        query = update.callback_query
+        _, _, action, note_id = str(query.data).split(":", 3)
+        note = self.database.claim_voice_note(
+            note_id, "queued" if action == "run" else "trashed"
+        )
+        if note is None:
+            await query.answer("That voice note was already handled.")
+            return
+        await query.answer()
+        if action == "trash":
+            if note.get("local_path"):
+                Path(note["local_path"]).unlink(missing_ok=True)
+            try:
+                await query.edit_message_text("🗑 Trashed. The audio was deleted.")
+            except TelegramError:
+                pass
+            return
+        try:
+            await query.edit_message_text(
+                f"🎧 Heard:\n{transcript_preview(note['transcript'])}"
+            )
+        except TelegramError:
+            pass
+        try:
+            run = await self._accept_text(
+                query.message,
+                user_id=update.effective_user.id,
+                chat_id=int(note["telegram_chat_id"]),
+                message_id=int(note["telegram_message_id"]),
+                text=note["transcript"],
+                exact_prompt=voice_prompt(note["transcript"]),
+                session_id=note["session_id"],
+            )
+        except Exception:
+            log.exception("Could not queue voice note %s", note_id)
+            self.database.update_voice_note(note_id, status="ready")
+            await query.message.reply_text(
+                "❌ Could not queue that voice note. Send /recover, then try "
+                "Run again."
+            )
+            raise
+        self.database.set_voice_note_run(note_id, run["id"])
+
+    async def instructions(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        session = self.context_session(update)
+        if session is None:
+            await self._topic_only(update, "/instructions")
+            return
+        # Drop only the command token so multi-line instructions survive.
+        raw = re.sub(r"^/\S+", "", update.message.text, count=1).strip()
+        if not raw:
+            current = session.get("instructions")
+            await update.message.reply_text(
+                f"📌 Instructions for {session['display_name']}:\n{current}"
+                if current
+                else (
+                    "This chat has no standing instructions. Set them with "
+                    "/instructions <text or skill path>; every run here will "
+                    "follow them. /instructions clear removes them."
+                )
+            )
+            return
+        if raw.lower() in {"clear", "off", "none"}:
+            self.database.set_session_instructions(session["id"], None)
+            await update.message.reply_text("📌 Instructions cleared.")
+            return
+        if len(raw) > INSTRUCTIONS_MAX_CHARS:
+            await update.message.reply_text(
+                "Those instructions are too long for one message. Put them in "
+                "a skill file in the repo and set /instructions <its path>."
+            )
+            return
+        self.database.set_session_instructions(session["id"], raw)
+        await update.message.reply_text(
+            f"📌 Every run in {session['display_name']} will now follow:\n{raw}"
+        )
+
     async def _accept(
         self,
         message,
@@ -1567,21 +1876,7 @@ class Gateway:
             else:
                 await message.reply_text(NAME_FIRST_TEXT)
             return
-        session = self.database.topic_session(chat_id, thread)
-        if session is None:
-            created = getattr(message.reply_to_message, "forum_topic_created", None)
-            session = await self.adopt_topic(
-                message.get_bot(),
-                user_id,
-                thread,
-                created.name if created else f"Topic {thread}",
-            )
-        elif session["status"] != "active":
-            try:
-                await message.get_bot().reopen_forum_topic(chat_id, thread)
-            except TelegramError as error:
-                log.warning("Could not reopen topic %s: %s", thread, error)
-            session = self.database.set_topic_open(chat_id, thread, True)
+        session = await self._topic_session_for(message, user_id)
         await self._accept_text(
             message,
             user_id=user_id,
@@ -1602,7 +1897,7 @@ class Gateway:
         text: str,
         exact_prompt: str | None = None,
         session_id: str | None = None,
-    ) -> None:
+    ) -> dict:
         run, created = self.database.accept_message(
             user_id=user_id,
             chat_id=chat_id,
@@ -1628,6 +1923,7 @@ class Gateway:
             f"position {queue.get('queued', 0)}"
         )
         await reply_to.reply_text(ack)
+        return run
 
     async def session_rollover_button(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -1849,7 +2145,11 @@ def build_application(config: GatewayConfig) -> Application:
         ("schedule_run", gateway.schedule_run),
     ]
     commands.append(("chats", gateway.chats))
-    group_commands = {"help", "new", "stop", "status", "model", "effort", "chats"}
+    commands.append(("instructions", gateway.instructions))
+    group_commands = {
+        "help", "new", "stop", "status", "model", "effort", "chats",
+        "instructions",
+    }
     for name, handler in commands:
         application.add_handler(
             CommandHandler(
@@ -1870,6 +2170,12 @@ def build_application(config: GatewayConfig) -> Application:
         CallbackQueryHandler(
             gateway.authorized(gateway.new_chat_button, group=True),
             pattern=f"^{NEW_CHAT_CALLBACK}$",
+        )
+    )
+    application.add_handler(
+        CallbackQueryHandler(
+            gateway.authorized(gateway.voice_button, group=True),
+            pattern=VOICE_PATTERN,
         )
     )
     application.add_handler(
@@ -1908,7 +2214,7 @@ def build_application(config: GatewayConfig) -> Application:
     application.add_handler(
         MessageHandler(
             filters.VOICE | filters.AUDIO | filters.Document.ALL,
-            gateway.authorized(gateway.nfl_audio_receive),
+            gateway.authorized(gateway.audio_receive, group=True),
         )
     )
     application.add_handler(

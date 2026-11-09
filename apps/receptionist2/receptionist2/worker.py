@@ -236,10 +236,17 @@ class Worker:
     def _chat_context(self, run: dict[str, Any], prompt: str) -> str:
         if not run.get("session_id"):
             return prompt
+        session = self.database.get_session(run["session_id"])
+        if session.get("instructions"):
+            # Repeated on every run so they hold for the whole conversation.
+            prompt = (
+                "[Standing instructions for this chat, set by the user with "
+                "/instructions. Follow them for this request:\n"
+                f"{session['instructions']}]\n\n{prompt}"
+            )
         if run.get("telegram_thread_id"):
             if run.get("provider_session_id"):
                 return prompt
-            session = self.database.get_session(run["session_id"])
             return (
                 "[Receptionist2 context, not part of the request: this "
                 "conversation is its own topic in the user's Receptionist2 "

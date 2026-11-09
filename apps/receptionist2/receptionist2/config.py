@@ -75,6 +75,7 @@ class GatewayConfig(CommonConfig):
     nfl_audio_max_duration_seconds: int
     # Optional private forum supergroup: one topic per chat.
     group_chat_id: int = 0
+    whisper_model: str = "small.en"
 
     @classmethod
     def from_env(cls) -> "GatewayConfig":
@@ -108,6 +109,7 @@ class GatewayConfig(CommonConfig):
             group_chat_id=int(
                 os.getenv("RECEPTIONIST2_GROUP_CHAT_ID", "").strip() or 0
             ),
+            whisper_model=os.getenv("RECEPTIONIST2_WHISPER_MODEL", "small.en"),
         )
 
     @property
@@ -117,6 +119,14 @@ class GatewayConfig(CommonConfig):
     @property
     def images_dir(self) -> Path:
         return self.state_dir / "images"
+
+    @property
+    def voice_dir(self) -> Path:
+        return self.state_dir / "voice"
+
+    @property
+    def whisper_dir(self) -> Path:
+        return self.state_dir / "whisper-models"
 
 
 @dataclass(frozen=True)

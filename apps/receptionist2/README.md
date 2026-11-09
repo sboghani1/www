@@ -42,6 +42,8 @@ Primary bot:
 - `/schedule_pause <id-prefix>`, `/schedule_resume <id-prefix>`
 - `/schedule_run <id-prefix>`
 - `/chats` lists every chat topic in the Receptionist2 group with its state
+- `/instructions [text|skill path|clear]` sets standing instructions that
+  every run in the current chat (private chat or topic) follows
 
 Watchdog bot:
 
@@ -61,6 +63,18 @@ screenshots) are saved under `RECEPTIONIST2_STATE_DIR/images` with shared
 group-only access and queued as one run whose prompt is the caption plus the
 image paths for the agent to open with Read. Images sent together as an album
 become a single run. Maintenance removes images after 14 days.
+
+Voice notes, audio files, and audio documents (up to 20 MB and an hour) work
+in the private chat and in every topic, as with Mel. The gateway saves them
+under `RECEPTIONIST2_STATE_DIR/voice` and transcribes them locally with
+faster-whisper (`RECEPTIONIST2_WHISPER_MODEL`, default `small.en`, CPU int8;
+the model is cached in `RECEPTIONIST2_STATE_DIR/whisper-models`) in a
+short-lived subprocess, one note at a time, so the model is not kept in
+memory. It replies with the transcript and **▶️ Run** / **🗑 Trash** buttons:
+Run queues the transcript as that chat's next prompt, Trash deletes the
+audio. Transcriptions interrupted by a gateway restart resume on start.
+While a `/nfl_audio` collection is open, private-chat audio goes to it
+instead. Maintenance removes voice audio after 14 days.
 
 When the active session's context is nearly full, the gateway offers to start
 a new session before continuing.
