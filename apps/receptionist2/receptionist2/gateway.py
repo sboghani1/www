@@ -68,6 +68,10 @@ HUB_TEXT = (
     "write inside a topic to continue it. Close a topic to archive it.\n\n"
     "In a topic: /stop, /status, /model, /effort. Anywhere: /chats."
 )
+# No set-gid bit: the gateway unit's RestrictSUIDSGID=true rejects it with
+# EPERM. Its Group=receptionist2-state already gives new files the shared
+# group the agent reads them through.
+SHARED_DIR_MODE = 0o770
 RECOVER_MENU_TEXT = "♻️ Recover"
 TOPICS_MENU_TEXT = "🧭 Topics & Context"
 STOP_MENU_TEXT = "🛑 Stop"
@@ -596,8 +600,10 @@ class Gateway:
         temp_path: Path | None = None
         stored = False
         try:
-            collection_dir.mkdir(parents=True, exist_ok=True, mode=0o2770)
-            collection_dir.chmod(0o2770)
+            collection_dir.mkdir(
+                parents=True, exist_ok=True, mode=SHARED_DIR_MODE
+            )
+            collection_dir.chmod(SHARED_DIR_MODE)
             final_path = collection_dir / f"{uuid.uuid4()}{selected.suffix}"
             temp_path = collection_dir / f".{final_path.name}.part"
             telegram_file = await selected.media.get_file()
@@ -1420,8 +1426,8 @@ class Gateway:
 
     async def _store_image(self, image: TelegramImage) -> Path:
         directory = self.config.images_dir
-        directory.mkdir(parents=True, exist_ok=True, mode=0o2770)
-        directory.chmod(0o2770)
+        directory.mkdir(parents=True, exist_ok=True, mode=SHARED_DIR_MODE)
+        directory.chmod(SHARED_DIR_MODE)
         final_path = directory / f"{uuid.uuid4()}{image.suffix}"
         temp_path = directory / f".{final_path.name}.part"
         try:

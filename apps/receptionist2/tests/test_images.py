@@ -4,7 +4,7 @@ import stat
 from types import SimpleNamespace
 
 from receptionist2.database import Database
-from receptionist2.gateway import Gateway
+from receptionist2.gateway import SHARED_DIR_MODE, Gateway
 from receptionist2.images import image_prompt, image_summary, telegram_image
 from receptionist2.maintenance import run_maintenance
 
@@ -171,3 +171,28 @@ def test_maintenance_removes_old_images(tmp_path) -> None:
 
     assert result["images_removed"] == 1
     assert not old.exists() and fresh.exists()
+
+
+def test_images_save_under_the_gateway_sandbox(tmp_path, monkeypatch) -> None:
+    # The gateway unit sets RestrictSUIDSGID=true: set-gid modes fail EPERM.
+    real_mkdir, real_chmod = os.mkdir, os.chmod
+
+    def no_setgid(real):
+        def call(path, mode=0o777, *args, **kwargs):
+            if mode & stat.S_ISGID:
+                raise PermissionError(1, "Operation not permitted", str(path))
+            return real(path, mode, *args, **kwargs)
+
+        return call
+
+    monkeypatch.setattr(os, "mkdir", no_setgid(real_mkdir))
+    monkeypatch.setattr(os, "chmod", no_setgid(real_chmod))
+    gateway = make_gateway(tmp_path)
+    message = Message(30, caption="why?", photo=[Media()])
+
+    send(gateway, message)
+
+    assert message.replies[-1].startswith("Queued · run")
+    directory = tmp_path / "images"
+    assert stat.S_IMODE(directory.stat().st_mode) == SHARED_DIR_MODE
+    assert not SHARED_DIR_MODE & (stat.S_ISGID | stat.S_ISUID)
