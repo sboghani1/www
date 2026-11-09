@@ -28,6 +28,28 @@ pluribus forwarder. Connection details are kept outside this public repo.
 - After deploying, check `systemctl is-active` and the last minute of
   `journalctl -u <unit>` for warnings, and exercise the changed path for real.
 
+## Workspace files installed by Receptionist2
+
+`/home/receptionist/repos/CLAUDE.md` (from
+`apps/receptionist2/deploy/workspace-CLAUDE.md`), the shared skills under
+`/home/receptionist/repos/.claude/skills/`, `/usr/local/bin/request-receptionist-deploy`,
+and `/usr/local/libexec/receptionist-deploy-executor` are installed by
+`install-receptionist2` on every run. Change them in the repository; edits
+made in place are overwritten. (Before 2026-11-09 they were refreshed only
+with `--workspace`, which let them silently go stale.)
+
+## Legacy receptionist
+
+The original receptionist bot (`apps/telegram-receptionist`) is retired:
+its units, deploy and watchdog scripts, and its own sudoers rules were
+removed, with a backup under `/root/telegram-receptionist-retired-*.tar.gz`.
+`/opt/telegram-receptionist/current/.venv` and `/var/lib/telegram-receptionist`
+remain because shared tools still run from that environment
+(nfl-audio-parser, `receptionist-nfl-history`, WNBA helpers,
+`receptionist-host-recovery`). Removing them needs those tools moved to
+their own install first. The agent account's `forwarder` and host-recovery
+sudo rules now live in `/etc/sudoers.d/receptionist-agent-shared`.
+
 ## Environment files
 
 Edit without breaking: copy to a timestamped backup with `cp -p`, write the new

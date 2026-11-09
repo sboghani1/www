@@ -32,13 +32,16 @@ after committing and pushing a clean revision:
 request-receptionist-deploy \
   --repo /home/receptionist/repos/www \
   --summary "Deploy Receptionist2" \
-  --command 'systemd-run --unit=receptionist2-install-$(date +%s) --collect --wait --pipe /home/receptionist/repos/www/apps/receptionist2/deploy/install-receptionist2 --restart'
+  --command 'systemd-run --unit=receptionist2-deploy-$(date +%s) --collect /bin/bash /home/receptionist/repos/www/apps/receptionist2/deploy/install-receptionist2 --restart'
 ```
+
+Do not add `--wait` to this one: the install restarts the worker that runs
+the request. Receptionist2 drains running work first and reports the result
+after it comes back.
 
 Receptionist2 executes a valid immutable request automatically and reports the
 exact revision, command, and result in the chat whose run queued it. Create a
-request only when the exact root command is ready to run. A request that runs
-`install-receptionist2` drains running work first.
+request only when the exact root command is ready to run.
 
 The deployment executor runs inside a read-only system mount namespace. Root
 commands that write under `/opt`, `/etc`, `/usr/local`, or manage systemd

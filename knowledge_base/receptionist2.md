@@ -83,7 +83,10 @@ the VPS pull the `www` checkout as `receptionist-agent` and run
 installer builds a release under `/opt/receptionist2/releases/<sha>`, runs
 the test suite, installs units and sudoers, and restarts all three services.
 Agents inside Receptionist2 must instead queue deploys through
-`request-receptionist-deploy` (see `CLAUDE.md`).
+`request-receptionist-deploy` (see `CLAUDE.md`). The agent runner exports
+`RECEPTIONIST2_RUN_ID`; the request records it, so the deployment's
+started/result notices and its Diagnose button appear in the chat or topic
+that queued it (requests made outside a run report to the private chat).
 
 ## Gotchas
 

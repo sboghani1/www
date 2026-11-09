@@ -222,16 +222,19 @@ sudo apps/receptionist2/deploy/install-receptionist2 [--revision SHA]
 ```
 
 The installer archives the exact revision, runs the test suite, and installs
-units, helpers, and sudoers, but enables and starts nothing. `--restart`
-restarts only enabled Receptionist2 services; `--workspace` also installs the
-shared workspace `CLAUDE.md`, skills, and deployment broker tools.
+units, helpers, sudoers, the shared workspace `CLAUDE.md` and skills, and the
+deployment broker tools (`request-receptionist-deploy`,
+`receptionist-deploy-executor`), but enables and starts nothing. `--restart`
+restarts only enabled Receptionist2 services. Edit the workspace files in the
+repository (`deploy/workspace-CLAUDE.md`, `.claude/skills/`), never in
+place: every install overwrites them.
 
 ## Cutover
 
 1. Write `/home/receptionist2/.config/receptionist2/gateway.env`,
    `/etc/receptionist2/worker.env`, and `/etc/receptionist2/watchdog.env`
    reusing the current primary and watchdog bot tokens.
-2. Run the installer with `--workspace`.
+2. Run the installer.
 3. `systemctl disable --now telegram-receptionist.service
    telegram-receptionist-watchdog.service
    telegram-receptionist-maintenance.timer`
