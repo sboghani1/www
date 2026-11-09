@@ -33,10 +33,17 @@ state_dir="/var/lib/decision-helper-bot"
 config_dir="/home/receptionist-agent/.config/decision-helper-bot"
 env_file="$config_dir/env"
 
+# Load the setup-token from auth.env like the service's EnvironmentFile does,
+# so its CLAUDE_CODE_OAUTH_TOKEN counts as the login (it stays out of argv).
 as_agent() {
     runuser -u receptionist-agent -- env -u ANTHROPIC_API_KEY \
         -u ANTHROPIC_AUTH_TOKEN HOME=/home/receptionist-agent \
-        USER=receptionist-agent PATH=/usr/local/bin:/usr/bin:/bin "$@"
+        USER=receptionist-agent PATH=/usr/local/bin:/usr/bin:/bin \
+        /bin/bash -c 'set -a
+            auth_env=/home/receptionist-agent/.claude/auth.env
+            if [[ -r "$auth_env" ]]; then . "$auth_env"; fi
+            set +a
+            exec "$@"' as-agent "$@"
 }
 
 id receptionist-agent >/dev/null

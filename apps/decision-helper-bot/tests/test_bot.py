@@ -762,6 +762,7 @@ def test_service_uses_claude_subscription_account() -> None:
     assert "EnvironmentFile=-/home/receptionist-agent/.claude/auth.env" in service
     installer = (Path(__file__).parents[1] / "deploy" / "install-decision-helper-bot").read_text()
     assert "auth status" in installer and "Claude subscription call OK" in installer
+    assert ". \"$auth_env\"" in installer  # the setup-token login counts
     assert "decision_helpers_bot" in installer
 
 
