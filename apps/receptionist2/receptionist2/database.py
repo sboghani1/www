@@ -301,6 +301,8 @@ class Database:
                 ("sessions", "telegram_thread_id", "INTEGER"),
                 # Unused since chats are named by the user; kept for old rows.
                 ("sessions", "title_pending", "INTEGER NOT NULL DEFAULT 0"),
+                # The agent run that queued a deployment, for its notices.
+                ("deployment_requests", "requester_run_id", "TEXT"),
                 # Standing per-chat instructions, set with /instructions.
                 ("sessions", "instructions", "TEXT"),
                 # Tombstone handoff: the latest tombstone and its run, and
@@ -2265,14 +2267,15 @@ class Database:
         summary: str,
         created_at: str,
         expires_at: str,
+        requester_run_id: str | None = None,
     ) -> bool:
         with self.connect() as connection:
             cursor = connection.execute(
                 """
                 INSERT OR IGNORE INTO deployment_requests(
                     id, telegram_user_id, repository_path, revision, command,
-                    summary, status, created_at, expires_at
-                ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+                    summary, status, created_at, expires_at, requester_run_id
+                ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
                 """,
                 (
                     request_id,
@@ -2283,6 +2286,7 @@ class Database:
                     summary,
                     created_at,
                     expires_at,
+                    requester_run_id,
                 ),
             )
             connection.commit()
@@ -2417,10 +2421,11 @@ class Database:
                 """
                 INSERT INTO runs(
                     id, session_id, telegram_user_id, telegram_chat_id,
-                    source, exact_prompt, model, effort, provider_session_id,
-                    status, deployment_request_id, created_at
+                    telegram_thread_id, source, exact_prompt, model, effort,
+                    provider_session_id, status, deployment_request_id,
+                    created_at
                 ) VALUES (
-                    ?, ?, ?, ?, 'deployment_diagnosis', ?, ?, ?, ?, 'queued',
+                    ?, ?, ?, ?, ?, 'deployment_diagnosis', ?, ?, ?, ?, 'queued',
                     ?, ?
                 )
                 """,
@@ -2429,6 +2434,7 @@ class Database:
                     session_id,
                     user_id,
                     chat_id,
+                    session["telegram_thread_id"],
                     prompt,
                     session["model"],
                     session["effort"],

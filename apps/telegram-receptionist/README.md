@@ -1,5 +1,12 @@
 # Telegram Receptionist
 
+> **Retired.** Receptionist2 (`apps/receptionist2`) replaced this bot on the
+> same Telegram token. Its systemd units were removed from production. This
+> directory stays because the environment it installed at
+> `/opt/telegram-receptionist/current/.venv` still hosts shared tools
+> (nfl-audio-parser, nfl-history, WNBA helpers, `receptionist-host-recovery`)
+> used by other services and skills. Do not deploy or restart the bot.
+
 Private Telegram bot that runs resumable coding-agent turns on a VPS.
 
 ## Current provider

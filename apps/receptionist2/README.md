@@ -1,8 +1,8 @@
 # Receptionist2
 
-Receptionist2 is a durable Telegram control plane for coding-agent work. It is
-implemented separately from the existing receptionist and is installed
-disabled by default so both services never poll the same Telegram bot token.
+Receptionist2 is a durable Telegram control plane for coding-agent work. It
+replaced the original receptionist (`apps/telegram-receptionist`, now retired)
+on the same Telegram bot token.
 
 ## Services
 
@@ -186,7 +186,10 @@ RECEPTIONIST2_MAX_PARALLEL_RUNS=2
 
 The worker also ingests deployment requests created by
 `request-receptionist-deploy` and runs approved ones through
-`receptionist-deploy-executor`. A request whose command runs
+`receptionist-deploy-executor`. The agent runner exports
+`RECEPTIONIST2_RUN_ID`, the request records it, and every notice about the
+deployment (started, result, Diagnose button) goes to the chat or topic whose
+run queued it; requests made outside a run go to the private chat. A request whose command runs
 `install-receptionist2` drains running work first and reports its result after
 the new worker starts.
 

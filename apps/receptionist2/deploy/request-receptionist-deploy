@@ -62,6 +62,10 @@ def main() -> None:
         raise SystemExit("Repository HEAD must match its configured upstream.")
     now = datetime.now(UTC)
     request_id = str(uuid.uuid4())
+    try:
+        run_id = str(uuid.UUID(os.environ.get("RECEPTIONIST2_RUN_ID", "")))
+    except ValueError:
+        run_id = None
     payload = {
         "id": request_id,
         "repository_path": str(repository),
@@ -71,6 +75,9 @@ def main() -> None:
         "created_at": now.isoformat(),
         "expires_at": (now + timedelta(minutes=15)).isoformat(),
     }
+    if run_id:
+        # Receptionist2 reports the deployment in the chat of this run.
+        payload["run_id"] = run_id
 
     REQUEST_DIR.mkdir(parents=True, exist_ok=True)
     temporary = REQUEST_DIR / f".{request_id}.tmp"

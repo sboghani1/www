@@ -1069,7 +1069,11 @@ class Gateway:
     ) -> None:
         try:
             request = self.database.get_deployment_request(request_id)
-            session = self.database.active_session(user_id)
+            session = (
+                self.database.topic_session(chat_id, thread_of(message))
+                if chat_id == self.config.group_chat_id
+                else None
+            ) or self.database.active_session(user_id)
             run, created = self.database.enqueue_deployment_diagnosis(
                 request_id=request_id,
                 user_id=user_id,
@@ -2485,12 +2489,18 @@ def build_application(config: GatewayConfig) -> Application:
     )
     for pattern, handler in (
         (ROLLOVER_PATTERN, gateway.session_rollover_button),
-        (DIAGNOSE_PATTERN, gateway.diagnose_deployment_button),
         (RETRY_PATTERN, gateway.retry_button),
     ):
         application.add_handler(
             CallbackQueryHandler(gateway.authorized(handler), pattern=pattern)
         )
+    # Deploy notices go to the requesting chat, so Diagnose works in topics.
+    application.add_handler(
+        CallbackQueryHandler(
+            gateway.authorized(gateway.diagnose_deployment_button, group=True),
+            pattern=DIAGNOSE_PATTERN,
+        )
+    )
     for text, handler in (
         (RECOVER_MENU_TEXT, gateway.recover),
         (DIAGNOSE_DEPLOYMENT_TEXT, gateway.diagnose_deployment_menu_button),

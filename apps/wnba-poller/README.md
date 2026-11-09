@@ -208,13 +208,14 @@ dedicated environment file, and uses 128 MB/192 MB memory limits.
 
 ## Troubleshooting `/wnba` game-loading errors
 
-Two independent bots intentionally use `/wnba` and the same generic failure
-text:
+`/wnba` is served by `@wnbaguesser_bot`, which runs the long-lived
+`wnba-guesser-bot.service` directly from `/opt/wnba-poller/current`.
 
-- `@ascereceptionist_bot` runs `telegram-receptionist.service` and calls the
-  short-lived `/usr/local/libexec/receptionist-wnba-helper`.
-- `@wnbaguesser_bot` runs the long-lived `wnba-guesser-bot.service` directly
-  from `/opt/wnba-poller/current`.
+`@ascereceptionist_bot` used to offer `/wnba` too, through
+`telegram-receptionist.service` and the short-lived
+`/usr/local/libexec/receptionist-wnba-helper`. That bot is retired and its
+successor, Receptionist2, has no `/wnba`; an error mentioning it comes from an
+old message or the helper run by hand.
 
 Always identify which bot received the command before diagnosing. Search the
 matching unit's journal, then compare the running process command with

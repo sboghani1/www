@@ -576,13 +576,32 @@ class Worker:
         *,
         kind: str = "deployment",
         reply_markup: list[list[dict[str, str]]] | None = None,
+        request: dict[str, Any] | None = None,
     ) -> None:
-        chat_id = self.database.primary_chat_id() or self.config.allowed_user_id
+        """Notify the chat whose run queued `request`, else the private chat."""
+        chat_id, thread_id = None, None
+        if request and request.get("requester_run_id"):
+            try:
+                run = self.database.get_run(request["requester_run_id"])
+            except LookupError:
+                run = None
+            if run:
+                chat_id = int(run["telegram_chat_id"])
+                thread_id = run.get("telegram_thread_id")
+        chat_id = (
+            chat_id
+            or self.database.primary_chat_id()
+            or self.config.allowed_user_id
+        )
         if not chat_id:
             log.warning("No Telegram chat for notification: %s", body[:200])
             return
         self.database.enqueue_outbox(
-            chat_id, body, kind=kind, reply_markup=reply_markup
+            chat_id,
+            body,
+            kind=kind,
+            reply_markup=reply_markup,
+            thread_id=thread_id,
         )
 
     def release_revision(self) -> str:
@@ -629,7 +648,8 @@ class Worker:
         self._notify(
             f"🚀 Receptionist2 deployment {request_id[:8]} "
             f"finished. Worker restarted at revision "
-            f"{revision[:12]}; queued prompts resume now."
+            f"{revision[:12]}; queued prompts resume now.",
+            request=request,
         )
 
     async def _deployment_loop(self) -> None:
@@ -681,7 +701,7 @@ class Worker:
             ):
                 continue
             request = self.database.get_deployment_request(request["id"])
-            self._notify(started_text(request))
+            self._notify(started_text(request), request=request)
             task = asyncio.create_task(self.execute_deployment(request))
             self._deployment_tasks.add(task)
             task.add_done_callback(self._deployment_tasks.discard)
@@ -789,6 +809,7 @@ class Worker:
                     if status == "failed"
                     else None
                 ),
+                request=request,
             )
 
 

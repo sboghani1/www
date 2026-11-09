@@ -10,14 +10,19 @@ the files to add or edit and wait for the user's feedback on topic boundaries
 before writing. The index's writing rules apply, and this repository is
 public.
 
-## Telegram receptionist
+## Receptionist2
 
-The application lives in `apps/telegram-receptionist`.
+The private `@ascereceptionist_bot` application lives in `apps/receptionist2`
+(see its README). The original receptionist in `apps/telegram-receptionist` is
+retired: its bot units were removed, and that directory is kept only because
+its installed environment at `/opt/telegram-receptionist/current/.venv` still
+hosts shared tools (nfl-audio-parser, nfl-history, WNBA helpers,
+`receptionist-host-recovery`). Do not deploy or restart the old bot.
 
 Run its tests before committing:
 
 ```bash
-cd apps/telegram-receptionist && python -m pytest
+cd apps/receptionist2 && python -m pytest
 ```
 
 Production deployment must be queued through the receptionist deployment broker
@@ -26,19 +31,20 @@ after committing and pushing a clean revision:
 ```bash
 request-receptionist-deploy \
   --repo /home/receptionist/repos/www \
-  --summary "Deploy the Telegram receptionist" \
-  --command 'systemd-run --unit=telegram-receptionist-deploy-$(date +%s) --collect /usr/local/libexec/deploy-telegram-receptionist-worker'
+  --summary "Deploy Receptionist2" \
+  --command 'systemd-run --unit=receptionist2-install-$(date +%s) --collect --wait --pipe /home/receptionist/repos/www/apps/receptionist2/deploy/install-receptionist2 --restart'
 ```
 
-The bot automatically executes a valid immutable request and reports the exact
-revision, command, and result in Telegram. Create a request only when the exact
-root command is ready to run. The agent has no direct sudo permission.
+Receptionist2 executes a valid immutable request automatically and reports the
+exact revision, command, and result in the chat whose run queued it. Create a
+request only when the exact root command is ready to run. A request that runs
+`install-receptionist2` drains running work first.
 
-The deployment executor runs inside the receptionist service's read-only system
-mount namespace. Root commands that write under `/opt`, `/etc`, `/usr/local`,
-or manage systemd units must use `systemd-run` to launch a transient unit
-outside that namespace. Add `--wait` when approval should report the detached
-installer's final result and `--pipe` when its actual logs are needed.
+The deployment executor runs inside a read-only system mount namespace. Root
+commands that write under `/opt`, `/etc`, `/usr/local`, or manage systemd
+units must use `systemd-run` to launch a transient unit outside that
+namespace. Add `--wait` when the result should report the installer's final
+status and `--pipe` when its actual logs are needed.
 
 The service namespace being read-only does not mean the host filesystem is
 read-only. Use

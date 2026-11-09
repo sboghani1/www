@@ -40,7 +40,14 @@ def parse_request_file(path: Path, repo_root: Path) -> dict[str, Any]:
         or expires_at - created_at > timedelta(minutes=15)
     ):
         raise ValueError("invalid request lifetime")
+    try:
+        requester_run_id = (
+            str(uuid.UUID(str(payload["run_id"]))) if payload.get("run_id") else None
+        )
+    except ValueError:
+        requester_run_id = None
     return {
+        "requester_run_id": requester_run_id,
         "request_id": request_id,
         "repository_path": str(repository),
         "revision": revision,

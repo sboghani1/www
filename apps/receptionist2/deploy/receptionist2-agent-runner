@@ -131,6 +131,8 @@ def main() -> None:
         f"{os.environ.get('PATH', '/usr/bin:/bin')}"
     )
     os.environ["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] = "1"
+    # request-receptionist-deploy records it so notices reach this run's chat.
+    os.environ["RECEPTIONIST2_RUN_ID"] = run_id
     RUN_STATE_DIR.mkdir(parents=True, exist_ok=True, mode=0o750)
     stdout_path = RUN_STATE_DIR / f"{run_id}.stdout.jsonl"
     stderr_path = RUN_STATE_DIR / f"{run_id}.stderr.log"
