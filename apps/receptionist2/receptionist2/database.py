@@ -16,6 +16,28 @@ def utc_now() -> str:
     return datetime.now(UTC).isoformat()
 
 
+VOICE_NOTES_TABLE = """
+CREATE TABLE {name} (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL REFERENCES sessions(id),
+    telegram_user_id INTEGER NOT NULL,
+    telegram_chat_id INTEGER NOT NULL,
+    telegram_message_id INTEGER NOT NULL,
+    status_message_id INTEGER,
+    local_path TEXT,
+    transcript TEXT,
+    status TEXT NOT NULL CHECK(status IN (
+        'awaiting','transcribing','ready','failed','queued','trashed'
+    )),
+    error TEXT,
+    run_id TEXT REFERENCES runs(id),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE(telegram_chat_id, telegram_message_id)
+)
+"""
+
+
 class Database:
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -322,28 +344,23 @@ class Database:
                     connection.execute(
                         f"ALTER TABLE {table} ADD COLUMN {column} {kind}"
                     )
-            connection.execute(
-                """
-                CREATE TABLE IF NOT EXISTS voice_notes (
-                    id TEXT PRIMARY KEY,
-                    session_id TEXT NOT NULL REFERENCES sessions(id),
-                    telegram_user_id INTEGER NOT NULL,
-                    telegram_chat_id INTEGER NOT NULL,
-                    telegram_message_id INTEGER NOT NULL,
-                    status_message_id INTEGER,
-                    local_path TEXT,
-                    transcript TEXT,
-                    status TEXT NOT NULL CHECK(status IN (
-                        'transcribing','ready','failed','queued','trashed'
-                    )),
-                    error TEXT,
-                    run_id TEXT REFERENCES runs(id),
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL,
-                    UNIQUE(telegram_chat_id, telegram_message_id)
+            existing = connection.execute(
+                "SELECT sql FROM sqlite_master WHERE name='voice_notes'"
+            ).fetchone()
+            if existing is None:
+                connection.execute(VOICE_NOTES_TABLE.format(name="voice_notes"))
+            elif "'awaiting'" not in existing["sql"]:
+                # Rebuild to widen the status CHECK; SQLite cannot alter it.
+                connection.execute(
+                    VOICE_NOTES_TABLE.format(name="voice_notes_rebuilt")
                 )
-                """
-            )
+                connection.execute(
+                    "INSERT INTO voice_notes_rebuilt SELECT * FROM voice_notes"
+                )
+                connection.execute("DROP TABLE voice_notes")
+                connection.execute(
+                    "ALTER TABLE voice_notes_rebuilt RENAME TO voice_notes"
+                )
             connection.execute(
                 """
                 CREATE UNIQUE INDEX IF NOT EXISTS sessions_topic
@@ -2102,7 +2119,7 @@ class Database:
                 INSERT OR IGNORE INTO voice_notes(
                     id, session_id, telegram_user_id, telegram_chat_id,
                     telegram_message_id, status, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, 'transcribing', ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, 'awaiting', ?, ?)
                 """,
                 (note_id, session_id, user_id, chat_id, message_id, now, now),
             ).rowcount
@@ -2134,15 +2151,18 @@ class Database:
             ).fetchone()
         return dict(row) if row else None
 
-    def claim_voice_note(self, note_id: str, status: str) -> dict[str, Any] | None:
-        """Move a ready note to queued or trashed exactly once."""
+    def claim_voice_note(
+        self, note_id: str, status: str, *, from_statuses: tuple[str, ...]
+    ) -> dict[str, Any] | None:
+        """Move a note from one of `from_statuses` to `status` exactly once."""
+        marks = ",".join("?" for _ in from_statuses)
         with self.connect() as connection:
             updated = connection.execute(
-                """
+                f"""
                 UPDATE voice_notes SET status=?, updated_at=?
-                WHERE id=? AND status='ready'
+                WHERE id=? AND status IN ({marks})
                 """,
-                (status, utc_now(), note_id),
+                (status, utc_now(), note_id, *from_statuses),
             ).rowcount
             connection.commit()
         return self.voice_note(note_id) if updated else None

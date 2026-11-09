@@ -54,8 +54,10 @@ operator detail is in `apps/receptionist2/README.md`; this is the mental model.
   Read tool.
 - **Voice/audio**: transcribed locally with faster-whisper `small.en` (CPU
   int8) in a short-lived subprocess, one at a time, so the ~0.5 GB model is not
-  held in memory. The transcript is shown with Run/Trash buttons; Run queues
-  it as the chat's next prompt.
+  held in memory. The bot first asks Transcribe or Trash; the transcript then
+  arrives as a new message (edits do not notify) in a tap-to-copy block with
+  Run/Trash. Bots cannot prefill the user's message box with long text, so
+  editing means copy, paste, edit, send.
 
 ## Tombstones
 

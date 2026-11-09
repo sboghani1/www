@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from receptionist2.config import WorkerConfig
 from receptionist2.database import Database
-from receptionist2.gateway import NAME_FIRST_TEXT, Gateway
+from receptionist2.gateway import NAME_FIRST_TEXT, VOICE_ASK_TEXT, Gateway
 from receptionist2.voice import main as voice_main
 from receptionist2.voice import transcript_preview, voice_prompt
 from receptionist2.worker import Worker
@@ -40,17 +40,25 @@ class Status:
         self.edits.append(text)
 
 
+def buttons_of(markup):
+    return (
+        [b.callback_data for row in markup.inline_keyboard for b in row]
+        if markup
+        else []
+    )
+
+
 class Bot:
     def __init__(self) -> None:
         self.edits: list[tuple] = []
+        self.sent: list[tuple] = []
 
     async def edit_message_text(self, text, *, chat_id, message_id, reply_markup=None):
-        buttons = (
-            [b.callback_data for row in reply_markup.inline_keyboard for b in row]
-            if reply_markup
-            else []
-        )
-        self.edits.append((chat_id, message_id, text, buttons))
+        self.edits.append((chat_id, message_id, text, buttons_of(reply_markup)))
+
+    async def send_message(self, chat_id, text, *, message_thread_id=None, reply_markup=None, **_):
+        self.sent.append((chat_id, message_thread_id, text, buttons_of(reply_markup)))
+        return SimpleNamespace(message_id=800 + len(self.sent))
 
     async def set_message_reaction(self, *_args):
         return None
@@ -69,8 +77,9 @@ class Message:
         self.text = text
         self.replies: list[str] = []
 
-    async def reply_text(self, text, **_kwargs):
+    async def reply_text(self, text, reply_markup=None, **_kwargs):
         self.replies.append(text)
+        self.reply_buttons = buttons_of(reply_markup)
         return Status(900 + len(self.replies))
 
     def get_bot(self):
@@ -136,49 +145,96 @@ def press(gateway, message, data):
     async def edit_message_text(text, **_kwargs):
         edits.append(text)
 
+    async def edit_message_reply_markup(markup):
+        edits.append(buttons_of(markup))
+
     query = SimpleNamespace(
-        data=data, answer=answer, edit_message_text=edit_message_text, message=message
+        data=data,
+        answer=answer,
+        edit_message_text=edit_message_text,
+        edit_message_reply_markup=edit_message_reply_markup,
+        message=message,
     )
     update = SimpleNamespace(
         callback_query=query, effective_user=SimpleNamespace(id=USER)
     )
-    asyncio.run(gateway.voice_button(update, None))
+
+    async def scenario():
+        await gateway.voice_button(update, SimpleNamespace(bot=message.bot))
+        await asyncio.gather(*gateway._voice_tasks)
+
+    asyncio.run(scenario())
     return answers, edits
 
 
-def test_voice_note_is_transcribed_then_run_once(tmp_path: Path) -> None:
+def ask_and_transcribe(gateway, message, chat_id=DM):
+    """Send audio, check the trash-first question, then tap Transcribe."""
+    receive(gateway, message, chat_id)
+    assert message.replies[-1] == VOICE_ASK_TEXT
+    tx, trash = message.reply_buttons
+    note_id = tx.rsplit(":", 1)[1]
+    assert (tx, trash) == (f"r2:voice:tx:{note_id}", f"r2:voice:trash:{note_id}")
+    _, edits = press(gateway, message, tx)
+    assert edits == ["📝 Transcribing…"]
+    return note_id
+
+
+def test_voice_note_asks_first_then_transcript_arrives_as_new_message(
+    tmp_path: Path,
+) -> None:
     gateway, database, calls = make_gateway(tmp_path)
     bot = Bot()
     message = Message(bot, 10)
 
-    receive(gateway, message)
-    receive(gateway, message)  # redelivered update: no second transcription
+    note_id = ask_and_transcribe(gateway, message)
+    receive(gateway, message)  # redelivered update: no second question
 
-    assert message.replies == ["🎧 Transcribing…"] and len(calls) == 1
-    [(chat, status_id, text, buttons)] = bot.edits
-    assert (chat, status_id) == (DM, 901)
-    assert text == "🎧 Heard:\ntake the Packers"
-    note_id = buttons[0].rsplit(":", 1)[1]
+    assert message.replies == [VOICE_ASK_TEXT] and len(calls) == 1
+    assert bot.edits == [(DM, 901, "🎧 Transcribed ↓", [])]
+    [(chat, thread, text, buttons)] = bot.sent
+    assert (chat, thread) == (DM, None)
+    assert text.startswith("🎧 Heard:\n<pre>take the Packers</pre>\nTap the text")
     assert buttons == [f"r2:voice:run:{note_id}", f"r2:voice:trash:{note_id}"]
+    assert press(gateway, message, f"r2:voice:tx:{note_id}")[0] == [
+        "That voice note was already handled."
+    ]
 
-    answers, edits = press(gateway, message, f"r2:voice:run:{note_id}")
+    _, edits = press(gateway, message, f"r2:voice:run:{note_id}")
     run = database.inbound_run(DM, 10)
     assert run["exact_prompt"] == voice_prompt("take the Packers")
     assert run["session_id"] == database.active_session(USER)["id"]
     assert database.voice_note(note_id)["run_id"] == run["id"]
-    assert edits == ["🎧 Heard:\ntake the Packers"]
+    assert edits == ["🎧 Heard:\n<pre>take the Packers</pre>"]
     assert message.replies[-1].startswith("Queued · run")
-
     assert press(gateway, message, f"r2:voice:trash:{note_id}")[0] == [
         "That voice note was already handled."
     ]
 
 
+def test_trash_before_transcribing_never_transcribes(tmp_path: Path) -> None:
+    gateway, database, calls = make_gateway(tmp_path)
+    message = Message(Bot(), 13)
+    receive(gateway, message)
+    note_id = message.reply_buttons[1].rsplit(":", 1)[1]
+    path = Path(database.voice_note(note_id)["local_path"])
+
+    _, edits = press(gateway, message, f"r2:voice:trash:{note_id}")
+
+    assert edits == ["🗑 Trashed. The audio was deleted."] and not path.exists()
+    assert calls == []
+
+
+def test_transcripts_are_escaped_for_html(tmp_path: Path) -> None:
+    gateway, _, _ = make_gateway(tmp_path, transcript="take <Lakers> & over")
+    bot = Bot()
+    ask_and_transcribe(gateway, Message(bot, 14))
+    assert "<pre>take &lt;Lakers&gt; &amp; over</pre>" in bot.sent[0][2]
+
+
 def test_trash_deletes_the_audio(tmp_path: Path) -> None:
     gateway, database, _ = make_gateway(tmp_path)
     bot = Bot()
-    receive(gateway, Message(bot, 11))
-    note_id = bot.edits[0][3][1].rsplit(":", 1)[1]
+    note_id = ask_and_transcribe(gateway, Message(bot, 11))
     path = Path(database.voice_note(note_id)["local_path"])
     assert path.exists()
 
@@ -191,7 +247,7 @@ def test_trash_deletes_the_audio(tmp_path: Path) -> None:
 def test_failed_transcription_reports_and_cleans_up(tmp_path: Path) -> None:
     gateway, database, _ = make_gateway(tmp_path, transcript=None)
     bot = Bot()
-    receive(gateway, Message(bot, 12))
+    ask_and_transcribe(gateway, Message(bot, 12))
 
     [(_, _, text, buttons)] = bot.edits
     assert text.startswith("❌ Could not transcribe that audio: RuntimeError")
@@ -206,8 +262,8 @@ def test_voice_in_a_topic_runs_in_that_chat(tmp_path: Path) -> None:
     )
     bot = Bot()
     message = Message(bot, 20, thread=11)
-    receive(gateway, message, GROUP)
-    note_id = bot.edits[0][3][0].rsplit(":", 1)[1]
+    note_id = ask_and_transcribe(gateway, message, GROUP)
+    assert bot.sent[0][:2] == (GROUP, 11)
 
     press(gateway, message, f"r2:voice:run:{note_id}")
 
@@ -308,8 +364,8 @@ def test_a_note_whose_download_died_is_retried_on_redelivery(tmp_path: Path) -> 
     message = Message(bot, 50)
     receive(gateway, message)
 
-    assert message.replies == [] and len(calls) == 1
-    assert bot.edits[0][1] == 777 and bot.edits[0][2] == "🎧 Heard:\ntake the Packers"
+    assert message.replies == [VOICE_ASK_TEXT] and calls == []
+    assert database.voice_note(note["id"])["local_path"]
 
 
 def test_restart_with_a_lost_file_says_so(tmp_path: Path) -> None:
@@ -331,3 +387,42 @@ def test_restart_with_a_lost_file_says_so(tmp_path: Path) -> None:
         (DM, 778, "❌ The audio was lost during a restart; send it again.", [])
     ]
     assert database.voice_note(note["id"])["status"] == "failed"
+
+
+def test_old_voice_notes_table_is_rebuilt_keeping_rows(tmp_path: Path) -> None:
+    database = Database(tmp_path / "db.sqlite")
+    database.initialize()
+    session = database.ensure_user(USER, DM, default_model="m", default_effort="high")
+    with database.connect() as connection:
+        connection.execute("DROP TABLE voice_notes")
+        connection.execute(
+            """
+            CREATE TABLE voice_notes (
+                id TEXT PRIMARY KEY, session_id TEXT NOT NULL,
+                telegram_user_id INTEGER NOT NULL,
+                telegram_chat_id INTEGER NOT NULL,
+                telegram_message_id INTEGER NOT NULL,
+                status_message_id INTEGER, local_path TEXT, transcript TEXT,
+                status TEXT NOT NULL CHECK(status IN (
+                    'transcribing','ready','failed','queued','trashed'
+                )),
+                error TEXT, run_id TEXT, created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                UNIQUE(telegram_chat_id, telegram_message_id)
+            )
+            """
+        )
+        connection.execute(
+            "INSERT INTO voice_notes VALUES ('n1', ?, 7, 7, 1, NULL, '/a', "
+            "'hi', 'ready', NULL, NULL, 'c', 'u')",
+            (session["id"],),
+        )
+        connection.commit()
+
+    database.initialize()
+
+    assert database.voice_note("n1")["transcript"] == "hi"
+    note, created = database.create_voice_note(
+        session_id=session["id"], user_id=USER, chat_id=DM, message_id=2
+    )
+    assert created and note["status"] == "awaiting"

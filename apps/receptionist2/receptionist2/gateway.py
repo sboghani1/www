@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import html
 import json
 import logging
 import os
@@ -73,7 +74,8 @@ ROLLOVER_PATTERN = re.compile(rf"^session:(?:new|continue):{UUID}$")
 DIAGNOSE_PATTERN = re.compile(rf"^deploy:diagnose:{UUID}$")
 RETRY_PATTERN = re.compile(rf"^r2:retry:{UUID}$")
 NEW_CHAT_CALLBACK = "r2:newchat"
-VOICE_PATTERN = re.compile(rf"^r2:voice:(?:run|trash):{UUID}$")
+VOICE_PATTERN = re.compile(rf"^r2:voice:(?:tx|run|trash):{UUID}$")
+VOICE_ASK_TEXT = "🎧 Got it. Transcribe it or trash the audio?"
 TOMB_PATTERN = re.compile(rf"^r2:tomb:(?:new|del|delyes|keep):{UUID}$")
 # The ☰ menu. Every command still works when typed; these are the common ones.
 PRIVATE_MENU = (
@@ -165,8 +167,9 @@ HELP_TEXT = (
     "Telegram reports their exact revision, command, and result.\n\n"
     "Photos and image files (screenshots work well; send several as one "
     "album) go to the agent with their caption as the request.\n\n"
-    "Voice notes and audio files are transcribed on the server; tap Run to "
-    "send the transcript to this chat's agent or Trash to delete it.\n\n"
+    "Voice notes and audio files: tap Transcribe or Trash. The transcript "
+    "arrives with Run (send it to this chat's agent) and Trash; to edit it, "
+    "tap to copy, then paste, edit, and send it yourself.\n\n"
     "/instructions [text|skill path|clear] — standing instructions every run "
     "in this chat follows\n"
     "/tombstone — write everything about this chat to a file, then continue "
@@ -203,6 +206,17 @@ def fruit_name(name: str, taken: set[str] = frozenset()) -> str:
         return name
     free = [fruit for fruit in FRUITS if fruit not in taken] or list(FRUITS)
     return f"{random.choice(free)} {name}"
+
+
+def transcript_message(transcript: str, *, hint: bool = True) -> str:
+    """The transcript as a tap-to-copy block, so it can be edited and resent."""
+    text = f"🎧 Heard:\n<pre>{html.escape(transcript_preview(transcript))}</pre>"
+    if hint:
+        text += (
+            "\nTap the text to copy it, if you'd rather edit it and send it "
+            "yourself."
+        )
+    return text
 
 
 def thread_of(message) -> int | None:
@@ -1682,7 +1696,7 @@ class Gateway:
         # A redelivered update is dropped unless its first attempt died
         # before the audio was saved (a gateway crash mid-download).
         unfinished = (
-            note["status"] == "transcribing"
+            note["status"] == "awaiting"
             and not note["local_path"]
             and note["id"] not in self._downloading
         )
@@ -1695,12 +1709,7 @@ class Gateway:
             self._downloading.discard(note["id"])
 
     async def _download_note(self, message, note: dict, selected) -> None:
-        bot = message.get_bot()
-        status_id = note.get("status_message_id")
-        if not status_id:
-            status = await message.reply_text("🎧 Transcribing…")
-            status_id = status.message_id
-            self.database.update_voice_note(note["id"], status_message_id=status_id)
+        """Save the audio, then ask whether to transcribe or trash it."""
         try:
             path = await self._store_voice(selected)
         except (OSError, TelegramError, ValueError) as error:
@@ -1708,12 +1717,29 @@ class Gateway:
             self.database.update_voice_note(
                 note["id"], status="failed", error=str(error)
             )
-            await self._show_voice_status(
-                bot, note, status_id, f"❌ Could not save that audio: {error}"
-            )
+            await message.reply_text(f"❌ Could not save that audio: {error}")
             return
         self.database.update_voice_note(note["id"], local_path=str(path))
-        self._start_transcription(bot, self.database.voice_note(note["id"]))
+        asked = await message.reply_text(
+            VOICE_ASK_TEXT,
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "📝 Transcribe",
+                            callback_data=f"r2:voice:tx:{note['id']}",
+                        ),
+                        InlineKeyboardButton(
+                            "🗑 Trash",
+                            callback_data=f"r2:voice:trash:{note['id']}",
+                        ),
+                    ]
+                ]
+            ),
+        )
+        self.database.update_voice_note(
+            note["id"], status_message_id=asked.message_id
+        )
 
     async def _show_voice_status(
         self, bot, note: dict, status_id, text: str, markup=None
@@ -1797,44 +1823,79 @@ class Gateway:
         async with self._transcribe_lock:
             result = await self._run_whisper(note["local_path"])
         transcript = str(result.get("transcript") or "").strip()
-        if transcript:
-            self.database.update_voice_note(
-                note["id"], status="ready", transcript=transcript
-            )
-            text = f"🎧 Heard:\n{transcript_preview(transcript)}"
-            markup = InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            "▶️ Run", callback_data=f"r2:voice:run:{note['id']}"
-                        ),
-                        InlineKeyboardButton(
-                            "🗑 Trash", callback_data=f"r2:voice:trash:{note['id']}"
-                        ),
-                    ]
-                ]
-            )
-        else:
+        if not transcript:
             error = str(result.get("error") or "No transcript was produced.")
             self.database.update_voice_note(note["id"], status="failed", error=error)
             Path(note["local_path"]).unlink(missing_ok=True)
-            text, markup = f"❌ Could not transcribe that audio: {error}", None
-        await self._show_voice_status(
-            bot, note, note.get("status_message_id"), text, markup
+            await self._show_voice_status(
+                bot,
+                note,
+                note.get("status_message_id"),
+                f"❌ Could not transcribe that audio: {error}",
+            )
+            return
+        self.database.update_voice_note(
+            note["id"], status="ready", transcript=transcript
         )
+        await self._show_voice_status(
+            bot, note, note.get("status_message_id"), "🎧 Transcribed ↓"
+        )
+        # A new message, not an edit, so Telegram notifies the user.
+        session = self.database.get_session(note["session_id"])
+        try:
+            sent = await bot.send_message(
+                int(note["telegram_chat_id"]),
+                transcript_message(transcript),
+                parse_mode="HTML",
+                message_thread_id=session.get("telegram_thread_id"),
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "▶️ Run",
+                                callback_data=f"r2:voice:run:{note['id']}",
+                            ),
+                            InlineKeyboardButton(
+                                "🗑 Trash",
+                                callback_data=f"r2:voice:trash:{note['id']}",
+                            ),
+                        ]
+                    ]
+                ),
+            )
+        except TelegramError as error:
+            log.warning("Could not send the transcript: %s", error)
+            return
+        self.database.update_voice_note(note["id"], status_message_id=sent.message_id)
 
     async def voice_button(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         query = update.callback_query
         _, _, action, note_id = str(query.data).split(":", 3)
-        note = self.database.claim_voice_note(
-            note_id, "queued" if action == "run" else "trashed"
-        )
+        if action == "tx":
+            note = self.database.claim_voice_note(
+                note_id, "transcribing", from_statuses=("awaiting",)
+            )
+        elif action == "run":
+            note = self.database.claim_voice_note(
+                note_id, "queued", from_statuses=("ready",)
+            )
+        else:
+            note = self.database.claim_voice_note(
+                note_id, "trashed", from_statuses=("awaiting", "ready")
+            )
         if note is None:
             await query.answer("That voice note was already handled.")
             return
         await query.answer()
+        if action == "tx":
+            try:
+                await query.edit_message_text("📝 Transcribing…")
+            except TelegramError:
+                pass
+            self._start_transcription(context.bot, note)
+            return
         if action == "trash":
             if note.get("local_path"):
                 Path(note["local_path"]).unlink(missing_ok=True)
@@ -1845,7 +1906,8 @@ class Gateway:
             return
         try:
             await query.edit_message_text(
-                f"🎧 Heard:\n{transcript_preview(note['transcript'])}"
+                transcript_message(note["transcript"], hint=False),
+                parse_mode="HTML",
             )
         except TelegramError:
             pass
@@ -1862,6 +1924,21 @@ class Gateway:
         except Exception:
             log.exception("Could not queue voice note %s", note_id)
             self.database.update_voice_note(note_id, status="ready")
+            await query.edit_message_reply_markup(
+                InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "▶️ Run", callback_data=f"r2:voice:run:{note_id}"
+                            ),
+                            InlineKeyboardButton(
+                                "🗑 Trash",
+                                callback_data=f"r2:voice:trash:{note_id}",
+                            ),
+                        ]
+                    ]
+                )
+            )
             await query.message.reply_text(
                 "❌ Could not queue that voice note. Send /recover, then try "
                 "Run again."
