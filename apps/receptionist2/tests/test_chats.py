@@ -8,13 +8,17 @@ from telegram.error import BadRequest
 from receptionist2.config import WorkerConfig
 from receptionist2.database import Database
 from receptionist2.gateway import (
-    NEW_CHAT_NAME,
+    FRUITS,
+    NAME_FIRST_TEXT,
+    NAME_PROMPT,
     Gateway,
     chats_text,
-    provisional_title,
+    clean_name,
+    fruit_name,
+    has_fruit,
     topic_link,
 )
-from receptionist2.worker import Worker, chats_overview, clean_title
+from receptionist2.worker import Worker, chats_overview
 
 USER = 7
 DM = 7
@@ -28,7 +32,7 @@ def make_db(tmp_path: Path) -> Database:
     return database
 
 
-def topic(database: Database, thread: int, name: str = "Chat", **kwargs):
+def topic(database: Database, thread: int, name: str = "Chat"):
     return database.create_topic_session(
         user_id=USER,
         chat_id=GROUP,
@@ -36,7 +40,6 @@ def topic(database: Database, thread: int, name: str = "Chat", **kwargs):
         name=name,
         model="claude-test",
         effort="high",
-        title_pending=kwargs.get("title_pending", False),
     )
 
 
@@ -112,17 +115,14 @@ def test_stop_targets_the_right_chat(tmp_path: Path) -> None:
 
 def test_topic_lifecycle_and_overview(tmp_path: Path) -> None:
     database = make_db(tmp_path)
-    blank = topic(database, 11, title_pending=True)
-    assert database.blank_topic_session(GROUP, 300)["id"] == blank["id"]
-    accept(database, 1, "first question", session_id=blank["id"])
-    assert database.blank_topic_session(GROUP, 300) is None
+    chat = topic(database, 11)
+    accept(database, 1, "first question", session_id=chat["id"])
 
     assert database.set_topic_open(GROUP, 11, False)["status"] == "archived"
-    database.set_session_title(blank["id"], "Packers ATS")
+    database.set_session_title(chat["id"], "🍓 Packers ATS")
     [row] = database.topic_sessions(USER)
-    assert row["display_name"] == "Packers ATS" and row["title_pending"] == 0
+    assert row["display_name"] == "🍓 Packers ATS"
     assert row["last_status"] == "queued" and row["last_text"] == "first question"
-    assert database.first_message_text(blank["id"]) == "first question"
     assert "closed" in chats_text([row], GROUP)
 
 
@@ -231,38 +231,16 @@ def test_first_topic_run_needs_no_private_chat(tmp_path: Path) -> None:
     assert session["id"] in prompt
 
 
-def test_titles_are_cleaned() -> None:
-    assert clean_title('**"Packers ATS as underdogs."**\nmore') == "Packers ATS as underdogs"
-    assert len(clean_title("word " * 30)) <= 48
-    assert provisional_title("  How have these teams\nbeen") == "How have these teams"
-    assert provisional_title("") == NEW_CHAT_NAME
+def test_names_get_one_fruit() -> None:
+    assert clean_name("  Packers\n  ATS  ") == "Packers ATS"
+    assert clean_name("   ") == ""
+    assert len(clean_name("word " * 40)) <= 121
+    named = fruit_name("Packers ATS")
+    assert has_fruit(named) and named.split(" ", 1)[1] == "Packers ATS"
+    assert fruit_name(named) == named
+    assert fruit_name("x", set(FRUITS[1:])) == f"{FRUITS[0]} x"
     assert topic_link(GROUP, 11) == "https://t.me/c/1234567890/11"
     assert chats_overview([]) == ""
-
-
-def test_first_success_titles_the_topic_once(tmp_path: Path) -> None:
-    database = make_db(tmp_path)
-    session = topic(database, 11, name="How have these…", title_pending=True)
-    run = accept(database, 1, "How have these teams been ATS", session_id=session["id"])
-    worker = make_worker(tmp_path, database)
-    calls = []
-
-    async def generate(message, response):
-        calls.append(message)
-        return "Underdog ATS records"
-
-    worker._generate_title = generate
-
-    async def scenario():
-        worker._schedule_title(run, "answer")
-        worker._schedule_title(run, "answer")
-        await asyncio.gather(*worker._title_tasks)
-
-    asyncio.run(scenario())
-    assert calls == ["How have these teams been ATS"]
-    assert database.get_session(session["id"])["display_name"] == "Underdog ATS records"
-    item = database.claim_outbox()
-    assert item["kind"] == "topic_title" and item["telegram_thread_id"] == 11
 
 
 # Gateway
@@ -339,21 +317,50 @@ def group_update(message):
     )
 
 
-def test_writing_in_the_hub_opens_a_topic(tmp_path: Path) -> None:
+def test_writing_in_the_hub_names_a_new_chat(tmp_path: Path) -> None:
     gateway, database, bot = make_gateway(tmp_path)
-    message = Message(bot, 40, "How have these teams been ATS as underdogs", HUB)
+    message = Message(bot, 40, "Packers  ATS", HUB)
 
     asyncio.run(gateway.exact_text(group_update(message), None))
-    asyncio.run(gateway.exact_text(group_update(message), None))
 
-    run = database.inbound_run(GROUP, 40)
-    session = database.get_session(run["session_id"])
-    assert session["telegram_thread_id"] == 101 == run["telegram_thread_id"]
-    assert session["title_pending"] == 1
-    assert [call[0] for call in bot.calls] == ["create", "copy", "send"]
-    assert bot.calls[2][2] == 101 and bot.calls[2][3].startswith("Queued")
-    assert message.replies[0].startswith("💬 Opened How have these teams been ATS")
-    assert message.replies[1].startswith("Already accepted")
+    session = database.topic_session(GROUP, 101)
+    name = session["display_name"]
+    assert has_fruit(name) and name.endswith(" Packers ATS")
+    assert database.inbound_run(GROUP, 40) is None
+    assert bot.calls == [
+        ("create", name),
+        ("send", GROUP, 101, f"{name} is ready. Send your first message here."),
+    ]
+    assert message.replies == [
+        f"💬 Opened {name}: https://t.me/c/1234567890/101"
+    ]
+    message.edit_date = 1
+    asyncio.run(gateway.exact_text(group_update(message), None))
+    assert len(database.topic_sessions(USER)) == 1
+
+
+def test_new_requires_a_name(tmp_path: Path) -> None:
+    gateway, database, bot = make_gateway(tmp_path)
+    message = Message(bot, 41, "/new", HUB)
+    update = group_update(message)
+
+    asyncio.run(gateway.new_session(update, SimpleNamespace(bot=bot, args=[])))
+    assert message.replies == ["Usage: /new <name>, e.g. /new Packers ATS"]
+    asyncio.run(
+        gateway.new_session(update, SimpleNamespace(bot=bot, args=["Chargers"]))
+    )
+    assert database.topic_session(GROUP, 101)["display_name"].endswith(" Chargers")
+
+
+def test_images_in_the_hub_ask_for_a_name_first(tmp_path: Path) -> None:
+    gateway, database, bot = make_gateway(tmp_path)
+    album = [Message(bot, 42 + i, None, HUB) for i in range(3)]
+    for message in album:
+        message.media_group_id = "g"
+        asyncio.run(gateway.image_receive(group_update(message), None))
+
+    assert [reply for m in album for reply in m.replies] == [NAME_FIRST_TEXT]
+    assert not (tmp_path / "images").exists() and bot.calls == []
 
 
 def test_messages_in_topics_continue_or_adopt_them(tmp_path: Path) -> None:
@@ -371,7 +378,9 @@ def test_messages_in_topics_continue_or_adopt_them(tmp_path: Path) -> None:
     assert database.get_session(known["id"])["status"] == "active"
     assert ("reopen", 11) in bot.calls
     adopted = database.topic_session(GROUP, 12)
-    assert adopted["display_name"] == "Mine" and not adopted["title_pending"]
+    assert has_fruit(adopted["display_name"])
+    assert adopted["display_name"].endswith(" Mine")
+    assert ("rename", 12, adopted["display_name"]) in bot.calls
     assert not any(call[0] == "create" for call in bot.calls)
 
 
@@ -397,7 +406,7 @@ def test_private_only_commands_are_refused_in_the_group(tmp_path: Path) -> None:
     assert users == 0
 
 
-def test_new_chat_button_reuses_a_blank_topic(tmp_path: Path) -> None:
+def test_new_chat_button_asks_for_the_name(tmp_path: Path) -> None:
     gateway, database, bot = make_gateway(tmp_path)
     answers = []
 
@@ -408,14 +417,12 @@ def test_new_chat_button_reuses_a_blank_topic(tmp_path: Path) -> None:
     update = SimpleNamespace(
         callback_query=query, effective_user=SimpleNamespace(id=USER)
     )
-    context = SimpleNamespace(bot=bot)
 
-    asyncio.run(gateway.new_chat_button(update, context))
-    asyncio.run(gateway.new_chat_button(update, context))
+    asyncio.run(gateway.new_chat_button(update, SimpleNamespace(bot=bot)))
 
-    assert [call[0] for call in bot.calls].count("create") == 1
-    assert answers == [f"Opened {NEW_CHAT_NAME}"] * 2
-    assert bot.calls[-1][2] == HUB
+    assert answers == [None]
+    assert bot.calls == [("send", GROUP, HUB, NAME_PROMPT)]
+    assert database.topic_sessions(USER) == []
 
 
 def test_topic_service_messages_update_sessions(tmp_path: Path) -> None:
@@ -431,9 +438,13 @@ def test_topic_service_messages_update_sessions(tmp_path: Path) -> None:
         )
         for key, value in kwargs.items():
             setattr(message, key, value)
-        asyncio.run(gateway.topic_event(group_update(message), None))
+        asyncio.run(
+            gateway.topic_event(group_update(message), SimpleNamespace(bot=bot))
+        )
 
-    event(forum_topic_created=SimpleNamespace(name="Draft"))
+    event(forum_topic_created=SimpleNamespace(name="🍉 Draft"))
+    assert database.topic_session(GROUP, 21)["display_name"] == "🍉 Draft"
+    assert bot.calls == []
     event(forum_topic_edited=SimpleNamespace(name="Renamed"))
     event(forum_topic_closed=True)
     session = database.topic_session(GROUP, 21)
@@ -444,7 +455,6 @@ def test_topic_service_messages_update_sessions(tmp_path: Path) -> None:
 
 def test_delivery_targets_topics_and_survives_deleted_ones(tmp_path: Path) -> None:
     gateway, database, bot = make_gateway(tmp_path)
-    database.enqueue_outbox(GROUP, "Better name", kind="topic_title", thread_id=11)
     database.enqueue_outbox(GROUP, "answer", kind="notice", thread_id=11)
     database.enqueue_outbox(GROUP, "orphan", kind="notice", thread_id=12)
     database.enqueue_outbox(DM, "private", kind="notice")
@@ -453,9 +463,33 @@ def test_delivery_targets_topics_and_survives_deleted_ones(tmp_path: Path) -> No
     asyncio.run(gateway.deliver_outbox(SimpleNamespace(bot=bot)))
 
     assert bot.calls == [
-        ("rename", 11, "Better name"),
         ("send", GROUP, 11, "answer"),
         ("send", USER, None, "(from a deleted chat topic)\norphan"),
         ("send", DM, None, "private"),
     ]
     assert database.claim_outbox() is None
+
+
+def test_startup_refreshes_the_pinned_hub_text(tmp_path: Path) -> None:
+    from receptionist2.gateway import HUB_TEXT
+
+    gateway, database, bot = make_gateway(tmp_path)
+    edits = []
+    pinned = SimpleNamespace(
+        message_id=9, text="old wording", from_user=SimpleNamespace(id=55)
+    )
+    bot.id = 55
+
+    async def get_chat(chat_id):
+        return SimpleNamespace(pinned_message=pinned)
+
+    async def edit_message_text(text, **kwargs):
+        edits.append((text, kwargs["message_id"]))
+        pinned.text = text
+
+    bot.get_chat = get_chat
+    bot.edit_message_text = edit_message_text
+
+    assert asyncio.run(gateway.ensure_hub(bot)) == HUB
+    asyncio.run(gateway.ensure_hub(bot))
+    assert edits == [(HUB_TEXT, 9)]

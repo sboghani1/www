@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import random
 import re
 import time
 import uuid
@@ -9,6 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from telegram import (
+    ForceReply,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     ReplyKeyboardMarkup,
@@ -58,15 +60,24 @@ DIAGNOSE_PATTERN = re.compile(rf"^deploy:diagnose:{UUID}$")
 RETRY_PATTERN = re.compile(rf"^r2:retry:{UUID}$")
 NEW_CHAT_CALLBACK = "r2:newchat"
 HUB_NAME = "📋 Chats"
-NEW_CHAT_NAME = "New chat"
-BLANK_TOPIC_REUSE_SECONDS = 5 * 60
-TOPIC_NAME_MAX_CHARS = 40
+FRUITS = (
+    "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓",
+    "🫐", "🍈", "🍒", "🍑", "🥭", "🍍", "🥥", "🥝",
+)
+# Telegram allows 128 characters; leave room for the fruit.
+TOPIC_NAME_MAX_CHARS = 120
+NAME_PROMPT = "Name for the new chat?"
+NAME_FIRST_TEXT = (
+    "Name the chat first: type its name here or tap ➕, then send the image "
+    "inside the new topic."
+)
 HUB_TEXT = (
     "📋 Chats\n\n"
     "Each topic in this group is its own Receptionist2 conversation, and up "
-    "to two of them work at once. Type here or tap ➕ to open a new one; "
-    "write inside a topic to continue it. Close a topic to archive it.\n\n"
-    "In a topic: /stop, /status, /model, /effort. Anywhere: /chats."
+    "to two of them work at once. To open one, type its name here (or tap "
+    "➕), then write inside the new topic. Close a topic to archive it.\n\n"
+    "In a topic: /stop, /status, /model, /effort. Anywhere: /chats, "
+    "/new <name>."
 )
 # No set-gid bit: the gateway unit's RestrictSUIDSGID=true rejects it with
 # EPERM. Its Group=receptionist2-state already gives new files the shared
@@ -107,8 +118,9 @@ HELP_TEXT = (
     "album) go to the agent with their caption as the request.\n\n"
     "Any other text is passed unchanged as the next agent prompt.\n\n"
     "/chats — every chat topic in the Receptionist2 group and its state. "
-    "In the group, each topic is its own conversation: type in 📋 Chats or "
-    "tap ➕ to open one, and use /stop, /status, /model, /effort inside it."
+    "In the group, each topic is its own conversation: type a name in "
+    "📋 Chats, tap ➕, or send /new <name> to open one, and use /stop, "
+    "/status, /model, /effort inside it."
 )
 
 
@@ -116,11 +128,24 @@ def topic_link(chat_id: int, thread_id: int) -> str:
     return f"https://t.me/c/{str(chat_id).removeprefix('-100')}/{thread_id}"
 
 
-def provisional_title(text: str) -> str:
-    line = " ".join(text.strip().splitlines()[0].split()) if text.strip() else ""
+def clean_name(text: str) -> str:
+    """A chat name from user input: one line, at most TOPIC_NAME_MAX_CHARS."""
+    line = " ".join(text.split())
     if len(line) > TOPIC_NAME_MAX_CHARS:
         line = line[:TOPIC_NAME_MAX_CHARS].rsplit(" ", 1)[0].rstrip(" ,;:-") + "…"
-    return line or NEW_CHAT_NAME
+    return line
+
+
+def has_fruit(name: str) -> bool:
+    return name.startswith(FRUITS)
+
+
+def fruit_name(name: str, taken: set[str] = frozenset()) -> str:
+    """Prefix a random fruit, preferring one no open chat already uses."""
+    if has_fruit(name):
+        return name
+    free = [fruit for fruit in FRUITS if fruit not in taken] or list(FRUITS)
+    return f"{random.choice(free)} {name}"
 
 
 def thread_of(message) -> int | None:
@@ -234,6 +259,7 @@ class Gateway:
         self.database = database
         self._progress_edits: dict[str, float] = {}
         self._albums: dict[str, dict] = {}
+        self._refused_albums: set[str] = set()
 
     async def post_init(self, application: Application) -> None:
         self.database.initialize()
@@ -272,6 +298,7 @@ class Gateway:
         """The 📋 Chats topic with a pinned ➕, created once per group."""
         existing = self.hub_thread()
         if existing:
+            await self._refresh_hub_text(bot)
             return existing
         chat_id = self.config.group_chat_id
         topic = await bot.create_forum_topic(chat_id, HUB_NAME)
@@ -297,31 +324,103 @@ class Gateway:
             log.info("General topic not hidden: %s", error)
         return thread
 
-    async def open_topic(
-        self, bot, *, user_id: int, name: str, title_pending: bool
-    ) -> dict:
+    def _fruit_name(self, user_id: int, name: str) -> str:
+        taken = {
+            row["display_name"][: len(fruit)]
+            for row in self.database.topic_sessions(user_id)
+            if row["status"] == "active"
+            for fruit in FRUITS
+            if row["display_name"].startswith(fruit)
+        }
+        return fruit_name(name, taken)
+
+    async def _refresh_hub_text(self, bot) -> None:
+        """Keep the pinned hub message's wording current across releases."""
+        chat = await bot.get_chat(self.config.group_chat_id)
+        pinned = chat.pinned_message
+        if (
+            pinned is None
+            or pinned.from_user is None
+            or pinned.from_user.id != bot.id
+            or pinned.text == HUB_TEXT
+        ):
+            return
+        await bot.edit_message_text(
+            HUB_TEXT,
+            chat_id=self.config.group_chat_id,
+            message_id=pinned.message_id,
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("➕", callback_data=NEW_CHAT_CALLBACK)]]
+            ),
+        )
+
+    async def open_topic(self, bot, *, user_id: int, name: str) -> dict:
+        """A new chat topic named with a fruit and the user's name for it."""
         chat_id = self.config.group_chat_id
+        name = self._fruit_name(user_id, name)
         topic = await bot.create_forum_topic(chat_id, name)
-        return self.database.create_topic_session(
+        session = self.database.create_topic_session(
             user_id=user_id,
             chat_id=chat_id,
             thread_id=topic.message_thread_id,
             name=name,
             model=self.config.default_model,
             effort=self.config.default_effort,
-            title_pending=title_pending,
         )
+        try:
+            await bot.send_message(
+                chat_id,
+                f"{name} is ready. Send your first message here.",
+                message_thread_id=topic.message_thread_id,
+            )
+        except TelegramError as error:
+            log.warning("Could not greet the new topic: %s", error)
+        return session
 
-    def adopt_topic(self, user_id: int, thread_id: int, name: str) -> dict:
+    async def adopt_topic(
+        self, bot, user_id: int, thread_id: int, name: str
+    ) -> dict:
+        """Register a topic the user created in Telegram, adding a fruit."""
+        named = self._fruit_name(user_id, name)
+        if named != name:
+            try:
+                await bot.edit_forum_topic(
+                    self.config.group_chat_id, thread_id, name=named
+                )
+            except TelegramError as error:
+                log.warning("Could not rename topic %s: %s", thread_id, error)
+                named = name
         return self.database.create_topic_session(
             user_id=user_id,
             chat_id=self.config.group_chat_id,
             thread_id=thread_id,
-            name=name,
+            name=named,
             model=self.config.default_model,
             effort=self.config.default_effort,
-            title_pending=False,
         )
+
+    async def name_new_chat(self, message, user_id: int, text: str) -> None:
+        name = clean_name(text)
+        if not name:
+            await message.reply_text(NAME_PROMPT)
+            return
+        try:
+            session = await self.open_topic(
+                message.get_bot(), user_id=user_id, name=name
+            )
+        except TelegramError as error:
+            await message.reply_text(f"Could not open a topic: {error}")
+            return
+        await message.reply_text(
+            f"💬 Opened {session['display_name']}: "
+            + topic_link(
+                self.config.group_chat_id, int(session["telegram_thread_id"])
+            ),
+            disable_web_page_preview=True,
+        )
+
+    def is_hub(self, thread: int | None) -> bool:
+        return thread is None or thread == self.hub_thread()
 
     def context_session(self, update: Update) -> dict | None:
         """The topic's session in the group, else the private chat's."""
@@ -341,31 +440,17 @@ class Gateway:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         query = update.callback_query
-        chat_id = self.config.group_chat_id
-        session = self.database.blank_topic_session(
-            chat_id, BLANK_TOPIC_REUSE_SECONDS
-        )
-        if session is None:
-            try:
-                session = await self.open_topic(
-                    context.bot,
-                    user_id=update.effective_user.id,
-                    name=NEW_CHAT_NAME,
-                    title_pending=True,
-                )
-            except TelegramError as error:
-                await query.answer(f"Could not open a topic: {error}")
-                return
-        await query.answer(f"Opened {session['display_name']}")
+        await query.answer()
         try:
+            # Any text written in the hub names a new chat; this just asks.
             await context.bot.send_message(
-                chat_id,
-                f"💬 {session['display_name']}: "
-                + topic_link(chat_id, int(session["telegram_thread_id"])),
+                self.config.group_chat_id,
+                NAME_PROMPT,
                 message_thread_id=thread_of(query.message),
+                reply_markup=ForceReply(input_field_placeholder="Chat name"),
             )
         except TelegramError as error:
-            log.warning("Could not post the new chat link: %s", error)
+            log.warning("Could not ask for the new chat name: %s", error)
 
     async def chats(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -393,8 +478,11 @@ class Gateway:
             return
         chat_id = self.config.group_chat_id
         if message.forum_topic_created:
-            self.adopt_topic(
-                update.effective_user.id, thread, message.forum_topic_created.name
+            await self.adopt_topic(
+                context.bot,
+                update.effective_user.id,
+                thread,
+                message.forum_topic_created.name,
             )
         elif message.forum_topic_edited and message.forum_topic_edited.name:
             session = self.database.topic_session(chat_id, thread)
@@ -1032,22 +1120,13 @@ class Gateway:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         if self.in_group(update):
-            name = " ".join(context.args).strip()[:TOPIC_NAME_MAX_CHARS]
-            try:
-                session = await self.open_topic(
-                    context.bot,
-                    user_id=update.effective_user.id,
-                    name=name or NEW_CHAT_NAME,
-                    title_pending=not name,
+            if not clean_name(" ".join(context.args)):
+                await update.message.reply_text(
+                    "Usage: /new <name>, e.g. /new Packers ATS"
                 )
-            except TelegramError as error:
-                await update.message.reply_text(f"Could not open a topic: {error}")
                 return
-            await update.message.reply_text(
-                f"💬 {session['display_name']}: "
-                + topic_link(
-                    self.config.group_chat_id, int(session["telegram_thread_id"])
-                )
+            await self.name_new_chat(
+                update.message, update.effective_user.id, " ".join(context.args)
             )
             return
         current = self.database.active_session(update.effective_user.id)
@@ -1359,6 +1438,13 @@ class Gateway:
                 f"Already accepted · run {existing['id'][:8]}"
             )
             return
+        if self.in_group(update) and self.is_hub(thread_of(message)):
+            group = message.media_group_id
+            if group is None or group not in self._refused_albums:
+                if group is not None:
+                    self._refused_albums.add(group)
+                await message.reply_text(NAME_FIRST_TEXT)
+            return
         image = telegram_image(message)
         if image is None:
             await message.reply_text(
@@ -1385,7 +1471,6 @@ class Gateway:
                 message_ids=[message.message_id],
                 text=image_summary(caption, 1),
                 exact_prompt=image_prompt(caption, [str(path)]),
-                title_hint=caption,
             )
             return
         album = self._albums.setdefault(
@@ -1421,7 +1506,6 @@ class Gateway:
             message_ids=[message_id for message_id, _, _ in items],
             text=image_summary(album["caption"], len(paths)),
             exact_prompt=image_prompt(album["caption"], paths),
-            title_hint=album["caption"],
         )
 
     async def _store_image(self, image: TelegramImage) -> Path:
@@ -1450,7 +1534,6 @@ class Gateway:
         message_ids: list[int],
         text: str,
         exact_prompt: str | None = None,
-        title_hint: str | None = None,
     ) -> None:
         """Queue a message: in the group, into its topic's own session."""
         message_id = message_ids[0]
@@ -1471,44 +1554,30 @@ class Gateway:
             )
             return
         thread = thread_of(message)
-        ack_thread = None
-        if thread is None or thread == self.hub_thread():
-            # Writing in the hub (or General) opens a new chat topic.
-            name = provisional_title(text if title_hint is None else title_hint)
-            try:
-                session = await self.open_topic(
-                    message.get_bot(),
-                    user_id=user_id,
-                    name=name,
-                    title_pending=True,
-                )
-            except TelegramError as error:
-                await message.reply_text(f"Could not open a topic: {error}")
-                return
-            ack_thread = int(session["telegram_thread_id"])
-            try:
-                await message.get_bot().copy_messages(
-                    chat_id, chat_id, message_ids, message_thread_id=ack_thread
-                )
-            except TelegramError as error:
-                log.warning("Could not copy the request into its topic: %s", error)
-            await message.reply_text(
-                f"💬 Opened {name}: {topic_link(chat_id, ack_thread)}",
-                disable_web_page_preview=True,
+        if self.is_hub(thread):
+            # Writing in the hub (or General) names a new chat; nothing runs.
+            if getattr(message, "edit_date", None):
+                return  # editing an earlier name must not open another chat
+            if exact_prompt is None:
+                await self.name_new_chat(message, user_id, text)
+            else:
+                await message.reply_text(NAME_FIRST_TEXT)
+            return
+        session = self.database.topic_session(chat_id, thread)
+        if session is None:
+            created = getattr(message.reply_to_message, "forum_topic_created", None)
+            session = await self.adopt_topic(
+                message.get_bot(),
+                user_id,
+                thread,
+                created.name if created else f"Topic {thread}",
             )
-        else:
-            session = self.database.topic_session(chat_id, thread)
-            if session is None:
-                created = getattr(message.reply_to_message, "forum_topic_created", None)
-                session = self.adopt_topic(
-                    user_id, thread, created.name if created else f"Topic {thread}"
-                )
-            elif session["status"] != "active":
-                try:
-                    await message.get_bot().reopen_forum_topic(chat_id, thread)
-                except TelegramError as error:
-                    log.warning("Could not reopen topic %s: %s", thread, error)
-                session = self.database.set_topic_open(chat_id, thread, True)
+        elif session["status"] != "active":
+            try:
+                await message.get_bot().reopen_forum_topic(chat_id, thread)
+            except TelegramError as error:
+                log.warning("Could not reopen topic %s: %s", thread, error)
+            session = self.database.set_topic_open(chat_id, thread, True)
         await self._accept_text(
             message,
             user_id=user_id,
@@ -1517,7 +1586,6 @@ class Gateway:
             text=text,
             exact_prompt=exact_prompt,
             session_id=session["id"],
-            ack_thread=ack_thread,
         )
 
     async def _accept_text(
@@ -1530,7 +1598,6 @@ class Gateway:
         text: str,
         exact_prompt: str | None = None,
         session_id: str | None = None,
-        ack_thread: int | None = None,
     ) -> None:
         run, created = self.database.accept_message(
             user_id=user_id,
@@ -1556,12 +1623,7 @@ class Gateway:
             f"{run['model']} · effort {run['effort']} · "
             f"position {queue.get('queued', 0)}"
         )
-        if ack_thread is not None:
-            await reply_to.get_bot().send_message(
-                chat_id, ack, message_thread_id=ack_thread
-            )
-        else:
-            await reply_to.reply_text(ack)
+        await reply_to.reply_text(ack)
 
     async def session_rollover_button(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -1666,15 +1728,6 @@ class Gateway:
             if item is None:
                 return
             thread = item.get("telegram_thread_id")
-            if item["kind"] == "topic_title":
-                try:
-                    await context.bot.edit_forum_topic(
-                        item["telegram_chat_id"], thread, name=item["body"][:128]
-                    )
-                except TelegramError as error:
-                    log.warning("Could not rename topic %s: %s", thread, error)
-                self.database.finish_outbox(item["id"])
-                continue
             try:
                 if item["kind"] == "run_result" and item["run_id"]:
                     await self._finish_status_message(context, item["run_id"])

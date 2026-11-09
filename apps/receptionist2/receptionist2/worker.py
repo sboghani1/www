@@ -6,7 +6,6 @@ import logging
 import os
 import signal
 import time
-import uuid
 from pathlib import Path
 from typing import Any
 
@@ -34,27 +33,7 @@ logging.basicConfig(
 log = logging.getLogger("receptionist2.worker")
 PROGRESS_INTERVAL_SECONDS = 3
 DEPLOY_DRAIN_STALE_SECONDS = 20 * 60
-TITLE_TIMEOUT_SECONDS = 120
-TITLE_MAX_CHARS = 48
 OVERVIEW_MAX_CHATS = 12
-TITLE_PROMPT = """Name this Telegram chat topic in 2 to 5 words, like an email \
-subject. Reply with only the name: no quotes, no emoji, no trailing period. \
-Do not use tools.
-
-First message:
-{message}
-
-Reply excerpt:
-{reply}
-"""
-
-
-def clean_title(text: str) -> str:
-    line = next((part for part in text.strip().splitlines() if part.strip()), "")
-    line = line.strip().strip("*_`#\"' ").rstrip(".").strip()
-    if len(line) > TITLE_MAX_CHARS:
-        line = line[:TITLE_MAX_CHARS].rsplit(" ", 1)[0].rstrip(" ,;:-")
-    return line
 
 
 def chats_overview(sessions: list[dict[str, Any]]) -> str:
@@ -89,7 +68,6 @@ class Worker:
         self.database = database
         self._stopping = asyncio.Event()
         self._run_tasks: dict[str, asyncio.Task[None]] = {}
-        self._title_tasks: set[asyncio.Task[None]] = set()
         self._deployment_lock = asyncio.Lock()
         self._deployment_tasks: set[asyncio.Task[None]] = set()
 
@@ -133,14 +111,12 @@ class Worker:
                 heartbeat,
                 deployments,
                 *self._deployment_tasks,
-                *self._title_tasks,
             ):
                 task.cancel()
             await asyncio.gather(
                 heartbeat,
                 deployments,
                 *self._deployment_tasks,
-                *self._title_tasks,
                 return_exceptions=True,
             )
             self.database.set_state("worker_status", "stopped")
@@ -400,7 +376,6 @@ class Worker:
                 **common,
             )
             self._continue_investigation(run, result.final_response)
-            self._schedule_title(run, result.final_response)
             return
         self._finish_run(
             run["id"],
@@ -488,80 +463,6 @@ class Worker:
             kind="investigation",
             run_id=continuation["id"],
         )
-
-    def _schedule_title(self, run: dict[str, Any], response: str) -> None:
-        if not run.get("telegram_thread_id") or not run.get("session_id"):
-            return
-        session = self.database.get_session(run["session_id"])
-        if not session.get("title_pending"):
-            return
-        # Claimed now so a quick follow-up does not title the topic twice.
-        self.database.set_session_title(session["id"], session["display_name"])
-        task = asyncio.create_task(self._title_topic(session, response))
-        self._title_tasks.add(task)
-        task.add_done_callback(self._title_tasks.discard)
-
-    async def _title_topic(self, session: dict[str, Any], response: str) -> None:
-        try:
-            title = await self._generate_title(
-                self.database.first_message_text(session["id"]), response
-            )
-        except Exception:
-            log.exception("Titling session %s failed", session["id"])
-            return
-        if not title or title == session["display_name"]:
-            return
-        self.database.set_session_title(session["id"], title)
-        self.database.enqueue_outbox(
-            int(session["telegram_chat_id"]),
-            title,
-            kind="topic_title",
-            thread_id=int(session["telegram_thread_id"]),
-        )
-
-    async def _generate_title(self, message: str, response: str) -> str:
-        prompt = TITLE_PROMPT.format(
-            message=message[:1500] or "(image)", reply=response[:1500]
-        )
-        command = build_command(
-            self.config.claude_binary, prompt, self.config.title_model, "low", None
-        )
-        process = await asyncio.create_subprocess_exec(
-            "/usr/bin/sudo",
-            "-n",
-            "-H",
-            "-u",
-            "receptionist-agent",
-            self.config.agent_launcher,
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL,
-            start_new_session=True,
-            limit=16 * 1024 * 1024,
-        )
-        payload = json.dumps(
-            {
-                "repository": str(self.config.repo_root),
-                "command": command,
-                "run_id": str(uuid.uuid4()),
-            }
-        ).encode()
-        try:
-            stdout, _ = await asyncio.wait_for(
-                process.communicate(payload), TITLE_TIMEOUT_SECONDS
-            )
-        except TimeoutError:
-            await self._terminate(process)
-            return ""
-        result = ProviderResult()
-        for line in stdout.decode(errors="replace").splitlines():
-            try:
-                consume_event(line, result)
-            except (json.JSONDecodeError, UnicodeDecodeError):
-                continue
-        if process.returncode != 0 or result.is_error:
-            return ""
-        return clean_title(result.final_response)
 
     async def _watch_cancel(
         self, run_id: str, process: asyncio.subprocess.Process

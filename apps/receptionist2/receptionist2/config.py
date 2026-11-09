@@ -135,7 +135,6 @@ class WorkerConfig(CommonConfig):
     allowed_user_id: int = 0
     release_link: Path = Path("/opt/receptionist2/current")
     max_parallel_runs: int = 2
-    title_model: str = "claude-haiku-4-5"
 
     @classmethod
     def from_env(cls) -> "WorkerConfig":

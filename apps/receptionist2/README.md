@@ -72,14 +72,13 @@ number of separate chats, one per topic, each its own Claude conversation.
 The bot must be an admin there with Manage Topics and Pin Messages. On start
 the gateway creates a 📋 Chats hub topic with a pinned ➕ and hides General.
 
-- Writing in 📋 Chats (or General) opens a new topic, copies the message into
-  it and runs it there. ➕ and `/new [name]` open an empty one; an untouched
-  topic under five minutes old is reused instead of stacking blanks.
+- Every chat needs a name: text written in 📋 Chats (or General) becomes the
+  name of a new topic, "🍓 <name>" with a random fruit, and nothing runs until
+  you write inside it. ➕ asks for the name; `/new <name>` requires one. An
+  image sent in 📋 Chats is refused until the chat is named.
 - Writing in a topic continues that chat. Topics you create yourself are
-  adopted under their own name; closing a topic archives its chat and writing
-  in it again reopens it.
-- After a topic's first successful run, Haiku names it unless you named it.
-  Renaming a topic yourself renames the chat.
+  adopted and get a fruit added to their name; closing a topic archives its
+  chat and writing in it again reopens it. Renaming a topic renames the chat.
 - `/stop`, `/status`, `/model`, and `/effort` act on the topic they are sent
   in. Other commands work only in the private chat.
 - The private chat stays the receptionist: its runs get a short overview of

@@ -299,6 +299,7 @@ class Database:
             for table, column, kind in (
                 ("sessions", "telegram_chat_id", "INTEGER"),
                 ("sessions", "telegram_thread_id", "INTEGER"),
+                # Unused since chats are named by the user; kept for old rows.
                 ("sessions", "title_pending", "INTEGER NOT NULL DEFAULT 0"),
                 ("runs", "telegram_thread_id", "INTEGER"),
                 ("outbox", "telegram_thread_id", "INTEGER"),
@@ -1966,7 +1967,6 @@ class Database:
         name: str,
         model: str,
         effort: str,
-        title_pending: bool,
     ) -> dict[str, Any]:
         session_id = str(uuid.uuid4())
         now = utc_now()
@@ -1977,9 +1977,9 @@ class Database:
                 """
                 INSERT OR IGNORE INTO sessions(
                     id, telegram_user_id, display_name, model, effort, status,
-                    telegram_chat_id, telegram_thread_id, title_pending,
-                    created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?)
+                    telegram_chat_id, telegram_thread_id, created_at,
+                    updated_at
+                ) VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?, ?)
                 """,
                 (
                     session_id,
@@ -1989,7 +1989,6 @@ class Database:
                     effort,
                     chat_id,
                     thread_id,
-                    int(title_pending),
                     now,
                     now,
                 ),
@@ -2030,26 +2029,6 @@ class Database:
             )
             connection.commit()
 
-    def blank_topic_session(
-        self, chat_id: int, max_age_seconds: int
-    ) -> dict[str, Any] | None:
-        """A recently opened topic nobody has written in yet."""
-        cutoff = (
-            datetime.now(UTC) - timedelta(seconds=max_age_seconds)
-        ).isoformat()
-        with self.connect() as connection:
-            row = connection.execute(
-                """
-                SELECT * FROM sessions s
-                WHERE s.telegram_chat_id=? AND s.telegram_thread_id IS NOT NULL
-                  AND s.status='active' AND s.created_at>=?
-                  AND NOT EXISTS (SELECT 1 FROM runs r WHERE r.session_id=s.id)
-                ORDER BY s.created_at DESC LIMIT 1
-                """,
-                (chat_id, cutoff),
-            ).fetchone()
-        return dict(row) if row else None
-
     def topic_sessions(self, user_id: int) -> list[dict[str, Any]]:
         """Every group chat with its latest run and message, newest first."""
         with self.connect() as connection:
@@ -2073,19 +2052,6 @@ class Database:
                     (user_id,),
                 )
             ]
-
-    def first_message_text(self, session_id: str) -> str:
-        with self.connect() as connection:
-            row = connection.execute(
-                """
-                SELECT i.exact_text FROM inbound_messages i
-                JOIN runs r ON r.id=i.run_id
-                WHERE r.session_id=?
-                ORDER BY i.received_at LIMIT 1
-                """,
-                (session_id,),
-            ).fetchone()
-        return str(row["exact_text"]) if row else ""
 
     def enqueue_outbox(
         self,
