@@ -56,6 +56,18 @@ UUID = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 ROLLOVER_PATTERN = re.compile(rf"^session:(?:new|continue):{UUID}$")
 DIAGNOSE_PATTERN = re.compile(rf"^deploy:diagnose:{UUID}$")
 RETRY_PATTERN = re.compile(rf"^r2:retry:{UUID}$")
+NEW_CHAT_CALLBACK = "r2:newchat"
+HUB_NAME = "📋 Chats"
+NEW_CHAT_NAME = "New chat"
+BLANK_TOPIC_REUSE_SECONDS = 5 * 60
+TOPIC_NAME_MAX_CHARS = 40
+HUB_TEXT = (
+    "📋 Chats\n\n"
+    "Each topic in this group is its own Receptionist2 conversation, and up "
+    "to two of them work at once. Type here or tap ➕ to open a new one; "
+    "write inside a topic to continue it. Close a topic to archive it.\n\n"
+    "In a topic: /stop, /status, /model, /effort. Anywhere: /chats."
+)
 RECOVER_MENU_TEXT = "♻️ Recover"
 TOPICS_MENU_TEXT = "🧭 Topics & Context"
 STOP_MENU_TEXT = "🛑 Stop"
@@ -89,8 +101,49 @@ HELP_TEXT = (
     "Telegram reports their exact revision, command, and result.\n\n"
     "Photos and image files (screenshots work well; send several as one "
     "album) go to the agent with their caption as the request.\n\n"
-    "Any other text is passed unchanged as the next agent prompt."
+    "Any other text is passed unchanged as the next agent prompt.\n\n"
+    "/chats — every chat topic in the Receptionist2 group and its state. "
+    "In the group, each topic is its own conversation: type in 📋 Chats or "
+    "tap ➕ to open one, and use /stop, /status, /model, /effort inside it."
 )
+
+
+def topic_link(chat_id: int, thread_id: int) -> str:
+    return f"https://t.me/c/{str(chat_id).removeprefix('-100')}/{thread_id}"
+
+
+def provisional_title(text: str) -> str:
+    line = " ".join(text.strip().splitlines()[0].split()) if text.strip() else ""
+    if len(line) > TOPIC_NAME_MAX_CHARS:
+        line = line[:TOPIC_NAME_MAX_CHARS].rsplit(" ", 1)[0].rstrip(" ,;:-") + "…"
+    return line or NEW_CHAT_NAME
+
+
+def thread_of(message) -> int | None:
+    """The forum topic a message belongs to; None for General or a DM."""
+    if message is None or not getattr(message, "is_topic_message", False):
+        return None
+    return message.message_thread_id
+
+
+def chats_text(sessions: list[dict], chat_id: int) -> str:
+    if not sessions:
+        return "No chat topics yet."
+    lines = ["Chats (newest first):"]
+    for session in sessions[:30]:
+        state = (
+            "closed"
+            if session["status"] != "active"
+            else session.get("last_status") or "new"
+        )
+        lines.append(
+            f"• {session['display_name']} — {state}\n  "
+            + topic_link(
+                int(session["telegram_chat_id"] or chat_id),
+                int(session["telegram_thread_id"]),
+            )
+        )
+    return "\n".join(lines)
 
 
 def recovery_menu() -> ReplyKeyboardMarkup:
@@ -195,20 +248,183 @@ class Gateway:
         application.job_queue.run_repeating(
             self.update_progress, interval=10, first=2
         )
+        if self.config.group_chat_id:
+            try:
+                await self.ensure_hub(application.bot)
+            except TelegramError as error:
+                log.warning(
+                    "Could not set up the chats hub (is the bot an admin "
+                    "with Manage Topics and Pin Messages?): %s",
+                    error,
+                )
+
+    def hub_thread(self) -> int | None:
+        value = self.database.get_state(
+            f"group_hub_thread:{self.config.group_chat_id}", ""
+        )
+        return int(value) if value else None
+
+    async def ensure_hub(self, bot) -> int:
+        """The 📋 Chats topic with a pinned ➕, created once per group."""
+        existing = self.hub_thread()
+        if existing:
+            return existing
+        chat_id = self.config.group_chat_id
+        topic = await bot.create_forum_topic(chat_id, HUB_NAME)
+        thread = topic.message_thread_id
+        self.database.set_state(f"group_hub_thread:{chat_id}", str(thread))
+        sent = await bot.send_message(
+            chat_id,
+            HUB_TEXT,
+            message_thread_id=thread,
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("➕", callback_data=NEW_CHAT_CALLBACK)]]
+            ),
+        )
+        try:
+            await bot.pin_chat_message(
+                chat_id, sent.message_id, disable_notification=True
+            )
+        except TelegramError as error:
+            log.warning("Could not pin the chats hub message: %s", error)
+        try:
+            await bot.hide_general_forum_topic(chat_id)
+        except TelegramError as error:
+            log.info("General topic not hidden: %s", error)
+        return thread
+
+    async def open_topic(
+        self, bot, *, user_id: int, name: str, title_pending: bool
+    ) -> dict:
+        chat_id = self.config.group_chat_id
+        topic = await bot.create_forum_topic(chat_id, name)
+        return self.database.create_topic_session(
+            user_id=user_id,
+            chat_id=chat_id,
+            thread_id=topic.message_thread_id,
+            name=name,
+            model=self.config.default_model,
+            effort=self.config.default_effort,
+            title_pending=title_pending,
+        )
+
+    def adopt_topic(self, user_id: int, thread_id: int, name: str) -> dict:
+        return self.database.create_topic_session(
+            user_id=user_id,
+            chat_id=self.config.group_chat_id,
+            thread_id=thread_id,
+            name=name,
+            model=self.config.default_model,
+            effort=self.config.default_effort,
+            title_pending=False,
+        )
+
+    def context_session(self, update: Update) -> dict | None:
+        """The topic's session in the group, else the private chat's."""
+        if not self.in_group(update):
+            return self.database.active_session(update.effective_user.id)
+        thread = thread_of(update.effective_message)
+        if thread is None or thread == self.hub_thread():
+            return None
+        return self.database.topic_session(self.config.group_chat_id, thread)
+
+    async def _topic_only(self, update: Update, command: str) -> None:
+        await update.message.reply_text(
+            f"Use {command} inside a chat topic, or in the private chat."
+        )
+
+    async def new_chat_button(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        query = update.callback_query
+        chat_id = self.config.group_chat_id
+        session = self.database.blank_topic_session(
+            chat_id, BLANK_TOPIC_REUSE_SECONDS
+        )
+        if session is None:
+            try:
+                session = await self.open_topic(
+                    context.bot,
+                    user_id=update.effective_user.id,
+                    name=NEW_CHAT_NAME,
+                    title_pending=True,
+                )
+            except TelegramError as error:
+                await query.answer(f"Could not open a topic: {error}")
+                return
+        await query.answer(f"Opened {session['display_name']}")
+        try:
+            await context.bot.send_message(
+                chat_id,
+                f"💬 {session['display_name']}: "
+                + topic_link(chat_id, int(session["telegram_thread_id"])),
+                message_thread_id=thread_of(query.message),
+            )
+        except TelegramError as error:
+            log.warning("Could not post the new chat link: %s", error)
+
+    async def chats(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        if not self.config.group_chat_id:
+            await update.message.reply_text(
+                "No Receptionist2 group is configured "
+                "(RECEPTIONIST2_GROUP_CHAT_ID)."
+            )
+            return
+        await update.message.reply_text(
+            chats_text(
+                self.database.topic_sessions(update.effective_user.id),
+                self.config.group_chat_id,
+            ),
+            disable_web_page_preview=True,
+        )
+
+    async def topic_event(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        message = update.effective_message
+        thread = message.message_thread_id
+        if not thread or thread == self.hub_thread():
+            return
+        chat_id = self.config.group_chat_id
+        if message.forum_topic_created:
+            self.adopt_topic(
+                update.effective_user.id, thread, message.forum_topic_created.name
+            )
+        elif message.forum_topic_edited and message.forum_topic_edited.name:
+            session = self.database.topic_session(chat_id, thread)
+            if session:
+                self.database.set_session_title(
+                    session["id"], message.forum_topic_edited.name
+                )
+        elif message.forum_topic_closed:
+            self.database.set_topic_open(chat_id, thread, False)
+        elif message.forum_topic_reopened:
+            self.database.set_topic_open(chat_id, thread, True)
 
     async def post_shutdown(self, application: Application) -> None:
         self.database.set_state("gateway_status", "stopped")
 
-    def authorized(self, handler):
+    def in_group(self, update: Update) -> bool:
+        chat = update.effective_chat
+        return bool(
+            self.config.group_chat_id
+            and chat is not None
+            and chat.id == self.config.group_chat_id
+        )
+
+    def authorized(self, handler, *, group: bool = False):
         async def wrapped(
             update: Update, context: ContextTypes.DEFAULT_TYPE
         ) -> None:
             user = update.effective_user
             chat = update.effective_chat
+            in_group = self.in_group(update)
             if (
                 user is None
                 or chat is None
-                or chat.type != ChatType.PRIVATE
+                or not (chat.type == ChatType.PRIVATE or in_group)
                 or user.id != self.config.allowed_user_id
             ):
                 log.warning(
@@ -216,6 +432,18 @@ class Gateway:
                     user.id if user else None,
                     chat.type if chat else None,
                 )
+                return
+            if in_group:
+                if group:
+                    await handler(update, context)
+                elif update.callback_query:
+                    await update.callback_query.answer(
+                        "That works only in the private chat."
+                    )
+                elif update.message:
+                    await update.message.reply_text(
+                        "That works only in the private chat with me."
+                    )
                 return
             self.database.ensure_user(
                 user.id,
@@ -260,7 +488,11 @@ class Gateway:
     async def help(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
-        await update.message.reply_text(HELP_TEXT, reply_markup=recovery_menu())
+        await update.message.reply_text(
+            HELP_TEXT,
+            # The recovery keyboard's buttons work only in the private chat.
+            reply_markup=None if self.in_group(update) else recovery_menu(),
+        )
 
     async def nfl_audio_start(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -510,9 +742,16 @@ class Gateway:
     async def stop(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
-        run = self.database.request_cancel()
+        if self.in_group(update):
+            session = self.context_session(update)
+            if session is None:
+                await self._topic_only(update, "/stop")
+                return
+            run = self.database.request_cancel(session["id"])
+        else:
+            run = self.database.request_cancel(private_only=True)
         await update.message.reply_text(
-            f"🛑 Stopping run {run['id'][:8]}…" if run else "No active run."
+            f"🛑 Stopping run {run['id'][:8]}…" if run else "No active run here."
         )
 
     async def reset(
@@ -733,25 +972,38 @@ class Gateway:
     async def status(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
-        session = self.database.active_session(update.effective_user.id)
+        session = self.context_session(update)
         queue = self.database.queue_summary()
-        await update.message.reply_text(
-            "Receptionist2 status\n"
-            f"Gateway: {self.database.get_state('gateway_status', 'unknown')}\n"
-            f"Worker: {self.database.get_state('worker_status', 'unknown')}\n"
-            f"Session: {session['display_name']} ({session['id'][:8]})\n"
-            f"Model: {session['model']}\n"
-            f"Effort: {session['effort']}\n"
-            f"Queued: {queue.get('queued', 0)}\n"
-            f"Running: {queue.get('running', 0)}\n"
-            f"Pending deliveries: {queue.get('outbox_pending', 0)}"
-        )
+        lines = [
+            "Receptionist2 status",
+            f"Gateway: {self.database.get_state('gateway_status', 'unknown')}",
+            f"Worker: {self.database.get_state('worker_status', 'unknown')}",
+        ]
+        if session:
+            lines += [
+                f"Session: {session['display_name']} ({session['id'][:8]})",
+                f"Model: {session['model']}",
+                f"Effort: {session['effort']}",
+            ]
+        lines += [
+            f"Queued: {queue.get('queued', 0)}",
+            f"Running: {queue.get('running', 0)}",
+            f"Pending deliveries: {queue.get('outbox_pending', 0)}",
+        ]
+        if self.config.group_chat_id:
+            topics = self.database.topic_sessions(update.effective_user.id)
+            open_count = sum(1 for row in topics if row["status"] == "active")
+            lines.append(f"Chat topics: {open_count} open · /chats")
+        await update.message.reply_text("\n".join(lines))
 
     async def model(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
+        session = self.context_session(update)
+        if session is None:
+            await self._topic_only(update, "/model")
+            return
         if not context.args:
-            session = self.database.active_session(update.effective_user.id)
             await update.message.reply_text(
                 f"Session model: {session['model']}\n"
                 "Usage: /model opus|opus48|fable|sonnet|haiku|<full-id>\n"
@@ -764,7 +1016,7 @@ class Gateway:
             await update.message.reply_text(str(error))
             return
         self.database.set_session_runtime(
-            update.effective_user.id, model=model
+            update.effective_user.id, model=model, session_id=session["id"]
         )
         await update.message.reply_text(
             f"Model set to {model} for newly queued runs."
@@ -773,6 +1025,25 @@ class Gateway:
     async def new_session(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
+        if self.in_group(update):
+            name = " ".join(context.args).strip()[:TOPIC_NAME_MAX_CHARS]
+            try:
+                session = await self.open_topic(
+                    context.bot,
+                    user_id=update.effective_user.id,
+                    name=name or NEW_CHAT_NAME,
+                    title_pending=not name,
+                )
+            except TelegramError as error:
+                await update.message.reply_text(f"Could not open a topic: {error}")
+                return
+            await update.message.reply_text(
+                f"💬 {session['display_name']}: "
+                + topic_link(
+                    self.config.group_chat_id, int(session["telegram_thread_id"])
+                )
+            )
+            return
         current = self.database.active_session(update.effective_user.id)
         name = " ".join(context.args).strip() or "conversation"
         session = self.database.create_session(
@@ -820,16 +1091,19 @@ class Gateway:
     async def effort(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
+        session = self.context_session(update)
+        if session is None:
+            await self._topic_only(update, "/effort")
+            return
         level = context.args[0].lower() if context.args else ""
         if level not in EFFORT_LEVELS:
-            session = self.database.active_session(update.effective_user.id)
             await update.message.reply_text(
                 f"Session effort: {session['effort']}\n"
                 f"Usage: /effort {'|'.join(EFFORT_LEVELS)}"
             )
             return
         self.database.set_session_runtime(
-            update.effective_user.id, effort=level
+            update.effective_user.id, effort=level, session_id=session["id"]
         )
         await update.message.reply_text(
             f"Effort set to {level} for newly queued runs."
@@ -1015,6 +1289,15 @@ class Gateway:
         existing = self.database.inbound_run(
             update.effective_chat.id, message.message_id
         )
+        if self.in_group(update):
+            await self._accept(
+                message,
+                user_id=update.effective_user.id,
+                chat_id=update.effective_chat.id,
+                message_ids=[message.message_id],
+                text=message.text,
+            )
+            return
         if existing is None:
             session = self.database.active_session(update.effective_user.id)
             reason = self.database.session_rollover_reason(
@@ -1089,13 +1372,14 @@ class Gateway:
         caption = message.caption or ""
         group = message.media_group_id
         if group is None:
-            await self._accept_text(
+            await self._accept(
                 message,
                 user_id=update.effective_user.id,
                 chat_id=update.effective_chat.id,
-                message_id=message.message_id,
+                message_ids=[message.message_id],
                 text=image_summary(caption, 1),
                 exact_prompt=image_prompt(caption, [str(path)]),
+                title_hint=caption,
             )
             return
         album = self._albums.setdefault(
@@ -1124,13 +1408,14 @@ class Gateway:
         items = sorted(album["messages"], key=lambda item: item[0])
         first_id, first_message, _ = items[0]
         paths = [path for _, _, path in items]
-        await self._accept_text(
+        await self._accept(
             first_message,
             user_id=album["user_id"],
             chat_id=album["chat_id"],
-            message_id=first_id,
+            message_ids=[message_id for message_id, _, _ in items],
             text=image_summary(album["caption"], len(paths)),
             exact_prompt=image_prompt(album["caption"], paths),
+            title_hint=album["caption"],
         )
 
     async def _store_image(self, image: TelegramImage) -> Path:
@@ -1150,6 +1435,85 @@ class Gateway:
             temp_path.unlink(missing_ok=True)
         return final_path
 
+    async def _accept(
+        self,
+        message,
+        *,
+        user_id: int,
+        chat_id: int,
+        message_ids: list[int],
+        text: str,
+        exact_prompt: str | None = None,
+        title_hint: str | None = None,
+    ) -> None:
+        """Queue a message: in the group, into its topic's own session."""
+        message_id = message_ids[0]
+        if chat_id != self.config.group_chat_id:
+            await self._accept_text(
+                message,
+                user_id=user_id,
+                chat_id=chat_id,
+                message_id=message_id,
+                text=text,
+                exact_prompt=exact_prompt,
+            )
+            return
+        existing = self.database.inbound_run(chat_id, message_id)
+        if existing:
+            await message.reply_text(
+                f"Already accepted · run {existing['id'][:8]}"
+            )
+            return
+        thread = thread_of(message)
+        ack_thread = None
+        if thread is None or thread == self.hub_thread():
+            # Writing in the hub (or General) opens a new chat topic.
+            name = provisional_title(text if title_hint is None else title_hint)
+            try:
+                session = await self.open_topic(
+                    message.get_bot(),
+                    user_id=user_id,
+                    name=name,
+                    title_pending=True,
+                )
+            except TelegramError as error:
+                await message.reply_text(f"Could not open a topic: {error}")
+                return
+            ack_thread = int(session["telegram_thread_id"])
+            try:
+                await message.get_bot().copy_messages(
+                    chat_id, chat_id, message_ids, message_thread_id=ack_thread
+                )
+            except TelegramError as error:
+                log.warning("Could not copy the request into its topic: %s", error)
+            await message.reply_text(
+                f"💬 Opened {name}: {topic_link(chat_id, ack_thread)}",
+                disable_web_page_preview=True,
+            )
+        else:
+            session = self.database.topic_session(chat_id, thread)
+            if session is None:
+                created = getattr(message.reply_to_message, "forum_topic_created", None)
+                session = self.adopt_topic(
+                    user_id, thread, created.name if created else f"Topic {thread}"
+                )
+            elif session["status"] != "active":
+                try:
+                    await message.get_bot().reopen_forum_topic(chat_id, thread)
+                except TelegramError as error:
+                    log.warning("Could not reopen topic %s: %s", thread, error)
+                session = self.database.set_topic_open(chat_id, thread, True)
+        await self._accept_text(
+            message,
+            user_id=user_id,
+            chat_id=chat_id,
+            message_id=message_id,
+            text=text,
+            exact_prompt=exact_prompt,
+            session_id=session["id"],
+            ack_thread=ack_thread,
+        )
+
     async def _accept_text(
         self,
         reply_to,
@@ -1159,6 +1523,8 @@ class Gateway:
         message_id: int,
         text: str,
         exact_prompt: str | None = None,
+        session_id: str | None = None,
+        ack_thread: int | None = None,
     ) -> None:
         run, created = self.database.accept_message(
             user_id=user_id,
@@ -1168,6 +1534,7 @@ class Gateway:
             default_model=self.config.default_model,
             default_effort=self.config.default_effort,
             exact_prompt=exact_prompt,
+            session_id=session_id,
         )
         if created:
             try:
@@ -1176,14 +1543,19 @@ class Gateway:
                 )
             except TelegramError:
                 pass
-        message = reply_to
         queue = self.database.queue_summary()
-        await message.reply_text(
+        ack = (
             f"{'Queued' if created else 'Already accepted'} · run "
             f"{run['id'][:8]}\n"
             f"{run['model']} · effort {run['effort']} · "
             f"position {queue.get('queued', 0)}"
         )
+        if ack_thread is not None:
+            await reply_to.get_bot().send_message(
+                chat_id, ack, message_thread_id=ack_thread
+            )
+        else:
+            await reply_to.reply_text(ack)
 
     async def session_rollover_button(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -1243,13 +1615,25 @@ class Gateway:
                 self._progress_edits.pop(run_id, None)
         for run in running:
             chat_id = int(run["telegram_chat_id"])
-            verbose = self.database.verbose_for_chat(chat_id)
+            thread = run.get("telegram_thread_id")
+            if thread:
+                try:
+                    verbose = bool(
+                        self.database.get_user_state(
+                            int(run["telegram_user_id"])
+                        )["verbose"]
+                    )
+                except LookupError:
+                    verbose = False
+            else:
+                verbose = self.database.verbose_for_chat(chat_id)
             try:
                 if not run["status_message_id"]:
                     sent = await context.bot.send_message(
                         chat_id,
                         f"▶️ Run {run['id'][:8]} started · {run['model']} / "
                         f"{run['effort']}\nClaude is starting…",
+                        message_thread_id=thread,
                     )
                     self.database.set_status_message(run["id"], sent.message_id)
                     self._progress_edits[run["id"]] = time.monotonic()
@@ -1275,26 +1659,62 @@ class Gateway:
             item = self.database.claim_outbox()
             if item is None:
                 return
+            thread = item.get("telegram_thread_id")
+            if item["kind"] == "topic_title":
+                try:
+                    await context.bot.edit_forum_topic(
+                        item["telegram_chat_id"], thread, name=item["body"][:128]
+                    )
+                except TelegramError as error:
+                    log.warning("Could not rename topic %s: %s", thread, error)
+                self.database.finish_outbox(item["id"])
+                continue
             try:
-                chunks = [
-                    item["body"][start : start + 3900]
-                    for start in range(0, len(item["body"]), 3900)
-                ] or [""]
                 if item["kind"] == "run_result" and item["run_id"]:
                     await self._finish_status_message(context, item["run_id"])
-                markup = markup_from_json(item.get("reply_markup_json"))
-                for index, chunk in enumerate(chunks):
-                    await context.bot.send_message(
-                        item["telegram_chat_id"],
-                        chunk,
-                        reply_markup=(
-                            markup if index == len(chunks) - 1 else None
-                        ),
+                try:
+                    await self._send_chunks(
+                        context, item["telegram_chat_id"], item, thread
+                    )
+                except BadRequest as error:
+                    if not thread or "thread" not in str(error).lower():
+                        raise
+                    # The topic was deleted: deliver to the private chat
+                    # rather than blocking every later delivery.
+                    log.warning("Topic %s is gone; delivering privately", thread)
+                    await self._send_chunks(
+                        context,
+                        self.config.allowed_user_id,
+                        item,
+                        None,
+                        prefix="(from a deleted chat topic)\n",
                     )
             except TelegramError as error:
                 self.database.finish_outbox(item["id"], str(error))
                 return
             self.database.finish_outbox(item["id"])
+
+    async def _send_chunks(
+        self,
+        context: ContextTypes.DEFAULT_TYPE,
+        chat_id: int,
+        item: dict,
+        thread: int | None,
+        *,
+        prefix: str = "",
+    ) -> None:
+        body = prefix + item["body"]
+        chunks = [
+            body[start : start + 3900] for start in range(0, len(body), 3900)
+        ] or [""]
+        markup = markup_from_json(item.get("reply_markup_json"))
+        for index, chunk in enumerate(chunks):
+            await context.bot.send_message(
+                chat_id,
+                chunk,
+                message_thread_id=thread,
+                reply_markup=markup if index == len(chunks) - 1 else None,
+            )
 
     async def _finish_status_message(
         self, context: ContextTypes.DEFAULT_TYPE, run_id: str
@@ -1365,10 +1785,30 @@ def build_application(config: GatewayConfig) -> Application:
         ("schedule_resume", gateway.schedule_resume),
         ("schedule_run", gateway.schedule_run),
     ]
+    commands.append(("chats", gateway.chats))
+    group_commands = {"help", "new", "stop", "status", "model", "effort", "chats"}
     for name, handler in commands:
         application.add_handler(
-            CommandHandler(name, gateway.authorized(handler))
+            CommandHandler(
+                name,
+                gateway.authorized(handler, group=name in group_commands),
+            )
         )
+    application.add_handler(
+        MessageHandler(
+            filters.StatusUpdate.FORUM_TOPIC_CREATED
+            | filters.StatusUpdate.FORUM_TOPIC_EDITED
+            | filters.StatusUpdate.FORUM_TOPIC_CLOSED
+            | filters.StatusUpdate.FORUM_TOPIC_REOPENED,
+            gateway.authorized(gateway.topic_event, group=True),
+        )
+    )
+    application.add_handler(
+        CallbackQueryHandler(
+            gateway.authorized(gateway.new_chat_button, group=True),
+            pattern=f"^{NEW_CHAT_CALLBACK}$",
+        )
+    )
     application.add_handler(
         CallbackQueryHandler(
             gateway.authorized(gateway.restart_button),
@@ -1399,7 +1839,7 @@ def build_application(config: GatewayConfig) -> Application:
     application.add_handler(
         MessageHandler(
             filters.PHOTO | filters.Document.IMAGE,
-            gateway.authorized(gateway.image_receive),
+            gateway.authorized(gateway.image_receive, group=True),
         )
     )
     application.add_handler(
@@ -1411,7 +1851,7 @@ def build_application(config: GatewayConfig) -> Application:
     application.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
-            gateway.authorized(gateway.exact_text),
+            gateway.authorized(gateway.exact_text, group=True),
         )
     )
     return application

@@ -58,8 +58,13 @@ def build_context_manifest(
     repo_root: Path,
     timezone: str,
     clipboard_path: Path = CLIPBOARD_DATABASE,
+    session_id: str | None = None,
 ) -> dict[str, Any]:
-    session = database.active_session(user_id)
+    session = (
+        database.get_session(session_id)
+        if session_id
+        else database.active_session(user_id)
+    )
     schedules = database.list_schedules(user_id)
     queue = database.queue_summary()
     clipboard = clipboard_context(clipboard_path)

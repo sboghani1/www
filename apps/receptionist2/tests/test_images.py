@@ -81,6 +81,7 @@ def make_gateway(tmp_path) -> Gateway:
         images_dir=tmp_path / "images",
         default_model="claude-test",
         default_effort="high",
+        group_chat_id=0,
     )
     return Gateway(config, database)
 

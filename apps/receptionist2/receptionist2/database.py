@@ -294,6 +294,30 @@ class Database:
                 connection.execute(
                     "ALTER TABLE runs ADD COLUMN scheduled_for TEXT"
                 )
+            # Group chats: a session bound to a forum topic, and the topic its
+            # runs and deliveries go to. NULL means the private chat.
+            for table, column, kind in (
+                ("sessions", "telegram_chat_id", "INTEGER"),
+                ("sessions", "telegram_thread_id", "INTEGER"),
+                ("sessions", "title_pending", "INTEGER NOT NULL DEFAULT 0"),
+                ("runs", "telegram_thread_id", "INTEGER"),
+                ("outbox", "telegram_thread_id", "INTEGER"),
+            ):
+                columns = {
+                    row["name"]
+                    for row in connection.execute(f"PRAGMA table_info({table})")
+                }
+                if column not in columns:
+                    connection.execute(
+                        f"ALTER TABLE {table} ADD COLUMN {column} {kind}"
+                    )
+            connection.execute(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS sessions_topic
+                    ON sessions(telegram_chat_id, telegram_thread_id)
+                    WHERE telegram_thread_id IS NOT NULL
+                """
+            )
             connection.commit()
 
     def ensure_user(
@@ -435,6 +459,7 @@ class Database:
                     """
                     SELECT * FROM sessions
                     WHERE telegram_user_id=? AND status='active'
+                      AND telegram_thread_id IS NULL
                     ORDER BY updated_at DESC
                     """,
                     (user_id,),
@@ -447,6 +472,7 @@ class Database:
                 """
                 SELECT * FROM sessions
                 WHERE telegram_user_id=? AND status='active' AND id LIKE ?
+                  AND telegram_thread_id IS NULL
                 """,
                 (user_id, f"{prefix}%"),
             ).fetchall()
@@ -463,10 +489,19 @@ class Database:
         return dict(rows[0])
 
     def set_session_runtime(
-        self, user_id: int, *, model: str | None = None, effort: str | None = None
+        self,
+        user_id: int,
+        *,
+        model: str | None = None,
+        effort: str | None = None,
+        session_id: str | None = None,
     ) -> dict[str, Any]:
+        if session_id:
+            current = self.get_session(session_id)
+        else:
+            current = self.active_session(user_id)
         if model is None and effort is None:
-            return self.active_session(user_id)
+            return current
         assignments = []
         values: list[Any] = []
         if model is not None:
@@ -478,14 +513,13 @@ class Database:
         assignments.append("updated_at=?")
         values.append(utc_now())
         with self.connect() as connection:
-            session = self.active_session(user_id)
-            values.append(session["id"])
+            values.append(current["id"])
             connection.execute(
                 f"UPDATE sessions SET {', '.join(assignments)} WHERE id=?",
                 values,
             )
             connection.commit()
-        return self.active_session(user_id)
+        return self.get_session(current["id"])
 
     def accept_message(
         self,
@@ -498,12 +532,17 @@ class Database:
         default_effort: str,
         source: str = "message",
         exact_prompt: str | None = None,
+        session_id: str | None = None,
     ) -> tuple[dict[str, Any], bool]:
-        session = self.ensure_user(
-            user_id,
-            chat_id,
-            default_model=default_model,
-            default_effort=default_effort,
+        session = (
+            self.get_session(session_id)
+            if session_id
+            else self.ensure_user(
+                user_id,
+                chat_id,
+                default_model=default_model,
+                default_effort=default_effort,
+            )
         )
         now = utc_now()
         run_id = str(uuid.uuid4())
@@ -526,15 +565,16 @@ class Database:
                 """
                 INSERT INTO runs(
                     id, session_id, telegram_user_id, telegram_chat_id,
-                    source, exact_prompt, model, effort, provider_session_id,
-                    status, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?)
+                    telegram_thread_id, source, exact_prompt, model, effort,
+                    provider_session_id, status, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?)
                 """,
                 (
                     run_id,
                     session["id"],
                     user_id,
                     chat_id,
+                    session.get("telegram_thread_id"),
                     source,
                     exact_prompt if exact_prompt is not None else text,
                     session["model"],
@@ -1047,10 +1087,18 @@ class Database:
             if draining.get("draining") == "1" or draining.get("deploy_drain"):
                 connection.commit()
                 return None
+            # Chats run in parallel, but a session never runs twice at once:
+            # its next run must resume the conversation the last one left.
             row = connection.execute(
                 """
-                SELECT * FROM runs
-                WHERE status='queued'
+                SELECT * FROM runs AS queued
+                WHERE status='queued' AND (
+                    session_id IS NULL OR NOT EXISTS (
+                        SELECT 1 FROM runs AS active
+                        WHERE active.status='running'
+                          AND active.session_id=queued.session_id
+                    )
+                )
                 ORDER BY created_at, id
                 LIMIT 1
                 """
@@ -1062,7 +1110,12 @@ class Database:
                 """
                 UPDATE runs
                 SET status='running', attempt=attempt+1, started_at=?,
-                    finished_at=NULL, error=NULL
+                    finished_at=NULL, error=NULL,
+                    provider_session_id=COALESCE(
+                        (SELECT provider_session_id FROM sessions
+                         WHERE sessions.id=runs.session_id),
+                        provider_session_id
+                    )
                 WHERE id=? AND status='queued'
                 """,
                 (utc_now(), row["id"]),
@@ -1145,10 +1198,18 @@ class Database:
             connection.execute(
                 """
                 INSERT INTO outbox(
-                    id, telegram_chat_id, run_id, kind, body, status, created_at
-                ) VALUES (?, ?, ?, 'run_result', ?, 'pending', ?)
+                    id, telegram_chat_id, telegram_thread_id, run_id, kind,
+                    body, status, created_at
+                ) VALUES (?, ?, ?, ?, 'run_result', ?, 'pending', ?)
                 """,
-                (str(uuid.uuid4()), run["telegram_chat_id"], run_id, body, now),
+                (
+                    str(uuid.uuid4()),
+                    run["telegram_chat_id"],
+                    run["telegram_thread_id"],
+                    run_id,
+                    body,
+                    now,
+                ),
             )
             connection.commit()
 
@@ -1771,16 +1832,17 @@ class Database:
                 """
                 INSERT INTO runs(
                     id, session_id, telegram_user_id, telegram_chat_id,
-                    source, exact_prompt, model, effort, provider_session_id,
-                    status, continuation_of, deployment_request_id,
-                    created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?)
+                    telegram_thread_id, source, exact_prompt, model, effort,
+                    provider_session_id, status, continuation_of,
+                    deployment_request_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?)
                 """,
                 (
                     run_id,
                     session_id,
                     user_id,
                     chat_id,
+                    session["telegram_thread_id"],
                     source,
                     prompt,
                     session["model"],
@@ -1794,11 +1856,16 @@ class Database:
             connection.commit()
         return self.get_run(run_id)
 
-    def request_cancel(self) -> dict[str, Any] | None:
+    def request_cancel(
+        self, session_id: str | None = None, *, private_only: bool = False
+    ) -> dict[str, Any] | None:
         with self.connect() as connection:
             row = connection.execute(
                 "SELECT * FROM runs WHERE status='running' "
-                "ORDER BY started_at LIMIT 1"
+                "AND (? IS NULL OR session_id=?) "
+                "AND (? = 0 OR telegram_thread_id IS NULL) "
+                "ORDER BY started_at LIMIT 1",
+                (session_id, session_id, int(private_only)),
             ).fetchone()
             if row is None:
                 return None
@@ -1879,6 +1946,147 @@ class Database:
             connection.commit()
             return cursor.rowcount
 
+    def topic_session(self, chat_id: int, thread_id: int) -> dict[str, Any] | None:
+        with self.connect() as connection:
+            row = connection.execute(
+                """
+                SELECT * FROM sessions
+                WHERE telegram_chat_id=? AND telegram_thread_id=?
+                """,
+                (chat_id, thread_id),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def create_topic_session(
+        self,
+        *,
+        user_id: int,
+        chat_id: int,
+        thread_id: int,
+        name: str,
+        model: str,
+        effort: str,
+        title_pending: bool,
+    ) -> dict[str, Any]:
+        session_id = str(uuid.uuid4())
+        now = utc_now()
+        with self.connect() as connection:
+            # A topic may be registered twice (bot-created, then its service
+            # message); the first registration wins.
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO sessions(
+                    id, telegram_user_id, display_name, model, effort, status,
+                    telegram_chat_id, telegram_thread_id, title_pending,
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?)
+                """,
+                (
+                    session_id,
+                    user_id,
+                    name,
+                    model,
+                    effort,
+                    chat_id,
+                    thread_id,
+                    int(title_pending),
+                    now,
+                    now,
+                ),
+            )
+            connection.commit()
+        session = self.topic_session(chat_id, thread_id)
+        assert session is not None
+        return session
+
+    def set_topic_open(
+        self, chat_id: int, thread_id: int, is_open: bool
+    ) -> dict[str, Any] | None:
+        with self.connect() as connection:
+            connection.execute(
+                """
+                UPDATE sessions SET status=?, updated_at=?
+                WHERE telegram_chat_id=? AND telegram_thread_id=?
+                """,
+                (
+                    "active" if is_open else "archived",
+                    utc_now(),
+                    chat_id,
+                    thread_id,
+                ),
+            )
+            connection.commit()
+        return self.topic_session(chat_id, thread_id)
+
+    def set_session_title(self, session_id: str, title: str) -> None:
+        with self.connect() as connection:
+            connection.execute(
+                """
+                UPDATE sessions
+                SET display_name=?, title_pending=0, updated_at=?
+                WHERE id=?
+                """,
+                (title, utc_now(), session_id),
+            )
+            connection.commit()
+
+    def blank_topic_session(
+        self, chat_id: int, max_age_seconds: int
+    ) -> dict[str, Any] | None:
+        """A recently opened topic nobody has written in yet."""
+        cutoff = (
+            datetime.now(UTC) - timedelta(seconds=max_age_seconds)
+        ).isoformat()
+        with self.connect() as connection:
+            row = connection.execute(
+                """
+                SELECT * FROM sessions s
+                WHERE s.telegram_chat_id=? AND s.telegram_thread_id IS NOT NULL
+                  AND s.status='active' AND s.created_at>=?
+                  AND NOT EXISTS (SELECT 1 FROM runs r WHERE r.session_id=s.id)
+                ORDER BY s.created_at DESC LIMIT 1
+                """,
+                (chat_id, cutoff),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def topic_sessions(self, user_id: int) -> list[dict[str, Any]]:
+        """Every group chat with its latest run and message, newest first."""
+        with self.connect() as connection:
+            return [
+                dict(row)
+                for row in connection.execute(
+                    """
+                    SELECT s.*,
+                        (SELECT status FROM runs r WHERE r.session_id=s.id
+                         ORDER BY r.created_at DESC LIMIT 1) AS last_status,
+                        (SELECT MAX(r.created_at) FROM runs r
+                         WHERE r.session_id=s.id) AS last_run_at,
+                        (SELECT i.exact_text FROM inbound_messages i
+                         JOIN runs r ON r.id=i.run_id
+                         WHERE r.session_id=s.id
+                         ORDER BY i.received_at DESC LIMIT 1) AS last_text
+                    FROM sessions s
+                    WHERE s.telegram_user_id=? AND s.telegram_thread_id IS NOT NULL
+                    ORDER BY COALESCE(last_run_at, s.created_at) DESC
+                    """,
+                    (user_id,),
+                )
+            ]
+
+    def first_message_text(self, session_id: str) -> str:
+        with self.connect() as connection:
+            row = connection.execute(
+                """
+                SELECT i.exact_text FROM inbound_messages i
+                JOIN runs r ON r.id=i.run_id
+                WHERE r.session_id=?
+                ORDER BY i.received_at LIMIT 1
+                """,
+                (session_id,),
+            ).fetchone()
+        return str(row["exact_text"]) if row else ""
+
     def enqueue_outbox(
         self,
         chat_id: int,
@@ -1887,19 +2095,26 @@ class Database:
         kind: str,
         run_id: str | None = None,
         reply_markup: list[list[dict[str, str]]] | None = None,
+        thread_id: int | None = None,
     ) -> str:
         outbox_id = str(uuid.uuid4())
         with self.connect() as connection:
+            if thread_id is None and run_id:
+                row = connection.execute(
+                    "SELECT telegram_thread_id FROM runs WHERE id=?", (run_id,)
+                ).fetchone()
+                thread_id = row["telegram_thread_id"] if row else None
             connection.execute(
                 """
                 INSERT INTO outbox(
-                    id, telegram_chat_id, run_id, kind, body,
-                    reply_markup_json, status, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)
+                    id, telegram_chat_id, telegram_thread_id, run_id, kind,
+                    body, reply_markup_json, status, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)
                 """,
                 (
                     outbox_id,
                     chat_id,
+                    thread_id,
                     run_id,
                     kind,
                     body,

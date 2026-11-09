@@ -7,7 +7,8 @@ disabled by default so both services never poll the same Telegram bot token.
 ## Services
 
 - `receptionist2-gateway.service`: Telegram intake and outbox delivery
-- `receptionist2-worker.service`: durable queued Claude execution
+- `receptionist2-worker.service`: durable queued Claude execution, up to
+  `RECEPTIONIST2_MAX_PARALLEL_RUNS` (default 2) chats at once
 - `receptionist2-watchdog.service`: independent deterministic controls,
   `/reauth`, `/diagnose`, and `/investigate`
 - `receptionist2-provider-monitor.timer`: authentication, model-limit, and
@@ -40,6 +41,7 @@ Primary bot:
 - `/schedule_add name | cron | prompt`
 - `/schedule_pause <id-prefix>`, `/schedule_resume <id-prefix>`
 - `/schedule_run <id-prefix>`
+- `/chats` lists every chat topic in the Receptionist2 group with its state
 
 Watchdog bot:
 
@@ -62,6 +64,29 @@ become a single run. Maintenance removes images after 14 days.
 
 When the active session's context is nearly full, the gateway offers to start
 a new session before continuing.
+
+## Group chats
+
+With `RECEPTIONIST2_GROUP_CHAT_ID` set, a private forum supergroup holds any
+number of separate chats, one per topic, each its own Claude conversation.
+The bot must be an admin there with Manage Topics and Pin Messages. On start
+the gateway creates a 📋 Chats hub topic with a pinned ➕ and hides General.
+
+- Writing in 📋 Chats (or General) opens a new topic, copies the message into
+  it and runs it there. ➕ and `/new [name]` open an empty one; an untouched
+  topic under five minutes old is reused instead of stacking blanks.
+- Writing in a topic continues that chat. Topics you create yourself are
+  adopted under their own name; closing a topic archives its chat and writing
+  in it again reopens it.
+- After a topic's first successful run, Haiku names it unless you named it.
+  Renaming a topic yourself renames the chat.
+- `/stop`, `/status`, `/model`, and `/effort` act on the topic they are sent
+  in. Other commands work only in the private chat.
+- The private chat stays the receptionist: its runs get a short overview of
+  the group's chats, and `/stop` there stops only private-chat runs.
+- Chats run in parallel up to `RECEPTIONIST2_MAX_PARALLEL_RUNS`; one chat's
+  messages always run in order and resume its conversation. A reply for a
+  deleted topic is delivered to the private chat instead.
 
 Schedules use `America/Los_Angeles` unless overridden. Missed occurrences
 collapse to one current run because each occurrence has a unique idempotency
@@ -101,6 +126,7 @@ RECEPTIONIST2_DEFAULT_EFFORT=high
 RECEPTIONIST2_NFL_AUDIO_MAX_BYTES=20971520
 RECEPTIONIST2_NFL_AUDIO_MAX_CLIPS=24
 RECEPTIONIST2_NFL_AUDIO_MAX_DURATION_SECONDS=3600
+RECEPTIONIST2_GROUP_CHAT_ID=-100...   # optional, see Group chats
 ```
 
 NFL audio is stored under `RECEPTIONIST2_STATE_DIR/nfl-audio` with shared
@@ -116,6 +142,7 @@ CLAUDE_BINARY=/usr/bin/claude
 RECEPTIONIST2_AGENT_LAUNCHER=/usr/local/libexec/receptionist2-agent-runner
 RECEPTIONIST2_RUN_STATE_DIR=/var/lib/receptionist2/runs
 TELEGRAM_ALLOWED_USER_ID=...
+RECEPTIONIST2_MAX_PARALLEL_RUNS=2
 ```
 
 The worker also ingests deployment requests created by

@@ -6,6 +6,7 @@ import logging
 import os
 import signal
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +34,43 @@ logging.basicConfig(
 log = logging.getLogger("receptionist2.worker")
 PROGRESS_INTERVAL_SECONDS = 3
 DEPLOY_DRAIN_STALE_SECONDS = 20 * 60
+TITLE_TIMEOUT_SECONDS = 120
+TITLE_MAX_CHARS = 48
+OVERVIEW_MAX_CHATS = 12
+TITLE_PROMPT = """Name this Telegram chat topic in 2 to 5 words, like an email \
+subject. Reply with only the name: no quotes, no emoji, no trailing period. \
+Do not use tools.
+
+First message:
+{message}
+
+Reply excerpt:
+{reply}
+"""
+
+
+def clean_title(text: str) -> str:
+    line = next((part for part in text.strip().splitlines() if part.strip()), "")
+    line = line.strip().strip("*_`#\"' ").rstrip(".").strip()
+    if len(line) > TITLE_MAX_CHARS:
+        line = line[:TITLE_MAX_CHARS].rsplit(" ", 1)[0].rstrip(" ,;:-")
+    return line
+
+
+def chats_overview(sessions: list[dict[str, Any]]) -> str:
+    lines = []
+    for session in sessions[:OVERVIEW_MAX_CHATS]:
+        state = (
+            "closed"
+            if session["status"] != "active"
+            else session.get("last_status") or "new"
+        )
+        last = " ".join(str(session.get("last_text") or "").split())[:100]
+        lines.append(
+            f"- {session['display_name']} [{state}]"
+            + (f" — last message: {last}" if last else "")
+        )
+    return "\n".join(lines)
 
 
 def process_alive(pid: int) -> bool:
@@ -50,7 +88,8 @@ class Worker:
         self.config = config
         self.database = database
         self._stopping = asyncio.Event()
-        self._active_process: asyncio.subprocess.Process | None = None
+        self._run_tasks: dict[str, asyncio.Task[None]] = {}
+        self._title_tasks: set[asyncio.Task[None]] = set()
         self._deployment_lock = asyncio.Lock()
         self._deployment_tasks: set[asyncio.Task[None]] = set()
 
@@ -65,38 +104,67 @@ class Worker:
         deployments = asyncio.create_task(self._deployment_loop())
         try:
             while not self._stopping.is_set():
-                if self.database.running_runs():
+                if self._has_orphans():
                     await self.reconcile()
-                    if self.database.running_runs():
-                        await self._sleep(self.config.poll_seconds)
-                        continue
+                # Orphans whose process is still alive keep their slot.
+                if (
+                    len(self.database.running_runs())
+                    >= self.config.max_parallel_runs
+                ):
+                    await self._sleep(self.config.poll_seconds)
+                    continue
                 run = self.database.claim_next_run()
                 if run is None:
                     await self._sleep(self.config.poll_seconds)
                     continue
-                try:
-                    await self.execute(run)
-                except Exception as error:
-                    log.exception("Run %s crashed in the worker", run["id"])
-                    if self.database.get_run(run["id"])["status"] == "running":
-                        self._finish_run(
-                            run["id"],
-                            status="failed",
-                            error=f"Worker error: {type(error).__name__}",
-                        )
+                task = asyncio.create_task(self._execute_guarded(run))
+                self._run_tasks[run["id"]] = task
+                task.add_done_callback(
+                    lambda _, run_id=run["id"]: self._run_tasks.pop(run_id, None)
+                )
         finally:
-            for task in (heartbeat, deployments, *self._deployment_tasks):
+            # Like the sequential worker, let in-flight runs finish; systemd
+            # still bounds the wait with TimeoutStopSec.
+            if self._run_tasks:
+                await asyncio.gather(
+                    *self._run_tasks.values(), return_exceptions=True
+                )
+            for task in (
+                heartbeat,
+                deployments,
+                *self._deployment_tasks,
+                *self._title_tasks,
+            ):
                 task.cancel()
             await asyncio.gather(
                 heartbeat,
                 deployments,
                 *self._deployment_tasks,
+                *self._title_tasks,
                 return_exceptions=True,
             )
             self.database.set_state("worker_status", "stopped")
 
     def stop(self) -> None:
         self._stopping.set()
+
+    def _has_orphans(self) -> bool:
+        return any(
+            run["id"] not in self._run_tasks
+            for run in self.database.running_runs()
+        )
+
+    async def _execute_guarded(self, run: dict[str, Any]) -> None:
+        try:
+            await self.execute(run)
+        except Exception as error:
+            log.exception("Run %s crashed in the worker", run["id"])
+            if self.database.get_run(run["id"])["status"] == "running":
+                self._finish_run(
+                    run["id"],
+                    status="failed",
+                    error=f"Worker error: {type(error).__name__}",
+                )
 
     async def _sleep(self, seconds: float) -> None:
         try:
@@ -112,6 +180,8 @@ class Worker:
 
     async def reconcile(self) -> None:
         for run in self.database.running_runs():
+            if run["id"] in self._run_tasks:
+                continue
             pid = run.get("process_id")
             if pid and process_alive(int(pid)):
                 log.warning(
@@ -170,10 +240,12 @@ class Worker:
                 "SKILL.md` before executing this scheduled occurrence.\n\n"
                 f"SCHEDULED_FOR={run['scheduled_for']}\n\n{prompt}"
             )
+        prompt = self._chat_context(run, prompt)
         if run.get("provider_session_id"):
             return prompt
         manifest = build_context_manifest(
             self.database,
+            session_id=run.get("session_id"),
             user_id=int(run["telegram_user_id"]),
             repo_root=self.config.repo_root,
             timezone=str(self.config.timezone),
@@ -184,6 +256,31 @@ class Worker:
         ):
             return None
         return bootstrap_prompt(prompt, manifest)
+
+    def _chat_context(self, run: dict[str, Any], prompt: str) -> str:
+        if not run.get("session_id"):
+            return prompt
+        if run.get("telegram_thread_id"):
+            if run.get("provider_session_id"):
+                return prompt
+            session = self.database.get_session(run["session_id"])
+            return (
+                "[Receptionist2 context, not part of the request: this "
+                "conversation is its own topic in the user's Receptionist2 "
+                "Telegram group. Other topics are separate conversations; "
+                "the private chat with the receptionist keeps an overview of "
+                f"them. This topic: {session['display_name']}]\n\n{prompt}"
+            )
+        sessions = self.database.topic_sessions(int(run["telegram_user_id"]))
+        if not sessions:
+            return prompt
+        return (
+            "[Receptionist2 context, not part of the request: the user's "
+            "other chats, each a separate conversation in the Receptionist2 "
+            "Telegram group, newest first. Use this only when the user asks "
+            "about them.]\n"
+            f"{chats_overview(sessions)}\n\n{prompt}"
+        )
 
     async def execute(self, run: dict[str, Any]) -> None:
         prompt = self._prepare_prompt(run)
@@ -220,7 +317,6 @@ class Worker:
                 run["id"], status="failed", error=f"Launch failed: {error}"
             )
             return
-        self._active_process = process
         self.database.set_run_process(run["id"], process.pid)
         assert process.stdin is not None
         process.stdin.write(
@@ -270,7 +366,6 @@ class Worker:
             cancel_task.cancel()
             await asyncio.gather(cancel_task, return_exceptions=True)
             stderr = await stderr_task
-            self._active_process = None
 
         common = {
             "provider_session_id": result.session_id,
@@ -305,6 +400,7 @@ class Worker:
                 **common,
             )
             self._continue_investigation(run, result.final_response)
+            self._schedule_title(run, result.final_response)
             return
         self._finish_run(
             run["id"],
@@ -392,6 +488,80 @@ class Worker:
             kind="investigation",
             run_id=continuation["id"],
         )
+
+    def _schedule_title(self, run: dict[str, Any], response: str) -> None:
+        if not run.get("telegram_thread_id") or not run.get("session_id"):
+            return
+        session = self.database.get_session(run["session_id"])
+        if not session.get("title_pending"):
+            return
+        # Claimed now so a quick follow-up does not title the topic twice.
+        self.database.set_session_title(session["id"], session["display_name"])
+        task = asyncio.create_task(self._title_topic(session, response))
+        self._title_tasks.add(task)
+        task.add_done_callback(self._title_tasks.discard)
+
+    async def _title_topic(self, session: dict[str, Any], response: str) -> None:
+        try:
+            title = await self._generate_title(
+                self.database.first_message_text(session["id"]), response
+            )
+        except Exception:
+            log.exception("Titling session %s failed", session["id"])
+            return
+        if not title or title == session["display_name"]:
+            return
+        self.database.set_session_title(session["id"], title)
+        self.database.enqueue_outbox(
+            int(session["telegram_chat_id"]),
+            title,
+            kind="topic_title",
+            thread_id=int(session["telegram_thread_id"]),
+        )
+
+    async def _generate_title(self, message: str, response: str) -> str:
+        prompt = TITLE_PROMPT.format(
+            message=message[:1500] or "(image)", reply=response[:1500]
+        )
+        command = build_command(
+            self.config.claude_binary, prompt, self.config.title_model, "low", None
+        )
+        process = await asyncio.create_subprocess_exec(
+            "/usr/bin/sudo",
+            "-n",
+            "-H",
+            "-u",
+            "receptionist-agent",
+            self.config.agent_launcher,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+            start_new_session=True,
+            limit=16 * 1024 * 1024,
+        )
+        payload = json.dumps(
+            {
+                "repository": str(self.config.repo_root),
+                "command": command,
+                "run_id": str(uuid.uuid4()),
+            }
+        ).encode()
+        try:
+            stdout, _ = await asyncio.wait_for(
+                process.communicate(payload), TITLE_TIMEOUT_SECONDS
+            )
+        except TimeoutError:
+            await self._terminate(process)
+            return ""
+        result = ProviderResult()
+        for line in stdout.decode(errors="replace").splitlines():
+            try:
+                consume_event(line, result)
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                continue
+        if process.returncode != 0 or result.is_error:
+            return ""
+        return clean_title(result.final_response)
 
     async def _watch_cancel(
         self, run_id: str, process: asyncio.subprocess.Process

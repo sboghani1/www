@@ -73,6 +73,8 @@ class GatewayConfig(CommonConfig):
     nfl_audio_max_bytes: int
     nfl_audio_max_clips: int
     nfl_audio_max_duration_seconds: int
+    # Optional private forum supergroup: one topic per chat.
+    group_chat_id: int = 0
 
     @classmethod
     def from_env(cls) -> "GatewayConfig":
@@ -103,6 +105,9 @@ class GatewayConfig(CommonConfig):
             nfl_audio_max_duration_seconds=positive_int(
                 "RECEPTIONIST2_NFL_AUDIO_MAX_DURATION_SECONDS", 3600
             ),
+            group_chat_id=int(
+                os.getenv("RECEPTIONIST2_GROUP_CHAT_ID", "").strip() or 0
+            ),
         )
 
     @property
@@ -129,6 +134,8 @@ class WorkerConfig(CommonConfig):
     deploy_timeout_seconds: int = 900
     allowed_user_id: int = 0
     release_link: Path = Path("/opt/receptionist2/current")
+    max_parallel_runs: int = 2
+    title_model: str = "claude-haiku-4-5"
 
     @classmethod
     def from_env(cls) -> "WorkerConfig":
@@ -168,6 +175,7 @@ class WorkerConfig(CommonConfig):
                 "RECEPTIONIST2_DEPLOY_TIMEOUT_SECONDS", 900
             ),
             allowed_user_id=int(os.getenv("TELEGRAM_ALLOWED_USER_ID", "0")),
+            max_parallel_runs=positive_int("RECEPTIONIST2_MAX_PARALLEL_RUNS", 2),
         )
 
 
