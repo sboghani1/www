@@ -176,7 +176,9 @@ receptionist's Opus agent, not with API billing:
 8. **Bait tracker (`/bait`).** A separate log of NBA sides that look too
    easy to pass up, to learn which kinds of "easy" picks lose. `/bait` lists
    the day's NBA games (ET; tomorrow's once every game today has tipped) with
-   BetOnline's spread for both sides. Tap the tempting side to log it at the
+   the spread for both sides. NBA lines in the intake workbook come from
+   Bovada since 2026-10-27 (the forwarder's `NBA_LINES_SOURCE`), polled every
+   5 minutes, so bait screens say Bovada. Tap the tempting side to log it at the
    number on the button. A game with no spread is a pick'em, graded on the
    moneyline. The confirmation has optional reason tags (star/big name,
    number too cheap, hot team, opponent is bad, home/road spot, injury news,
@@ -187,7 +189,12 @@ receptionist's Opus agent, not with API billing:
    whether the number moved since your last tap and offers both sides again
    at the current number ("taking the bait" again is a new row with its own
    line) or **🙅 Not tempted anymore**, which is graded as the side you
-   dropped. Bait closes at tip. After tip Mel saves BetOnline's closing
+   dropped. Bait closes at tip. Mel also checks each baited game's line on a
+   schedule: every 3 hours until 4 hours before tip (…10h, 7h), then 4h, 3h,
+   2h, 1h, and 15 minutes before tip. When the side's spread has moved at
+   least a full point from the last number you saw (your last tap, or the
+   last alert), Mel sends the same Latest line prompt unasked. Smaller moves
+   and juice changes stay quiet, and a new tap resets the baseline. After tip Mel saves the closing
    number for the side, and ESPN grades it. `/baitstats` shows records for
    first looks vs. re-takes (better number, chased a worse number, switched
    sides), favorite/underdog by spread size, home/away, whether the market

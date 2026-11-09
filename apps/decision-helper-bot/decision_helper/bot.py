@@ -31,6 +31,8 @@ from telegram.ext import (
 
 from .bait import (
     BaitStore,
+    check_label,
+    scheduled_move,
     board_keyboard,
     confirmation_keyboard,
     decode_line,
@@ -558,6 +560,8 @@ class DecisionBot:
         self._sync = asyncio.Lock()
         self._learning_retry_at: datetime | None = None
         self.baits = BaitStore(store)
+        self._bot: Any = None
+        self._bait_checks = asyncio.Lock()
 
     def authorized(self, handler: Handler) -> Handler:
         async def wrapped(
@@ -611,6 +615,11 @@ class DecisionBot:
             interval=self.config.sync_interval_seconds,
             first=30,
             name="decision-sync",
+        )
+        # Separate from decision-sync, whose Claude reviews can run long.
+        self._bot = application.bot
+        application.job_queue.run_repeating(
+            self.bait_check_job, interval=60, first=20, name="bait-checks"
         )
         # Load Whisper before the first voice note so it is not slow.
         application.create_task(asyncio.to_thread(self.transcriber.warm))
@@ -1617,6 +1626,53 @@ class DecisionBot:
         await update.message.reply_text(
             format_bait_stats(self.baits.all(), EASTERN)[:TELEGRAM_LIMIT]
         )
+
+    async def bait_check_job(self, context: ContextTypes.DEFAULT_TYPE) -> None:
+        del context
+        if self._bait_checks.locked():
+            return
+        async with self._bait_checks:
+            try:
+                await self.check_baited_lines()
+            except Exception:
+                log.exception("Bait line checks failed")
+
+    async def check_baited_lines(self) -> None:
+        """Scheduled checks of baited games: alert with both sides at the
+        new number when the line moved a full point since you last saw it."""
+        due = self.baits.due_checks()
+        if not due:
+            return
+        events = {
+            event.id: event
+            for event in await self.candidate_events(
+                day_offsets=range(-1, 2), sports=("nba",)
+            )
+        }
+        now = utc_now()
+        for watch in due:
+            event = events.get(watch["event_id"])
+            history = self.baits.game_history(watch["event_id"])
+            if (
+                event is None
+                or not history
+                or parse_timestamp(event.commence_time) <= now
+            ):
+                self.baits.checked(watch["event_id"])
+                continue
+            last = history[-1]
+            moved = scheduled_move(event, last, watch)
+            if moved is None:
+                self.baits.checked(watch["event_id"])
+                continue
+            text, _ = format_latest(event, history, EASTERN)
+            await self._bot.send_message(
+                self.config.allowed_user_id,
+                f"⏰ {check_label(event.commence_time, now)}: your bait's line "
+                f"moved.\n{text}",
+                reply_markup=latest_keyboard(event, last),
+            )
+            self.baits.checked(watch["event_id"], alert_line=moved)
 
     async def sync_baits(self) -> None:
         """Save each baited side's closing number, then grade it."""

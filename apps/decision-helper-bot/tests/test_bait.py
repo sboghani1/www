@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock
 from decision_helper.bait import format_bait_stats
 from decision_helper.bot import EASTERN
 from decision_helper.models import FinalGame, MarketEvent, MarketQuote, timestamp
+from decision_helper.models import parse_timestamp as parse_ts
 from helpers import make_events
 from test_bot import make_bot
 
@@ -288,3 +289,72 @@ def test_bait_closes_at_tip_then_is_graded_and_summarized(tmp_path: Path) -> Non
     assert "• ⭐ Star / big name: 1-0 (100%)" in report
     assert "❌" in report and "[re-take]" in report
     assert "|" not in report  # Telegram-friendly bullets, no tables
+
+
+def test_check_schedule_is_every_3h_then_hourly_then_15_minutes_before_tip() -> None:
+    from decision_helper.bait import next_check
+
+    tip = datetime(2026, 11, 10, 0, 30, tzinfo=UTC)
+    checks = []
+    now = tip - timedelta(hours=12, minutes=5)
+    while (due := next_check(timestamp(tip), now)) is not None:
+        checks.append(tip - due)
+        now = due
+    assert checks == [
+        timedelta(hours=10), timedelta(hours=7), timedelta(hours=4), timedelta(hours=3),
+        timedelta(hours=2), timedelta(hours=1), timedelta(minutes=15),
+    ]
+
+
+def test_scheduled_checks_alert_on_a_full_point_move_since_you_last_saw_it(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    bot._bot = SimpleNamespace(send_message=AsyncMock())
+    chat = Chat()
+    show_board(bot, chat)
+    tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)
+    tap(bot, bot.bait_take, "bait:a:ml:nba-b", chat)
+    watch = bot.baits.watch("nba-a")
+    # Baited an hour before tip: the next check is 15 minutes before.
+    assert parse_ts(watch["next_check_at"]) == parse_ts(bot.baits.latest("nba-a")["commence_time"]) - timedelta(minutes=15)
+
+    def run_check(spread):
+        bot.lines.events = nba_slate(now, celtics_spread=spread)
+        with bot.store.connect() as connection:
+            connection.execute("UPDATE bait_watch SET next_check_at=?", (timestamp(now - timedelta(minutes=1)),))
+            connection.commit()
+        asyncio.run(bot.check_baited_lines())
+
+    run_check(-6)  # half a point: no alert
+    bot._bot.send_message.assert_not_awaited()
+    run_check(-6.5)  # a full point
+    chat_id, text = bot._bot.send_message.await_args.args
+    assert chat_id == 1
+    assert "before tip: your bait's line moved" in text
+    assert "you took Celtics -5.5 (-110)" in text and "now Celtics -6.5 (-110)" in text
+    assert "🙅 Not tempted anymore" in buttons(bot._bot.send_message.await_args.kwargs["reply_markup"])
+    assert bot.baits.watch("nba-a")["alert_line"] == -6.5
+    run_check(-7)  # half a point past the alert: no repeat
+    assert bot._bot.send_message.await_count == 1
+    run_check(-7.5)
+    assert bot._bot.send_message.await_count == 2
+    # Taking the bait again makes its number the new baseline.
+    tap(bot, bot.bait_take, "baitre:a:-7.5:nba-a", chat)
+    assert bot.baits.watch("nba-a")["alert_line"] is None
+    run_check(-8)
+    assert bot._bot.send_message.await_count == 2
+    # The moneyline-only game stays quiet until a real spread appears.
+    assert bot.baits.watch("nba-b")["next_check_at"] is not None
+
+
+def test_existing_baits_get_a_check_schedule(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    chat = Chat()
+    show_board(bot, chat)
+    tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)
+    with bot.store.connect() as connection:
+        connection.execute("DELETE FROM bait_watch")
+        connection.commit()
+    bot.baits.initialize()
+    assert bot.baits.watch("nba-a")["next_check_at"] is not None

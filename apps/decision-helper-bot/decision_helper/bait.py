@@ -1,6 +1,7 @@
 """Bait tracker: NBA sides that look too easy to pass up.
 
-``/bait`` lists the day's NBA games with BetOnline spreads. Tapping a side
+``/bait`` lists the day's NBA games with Bovada spreads (the forwarder's
+``nba_games`` tab has been filled from Bovada since 2026-10-27). Tapping a side
 logs it as bait at the number shown. Checking a baited game's latest line
 offers both sides again at the current number (and "not tempted anymore"), so
 every re-take is its own row with the line it was taken at. Reasons are
@@ -16,7 +17,7 @@ import json
 import uuid
 from collections import Counter, defaultdict
 from collections.abc import Iterable
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -46,11 +47,44 @@ BAIT_TAGS = (
 TAG_LABELS = dict(BAIT_TAGS)
 RESULT_DELAY = timedelta(minutes=150)  # an NBA game lasts about 2.5 hours
 CLOSE_DELAY = timedelta(minutes=15)  # the forwarder's last pre-tip poll is in by then
+# Scheduled line checks on a baited game: 15 minutes and 1-4 hours before
+# tip, and every 3 hours before that (7h, 10h, ...). A check alerts only when
+# the line moved a full point from the last number you saw.
+CHECK_OFFSETS = (timedelta(minutes=15), *(timedelta(hours=h) for h in range(1, 5)))
+EARLY_CHECK_EVERY = timedelta(hours=3)
+ALERT_MOVE = 1.0
+
+
+def next_check(commence_time: str, now: datetime) -> datetime | None:
+    """The first scheduled check after ``now``; None once the last
+    (15 minutes before tip) has passed."""
+    commence = parse_timestamp(commence_time)
+    offsets = list(CHECK_OFFSETS)
+    early = CHECK_OFFSETS[-1] + EARLY_CHECK_EVERY
+    while commence - early > now:
+        offsets.append(early)
+        early += EARLY_CHECK_EVERY
+    due = [commence - offset for offset in offsets if commence - offset > now]
+    return min(due, default=None)
+
+
+def check_label(commence_time: str, checked_at: datetime) -> str:
+    """'2h before tip' / '15 min before tip' for the check nearest now."""
+    left = parse_timestamp(commence_time) - checked_at
+    minutes = max(0, round(left.total_seconds() / 60))
+    if minutes < 45:
+        return f"{minutes} min before tip"
+    return f"{round(minutes / 60)}h before tip"
+
+
+def spread_point(pick_type: str, line: float | None) -> float | None:
+    """A side's spread for move checks; a moneyline-only pick'em is 0."""
+    return 0.0 if pick_type == "winner" else line
 
 
 def side_quote(event: MarketEvent, team: str) -> tuple[str, float | None, int | None]:
     """How a side is offered: ``spread`` with a point (0 = pick'em), or
-    ``winner`` with the moneyline price when BetOnline has no spread."""
+    ``winner`` with the moneyline price when there is no spread."""
     spread = event.markets.get(f"spread:{team}")
     if spread is not None and spread.point is not None:
         return "spread", spread.point, spread.price
@@ -145,6 +179,16 @@ class BaitStore:
                 CREATE INDEX IF NOT EXISTS baits_due
                     ON baits(status, next_result_check_at);
 
+                -- One row per baited game: when to check its line next, and
+                -- the number from the last alert (NULL: the last bait row's).
+                CREATE TABLE IF NOT EXISTS bait_watch (
+                    event_id TEXT PRIMARY KEY,
+                    commence_time TEXT NOT NULL,
+                    next_check_at TEXT,
+                    alert_line REAL,
+                    alerted_at TEXT
+                );
+
                 -- Mel's messages a reason can be replied to.
                 CREATE TABLE IF NOT EXISTS bait_messages (
                     telegram_message_id INTEGER PRIMARY KEY,
@@ -152,6 +196,22 @@ class BaitStore:
                 );
                 """
             )
+            # Games baited before scheduled checks existed.
+            now = utc_now()
+            for row in connection.execute(
+                "SELECT event_id, MAX(commence_time) AS commence_time FROM baits "
+                "WHERE event_id NOT IN (SELECT event_id FROM bait_watch) "
+                "GROUP BY event_id"
+            ).fetchall():
+                connection.execute(
+                    "INSERT INTO bait_watch (event_id, commence_time, "
+                    "next_check_at) VALUES (?, ?, ?)",
+                    (
+                        row["event_id"],
+                        row["commence_time"],
+                        _stamp(next_check(row["commence_time"], now)),
+                    ),
+                )
             connection.commit()
 
     def record(
@@ -214,6 +274,23 @@ class BaitStore:
             row = connection.execute(
                 "SELECT * FROM baits WHERE id=?", (bait_id,)
             ).fetchone()
+            # A new bait row is the number you last saw: checks restart
+            # from it.
+            connection.execute(
+                """
+                INSERT INTO bait_watch (event_id, commence_time, next_check_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(event_id) DO UPDATE SET
+                    commence_time=excluded.commence_time,
+                    next_check_at=excluded.next_check_at,
+                    alert_line=NULL
+                """,
+                (
+                    event.id,
+                    event.commence_time,
+                    _stamp(next_check(event.commence_time, now)),
+                ),
+            )
             connection.commit()
         return dict(row), True
 
@@ -233,6 +310,45 @@ class BaitStore:
         with self.store.connect() as connection:
             row = connection.execute(
                 query + " ORDER BY ordinal DESC LIMIT 1", params
+            ).fetchone()
+        return dict(row) if row else None
+
+    def due_checks(self) -> list[dict[str, Any]]:
+        with self.store.connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM bait_watch WHERE next_check_at IS NOT NULL "
+                "AND next_check_at<=? ORDER BY next_check_at",
+                (timestamp(utc_now()),),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def checked(self, event_id: str, alert_line: float | None = None) -> None:
+        """Schedule the next check; an alert's number becomes the baseline
+        so the same move is not alerted twice."""
+        with self.store.connect() as connection:
+            row = connection.execute(
+                "SELECT commence_time FROM bait_watch WHERE event_id=?",
+                (event_id,),
+            ).fetchone()
+            if row is None:
+                return
+            now = utc_now()
+            connection.execute(
+                "UPDATE bait_watch SET next_check_at=? WHERE event_id=?",
+                (_stamp(next_check(row["commence_time"], now)), event_id),
+            )
+            if alert_line is not None:
+                connection.execute(
+                    "UPDATE bait_watch SET alert_line=?, alerted_at=? "
+                    "WHERE event_id=?",
+                    (alert_line, timestamp(now), event_id),
+                )
+            connection.commit()
+
+    def watch(self, event_id: str) -> dict[str, Any] | None:
+        with self.store.connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM bait_watch WHERE event_id=?", (event_id,)
             ).fetchone()
         return dict(row) if row else None
 
@@ -321,7 +437,7 @@ class BaitStore:
         return [dict(row) for row in rows]
 
     def record_close(self, bait_id: str, event: MarketEvent | None, side: str) -> None:
-        """BetOnline's last pre-tip number for the bait's side (``side`` is
+        """Bovada's last pre-tip number for the bait's side (``side`` is
         'away' or 'home'), so a later read can tell whether the market moved
         with the bait or against it."""
         line = price = None
@@ -400,6 +516,30 @@ class BaitStore:
         return [dict(row) for row in rows]
 
 
+def _stamp(value: datetime | None) -> str | None:
+    return timestamp(value) if value is not None else None
+
+
+def scheduled_move(
+    event: MarketEvent, last: dict[str, Any], watch: dict[str, Any] | None
+) -> float | None:
+    """The current spread of the last bait's side when it moved at least a
+    full point from the last number you saw (the last alert's, else the last
+    bait row's); otherwise None."""
+    pick_type, line, _ = side_quote(event, last["selection"])
+    current = spread_point(pick_type, line)
+    if pick_type == "winner" and event.markets.get(f"winner:{last['selection']}") is None:
+        return None  # the book has no line for the game right now
+    seen = (
+        watch["alert_line"]
+        if watch is not None and watch["alert_line"] is not None
+        else spread_point(last["pick_type"], last["line"])
+    )
+    if current is None or seen is None or abs(current - seen) < ALERT_MOVE:
+        return None
+    return current
+
+
 # --- Telegram presentation -------------------------------------------------
 
 
@@ -448,7 +588,7 @@ def format_board(
     events: list[MarketEvent], baited: dict[str, dict[str, Any]], now, eastern
 ) -> str:
     lines = [
-        "🎣 NBA lines (BetOnline). Tap the side that looks too easy to pass up:"
+        "🎣 NBA lines (Bovada). Tap the side that looks too easy to pass up:"
     ]
     for event in events:
         start = parse_timestamp(event.commence_time)
