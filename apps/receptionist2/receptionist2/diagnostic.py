@@ -6,8 +6,9 @@ import os
 import subprocess
 from pathlib import Path
 
+from .claude_token import TOKEN_KEY
 from .config import DEFAULT_EFFORT, DEFAULT_MODEL, CommonConfig
-from .control import status
+from .control import read_auth_env_token, status
 from .database import Database
 from .investigation import investigation_prompt
 
@@ -41,10 +42,16 @@ def diagnose(
             f"{incident_id}. Investigate why Receptionist2 is unhealthy. "
             f"{evidence}"
         )
+    environment = dict(os.environ)
+    sudo = ["/usr/bin/sudo", "-n"]
+    token = read_auth_env_token()
+    if token:
+        # Through the environment, never argv, so it stays out of sudo's log.
+        environment[TOKEN_KEY] = token
+        sudo.append(f"--preserve-env={TOKEN_KEY}")
     result = subprocess.run(
         [
-            "/usr/bin/sudo",
-            "-n",
+            *sudo,
             "-H",
             "-u",
             "receptionist-agent",
@@ -60,6 +67,7 @@ def diagnose(
             os.getenv("RECEPTIONIST2_DIAGNOSTIC_EFFORT", DEFAULT_EFFORT),
         ],
         cwd=repo_root,
+        env=environment,
         capture_output=True,
         text=True,
         timeout=1800,

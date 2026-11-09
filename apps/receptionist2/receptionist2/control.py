@@ -10,7 +10,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from .config import CommonConfig
+from .claude_token import AUTH_ENV, is_token_line
+from .config import DEFAULT_MODEL, CommonConfig
 from .database import Database
 
 GATEWAY_SERVICE = "receptionist2-gateway.service"
@@ -49,15 +50,30 @@ def unit_status(unit: str) -> dict[str, str]:
 
 
 CLAUDE_CODE_SYSTEM = "You are Claude Code, Anthropic's official CLI for Claude."
-AUTH_ENV = Path("/home/receptionist-agent/.claude/auth.env")
 CREDENTIALS = Path("/home/receptionist-agent/.claude/.credentials.json")
+RECEPTIONIST2_BIN = "/opt/receptionist2/current/.venv/bin"
+# decision-helper-bot shares receptionist-agent's Claude login but reads
+# auth.env only when it starts (EnvironmentFile=).
+AUTH_CONSUMER_UNITS = ("decision-helper-bot.service",)
+
+
+def read_auth_env_token() -> str:
+    try:
+        lines = AUTH_ENV.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ""
+    token = ""
+    # Like systemd's EnvironmentFile=, the last assignment wins.
+    for line in lines:
+        if is_token_line(line):
+            token = line.split("=", 1)[1].strip().strip("'\"")
+    return token
 
 
 def read_oauth_token() -> str:
-    if AUTH_ENV.is_file():
-        for line in AUTH_ENV.read_text(encoding="utf-8").splitlines():
-            if line.startswith("CLAUDE_CODE_OAUTH_TOKEN="):
-                return line.split("=", 1)[1].strip().strip("'\"")
+    token = read_auth_env_token()
+    if token:
+        return token
     if CREDENTIALS.is_file():
         try:
             payload = json.loads(CREDENTIALS.read_text(encoding="utf-8"))
@@ -114,28 +130,9 @@ def probe_model(token: str, model: str) -> dict[str, str]:
 
 
 def provider_status(database: Database | None = None) -> dict[str, Any]:
-    result = run(
-        [
-            "/usr/bin/sudo",
-            "-n",
-            "-H",
-            "-u",
-            "receptionist-agent",
-            "/usr/bin/claude",
-            "auth",
-            "status",
-        ],
-        timeout=45,
-    )
-    payload: dict[str, Any] = {}
-    if result.returncode == 0:
-        try:
-            parsed = json.loads(result.stdout)
-            if isinstance(parsed, dict):
-                payload = parsed
-        except json.JSONDecodeError:
-            pass
-    logged_in = payload.get("loggedIn")
+    models = database.configured_models() if database is not None else []
+    auth = auth_status(models[0] if models else DEFAULT_MODEL)
+    logged_in = auth["logged_in"]
     status = {
         "condition": (
             "ok"
@@ -145,15 +142,10 @@ def provider_status(database: Database | None = None) -> dict[str, Any]:
             else "unknown"
         ),
         "logged_in": logged_in,
-        "auth_method": payload.get("authMethod", "unknown"),
-        "detail": (
-            result.stderr.strip()[-500:]
-            if result.returncode
-            else "Claude authentication is valid"
-        ),
+        "auth_method": auth["auth_method"],
+        "detail": auth_detail(auth),
     }
     token = read_oauth_token()
-    models = database.configured_models() if database is not None else []
     status["models"] = {
         model: probe_model(token, model)
         if token
@@ -163,38 +155,89 @@ def provider_status(database: Database | None = None) -> dict[str, Any]:
     return status
 
 
-def auth_status() -> dict[str, Any]:
-    result = run(
-        [
-            "/usr/bin/sudo",
-            "-n",
-            "-H",
-            "-u",
-            "receptionist-agent",
-            "/usr/bin/claude",
-            "auth",
-            "status",
-        ],
-        timeout=45,
+def auth_status(model: str = DEFAULT_MODEL) -> dict[str, Any]:
+    # Agent runs prefer the long-lived token in auth.env over the login in
+    # .credentials.json, so a present token is what has to be valid.
+    token = read_auth_env_token()
+    if token:
+        return token_auth_status(token, model)
+    return cli_auth_status()
+
+
+def token_auth_status(token: str, model: str) -> dict[str, Any]:
+    probe = probe_model(token, model)
+    condition = probe["condition"]
+    logged_in = (
+        True
+        if condition in ("ok", "blocked")
+        else False
+        if condition == "auth_failed"
+        else None
     )
-    try:
-        payload = json.loads(result.stdout) if result.returncode == 0 else {}
-    except json.JSONDecodeError:
-        payload = {}
-    logged_in = payload.get("loggedIn") if isinstance(payload, dict) else None
     return {
-        "logged_in": logged_in if isinstance(logged_in, bool) else None,
-        "auth_method": (
-            payload.get("authMethod", "unknown")
-            if isinstance(payload, dict)
-            else "unknown"
-        ),
+        "logged_in": logged_in,
+        "auth_method": "oauth_token",
+        "detail": probe["detail"],
     }
 
 
+def cli_auth_status() -> dict[str, Any]:
+    try:
+        result = run(
+            [
+                "/usr/bin/sudo",
+                "-n",
+                "-H",
+                "-u",
+                "receptionist-agent",
+                "/usr/bin/claude",
+                "auth",
+                "status",
+            ],
+            timeout=45,
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "logged_in": None,
+            "auth_method": "unknown",
+            "detail": "claude auth status timed out",
+        }
+    # `claude auth status` exits 1 when logged out but still prints its JSON.
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        payload = None
+    if not isinstance(payload, dict):
+        payload = {}
+    logged_in = payload.get("loggedIn")
+    return {
+        "logged_in": logged_in if isinstance(logged_in, bool) else None,
+        "auth_method": str(payload.get("authMethod", "unknown")),
+        "detail": result.stderr.strip()[-500:],
+    }
+
+
+def auth_detail(auth: dict[str, Any]) -> str:
+    if auth["logged_in"] is True:
+        return "Claude authentication is valid"
+    if auth["logged_in"] is False and auth["auth_method"] == "oauth_token":
+        return (
+            f"The long-lived token in {AUTH_ENV} was rejected "
+            f"({auth.get('detail') or 'no detail'}). "
+            "Send /reauth to the watchdog bot."
+        )
+    if auth["logged_in"] is False:
+        return (
+            f"Claude is logged out: {AUTH_ENV} has no token and the login in "
+            f"{CREDENTIALS} is gone or expired. Send /reauth to the watchdog bot."
+        )
+    return str(auth.get("detail") or "Claude authentication status is unknown")
+
+
+
 def reauth_command() -> list[str]:
-    # The watchdog's mount namespace has a read-only /home, so the login must
-    # run in a transient unit outside it to persist Claude credentials.
+    # The watchdog's mount namespace has a read-only /home, so the token
+    # session runs in a transient unit outside it to write auth.env.
     return [
         "/usr/bin/systemd-run",
         "--pipe",
@@ -208,10 +251,19 @@ def reauth_command() -> list[str]:
         "--setenv=HOME=/home/receptionist-agent",
         "--setenv=USER=receptionist-agent",
         "--setenv=PATH=/usr/local/bin:/usr/bin:/bin",
-        "/usr/bin/claude",
-        "auth",
-        "login",
+        f"{RECEPTIONIST2_BIN}/receptionist2-claude-token",
     ]
+
+
+def apply_auth() -> dict[str, Any]:
+    restarted: list[str] = []
+    for unit in AUTH_CONSUMER_UNITS:
+        if run(["/usr/bin/systemctl", "is-active", "--quiet", unit]).returncode:
+            continue
+        result = run(["/usr/bin/systemctl", "restart", unit], timeout=120)
+        if result.returncode == 0:
+            restarted.append(unit)
+    return {"restarted": restarted}
 
 
 def status(database: Database) -> dict[str, Any]:
@@ -326,7 +378,15 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "action",
-        choices=("status", "logs", "provider", "restart", "auth-status", "reauth"),
+        choices=(
+            "status",
+            "logs",
+            "provider",
+            "restart",
+            "auth-status",
+            "reauth",
+            "apply-auth",
+        ),
     )
     parser.add_argument("request_id", nargs="?")
     args = parser.parse_args()
@@ -335,6 +395,9 @@ def main() -> None:
         os.execv(command[0], command)
     if args.action == "auth-status":
         print(json.dumps(auth_status()))
+        return
+    if args.action == "apply-auth":
+        print(json.dumps(apply_auth()))
         return
     config = CommonConfig.from_env()
     database = Database(config.database_path)

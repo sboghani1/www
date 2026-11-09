@@ -27,6 +27,8 @@ log = logging.getLogger("receptionist2.watchdog")
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 REAUTH_TIMEOUT_SECONDS = 300
+REAUTH_PROMPT_TIMEOUT_SECONDS = 60
+REAUTH_FINISH_TIMEOUT_SECONDS = 120
 CLAUDE_AUTH_URL_PREFIX = "https://claude.com/"
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 HELP_TEXT = (
@@ -339,7 +341,8 @@ class Watchdog:
             self._expire_reauth(update.effective_chat.id)
         )
         await message.reply_text(
-            "Open this link and authorize Claude:\n\n"
+            "Open this link and authorize Claude with the account "
+            "Receptionist2 should use:\n\n"
             f"{auth_url}\n\n"
             "Send the one-time code as your next message here. It is relayed "
             "directly to Claude and deleted from Telegram when possible.",
@@ -368,7 +371,7 @@ class Watchdog:
             process.stdin.write((response + "\n").encode("utf-8"))
             await process.stdin.drain()
             process.stdin.close()
-            await finish_reauth_process(process)
+            returncode, output, errors = await finish_reauth_process(process)
         except (BrokenPipeError, ConnectionError, TimeoutError):
             await self._stop_reauth()
             await message.reply_text(
@@ -379,16 +382,35 @@ class Watchdog:
         finally:
             response = ""
         self._reauth_process = None
-        code, stdout, _ = await self._helper("auth-status", timeout=60)
-        try:
-            logged_in = json.loads(stdout).get("logged_in") if not code else None
-        except (json.JSONDecodeError, AttributeError):
-            logged_in = None
-        if logged_in is True:
-            log.info("Claude reauthentication succeeded")
+        if returncode:
+            log.warning("Claude token session exited with %s", returncode)
             await message.reply_text(
-                "✅ Claude reauthentication succeeded. No restart is required."
+                "❌ Claude authentication failed: "
+                f"{last_line(output) or last_line(errors) or 'no output'}\n"
+                "Start a new /reauth attempt."
             )
+            return
+        code, stdout, _ = await self._helper("auth-status", timeout=90)
+        try:
+            status = json.loads(stdout) if not code else {}
+        except json.JSONDecodeError:
+            status = {}
+        if not isinstance(status, dict):
+            status = {}
+        if status.get("logged_in") is True:
+            log.info("Claude reauthentication succeeded")
+            _, applied, _ = await self._helper("apply-auth", timeout=180)
+            try:
+                restarted = json.loads(applied).get("restarted", [])
+            except (json.JSONDecodeError, AttributeError):
+                restarted = []
+            text = (
+                "✅ Claude reauthentication succeeded. Receptionist2 runs use "
+                "the new 1-year token immediately."
+            )
+            if restarted:
+                text += "\nRestarted to load it: " + ", ".join(restarted)
+            await message.reply_text(text)
             return
         log.warning("Claude reauthentication failed")
         await message.reply_text(
@@ -494,7 +516,7 @@ async def read_reauth_prompt(process: asyncio.subprocess.Process) -> str:
         raise RuntimeError("authentication output was unavailable")
     loop = asyncio.get_running_loop()
     chunks: list[bytes] = []
-    deadline = loop.time() + 30
+    deadline = loop.time() + REAUTH_PROMPT_TIMEOUT_SECONDS
     while loop.time() < deadline:
         chunk = await asyncio.wait_for(
             process.stdout.read(4096), deadline - loop.time()
@@ -520,21 +542,35 @@ def extract_auth_url(output: str) -> str:
     return auth_url
 
 
-async def finish_reauth_process(process: asyncio.subprocess.Process) -> None:
+async def finish_reauth_process(
+    process: asyncio.subprocess.Process,
+) -> tuple[int, str, str]:
     readers = [
         asyncio.create_task(stream.read())
         for stream in (process.stdout, process.stderr)
         if stream is not None
     ]
     try:
-        await asyncio.wait_for(process.wait(), timeout=90)
+        await asyncio.wait_for(
+            process.wait(), timeout=REAUTH_FINISH_TIMEOUT_SECONDS
+        )
     except TimeoutError:
         process.terminate()
         await process.wait()
         raise
     finally:
-        if readers:
-            await asyncio.gather(*readers, return_exceptions=True)
+        outputs = await asyncio.gather(*readers, return_exceptions=True)
+    texts = [
+        output.decode(errors="replace") if isinstance(output, bytes) else ""
+        for output in outputs
+    ]
+    texts += [""] * (2 - len(texts))
+    return process.returncode or 0, texts[0], texts[1]
+
+
+def last_line(text: str) -> str:
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    return lines[-1][-500:] if lines else ""
 
 
 def build_application(config: WatchdogConfig) -> Application:
@@ -583,7 +619,14 @@ def build_application(config: WatchdogConfig) -> Application:
 
 def main() -> None:
     config = WatchdogConfig.from_env()
-    build_application(config).run_polling(drop_pending_updates=True)
+    # Telegram keeps the last allowed_updates a bot polled with; an earlier
+    # message-only setting silently dropped every inline-button press. Edited
+    # messages stay excluded so an edit cannot rerun a command or be relayed
+    # as a reauth code.
+    build_application(config).run_polling(
+        allowed_updates=[Update.MESSAGE, Update.CALLBACK_QUERY],
+        drop_pending_updates=True,
+    )
 
 
 if __name__ == "__main__":

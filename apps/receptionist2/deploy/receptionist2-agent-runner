@@ -27,6 +27,8 @@ ALLOWED_GOOGLE_KEYS = {
     "NFL_INTAKE_SHEET_ID",
     "WNBA_SHEET_ID",
 }
+CLAUDE_AUTH_ENV = Path("/home/receptionist-agent/.claude/auth.env")
+CLAUDE_TOKEN_KEY = "CLAUDE_CODE_OAUTH_TOKEN"
 
 
 def load_google_environment() -> None:
@@ -38,6 +40,26 @@ def load_google_environment() -> None:
         key, value = line.split("=", 1)
         if key in ALLOWED_GOOGLE_KEYS:
             os.environ[key] = value
+
+
+def load_claude_token() -> None:
+    # The long-lived `claude setup-token` token outlives the login in
+    # .credentials.json, whose refresh token has a hard expiry. Without the
+    # file, Claude falls back to that login exactly as before.
+    try:
+        lines = CLAUDE_AUTH_ENV.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return
+    token = ""
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("export "):
+            stripped = stripped[len("export ") :].lstrip()
+        key, separator, value = stripped.partition("=")
+        if separator and key.strip() == CLAUDE_TOKEN_KEY:
+            token = value.strip().strip("'\"")
+    if token:
+        os.environ[CLAUDE_TOKEN_KEY] = token
 
 
 def validate_command(command: object) -> list[str]:
@@ -103,6 +125,7 @@ def main() -> None:
         raise SystemExit("Repository is outside the approved workspace")
 
     load_google_environment()
+    load_claude_token()
     os.environ["PATH"] = (
         f"{RECEPTIONIST2_BIN}:{LEGACY_NFL_AUDIO_BIN}:"
         f"{os.environ.get('PATH', '/usr/bin:/bin')}"

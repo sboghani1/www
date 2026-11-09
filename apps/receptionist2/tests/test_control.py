@@ -1,4 +1,5 @@
 import io
+import subprocess
 import time
 import urllib.error
 
@@ -98,3 +99,95 @@ def test_restart_waits_for_application_readiness(
     assert calls["unit_status"] == 4
     assert calls["sleep"] == 1
     assert database.get_restart_request(request["id"])["status"] == "succeeded"
+
+
+def isolate_auth_files(monkeypatch, tmp_path, auth_env: str | None = None):
+    path = tmp_path / "auth.env"
+    if auth_env is not None:
+        path.write_text(auth_env)
+    monkeypatch.setattr(control, "AUTH_ENV", path)
+    monkeypatch.setattr(control, "CREDENTIALS", tmp_path / "credentials.json")
+
+
+def test_logged_out_cli_status_is_an_auth_failure(monkeypatch, tmp_path) -> None:
+    isolate_auth_files(monkeypatch, tmp_path)
+
+    def logged_out(argv, timeout=60):
+        # `claude auth status` exits 1 when logged out but still prints JSON.
+        return subprocess.CompletedProcess(
+            argv, 1, stdout='{"loggedIn": false, "authMethod": "none"}', stderr=""
+        )
+
+    monkeypatch.setattr(control, "run", logged_out)
+
+    status = control.provider_status()
+
+    assert status["condition"] == "auth_failed"
+    assert status["logged_in"] is False
+    assert "logged out" in status["detail"]
+    assert "/reauth" in status["detail"]
+
+
+def test_auth_env_token_takes_precedence_over_cli_login(
+    monkeypatch, tmp_path
+) -> None:
+    isolate_auth_files(
+        monkeypatch,
+        tmp_path,
+        "OTHER=1\nCLAUDE_CODE_OAUTH_TOKEN=old\n"
+        "export CLAUDE_CODE_OAUTH_TOKEN='sk-ant-oat01-new'\n",
+    )
+    probed = []
+
+    def probe(token, model):
+        probed.append((token, model))
+        return {"condition": "ok", "detail": "HTTP 200"}
+
+    def unexpected_cli(*_args, **_kwargs):
+        raise AssertionError("the CLI login must not decide token auth")
+
+    monkeypatch.setattr(control, "probe_model", probe)
+    monkeypatch.setattr(control, "run", unexpected_cli)
+
+    assert control.auth_status("claude-test") == {
+        "logged_in": True,
+        "auth_method": "oauth_token",
+        "detail": "HTTP 200",
+    }
+    assert probed == [("sk-ant-oat01-new", "claude-test")]
+
+
+def test_rejected_auth_env_token_is_an_auth_failure(monkeypatch, tmp_path) -> None:
+    isolate_auth_files(monkeypatch, tmp_path, "CLAUDE_CODE_OAUTH_TOKEN=dead\n")
+    monkeypatch.setattr(
+        control,
+        "probe_model",
+        lambda *_: {"condition": "auth_failed", "detail": "HTTP 401: expired"},
+    )
+
+    status = control.provider_status()
+
+    assert status["condition"] == "auth_failed"
+    assert "was rejected (HTTP 401: expired)" in status["detail"]
+
+
+
+def test_apply_auth_restarts_only_active_consumers(monkeypatch) -> None:
+    calls = []
+
+    def fake_run(state):
+        def run(argv, timeout=60):
+            calls.append(argv[1:])
+            code = state if argv[1] == "is-active" else 0
+            return subprocess.CompletedProcess(argv, code, "", "")
+
+        return run
+
+    monkeypatch.setattr(control, "run", fake_run(0))
+    assert control.apply_auth() == {"restarted": ["decision-helper-bot.service"]}
+    assert calls[-1] == ["restart", "decision-helper-bot.service"]
+
+    calls.clear()
+    monkeypatch.setattr(control, "run", fake_run(3))
+    assert control.apply_auth() == {"restarted": []}
+    assert all(call[0] == "is-active" for call in calls)

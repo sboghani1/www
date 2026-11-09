@@ -1302,7 +1302,11 @@ def build_application(config: GatewayConfig) -> Application:
 
 def main() -> None:
     config = GatewayConfig.from_env()
-    build_application(config).run_polling(drop_pending_updates=False)
+    # Telegram keeps the last allowed_updates a bot polled with, so request
+    # every type explicitly rather than inheriting a narrower setting.
+    build_application(config).run_polling(
+        allowed_updates=Update.ALL_TYPES, drop_pending_updates=False
+    )
 
 
 if __name__ == "__main__":

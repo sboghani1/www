@@ -461,7 +461,36 @@ def test_reauth_runs_outside_sandbox_as_agent() -> None:
     assert command[0] == "/usr/bin/systemd-run"
     assert "--pipe" in command and "--wait" in command
     assert "--uid=receptionist-agent" in command
-    assert command[-3:] == ["/usr/bin/claude", "auth", "login"]
+    assert command[-1] == (
+        "/opt/receptionist2/current/.venv/bin/receptionist2-claude-token"
+    )
+
+
+def test_watchdog_and_gateway_poll_every_update_type(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from telegram import Update
+
+    from receptionist2 import gateway, watchdog
+
+    calls = []
+
+    class Application:
+        def run_polling(self, **kwargs):
+            calls.append(kwargs)
+
+    for module, name in ((watchdog, "WatchdogConfig"), (gateway, "GatewayConfig")):
+        monkeypatch.setattr(module, name, SimpleNamespace(from_env=object))
+        monkeypatch.setattr(module, "build_application", lambda _: Application())
+        module.main()
+
+    # Edited messages stay out of the watchdog so an edit cannot rerun a
+    # command or be relayed as a reauth code.
+    assert [call["allowed_updates"] for call in calls] == [
+        [Update.MESSAGE, Update.CALLBACK_QUERY],
+        Update.ALL_TYPES,
+    ]
+    assert [call["drop_pending_updates"] for call in calls] == [True, False]
 
 
 def test_extract_auth_url_strips_ansi_and_wrapping() -> None:

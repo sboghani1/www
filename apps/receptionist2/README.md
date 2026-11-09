@@ -44,8 +44,12 @@ Primary bot:
 Watchdog bot:
 
 - `/help`, `/status`, `/logs`, `/restart`
-- `/reauth` relays the next plain-text message to `claude auth login` (run in
-  a transient unit outside the watchdog sandbox) and deletes it
+- `/reauth` runs `claude setup-token` in a transient unit outside the
+  watchdog sandbox, relays the next plain-text message as the one-time code
+  (and deletes it), stores the resulting 1-year token in `auth.env` (see
+  Claude authentication) and restarts decision-helper-bot so it loads the
+  token. The token carries no profile scope, so sign in to the intended
+  Claude account in the browser before authorizing
 - `/diagnose` and `/investigate <problem>` start a root diagnostic agent
   outside the watchdog sandbox
 - `/model`, `/effort`
@@ -56,6 +60,25 @@ a new session before continuing.
 Schedules use `America/Los_Angeles` unless overridden. Missed occurrences
 collapse to one current run because each occurrence has a unique idempotency
 key and the scheduler advances directly to the next future fire time.
+
+## Claude authentication
+
+Agent runs, `/diagnose` and `/investigate` agents, and decision-helper-bot
+(which shares the `receptionist-agent` login) authenticate with a long-lived `claude setup-token` token stored as
+`CLAUDE_CODE_OAUTH_TOKEN` in `/home/receptionist-agent/.claude/auth.env`
+(mode 0600). The agent runner loads it for every run; without the file,
+Claude falls back to `~/.claude/.credentials.json`, whose refresh token has a
+hard expiry after which Claude Code blanks the stored tokens. Watchdog
+`/reauth` renews the token: it rewrites only the token line, keeps the
+previous file as `auth.env.bak`, and restarts decision-helper-bot, which reads
+`auth.env` only at startup. The provider monitor alerts when the token is
+rejected or Claude is logged out.
+
+Both bots pass `allowed_updates` explicitly because Telegram otherwise keeps
+the last setting a bot polled with; a message-only setting left by an earlier
+bootstrap made the watchdog's inline buttons silently do nothing. The watchdog
+takes only messages and button presses, so editing a message cannot rerun a
+command or be relayed as a reauth code.
 
 ## Configuration
 
