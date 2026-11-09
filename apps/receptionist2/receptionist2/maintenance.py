@@ -65,6 +65,12 @@ def run_maintenance(
         if run_dir.is_dir()
         else []
     )
+    image_dir = state_dir / "images"
+    image_files = (
+        [path for path in image_dir.iterdir() if path.is_file()]
+        if image_dir.is_dir()
+        else []
+    )
     database = Database(database_path)
     database.initialize()
     pruned = database.prune(days=record_days)
@@ -73,6 +79,9 @@ def run_maintenance(
         "backups_removed": backups_removed,
         "run_artifacts_removed": remove_older_than(
             run_files, run_artifact_days, now
+        ),
+        "images_removed": remove_older_than(
+            image_files, run_artifact_days, now
         ),
         "pruned": pruned,
     }

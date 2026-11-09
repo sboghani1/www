@@ -54,6 +54,12 @@ Watchdog bot:
   outside the watchdog sandbox
 - `/model`, `/effort`
 
+Photos and image files (PNG, JPEG, WebP, GIF; usually phone or laptop
+screenshots) are saved under `RECEPTIONIST2_STATE_DIR/images` with shared
+group-only access and queued as one run whose prompt is the caption plus the
+image paths for the agent to open with Read. Images sent together as an album
+become a single run. Maintenance removes images after 14 days.
+
 When the active session's context is nearly full, the gateway offers to start
 a new session before continuing.
 

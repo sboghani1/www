@@ -33,6 +33,14 @@ from .deployments import (
     diagnose_markup,
     diagnosis_prompt,
 )
+from .images import (
+    ALBUM_SETTLE_SECONDS,
+    IMAGE_MAX_BYTES,
+    TelegramImage,
+    image_prompt,
+    image_summary,
+    telegram_image,
+)
 from .investigation import investigation_prompt
 from .nfl_audio import audio_review_prompt, remove_audio_files, telegram_audio
 from .resources import resource_summary
@@ -79,6 +87,8 @@ HELP_TEXT = (
     "/schedule_run — recurring tasks\n\n"
     "Validated immutable deployment requests execute automatically; "
     "Telegram reports their exact revision, command, and result.\n\n"
+    "Photos and image files (screenshots work well; send several as one "
+    "album) go to the agent with their caption as the request.\n\n"
     "Any other text is passed unchanged as the next agent prompt."
 )
 
@@ -166,6 +176,7 @@ class Gateway:
         self.config = config
         self.database = database
         self._progress_edits: dict[str, float] = {}
+        self._albums: dict[str, dict] = {}
 
     async def post_init(self, application: Application) -> None:
         self.database.initialize()
@@ -1047,8 +1058,107 @@ class Gateway:
             text=message.text,
         )
 
+    async def image_receive(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        message = update.effective_message
+        existing = self.database.inbound_run(
+            update.effective_chat.id, message.message_id
+        )
+        if existing:
+            await message.reply_text(
+                f"Already accepted · run {existing['id'][:8]}"
+            )
+            return
+        image = telegram_image(message)
+        if image is None:
+            await message.reply_text(
+                "Send screenshots as photos or as PNG, JPEG, WebP, or GIF "
+                "files."
+            )
+            return
+        if image.size_bytes is not None and image.size_bytes > IMAGE_MAX_BYTES:
+            await message.reply_text("That image is larger than 20 MB.")
+            return
+        try:
+            path = await self._store_image(image)
+        except (OSError, TelegramError, ValueError) as error:
+            log.exception("Could not store image message")
+            await message.reply_text(f"Could not save that image: {error}")
+            return
+        caption = message.caption or ""
+        group = message.media_group_id
+        if group is None:
+            await self._accept_text(
+                message,
+                user_id=update.effective_user.id,
+                chat_id=update.effective_chat.id,
+                message_id=message.message_id,
+                text=image_summary(caption, 1),
+                exact_prompt=image_prompt(caption, [str(path)]),
+            )
+            return
+        album = self._albums.setdefault(
+            group,
+            {
+                "user_id": update.effective_user.id,
+                "chat_id": update.effective_chat.id,
+                "messages": [],
+                "caption": "",
+            },
+        )
+        album["messages"].append((message.message_id, message, str(path)))
+        if caption:
+            album["caption"] = caption
+        name = f"album:{group}"
+        for job in context.job_queue.get_jobs_by_name(name):
+            job.schedule_removal()
+        context.job_queue.run_once(
+            self._accept_album, ALBUM_SETTLE_SECONDS, data=group, name=name
+        )
+
+    async def _accept_album(self, context: ContextTypes.DEFAULT_TYPE) -> None:
+        album = self._albums.pop(context.job.data, None)
+        if not album:
+            return
+        items = sorted(album["messages"], key=lambda item: item[0])
+        first_id, first_message, _ = items[0]
+        paths = [path for _, _, path in items]
+        await self._accept_text(
+            first_message,
+            user_id=album["user_id"],
+            chat_id=album["chat_id"],
+            message_id=first_id,
+            text=image_summary(album["caption"], len(paths)),
+            exact_prompt=image_prompt(album["caption"], paths),
+        )
+
+    async def _store_image(self, image: TelegramImage) -> Path:
+        directory = self.config.images_dir
+        directory.mkdir(parents=True, exist_ok=True, mode=0o2770)
+        directory.chmod(0o2770)
+        final_path = directory / f"{uuid.uuid4()}{image.suffix}"
+        temp_path = directory / f".{final_path.name}.part"
+        try:
+            telegram_file = await image.media.get_file()
+            await telegram_file.download_to_drive(custom_path=temp_path)
+            if temp_path.stat().st_size > IMAGE_MAX_BYTES:
+                raise ValueError("the image exceeded the 20 MB limit")
+            temp_path.chmod(0o660)
+            temp_path.replace(final_path)
+        finally:
+            temp_path.unlink(missing_ok=True)
+        return final_path
+
     async def _accept_text(
-        self, reply_to, *, user_id: int, chat_id: int, message_id: int, text: str
+        self,
+        reply_to,
+        *,
+        user_id: int,
+        chat_id: int,
+        message_id: int,
+        text: str,
+        exact_prompt: str | None = None,
     ) -> None:
         run, created = self.database.accept_message(
             user_id=user_id,
@@ -1057,6 +1167,7 @@ class Gateway:
             text=text,
             default_model=self.config.default_model,
             default_effort=self.config.default_effort,
+            exact_prompt=exact_prompt,
         )
         if created:
             try:
@@ -1285,6 +1396,12 @@ def build_application(config: GatewayConfig) -> Application:
                 gateway.authorized(handler),
             )
         )
+    application.add_handler(
+        MessageHandler(
+            filters.PHOTO | filters.Document.IMAGE,
+            gateway.authorized(gateway.image_receive),
+        )
+    )
     application.add_handler(
         MessageHandler(
             filters.VOICE | filters.AUDIO | filters.Document.ALL,

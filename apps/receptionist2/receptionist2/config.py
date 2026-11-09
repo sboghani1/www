@@ -109,6 +109,10 @@ class GatewayConfig(CommonConfig):
     def nfl_audio_dir(self) -> Path:
         return self.state_dir / "nfl-audio"
 
+    @property
+    def images_dir(self) -> Path:
+        return self.state_dir / "images"
+
 
 @dataclass(frozen=True)
 class WorkerConfig(CommonConfig):
