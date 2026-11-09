@@ -1,0 +1,26 @@
+[Unit]
+Description=Parse Craig Trapp & Indian Cowboy NBA picks shows for Mel's bait tracker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# The account with the Claude subscription login and the AssemblyAI key; it
+# ingests into the forwarder's opinion store through sudo, so no
+# NoNewPrivileges here.
+User=receptionist-agent
+Group=receptionist-agent
+WorkingDirectory=/var/lib/decision-helper-bot
+Environment=HOME=/home/receptionist-agent
+Environment=USER=receptionist-agent
+Environment=PATH=/opt/decision-helper-bot/current/.venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONDONTWRITEBYTECODE=1
+EnvironmentFile=-/home/receptionist-agent/.claude/auth.env
+EnvironmentFile=/home/receptionist-agent/.config/nfl-audio-parser/env
+UnsetEnvironment=ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN
+ExecStart=/opt/decision-helper-bot/current/.venv/bin/nba-channel-intake run
+TimeoutStartSec=2h
+PrivateTmp=true
+UMask=0077
+StandardOutput=journal
+StandardError=journal

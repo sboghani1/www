@@ -358,3 +358,118 @@ def test_existing_baits_get_a_check_schedule(tmp_path: Path) -> None:
         connection.commit()
     bot.baits.initialize()
     assert bot.baits.watch("nba-a")["next_check_at"] is not None
+
+
+def write_picker_picks(bot, now: datetime, picks: list[dict], covered: list[str]) -> None:
+    day = parse_ts(timestamp(now + timedelta(hours=1))).astimezone(EASTERN).date().isoformat()
+    bot.config.picker_picks_path.write_text(json.dumps({
+        "sport": "nba",
+        "picks": picks,
+        "coverage": [
+            {"picker_name": name, "valid_from_date": day, "valid_through_date": day}
+            for name in covered
+        ],
+    }))
+
+
+def side_pick(picker: str, direction: str, line: float | None, event_id: str = "nba-a") -> dict:
+    return {
+        "picker_name": picker, "event_id": event_id, "market_family": "game_side",
+        "contract_type": "spread", "direction": direction, "line": line,
+        "opinion_status": "active", "condition_text": None,
+    }
+
+
+def test_trapp_and_cowboy_show_after_the_first_pick_and_follow_up(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    bot._bot = SimpleNamespace(send_message=AsyncMock())
+    chat = Chat()
+    board = show_board(bot, chat)
+    assert "Trapp" not in board.text  # nothing shown before your pick
+
+    # No parsed show yet: the confirmation says so, and no follow-up fires.
+    tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)
+    assert "⏳ Trapp: that day's show isn't parsed yet" in chat.sent[-1].text
+    asyncio.run(bot.check_picker_updates())
+    bot._bot.send_message.assert_not_awaited()
+
+    # The show lands: Trapp is against you, Cowboy only has a total.
+    write_picker_picks(
+        bot, now,
+        [
+            side_pick("Craig Trapp", "Los Angeles Lakers", 5.5),
+            {**side_pick("Indian Cowboy", "Under", 228.5), "market_family": "game_total", "contract_type": "total"},
+        ],
+        ["Craig Trapp", "Indian Cowboy"],
+    )
+    asyncio.run(bot.check_picker_updates())
+    _, text = bot._bot.send_message.await_args.args
+    assert "👥 Picks update: Boston Celtics @ Los Angeles Lakers" in text
+    assert "You took Celtics -5.5 (-110)" in text
+    assert "⚔️ Trapp: Lakers +5.5, opposite side" in text
+    assert "➖ Cowboy: no side pick (total: Under 228.5)" in text
+    asyncio.run(bot.check_picker_updates())
+    assert bot._bot.send_message.await_count == 1  # once per change
+
+    # Later screens carry it too.
+    tap(bot, bot.bait_latest, "baitline:nba-a", chat)
+    assert "⚔️ Trapp: Lakers +5.5, opposite side" in chat.sent[-1].text
+    # Switching to Trapp's side makes it the same side, and the
+    # confirmation already shows it, so no extra follow-up.
+    tap(bot, bot.bait_take, "baitre:h:5.5:nba-a", chat)
+    assert "🤝 Trapp: Lakers +5.5, same side as you" in chat.sent[-1].text
+    asyncio.run(bot.check_picker_updates())
+    assert bot._bot.send_message.await_count == 1
+
+
+def test_existing_bait_gets_picks_once_they_exist(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    bot._bot = SimpleNamespace(send_message=AsyncMock())
+    chat = Chat()
+    show_board(bot, chat)
+    tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)
+    # A bait from before this feature has no stored summary.
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE bait_watch SET picker_signature=NULL")
+        connection.commit()
+    write_picker_picks(bot, now, [side_pick("Indian Cowboy", "Boston Celtics", -5.5)], ["Indian Cowboy"])
+    asyncio.run(bot.check_picker_updates())
+    _, text = bot._bot.send_message.await_args.args
+    assert "🤝 Cowboy: Celtics -5.5, same side as you" in text
+    assert "⏳ Trapp: that day's show isn't parsed yet" in text
+
+
+def test_bait_stats_split_final_positions_by_picker(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    chat = Chat()
+    show_board(bot, chat)
+    tap(bot, bot.bait_take, "bait:h:5.5:nba-a", chat)  # first look Lakers
+    bot.lines.events = nba_slate(now, celtics_spread=-7.5)
+    tap(bot, bot.bait_take, "baitre:a:-7.5:nba-a", chat)  # final position Celtics
+    tap(bot, bot.bait_take, "bait:h:ml:nba-b", chat)
+    write_picker_picks(
+        bot, now,
+        [
+            side_pick("Craig Trapp", "Boston Celtics", -6.5),
+            side_pick("Indian Cowboy", "Los Angeles Lakers", 6.5),
+            side_pick("Craig Trapp", "Denver Nuggets", None, "nba-b"),
+            side_pick("Indian Cowboy", "Denver Nuggets", None, "nba-b"),
+        ],
+        ["Craig Trapp", "Indian Cowboy"],
+    )
+    with bot.store.connect() as connection:
+        connection.execute(
+            "UPDATE baits SET status='final', result=CASE WHEN event_id='nba-a' AND ordinal=2 THEN 'win' "
+            "WHEN event_id='nba-a' THEN 'loss' ELSE 'loss' END"
+        )
+        connection.commit()
+    report = format_bait_stats(bot.baits.all(), EASTERN, bot.pickers)
+    assert "vs Trapp & Cowboy (your final position per game)" in report
+    assert "• Trapp same side as you: 1-1 (50%)" in report
+    assert "• Cowboy opposite side: 1-0 (100%)" in report
+    assert "• Cowboy same side as you: 0-1 (0%)" in report
+    assert "• split: 1-0 (100%)" in report
+    assert "• both with you: 0-1 (0%)" in report

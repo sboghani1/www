@@ -141,6 +141,14 @@ def build_parser() -> argparse.ArgumentParser:
         choices=range(0, 6),
         default=0,
     )
+    picks_export = subparsers.add_parser(
+        "picks-export",
+        help="Export named pickers' latest pregame sides and totals.",
+    )
+    picks_export.add_argument("--sport", choices=("nfl", "nba"), required=True)
+    picks_export.add_argument(
+        "--picker", action="append", required=True, dest="pickers"
+    )
     return parser
 
 
@@ -216,6 +224,13 @@ def main(argv: list[str] | None = None) -> int:
                     event_id=args.event_id,
                     market_family=args.market_family,
                     minimum_conviction=args.minimum_conviction,
+                ),
+            }
+        elif args.command == "picks-export":
+            result = {
+                "ok": True,
+                **opinions.picker_picks(
+                    sport=args.sport, picker_names=args.pickers
                 ),
             }
         else:

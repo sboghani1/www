@@ -205,6 +205,22 @@ receptionist's Opus agent, not with API billing:
    separate from picks and leans and don't feed reviews, opinions, or
    learnings.
 
+9. **Trapp & Cowboy next to your bait.** The `nba-channel-intake.timer`
+   (02, 08, 12, 16 and 19:00 ET) parses Doc's Sports' public daily NBA show
+   with Craig Trapp and Indian Cowboy (plus Cowboy's free single-game videos;
+   the members-only "YouTube Premium" ones can't be fetched) into the
+   forwarder's opinion store, then exports both pickers' latest pregame
+   full-game sides and totals to `/var/lib/decision-helper-bot/picker-picks.json`.
+   See `apps/nfl-audio-parser/README.md` for how the intake works. Nothing
+   about them shows before you tap: each bait confirmation and 🔄 Latest line
+   message ends with where each one stands on that game (🤝 same side,
+   ⚔️ opposite side, ➖ no side pick with their total if any, ⏳ that day's show
+   isn't parsed yet). When their picks on a baited game arrive or change
+   before tip, Mel sends one 👥 Picks update. `/baitstats` adds "vs Trapp &
+   Cowboy": your final position per game (its last bait row, when it's a
+   take) graded by where each stood, and whether both were with you, both
+   against you, or split.
+
 ## Bot commands
 
 - `/games` - today's and tomorrow's games; tap one for Mel's opinion

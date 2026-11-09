@@ -30,6 +30,7 @@ from .models import (
     timestamp,
     utc_now,
 )
+from .pickers import PickerFeed, picker_stats
 from .store import DecisionStore
 
 
@@ -196,6 +197,16 @@ class BaitStore:
                 );
                 """
             )
+            # The picker summary last shown for the game, so a follow-up is
+            # sent only when the tracked pickers' picks change.
+            columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(bait_watch)")
+            }
+            if "picker_signature" not in columns:
+                connection.execute(
+                    "ALTER TABLE bait_watch ADD COLUMN picker_signature TEXT"
+                )
             # Games baited before scheduled checks existed.
             now = utc_now()
             for row in connection.execute(
@@ -343,6 +354,24 @@ class BaitStore:
                     "WHERE event_id=?",
                     (alert_line, timestamp(now), event_id),
                 )
+            connection.commit()
+
+    def upcoming_watches(self) -> list[dict[str, Any]]:
+        """Baited games that haven't tipped."""
+        with self.store.connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM bait_watch WHERE commence_time>? "
+                "ORDER BY commence_time",
+                (timestamp(utc_now()),),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def set_picker_signature(self, event_id: str, value: str) -> None:
+        with self.store.connect() as connection:
+            connection.execute(
+                "UPDATE bait_watch SET picker_signature=? WHERE event_id=?",
+                (value, event_id),
+            )
             connection.commit()
 
     def watch(self, event_id: str) -> dict[str, Any] | None:
@@ -819,7 +848,9 @@ def bait_stats(baits: list[dict[str, Any]]) -> dict[str, dict[str, Counter]]:
     return groups
 
 
-def format_bait_stats(baits: list[dict[str, Any]], eastern) -> str:
+def format_bait_stats(
+    baits: list[dict[str, Any]], eastern, feed: PickerFeed | None = None
+) -> str:
     takes = [bait for bait in baits if bait["action"] == "take"]
     if not takes:
         return "No bait logged yet. Use /bait to mark tempting NBA sides."
@@ -834,6 +865,13 @@ def format_bait_stats(baits: list[dict[str, Any]], eastern) -> str:
             rows.items(), key=lambda item: -sum(item[1].values())
         ):
             lines.append(f"• {label}: {_record(results)}")
+    if feed is not None:
+        versus = picker_stats(baits, feed, eastern)
+        if versus:
+            lines.append("")
+            lines.append("vs Trapp & Cowboy (your final position per game)")
+            for label, results in sorted(versus.items()):
+                lines.append(f"• {label}: {_record(results)}")
     recent = [bait for bait in takes if bait["status"] == "final"][-8:]
     if recent:
         lines.append("")

@@ -26,6 +26,10 @@ fi
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 app_dir="$(cd "$script_dir/.." && pwd)"
+parser_dir="$(cd "$app_dir/../nfl-audio-parser" && pwd)"
+sqlite_dir="$(cd "$app_dir/../../packages/www-sqlite" && pwd)"
+parser_env="/home/receptionist-agent/.config/nfl-audio-parser/env"
+forwarder_env="/home/forwarder/app/.env.local"
 install_root="/opt/decision-helper-bot"
 releases="$install_root/releases"
 release="$releases/$(date -u +%Y%m%dT%H%M%SZ)-$$"
@@ -86,6 +90,9 @@ rm -rf "$release/.venv" "$release/.pytest_cache"
 "$python_binary" -m venv "$release/.venv"
 "$release/.venv/bin/pip" install --quiet --upgrade pip
 "$release/.venv/bin/pip" install --quiet "$release[test]"
+# The NBA picks-show intake (nba-channel-intake) and the opinion-store CLI it
+# runs as the forwarder account.
+"$release/.venv/bin/pip" install --quiet "$sqlite_dir" "$parser_dir"
 (
     cd "$release"
     PYTHONDONTWRITEBYTECODE=1 \
@@ -125,6 +132,39 @@ asyncio.run(main())
 PY
 trap - ERR
 
+# YouTube refuses downloads from this server's address; the intake goes
+# through the local Cloudflare WARP proxy the forwarder uses for Pinnacle.
+# Copy its address into the parser's private env without printing it.
+if [[ ! -s "$parser_env" ]]; then
+    echo "Missing $parser_env (ASSEMBLYAI_API_KEY); the NBA intake can't run." >&2
+    exit 1
+fi
+"$python_binary" - "$forwarder_env" "$parser_env" <<'PY'
+import sys
+from pathlib import Path
+
+def value(path, key):
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        name, sep, raw = line.strip().removeprefix("export ").partition("=")
+        if sep and name.strip() == key:
+            return raw.strip().strip("'\"")
+    return ""
+
+proxy = value(sys.argv[1], "PINNACLE_PROXY")
+if not proxy:
+    sys.exit("PINNACLE_PROXY is missing from the forwarder env; the NBA intake needs it.")
+target = Path(sys.argv[2])
+lines = [
+    line for line in target.read_text(encoding="utf-8").splitlines()
+    if not line.startswith("NBA_CHANNEL_PROXY=")
+]
+lines.append(f"NBA_CHANNEL_PROXY={proxy}")
+target.write_text("\n".join(lines) + "\n", encoding="utf-8")
+print("NBA intake proxy configured.")
+PY
+chown receptionist-agent:receptionist-agent "$parser_env"
+chmod 0600 "$parser_env"
+
 ln -sfn "$release" "$install_root/current.new"
 mv -Tf "$install_root/current.new" "$install_root/current"
 install -m 0644 -o root -g root \
@@ -133,7 +173,16 @@ install -m 0644 -o root -g root \
 install -m 0755 -o root -g root \
     "$script_dir/configure-decision-helper-bot" \
     /usr/local/sbin/configure-decision-helper-bot
+for unit in nba-channel-intake.service nba-channel-intake.timer; do
+    install -m 0644 -o root -g root "$script_dir/$unit" "/etc/systemd/system/$unit"
+done
 systemctl daemon-reload
+systemctl enable --now nba-channel-intake.timer
+# Write the picker export now so Mel has it before the first timer run.
+as_agent /bin/bash -c 'set -a; . /home/receptionist-agent/.config/nfl-audio-parser/env; set +a
+    exec /opt/decision-helper-bot/current/.venv/bin/nba-channel-intake export' ||
+    echo "NBA picker export didn't run now (intake busy?); the timer writes it." >&2
+
 if [[ -s "$env_file" ]] && ! grep -q '^DECISION_HELPER_LINES_SHEET_ID=' "$env_file"; then
     # Pre-sheet env (ODDS_API_KEY): rewrite it with the forwarder's sheet
     # credentials; the configure script keeps the existing token.

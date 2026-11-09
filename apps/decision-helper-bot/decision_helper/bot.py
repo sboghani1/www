@@ -59,6 +59,7 @@ from .models import (
     team_matches,
     utc_now,
 )
+from .pickers import PickerFeed, format_views, signature
 from .store import DecisionStore
 from .transcribe import WhisperTranscriber
 
@@ -560,6 +561,7 @@ class DecisionBot:
         self._sync = asyncio.Lock()
         self._learning_retry_at: datetime | None = None
         self.baits = BaitStore(store)
+        self.pickers = PickerFeed(config.picker_picks_path)
         self._bot: Any = None
         self._bait_checks = asyncio.Lock()
 
@@ -1511,7 +1513,11 @@ class DecisionBot:
             )
             return
         sent = await query.message.reply_text(
-            format_confirmation(bait, self.baits.game_history(event.id), EASTERN),
+            self._bait_text(
+                bait,
+                format_confirmation(bait, self.baits.game_history(event.id), EASTERN),
+                remember=True,
+            ),
             reply_markup=confirmation_keyboard(bait),
         )
         self.baits.link_message(sent.message_id, bait["id"])
@@ -1538,7 +1544,8 @@ class DecisionBot:
         await query.answer()
         text, _ = format_latest(event, history, EASTERN)
         await query.message.reply_text(
-            text, reply_markup=latest_keyboard(event, history[-1])
+            self._bait_text(history[-1], text, remember=True),
+            reply_markup=latest_keyboard(event, history[-1]),
         )
 
     async def bait_tag(
@@ -1554,7 +1561,10 @@ class DecisionBot:
             return
         await query.answer()
         await query.edit_message_text(
-            format_confirmation(bait, self.baits.game_history(bait["event_id"]), EASTERN),
+            self._bait_text(
+                bait,
+                format_confirmation(bait, self.baits.game_history(bait["event_id"]), EASTERN),
+            ),
             reply_markup=confirmation_keyboard(bait),
         )
 
@@ -1624,7 +1634,7 @@ class DecisionBot:
     ) -> None:
         del context
         await update.message.reply_text(
-            format_bait_stats(self.baits.all(), EASTERN)[:TELEGRAM_LIMIT]
+            format_bait_stats(self.baits.all(), EASTERN, self.pickers)[:TELEGRAM_LIMIT]
         )
 
     async def bait_check_job(self, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1636,6 +1646,10 @@ class DecisionBot:
                 await self.check_baited_lines()
             except Exception:
                 log.exception("Bait line checks failed")
+            try:
+                await self.check_picker_updates()
+            except Exception:
+                log.exception("Bait picker updates failed")
 
     async def check_baited_lines(self) -> None:
         """Scheduled checks of baited games: alert with both sides at the
@@ -1673,6 +1687,44 @@ class DecisionBot:
                 reply_markup=latest_keyboard(event, last),
             )
             self.baits.checked(watch["event_id"], alert_line=moved)
+
+    def _bait_text(
+        self, bait: dict[str, Any], text: str, *, remember: bool = False
+    ) -> str:
+        """``text`` with where Trapp and Cowboy stand on the bait's game,
+        shown only once you've made your first pick on it."""
+        views = self.pickers.views(
+            bait["event_id"], bait["commence_time"], bait["selection"], EASTERN
+        )
+        if remember:
+            self.baits.set_picker_signature(bait["event_id"], signature(views))
+        return f"{text}\n\n{format_views(views)}"
+
+    async def check_picker_updates(self) -> None:
+        """Before tip, tell you once when Trapp's or Cowboy's picks on a
+        baited game arrive or change after you last saw them."""
+        for watch in self.baits.upcoming_watches():
+            history = self.baits.game_history(watch["event_id"])
+            if not history:
+                continue
+            last = history[-1]
+            views = self.pickers.views(
+                last["event_id"], last["commence_time"], last["selection"], EASTERN
+            )
+            current = signature(views)
+            if current == watch["picker_signature"]:
+                continue
+            nothing_yet = all(view.relation == "not_in" for view in views)
+            if watch["picker_signature"] is not None or not nothing_yet:
+                start = parse_timestamp(last["commence_time"]).astimezone(EASTERN)
+                verb = "took" if last["action"] == "take" else "passed on"
+                await self._bot.send_message(
+                    self.config.allowed_user_id,
+                    f"👥 Picks update: {last['away_team']} @ {last['home_team']} "
+                    f"({start:%-I:%M %p} ET). You {verb} {describe_bait(last)}.\n"
+                    + format_views(views),
+                )
+            self.baits.set_picker_signature(watch["event_id"], current)
 
     async def sync_baits(self) -> None:
         """Save each baited side's closing number, then grade it."""

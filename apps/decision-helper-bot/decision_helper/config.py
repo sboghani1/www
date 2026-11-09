@@ -106,5 +106,10 @@ class Config:
         return self.state_dir / "models"
 
     @property
+    def picker_picks_path(self) -> Path:
+        """Written by the nba-channel-intake timer; Mel only reads it."""
+        return self.state_dir / "picker-picks.json"
+
+    @property
     def claude_workdir(self) -> Path:
         return self.state_dir / "claude-workdir"

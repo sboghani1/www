@@ -234,6 +234,46 @@ of final pregame records.
 Spotify content identifiers can already be fingerprinted by the opinion store,
 but Spotify downloading/transcription is intentionally not implemented yet.
 
+## Daily NBA channel intake
+
+`nba-channel-intake` (`nfl_audio_parser/nba_channel.py`) ingests daily NBA
+picks shows into the opinion store. It is installed into Mel's environment
+and scheduled by Mel's installer as `nba-channel-intake.timer` (see
+`apps/decision-helper-bot`), running as `receptionist-agent`. Its only
+channel today is Doc's Sports with Craig Trapp and Indian Cowboy (`CHANNELS`).
+
+Each run:
+
+1. Lists the channel's recent uploads (flat listing, no download) and keeps
+   public titles that mention NBA and a configured picker, skipping
+   members-only/"Premium", WNBA, preseason, and other sports. The slate date
+   comes from the title (`11/9/26` or `November 9th, 2026`).
+2. Downloads the audio through `NBA_CHANNEL_PROXY`: YouTube answers "confirm
+   you're not a bot" to downloads from the VPS address, so the installer
+   copies the forwarder's local Cloudflare WARP proxy (`PINNACLE_PROXY`) into
+   `~/.config/nfl-audio-parser/env`.
+3. Transcribes the whole video with AssemblyAI (speaker labels on) and deletes
+   the AssemblyAI transcript afterwards.
+4. Loads ESPN's NBA games for the title date, the publish date, and the day
+   after, keeping only games that tip after the video went up (one show was
+   titled with an old date).
+5. Asks Claude (text only, subscription login, `claude-opus-5-5`) for each
+   host's full-game and period sides and game totals with exact quotes, then
+   keeps only picks whose quotes are exact transcript substrings for a listed
+   game and an expected host, validates the payload in a throwaway store, and
+   ingests it as the forwarder account. The prediction window is the picked
+   games' dates.
+6. Exports the pickers' latest pregame picks and covered dates
+   (`nfl-audio-parser-store picks-export`) to
+   `/var/lib/decision-helper-bot/picker-picks.json`.
+
+Run state lives in `/var/lib/decision-helper-bot/nba-channel-state.json`,
+keyed by source reference hash only. Ingested and no-pick videos are not
+retried; failures are retried up to three times. By default a run covers
+slates from yesterday through tomorrow; backfill with
+`nba-channel-intake run --since 2026-10-20 --until 2026-11-08 --scan 1100
+--max-items 20`, and `--dry-run` prints the payload without ingesting.
+
 ## Scheduled channel pipeline
 
 `nfl-audio-parser-pipeline` discovers and processes configured YouTube channels

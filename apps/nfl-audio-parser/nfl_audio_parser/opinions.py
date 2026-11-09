@@ -5,6 +5,7 @@ import json
 import sqlite3
 import uuid
 from datetime import UTC, date, datetime
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -1272,6 +1273,61 @@ class OpinionStore:
                 values,
             ).fetchall()
         return [dict(row) for row in rows]
+
+    def picker_picks(
+        self, *, sport: str, picker_names: Iterable[str]
+    ) -> dict[str, Any]:
+        """Each named picker's latest pregame full-game side and total
+        opinions, plus the dates each picker's content covers, so a reader
+        can tell "no pick on this game" from "that day's video isn't in"."""
+        if sport not in SPORTS:
+            raise ValueError("sport is unsupported")
+        names = sorted({_normalize_name(name) for name in picker_names})
+        if not names:
+            raise ValueError("At least one picker is required")
+        marks = ",".join("?" for _ in names)
+        with connect(self.path, read_only=True) as connection:
+            picks = connection.execute(
+                f"""
+                SELECT opinion.picker_name, opinion.event_id,
+                       opinion.commence_time_utc, opinion.away_team,
+                       opinion.home_team, opinion.market_family,
+                       opinion.contract_type, opinion.direction, opinion.line,
+                       opinion.price, opinion.selection,
+                       opinion.opinion_status, opinion.condition_text,
+                       opinion.conviction_score, opinion.conviction_label,
+                       opinion.published_at_utc
+                FROM latest_pregame_opinions opinion
+                JOIN pickers picker ON picker.picker_id=opinion.picker_id
+                WHERE opinion.sport=? AND opinion.period='game'
+                  AND opinion.market_family IN ('game_side', 'game_total')
+                  AND picker.normalized_name IN ({marks})
+                ORDER BY opinion.commence_time_utc, opinion.event_id,
+                         opinion.picker_name, opinion.market_family
+                """,
+                (sport, *names),
+            ).fetchall()
+            covered = connection.execute(
+                f"""
+                SELECT DISTINCT picker.display_name AS picker_name,
+                       window.valid_from_date, window.valid_through_date,
+                       content.published_at_utc
+                FROM current_opinion_observations observation
+                JOIN pickers picker ON picker.picker_id=observation.picker_id
+                JOIN prediction_windows window
+                  ON window.window_id=observation.window_id
+                JOIN content_items content
+                  ON content.content_id=observation.content_id
+                WHERE window.sport=? AND picker.normalized_name IN ({marks})
+                ORDER BY window.valid_from_date, picker.display_name
+                """,
+                (sport, *names),
+            ).fetchall()
+        return {
+            "sport": sport,
+            "picks": [dict(row) for row in picks],
+            "coverage": [dict(row) for row in covered],
+        }
 
     def consensus(
         self,

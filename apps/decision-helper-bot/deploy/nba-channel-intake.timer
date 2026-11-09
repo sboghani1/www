@@ -1,0 +1,14 @@
+[Unit]
+Description=Check Doc's Sports for new NBA picks shows
+
+[Timer]
+# The daily show usually goes up shortly after midnight ET; later runs catch
+# late uploads and single-game videos before evening tip-offs.
+OnCalendar=*-*-* 02,08,12,16,19:00:00 America/New_York
+Persistent=true
+AccuracySec=1min
+RandomizedDelaySec=5min
+Unit=nba-channel-intake.service
+
+[Install]
+WantedBy=timers.target

@@ -344,3 +344,73 @@ def test_payload_cannot_persist_raw_source_metadata(tmp_path: Path) -> None:
             payload,
             source_url="https://www.youtube.com/watch?v=secret-source",
         )
+
+
+def test_picker_picks_exports_latest_sides_totals_and_coverage(
+    tmp_path: Path,
+) -> None:
+    store = OpinionStore(tmp_path / "opinions.sqlite3")
+
+    def observation(index: int, picker: str, family: str, direction: str, line: float | None, period: str = "game") -> dict:
+        return {
+            "observation_index": index,
+            "picker_name": picker,
+            "event_id": "nba-1",
+            "market_family": family,
+            "contract_type": "spread" if family == "game_side" else "total",
+            "period": period,
+            "source_seconds": 800.0 + index,
+            "selection": f"{direction} {line}",
+            "direction": direction,
+            "line": line,
+            "opinion_status": "active",
+            "opinion_stage": "final",
+            "conviction": {
+                "score": 3,
+                "label": "standard",
+                "explicit_markers": [],
+                "hedged": False,
+                "conditional": False,
+                "condition_text": None,
+            },
+            "evidence_segments": [{"exact_text": f"I like {direction}."}],
+            "extraction_confidence": 0.9,
+            "review_flags": [],
+        }
+
+    store.ingest(
+        opinion_payload(
+            sport="nba",
+            published_at_utc="2026-11-09T06:00:00Z",
+            valid_from_date="2026-11-09",
+            valid_through_date="2026-11-09",
+            event_id="nba-1",
+            commence_time_utc="2026-11-10T00:30:00Z",
+            away_team="Memphis Grizzlies",
+            home_team="Toronto Raptors",
+            observations=[
+                observation(1, "Craig Trapp", "game_side", "Memphis Grizzlies", 3.5),
+                observation(2, "Indian Cowboy", "game_total", "Under", 231.5),
+                observation(3, "Craig Trapp", "game_side", "Toronto Raptors", -2.0, "1h"),
+                observation(4, "Someone Else", "game_side", "Toronto Raptors", -3.5),
+            ],
+        ),
+        source_url="https://www.youtube.com/watch?v=daily",
+    )
+    export = store.picker_picks(
+        sport="nba", picker_names=["Craig Trapp", "indian  cowboy"]
+    )
+    picks = {
+        (row["picker_name"], row["market_family"]): row
+        for row in export["picks"]
+    }
+    assert set(picks) == {
+        ("Craig Trapp", "game_side"),
+        ("Indian Cowboy", "game_total"),
+    }
+    assert picks[("Craig Trapp", "game_side")]["direction"] == "Memphis Grizzlies"
+    assert picks[("Craig Trapp", "game_side")]["line"] == 3.5
+    assert {
+        (row["picker_name"], row["valid_from_date"])
+        for row in export["coverage"]
+    } == {("Craig Trapp", "2026-11-09"), ("Indian Cowboy", "2026-11-09")}
