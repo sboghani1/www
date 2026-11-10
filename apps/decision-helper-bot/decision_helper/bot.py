@@ -1408,27 +1408,11 @@ class DecisionBot:
     # --- Bait tracker ----------------------------------------------------
 
     async def bait_events(self) -> list[MarketEvent]:
-        """The NBA slate to bait: today's (ET) games, or tomorrow's once
-        every game today has tipped."""
-        events = await self.candidate_events(
-            day_offsets=range(0, 2), sports=("nba",)
+        """The NBA games to bait: today's and tomorrow's (ET). Bovada posts
+        next-day lines late, so some may have no line yet."""
+        return self._today_and_tomorrow(
+            await self.candidate_events(day_offsets=range(0, 2), sports=("nba",))
         )
-        now = utc_now()
-        days = sorted(
-            {
-                parse_timestamp(event.commence_time).astimezone(EASTERN).date()
-                for event in events
-                if parse_timestamp(event.commence_time) > now
-            }
-        )
-        if not days:
-            return []
-        return [
-            event
-            for event in events
-            if parse_timestamp(event.commence_time).astimezone(EASTERN).date()
-            == days[0]
-        ]
 
     async def _bait_event(self, event_id: str) -> MarketEvent | None:
         return next(

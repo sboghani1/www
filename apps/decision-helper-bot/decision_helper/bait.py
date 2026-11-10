@@ -93,6 +93,17 @@ def side_quote(event: MarketEvent, team: str) -> tuple[str, float | None, int | 
     return "winner", None, winner.price if winner is not None else None
 
 
+def has_line(event: MarketEvent) -> bool:
+    """Bovada has a spread or moneyline up (not yet posted, or pulled for
+    news, otherwise)."""
+    return any(
+        (quote := event.markets.get(f"{market}:{team}")) is not None
+        and (quote.point is not None or quote.price is not None)
+        for market in ("spread", "winner")
+        for team in (event.away_team, event.home_team)
+    )
+
+
 def side_label(team: str, pick_type: str, line: float | None) -> str:
     """'Celtics -5.5', 'Lakers pk' (a 0 spread or no spread at all)."""
     short = team.split()[-1]
@@ -592,7 +603,8 @@ def board_keyboard(
                 ]
             )
             continue
-        rows.append(side_buttons(event))
+        if has_line(event):
+            rows.append(side_buttons(event))
     return InlineKeyboardMarkup(rows)
 
 
@@ -619,15 +631,25 @@ def format_board(
     lines = [
         "🎣 NBA lines (Bovada). Tap the side that looks too easy to pass up:"
     ]
+    today = now.astimezone(eastern).date()
+    day = None
     for event in events:
         start = parse_timestamp(event.commence_time)
-        sides = " / ".join(
-            side_label(team, *side_quote(event, team)[:2])
-            for team in (event.away_team, event.home_team)
-        )
-        total = event.markets.get("total:Over")
-        if total is not None and total.point is not None:
-            sides += f", o/u {total.point:g}"
+        if start.astimezone(eastern).date() != day:
+            day = start.astimezone(eastern).date()
+            title = "Today" if day == today else "Tomorrow" if (day - today).days == 1 else f"{day:%a}"
+            lines.append("")
+            lines.append(f"{title}, {day:%a %b %-d}")
+        if has_line(event):
+            sides = " / ".join(
+                side_label(team, *side_quote(event, team)[:2])
+                for team in (event.away_team, event.home_team)
+            )
+            total = event.markets.get("total:Over")
+            if total is not None and total.point is not None:
+                sides += f", o/u {total.point:g}"
+        else:
+            sides = "no line yet"
         line = (
             f"• {start.astimezone(eastern):%-I:%M %p} "
             f"{event.away_team} @ {event.home_team}: {sides}"
@@ -703,6 +725,13 @@ def format_latest(
 ) -> tuple[str, bool]:
     """The game's current line against the last bait; (text, moved)."""
     last = history[-1]
+    if not has_line(event):
+        return (
+            f"🔄 {event.away_team} @ {event.home_team}\n"
+            "⏸ Off the board right now: Bovada pulled the line, often for "
+            "injury news. Check again in a few minutes.",
+            False,
+        )
     pick_type, line, price = side_quote(event, last["selection"])
     now_label = side_label(last["selection"], pick_type, line)
     if price is not None:
@@ -730,6 +759,10 @@ def format_latest(
 
 
 def latest_keyboard(event: MarketEvent, last: dict[str, Any]) -> InlineKeyboardMarkup:
+    if not has_line(event):
+        return InlineKeyboardMarkup(
+            [[InlineKeyboardButton("🔄 Check again", callback_data=f"baitline:{event.id}"[:64])]]
+        )
     rows = [side_buttons(event, "baitre", "🎣 ")]
     if last["action"] == "take":
         pick_type, line, _ = side_quote(event, last["selection"])

@@ -175,8 +175,10 @@ receptionist's Opus agent, not with API billing:
 
 8. **Bait tracker (`/bait`).** A separate log of NBA sides that look too
    easy to pass up, to learn which kinds of "easy" picks lose. `/bait` lists
-   the day's NBA games (ET; tomorrow's once every game today has tipped) with
-   the spread for both sides. NBA lines in the intake workbook come from
+   today's and tomorrow's NBA games (ET, in day sections) with the spread
+   for both sides. A game Bovada hasn't priced yet (next-day lines post
+   late) or has pulled for news shows "no line yet" with no buttons, and
+   its Latest line check says it is off the board. NBA lines in the intake workbook come from
    Bovada since 2026-10-27 (the forwarder's `NBA_LINES_SOURCE`), polled every
    5 minutes, so bait screens say Bovada. Tap the tempting side to log it at the
    number on the button. A game with no spread is a pick'em, graded on the

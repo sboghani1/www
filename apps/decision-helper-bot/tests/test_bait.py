@@ -473,3 +473,49 @@ def test_bait_stats_split_final_positions_by_picker(tmp_path: Path) -> None:
     assert "• Cowboy same side as you: 0-1 (0%)" in report
     assert "• split: 1-0 (100%)" in report
     assert "• both with you: 0-1 (0%)" in report
+
+
+def test_board_shows_tomorrow_and_games_without_a_line_have_no_buttons(tmp_path: Path) -> None:
+    from zoneinfo import ZoneInfo
+
+    eastern = ZoneInfo("America/New_York")
+    # Noon ET, so "today" and "tomorrow" are unambiguous.
+    noon = datetime.now(eastern).replace(hour=12, minute=0, second=0, microsecond=0).astimezone(UTC)
+    today = nba_slate(noon)
+    tomorrow_priced = MarketEvent(**{**today[0].__dict__, "id": "nba-t1", "commence_time": timestamp(noon + timedelta(days=1, hours=7)),
+                                     "away_team": "Miami Heat", "home_team": "Utah Jazz",
+                                     "markets": {"spread:Miami Heat": MarketQuote(-3, -110, 1), "spread:Utah Jazz": MarketQuote(3, -110, 1)}})
+    tomorrow_unpriced = MarketEvent(**{**today[0].__dict__, "id": "nba-t2", "commence_time": timestamp(noon + timedelta(days=1, hours=8)),
+                                       "away_team": "Orlando Magic", "home_team": "Sacramento Kings", "markets": {}})
+    events = today + [tomorrow_priced, tomorrow_unpriced]
+    bot = make_bot(tmp_path, events)
+    bot.baits.initialize()
+    bot.espn.started = list(events)
+    import decision_helper.bot as bot_module
+    original = bot_module.utc_now
+    bot_module.utc_now = lambda: noon
+    try:
+        chat = Chat()
+        board = show_board(bot, chat)
+    finally:
+        bot_module.utc_now = original
+    text = board.text
+    assert text.index("Today, ") < text.index("Celtics -5.5") < text.index("Tomorrow, ") < text.index("Heat -3 / Jazz +3")
+    assert "Orlando Magic @ Sacramento Kings: no line yet" in text
+    labels = buttons(board.reply_markup)
+    assert "Heat -3" in labels and not any("Magic" in label or "Kings" in label for label in labels)
+
+
+def test_latest_line_when_the_game_is_off_the_board(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    chat = Chat()
+    show_board(bot, chat)
+    tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)
+    pulled = nba_slate(now)
+    pulled[0] = MarketEvent(**{**pulled[0].__dict__, "markets": {}})
+    bot.lines.events = pulled
+    bot.espn.started = pulled
+    tap(bot, bot.bait_latest, "baitline:nba-a", chat)
+    assert "⏸ Off the board right now" in chat.sent[-1].text
+    assert buttons(chat.sent[-1].reply_markup) == {"🔄 Check again": "baitline:nba-a"}
