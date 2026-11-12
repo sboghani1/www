@@ -165,6 +165,37 @@ PY
 chown receptionist-agent:receptionist-agent "$parser_env"
 chmod 0600 "$parser_env"
 
+# The 1h-before-tip BetOnline/Bovada/Hard Rock check is Mel's only Odds API
+# use; it shares the forwarder guesser's key. Copy it without printing it.
+if [[ -s "$env_file" ]]; then
+    "$python_binary" - /home/forwarder/app/.env.guesser "$env_file" <<'PY'
+import sys
+from pathlib import Path
+
+def value(path, key):
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        name, sep, raw = line.strip().removeprefix("export ").partition("=")
+        if sep and name.strip() == key:
+            return raw.strip().strip("'\"")
+    return ""
+
+key = value(sys.argv[1], "ODDS_API_KEY")
+if not key:
+    print("No ODDS_API_KEY in the guesser env; the book check stays off.")
+    sys.exit(0)
+target = Path(sys.argv[2])
+lines = [
+    line for line in target.read_text(encoding="utf-8").splitlines()
+    if not line.startswith("DECISION_HELPER_ODDS_API_KEY=")
+]
+lines.append(f"DECISION_HELPER_ODDS_API_KEY={key}")
+target.write_text("\n".join(lines) + "\n", encoding="utf-8")
+print("Odds API key configured for the book check.")
+PY
+    chown receptionist-agent:receptionist-agent "$env_file"
+    chmod 0600 "$env_file"
+fi
+
 ln -sfn "$release" "$install_root/current.new"
 mv -Tf "$install_root/current.new" "$install_root/current"
 install -m 0644 -o root -g root \

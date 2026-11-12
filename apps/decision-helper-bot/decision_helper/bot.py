@@ -44,6 +44,14 @@ from .bait import (
     latest_keyboard,
     side_quote,
 )
+from .books import (
+    SCHEDULE_EVERY,
+    BookStore,
+    OddsClient,
+    format_book_stats,
+    format_divergence,
+    match_game,
+)
 from .claude import ClaudeClient
 from .config import Config
 from .espn import EspnClient, match_final
@@ -550,6 +558,7 @@ class DecisionBot:
         claude: ClaudeClient,
         lines: SheetLines,
         espn: EspnClient,
+        odds: OddsClient | None = None,
     ) -> None:
         self.config = config
         self.store = store
@@ -564,6 +573,9 @@ class DecisionBot:
         self.pickers = PickerFeed(config.picker_picks_path)
         self._bot: Any = None
         self._bait_checks = asyncio.Lock()
+        self.odds = odds
+        self.books = BookStore(store)
+        self._books_scheduled_at: datetime | None = None
 
     def authorized(self, handler: Handler) -> Handler:
         async def wrapped(
@@ -591,6 +603,7 @@ class DecisionBot:
     async def post_init(self, application: Application) -> None:
         self.store.initialize()
         self.baits.initialize()
+        self.books.initialize()
         self.config.audio_dir.mkdir(parents=True, exist_ok=True)
         identity = await application.bot.get_me()
         if identity.username != self.config.expected_username:
@@ -630,6 +643,8 @@ class DecisionBot:
         del application
         await self.lines.close()
         await self.espn.close()
+        if self.odds is not None:
+            await self.odds.close()
 
     async def start(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -993,6 +1008,7 @@ class DecisionBot:
                 self.sync_reviews,
                 self.sync_learnings,
                 self.sync_baits,
+                self.sync_book_results,
             ):
                 try:
                     await step()
@@ -1617,9 +1633,14 @@ class DecisionBot:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         del context
-        await update.message.reply_text(
-            format_bait_stats(self.baits.all(), EASTERN, self.pickers)[:TELEGRAM_LIMIT]
+        baits = self.baits.all()
+        text = "\n".join(
+            [
+                format_bait_stats(baits, EASTERN, self.pickers),
+                *format_book_stats(self.books.all(), baits),
+            ]
         )
+        await update.message.reply_text(text[:TELEGRAM_LIMIT])
 
     async def bait_check_job(self, context: ContextTypes.DEFAULT_TYPE) -> None:
         del context
@@ -1634,6 +1655,43 @@ class DecisionBot:
                 await self.check_picker_updates()
             except Exception:
                 log.exception("Bait picker updates failed")
+            try:
+                await self.check_books()
+            except Exception:
+                log.exception("Book checks failed")
+
+    async def check_books(self) -> None:
+        """BetOnline vs Bovada and Hard Rock an hour before every NBA tip
+        (the only Odds API use). Every game is recorded; a full-point
+        divergence on a baited game is sent to you."""
+        if self.odds is None:
+            return
+        now = utc_now()
+        if self._books_scheduled_at is None or now - self._books_scheduled_at >= SCHEDULE_EVERY:
+            self.books.schedule(
+                await self.candidate_events(day_offsets=range(0, 2), sports=("nba",))
+            )
+            self._books_scheduled_at = now
+        due = self.books.due(now)
+        if not due:
+            return
+        latest = max(parse_timestamp(row["commence_time"]) for row in due)
+        games = await self.odds.fetch(now, latest + timedelta(minutes=30))
+        for row in due:
+            game = match_game(row, games)
+            if game is None or "BetOnline" not in game.lines:
+                self.books.retry_later(row["event_id"])  # pulled, or not listed
+                continue
+            row = self.books.capture(row, game)
+            history = self.baits.game_history(row["event_id"])
+            if row["side"] is None or not history:
+                continue
+            takes = [item for item in history if item["action"] == "take"]
+            await self._bot.send_message(
+                self.config.allowed_user_id,
+                format_divergence(row, takes[-1] if takes else None),
+            )
+            self.books.mark_alerted(row["event_id"])
 
     async def check_baited_lines(self) -> None:
         """Scheduled checks of baited games: alert with both sides at the
@@ -1709,6 +1767,29 @@ class DecisionBot:
                     + format_views(views),
                 )
             self.baits.set_picker_signature(watch["event_id"], current)
+
+    async def sync_book_results(self) -> None:
+        """Grade BetOnline's side on each diverged game (and record every
+        checked game's score)."""
+        cache: dict[str, list[FinalGame]] = {}
+        for row in self.books.due_results():
+            date = (
+                parse_timestamp(row["commence_time"])
+                .astimezone(EASTERN)
+                .strftime("%Y%m%d")
+            )
+            if date not in cache:
+                cache[date] = await self.espn.fetch_finals("nba", date)
+            game = match_final(
+                cache[date],
+                away_team=row["away_team"],
+                home_team=row["home_team"],
+                commence_time=row["commence_time"],
+            )
+            if game is None:
+                self.books.defer_result(row["event_id"])
+            else:
+                self.books.settle(row, game)
 
     async def sync_baits(self) -> None:
         """Save each baited side's closing number, then grade it."""
@@ -1840,6 +1921,7 @@ def main() -> None:
         ),
         lines=SheetLines(config.google_credentials, config.lines_sheet_id),
         espn=EspnClient(),
+        odds=OddsClient(config.odds_api_key) if config.odds_api_key else None,
     )
     bot.application().run_polling(allowed_updates=Update.ALL_TYPES)
 

@@ -37,6 +37,9 @@ class Config:
     whisper_model: str
     max_download_bytes: int
     sync_interval_seconds: int
+    # Only for the 1h-before-tip BetOnline/Bovada/Hard Rock check; empty
+    # turns that check off.
+    odds_api_key: str = ""
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -91,6 +94,7 @@ class Config:
             sync_interval_seconds=_positive_int(
                 "DECISION_HELPER_SYNC_INTERVAL_SECONDS", 300
             ),
+            odds_api_key=os.getenv("DECISION_HELPER_ODDS_API_KEY", "").strip(),
         )
 
     @property

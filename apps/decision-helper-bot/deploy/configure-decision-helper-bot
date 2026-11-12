@@ -9,10 +9,11 @@ if [[ "$EUID" -ne 0 ]]; then
 fi
 
 gateway_env="/home/receptionist2/.config/receptionist2/gateway.env"
-# BetOnline lines come from telegram-channel-forwarder's intake workbook; Mel
-# reads them with the forwarder's Google service account and never calls
-# The Odds API.
+# Lines come from telegram-channel-forwarder's intake workbook (Bovada); Mel
+# reads them with the forwarder's Google service account. Its only Odds API
+# use is the 1h-before-tip book check, with the guesser's key.
 forwarder_env="/home/forwarder/app/.env"
+guesser_env="/home/forwarder/app/.env.guesser"
 config_dir="/home/receptionist-agent/.config/decision-helper-bot"
 env_file="$config_dir/env"
 
@@ -47,6 +48,8 @@ if [[ -z "$google_credentials" || -z "$lines_sheet_id" ]]; then
     exit 1
 fi
 
+odds_api_key="$(read_value ODDS_API_KEY "$guesser_env")"
+
 install -d -m 0700 -o receptionist-agent -g receptionist-agent "$config_dir"
 temporary="$(mktemp)"
 trap 'rm -f "$temporary"' EXIT
@@ -60,6 +63,7 @@ DECISION_HELPER_STATE_DIR=/var/lib/decision-helper-bot
 DECISION_HELPER_CLAUDE_MODEL=claude-opus-5-5
 DECISION_HELPER_CLAUDE_EFFORT=medium
 DECISION_HELPER_WHISPER_MODEL=small.en
+DECISION_HELPER_ODDS_API_KEY=$odds_api_key
 EOF
 install -m 0600 -o receptionist-agent -g receptionist-agent \
     "$temporary" "$env_file"

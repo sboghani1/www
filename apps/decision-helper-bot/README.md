@@ -106,9 +106,11 @@ the next sync.
    that the summary did not mention: **✅ Still a bet** or **↩️ It was a
    lean**. The second button makes it a lean, adds a clarification to its
    note so a reparse agrees, and re-queues its review.
-3. **Market tracking (BetOnline only, no API credits).** Mel never calls The
-   Odds API. It reads BetOnline lines from the `nfl_games` / `nba_games` tabs
-   of telegram-channel-forwarder's intake workbook (written by its
+3. **Market tracking (no API credits).** Apart from the 1h-before-tip book
+   check (10), Mel never calls The Odds API. It reads the lines (Bovada
+   since 2026-10-27; older text here calls them BetOnline) from the
+   `nfl_games` / `nba_games` tabs of telegram-channel-forwarder's intake
+   workbook (written by its
    `nfl-lines-fetcher` / `nba-lines-fetcher` timers), using the forwarder's
    Google service account. The line and price are saved when the pick is made,
    along with the BetOnline spread at that moment (the picked team's for a
@@ -222,6 +224,25 @@ receptionist's Opus agent, not with API billing:
    Cowboy": your final position per game (its last bait row, when it's a
    take) graded by where each stood, and whether both were with you, both
    against you, or split.
+
+10. **BetOnline vs Bovada and Hard Rock (1h before tip).** Mel's only Odds
+    API use, testing whether BetOnline points at the winning side when it
+    disagrees with recreational books. 60 minutes before every NBA tip, one
+    call (`bookmakers=betonlineag,bovada,hardrockbet`, spreads only: 1
+    credit, and a call that returns no games is free) snapshots all three
+    books into `book_checks`. Games tipping together share a call; a game the
+    books have pulled is retried every 5 minutes until tip. A divergence is
+    BetOnline's spread a full point or more off Bovada or Hard Rock with the
+    juice on that side within 2.5 points of implied probability (about 10
+    cents). A bigger juice gap can make a different number the same price, so
+    it doesn't count, and neither does a game where the two books disagree
+    about which way BetOnline leans. BetOnline's side is the one it prices
+    more expensively. Every game is recorded and graded at the softer number
+    (the one you could bet) and at BetOnline's. Mel only messages (⚖️) when a
+    baited game diverges. `/baitstats` adds the record of BetOnline's side and
+    of your bait with or against it. The key is the forwarder guesser's
+    `ODDS_API_KEY`, which the installer copies into
+    `DECISION_HELPER_ODDS_API_KEY`; without it the check is off.
 
 ## Bot commands
 
