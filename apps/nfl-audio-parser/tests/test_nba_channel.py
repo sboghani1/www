@@ -167,3 +167,14 @@ def test_build_payload_returns_none_without_picks() -> None:
 
 def test_parse_json_object_accepts_fenced_json() -> None:
     assert parse_json_object('```json\n{"picks": []}\n```') == {"picks": []}
+
+
+def test_audio_cut_short_while_youtube_processes_is_refused() -> None:
+    import pytest
+
+    from nfl_audio_parser.nba_channel import check_complete
+
+    check_complete(501.4, 502)
+    check_complete(300.0, None)  # no reported length: nothing to compare
+    with pytest.raises(RuntimeError, match="177 s of the video's 502 s"):
+        check_complete(176.7, 502)

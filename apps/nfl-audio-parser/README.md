@@ -251,7 +251,10 @@ Each run:
 2. Downloads the audio through `NBA_CHANNEL_PROXY`: YouTube answers "confirm
    you're not a bot" to downloads from the VPS address, so the installer
    copies the forwarder's local Cloudflare WARP proxy (`PINNACLE_PROXY`) into
-   `~/.config/nfl-audio-parser/env`.
+   `~/.config/nfl-audio-parser/env`. Audio shorter than 95% of the video's
+   reported length fails and is retried on a later run: a show fetched
+   minutes after upload once came back cut to its last three minutes while
+   YouTube was still processing it.
 3. Transcribes the whole video with AssemblyAI (speaker labels on) and deletes
    the AssemblyAI transcript afterwards.
 4. Loads ESPN's NBA games for the title date, the publish date, and the day

@@ -60,6 +60,10 @@ DEFAULT_STORE_BINARY = Path(
 DEFAULT_CLAUDE_BINARY = "/usr/bin/claude"
 DEFAULT_CLAUDE_MODEL = "claude-opus-5-5"
 MAX_ATTEMPTS = 3
+# A video downloaded minutes after upload can come back cut short while
+# YouTube is still processing it (2026-11-13: 177 s of a 502 s show). Audio
+# shorter than this share of the reported length fails and is retried.
+MIN_AUDIO_SHARE = 0.95
 PRIVATE_AVAILABILITY = {"subscriber_only", "premium_only", "needs_auth"}
 MONTHS = {
     name: number
@@ -198,8 +202,11 @@ def list_uploads(channel: Channel, limit: int) -> list[dict[str, Any]]:
 # --- Media and schedule ------------------------------------------------------
 
 
-def download_audio(url: str, directory: Path, proxy: str | None) -> tuple[Path, datetime]:
-    """Best audio into ``directory``; returns (path, published time)."""
+def download_audio(
+    url: str, directory: Path, proxy: str | None
+) -> tuple[Path, datetime, float | None]:
+    """Best audio into ``directory``; returns (path, published time, the
+    video's reported length in seconds when YouTube gives one)."""
     options: dict[str, Any] = {
         "quiet": True,
         "no_warnings": True,
@@ -224,7 +231,21 @@ def download_audio(url: str, directory: Path, proxy: str | None) -> tuple[Path, 
     files = [path for path in directory.iterdir() if path.name.startswith("source.")]
     if len(files) != 1:
         raise RuntimeError("Expected one downloaded audio file")
-    return files[0], datetime.fromtimestamp(int(published), UTC)
+    reported = info.get("duration")
+    return (
+        files[0],
+        datetime.fromtimestamp(int(published), UTC),
+        float(reported) if isinstance(reported, (int, float)) and reported > 0 else None,
+    )
+
+
+def check_complete(duration: float, reported: float | None) -> None:
+    """Refuse audio that is clearly shorter than the video."""
+    if reported is not None and duration < reported * MIN_AUDIO_SHARE:
+        raise RuntimeError(
+            f"Downloaded audio is {duration:.0f} s of the video's {reported:.0f} s "
+            "(YouTube may still be processing it); retrying on a later run"
+        )
 
 
 def espn_schedule(day: date) -> list[dict[str, Any]]:
@@ -743,10 +764,11 @@ class Runner:
         transcript_id = None
         try:
             with tempfile.TemporaryDirectory(prefix="nba-channel-") as directory:
-                audio, published = download_audio(
+                audio, published, reported = download_audio(
                     candidate.url, Path(directory), self.proxy
                 )
                 duration = media_duration(audio)
+                check_complete(duration, reported)
                 transcript = transcribe(
                     audio,
                     start_timestamp="0",
