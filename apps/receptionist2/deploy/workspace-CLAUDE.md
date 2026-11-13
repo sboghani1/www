@@ -34,6 +34,9 @@ This directory is the root of a private coding workspace.
 - For analytical questions about completed 2023-2025 NFL games, invoke the
   `nfl-history` skill. It queries the authoritative `nfl_game_history` Sheet tab
   through a fixed read-only helper and reuses a private local cache.
+- For straight-up winner picks of 2026 NFL games with a spread of 2.5 or
+  less, invoke the `nfl-close-picks` skill. It runs the deterministic scripts
+  in `nfl-close-picks` and must keep its in-sample caveats.
 - This agent account has full passwordless root (`sudo -n`). Use it for
   diagnosis and repair, but never as a shortcut around the deployment flow
   below. Never print or expose secret values.

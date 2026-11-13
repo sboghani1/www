@@ -143,7 +143,7 @@ visudo -c >/dev/null
 if [[ "$install_workspace" == "1" ]]; then
     install -m 0644 -o receptionist-agent -g receptionist-agent \
         "$deploy/workspace-CLAUDE.md" "$workspace_root/CLAUDE.md"
-    for skill in nfl-history wnba-lean nfl-audio-parser; do
+    for skill in nfl-history wnba-lean nfl-audio-parser nfl-close-picks; do
         source_skill="$release/.claude/skills/$skill/SKILL.md"
         if [[ ! -f "$source_skill" ]]; then
             echo "Skipping missing skill $skill" >&2
