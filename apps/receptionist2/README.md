@@ -89,6 +89,15 @@ instead. Maintenance removes voice audio after 14 days.
 When the active session's context is nearly full, the gateway offers to start
 a new session before continuing.
 
+## One reply per request
+
+The bot answers each message with a single reply. The "Queued" reply is
+edited into live progress while the run works and then replaced by the answer,
+headed `🔖 <run id>` so the request can be referenced. Edits do not notify, so
+the 👀 reaction and the reply changing are the signals. Answers longer than one
+Telegram message overflow into follow-up messages; if the reply can't be
+edited (for example it was deleted), the answer arrives as a new message.
+
 ## Tombstones
 
 `/tombstone` (in the ☰ menu of the private chat and the group) queues a run

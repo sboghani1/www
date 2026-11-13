@@ -47,6 +47,14 @@ operator detail is in `apps/receptionist2/README.md`; this is the mental model.
   session; the worker prepends them to every run's prompt. This is how a chat
   becomes a specialist (for example one that follows a parsing skill).
 
+## Replies
+
+Each request gets one reply: the "Queued" ack is the run's status message
+(`runs.status_message_id`), edited into progress and finally replaced by the
+answer headed `🔖 <run id>`. Only overflow of answers over ~3,900 characters
+becomes extra messages. Progress edits re-check that the run is still running
+so they never overwrite a delivered answer.
+
 ## Inputs
 
 - **Images** (photos, image documents, albums): saved under

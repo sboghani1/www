@@ -1948,7 +1948,9 @@ class Database:
     def set_status_message(self, run_id: str, message_id: int) -> None:
         with self.connect() as connection:
             connection.execute(
-                "UPDATE runs SET status_message_id=? WHERE id=?",
+                # The first reply about a run becomes its only status message.
+                "UPDATE runs SET status_message_id=? "
+                "WHERE id=? AND status_message_id IS NULL",
                 (message_id, run_id),
             )
             connection.commit()

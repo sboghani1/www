@@ -138,12 +138,6 @@ RECOVER_MENU_TEXT = "♻️ Recover"
 TOPICS_MENU_TEXT = "🧭 Topics & Context"
 STOP_MENU_TEXT = "🛑 Stop"
 STATUS_MENU_TEXT = "📋 Status"
-RUN_ICONS = {
-    "succeeded": "✅",
-    "failed": "❌",
-    "cancelled": "🛑",
-    "interrupted": "⚠️",
-}
 HELP_TEXT = (
     "/new [name] — start a new conversation\n"
     "/sessions — list conversations\n"
@@ -874,7 +868,8 @@ class Gateway:
         except (KeyError, RuntimeError, ValueError) as error:
             await update.message.reply_text(str(error))
             return
-        await update.message.reply_text(
+        await self._ack(
+            update.message,
             f"{'Queued' if created else 'Already queued'} {len(items)} "
             f"clip{'s' if len(items) != 1 else ''} for a review-only "
             f"{collection['season']} Week {collection['week']} analysis · "
@@ -1036,8 +1031,8 @@ class Gateway:
             await query.answer(str(error), show_alert=True)
             return
         await query.answer("Queued")
-        await query.message.reply_text(
-            f"🔁 Retrying {run_id[:8]} as run {run['id'][:8]}."
+        await self._ack(
+            query.message, f"🔁 Retrying {run_id[:8]} as run {run['id'][:8]}.", run
         )
 
     async def deployments(
@@ -1104,9 +1099,11 @@ class Gateway:
             )
             return
         queue = self.database.queue_summary()
-        await message.reply_text(
+        await self._ack(
+            message,
             f"🔧 Deployment diagnosis queued as run {run['id'][:8]} "
-            f"(queue position {queue.get('queued', 0)})."
+            f"(queue position {queue.get('queued', 0)}).",
+            run,
         )
 
     async def diagnose_deployment_button(
@@ -1160,9 +1157,11 @@ class Gateway:
             exact_prompt=investigation_prompt(problem),
         )
         queue = self.database.queue_summary()
-        await update.message.reply_text(
+        await self._ack(
+            update.message,
             f"🔎 {'Investigation queued' if created else 'Already accepted'}"
-            f" · run {run['id'][:8]} · position {queue.get('queued', 0)}"
+            f" · run {run['id'][:8]} · position {queue.get('queued', 0)}",
+            run if created else None,
         )
 
     async def status(
@@ -1464,9 +1463,11 @@ class Gateway:
         except (LookupError, RuntimeError) as error:
             await update.message.reply_text(str(error))
             return
-        await update.message.reply_text(
+        await self._ack(
+            update.message,
             f"{'Queued' if created else 'Already queued'} {schedule['name']} "
-            f"as run {run['id'][:8]}."
+            f"as run {run['id'][:8]}.",
+            run if created else None,
         )
 
     async def exact_text(
@@ -1967,9 +1968,11 @@ class Gateway:
         self.database.update_session(
             session["id"], tombstone_path=str(path), tombstone_run_id=run["id"]
         )
-        await update.message.reply_text(
+        await self._ack(
+            update.message,
             f"🪦 Writing the tombstone for {session['display_name']} · run "
-            f"{run['id'][:8]}. When it's saved you can continue in a new chat."
+            f"{run['id'][:8]}. When it's saved you can continue in a new chat.",
+            run,
         )
 
     async def knowledge_transfer(
@@ -1988,9 +1991,11 @@ class Gateway:
             source="message",
             prompt=knowledge_transfer_prompt(focus),
         )
-        await update.message.reply_text(
+        await self._ack(
+            update.message,
             f"📚 {session['display_name']} will propose knowledge-base "
-            f"changes for your feedback before writing · run {run['id'][:8]}."
+            f"changes for your feedback before writing · run {run['id'][:8]}.",
+            run,
         )
 
     async def tomb_button(
@@ -2294,8 +2299,15 @@ class Gateway:
             f"{run['model']} · effort {run['effort']} · "
             f"position {queue.get('queued', 0)}"
         )
-        await reply_to.reply_text(ack)
+        await self._ack(reply_to, ack, run if created else None)
         return run
+
+    async def _ack(self, reply_to, text: str, run: dict | None) -> None:
+        """Reply about a run; that reply is later edited into its progress
+        and finally its answer, so each request gets exactly one reply."""
+        sent = await reply_to.reply_text(text)
+        if run is not None and getattr(sent, "message_id", None):
+            self.database.set_status_message(run["id"], sent.message_id)
 
     async def session_rollover_button(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -2383,6 +2395,8 @@ class Gateway:
                 if time.monotonic() - last < interval:
                     continue
                 self._progress_edits[run["id"]] = time.monotonic()
+                if self.database.get_run(run["id"])["status"] != "running":
+                    continue  # its answer may already be in that message
                 await context.bot.edit_message_text(
                     progress_text(run, verbose=verbose, now=now),
                     chat_id=chat_id,
@@ -2402,7 +2416,11 @@ class Gateway:
             thread = item.get("telegram_thread_id")
             try:
                 if item["kind"] == "run_result" and item["run_id"]:
-                    await self._finish_status_message(context, item["run_id"])
+                    rest = await self._answer_in_status_message(context, item)
+                    if rest is None:
+                        self.database.finish_outbox(item["id"])
+                        continue
+                    item = rest
                 try:
                     await self._send_chunks(
                         context, item["telegram_chat_id"], item, thread
@@ -2447,22 +2465,34 @@ class Gateway:
                 reply_markup=markup if index == len(chunks) - 1 else None,
             )
 
-    async def _finish_status_message(
-        self, context: ContextTypes.DEFAULT_TYPE, run_id: str
-    ) -> None:
-        run = self.database.get_run(run_id)
+    async def _answer_in_status_message(
+        self, context: ContextTypes.DEFAULT_TYPE, item: dict
+    ) -> dict | None:
+        """Put a run's answer into its one status message.
+
+        Returns what is left to send as new messages (the overflow of a long
+        answer, or all of it when there is no status message to edit), or None
+        when the answer fit.
+        """
+        run = self.database.get_run(item["run_id"])
+        self._progress_edits.pop(run["id"], None)
+        body = f"🔖 {run['id'][:8]}\n\n{item['body']}"
         if not run["status_message_id"]:
-            return
+            return {**item, "body": body}
+        first, rest = body[:3900], body[3900:]
+        markup = markup_from_json(item.get("reply_markup_json"))
         try:
             await context.bot.edit_message_text(
-                f"{RUN_ICONS.get(run['status'], '•')} Run {run_id[:8]} "
-                f"{run['status']}.",
+                first,
                 chat_id=int(run["telegram_chat_id"]),
                 message_id=int(run["status_message_id"]),
+                reply_markup=None if rest else markup,
             )
-        except TelegramError:
-            pass
-        self._progress_edits.pop(run_id, None)
+        except BadRequest as error:
+            if "not modified" not in str(error).lower():
+                log.warning("Could not put the answer in place: %s", error)
+                return {**item, "body": body}
+        return {**item, "body": rest} if rest else None
 
     async def enqueue_due_schedules(
         self, context: ContextTypes.DEFAULT_TYPE
