@@ -25,6 +25,7 @@ import httpx
 from .models import (
     FinalGame,
     MarketEvent,
+    MarketQuote,
     grade_pick,
     implied_probability,
     parse_timestamp,
@@ -91,6 +92,43 @@ def parse_odds(payload: Any) -> list[BookGame]:
         except (KeyError, TypeError, ValueError):
             continue
     return games
+
+
+def parse_betonline(payload: Any) -> list[MarketEvent]:
+    """BetOnline spreads and moneylines from an Odds API ``/odds`` reply, as
+    MarketEvents for the bait board's fallback."""
+    events = []
+    for event in payload if isinstance(payload, list) else []:
+        try:
+            book = next(
+                b for b in event.get("bookmakers") or [] if b.get("key") == "betonlineag"
+            )
+            markets: dict[str, MarketQuote] = {}
+            for market in book.get("markets") or []:
+                kind = {"spreads": "spread", "h2h": "winner"}.get(market.get("key"))
+                if kind is None:
+                    continue
+                for outcome in market.get("outcomes") or []:
+                    point = outcome.get("point") if kind == "spread" else None
+                    markets[f"{kind}:{outcome['name']}"] = MarketQuote(
+                        float(point) if point is not None else None,
+                        int(outcome["price"]),
+                        1,
+                    )
+            events.append(
+                MarketEvent(
+                    id=str(event["id"]),
+                    sport="nba",
+                    commence_time=str(event["commence_time"]),
+                    away_team=event["away_team"],
+                    home_team=event["home_team"],
+                    markets=markets,
+                    book="BetOnline",
+                )
+            )
+        except (KeyError, StopIteration, TypeError, ValueError):
+            continue
+    return events
 
 
 def divergence(game: BookGame) -> dict[str, Any] | None:
@@ -171,6 +209,29 @@ class OddsClient:
             response.headers.get("x-requests-remaining"),
         )
         return parse_odds(response.json())
+
+    async def fetch_betonline(self, start: datetime, end: datetime) -> list[MarketEvent]:
+        """BetOnline spreads and moneylines (2 credits when any game is
+        listed) for the bait board's games Bovada hasn't posted."""
+        response = await self.client.get(
+            ODDS_URL,
+            params={
+                "apiKey": self.api_key,
+                "bookmakers": "betonlineag",
+                "markets": "spreads,h2h",
+                "oddsFormat": "american",
+                "commenceTimeFrom": _odds_time(start),
+                "commenceTimeTo": _odds_time(end),
+            },
+        )
+        if not 200 <= response.status_code < 300:
+            raise RuntimeError(f"Odds API returned HTTP {response.status_code}")
+        log.info(
+            "Odds API BetOnline fallback: %s credit(s), %s left",
+            response.headers.get("x-requests-last"),
+            response.headers.get("x-requests-remaining"),
+        )
+        return parse_betonline(response.json())
 
 
 def _odds_time(value: datetime) -> str:

@@ -143,3 +143,79 @@ def test_without_a_key_nothing_is_called(tmp_path: Path) -> None:
     assert bot.odds is None
     asyncio.run(bot.check_books())
     assert bot.books.all() == []
+
+
+def test_betonline_fills_games_bovada_has_not_posted_until_bovada_does(tmp_path: Path) -> None:
+    from decision_helper.bait import format_bait_stats
+    from decision_helper.bot import EASTERN
+    from decision_helper.models import MarketEvent, MarketQuote
+    from test_bait import buttons, nba_slate
+
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    unposted = MarketEvent(**{**nba_slate(now)[0].__dict__, "markets": {}})
+    bot.lines.events = [unposted, nba_slate(now)[1]]
+    bot.espn.started = list(bot.lines.events)
+    betonline_payload = [{
+        "id": "odds-1", "commence_time": timestamp(now + timedelta(hours=1, minutes=10)),
+        "away_team": "Boston Celtics", "home_team": "Los Angeles Lakers",
+        "bookmakers": [{"key": "betonlineag", "markets": [
+            {"key": "spreads", "outcomes": [{"name": "Boston Celtics", "point": -7, "price": -105},
+                                            {"name": "Los Angeles Lakers", "point": 7, "price": -115}]},
+            {"key": "h2h", "outcomes": [{"name": "Boston Celtics", "price": -280},
+                                        {"name": "Los Angeles Lakers", "price": 230}]}]}],
+    }]
+    odds = FakeOdds([])
+    odds.betonline_calls = 0
+
+    async def fetch_betonline(start, end):
+        odds.betonline_calls += 1
+        from decision_helper.books import parse_betonline
+        return parse_betonline(betonline_payload)
+
+    odds.fetch_betonline = fetch_betonline
+    bot.odds = odds
+    chat = Chat()
+
+    board = show_board(bot, chat)
+    assert "Boston Celtics @ Los Angeles Lakers: Celtics -7 / Lakers +7 · BetOnline" in board.text
+    assert buttons(board.reply_markup)["Celtics -7"] == "bait:ab:-7:nba-a"
+    tap(bot, bot.bait_take, "bait:ab:-7:nba-a", chat)
+    assert chat.sent[-1].text.startswith("🎣 Taking the bait: Celtics -7 (-105) @ BetOnline")
+    bait = bot.baits.latest("nba-a")
+    assert (bait["book"], bait["line"], bait["price"]) == ("BetOnline", -7, -105)
+    assert odds.betonline_calls == 1  # read at most hourly
+
+    # Bovada posts: its number replaces BetOnline's, and the move says so.
+    bot.lines.events = nba_slate(now, celtics_spread=-7.5)
+    bot.espn.started = list(bot.lines.events)
+    tap(bot, bot.bait_latest, "baitline:nba-a", chat)
+    latest = chat.sent[-1]
+    assert "📈 Line moved: you took Celtics -7 (-105) @ BetOnline at " in latest.text
+    assert "now Celtics -7.5 (-110) @ Bovada." in latest.text
+    assert buttons(latest.reply_markup)["🎣 Celtics -7.5"] == "baitre:a:-7.5:nba-a"
+    tap(bot, bot.bait_take, "baitre:a:-7.5:nba-a", chat)
+    assert bot.baits.latest("nba-a")["book"] == "Bovada"
+    board = show_board(bot, chat)
+    assert "· BetOnline" not in board.text.split("Celtics @")[1].split("\n")[0]
+
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE baits SET status='final', result='win' WHERE book='BetOnline'")
+        connection.execute("UPDATE baits SET status='final', result='loss' WHERE book='Bovada'")
+        connection.commit()
+    report = format_bait_stats(bot.baits.all(), EASTERN)
+    assert "Book you took it at" in report
+    assert "• BetOnline: 1-0 (100%)" in report and "• Bovada: 0-1 (0%)" in report
+
+
+def test_without_a_key_unposted_games_stay_without_buttons(tmp_path: Path) -> None:
+    from decision_helper.models import MarketEvent
+    from test_bait import buttons, nba_slate
+
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    bot.lines.events = [MarketEvent(**{**nba_slate(now)[0].__dict__, "markets": {}})]
+    bot.espn.started = list(bot.lines.events)
+    board = show_board(bot, Chat())
+    assert "Boston Celtics @ Los Angeles Lakers: no line yet" in board.text
+    assert buttons(board.reply_markup) == {}

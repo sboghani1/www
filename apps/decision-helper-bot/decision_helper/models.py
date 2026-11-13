@@ -60,6 +60,9 @@ class MarketEvent:
     away_team: str
     home_team: str
     markets: dict[str, MarketQuote]
+    # Where the lines came from when it isn't the sheet's (Bovada): the NBA
+    # bait board fills games Bovada hasn't posted from BetOnline.
+    book: str = ""
 
     def prompt_dict(self) -> dict[str, Any]:
         return {

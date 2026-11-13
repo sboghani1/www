@@ -30,6 +30,8 @@ from telegram.ext import (
 )
 
 from .bait import (
+    book_of,
+    has_line,
     BaitStore,
     check_label,
     scheduled_move,
@@ -83,6 +85,7 @@ EASTERN = ZoneInfo("America/New_York")
 CANDIDATE_WINDOW = timedelta(days=8)
 STARTED_LOOKBACK_DAYS = 3
 HISTORIC_LINES_AFTER = timedelta(minutes=10)
+BETONLINE_REFRESH = timedelta(hours=1)  # bait board fallback reads
 LEARNING_HOUR = 9  # Eastern; a day's learnings run the next morning
 LEARNING_RETRY = timedelta(minutes=30)
 LEARNING_REVIEW_ATTEMPTS = 3  # a late day still waits on reviews until they fail this often
@@ -576,6 +579,7 @@ class DecisionBot:
         self.odds = odds
         self.books = BookStore(store)
         self._books_scheduled_at: datetime | None = None
+        self._betonline: tuple[datetime, list[MarketEvent]] | None = None
 
     def authorized(self, handler: Handler) -> Handler:
         async def wrapped(
@@ -1427,8 +1431,46 @@ class DecisionBot:
         """The NBA games to bait: today's and tomorrow's (ET). Bovada posts
         next-day lines late, so some may have no line yet."""
         return self._today_and_tomorrow(
-            await self.candidate_events(day_offsets=range(0, 2), sports=("nba",))
+            await self._with_betonline(
+                await self.candidate_events(day_offsets=range(0, 2), sports=("nba",))
+            )
         )
+
+    async def _with_betonline(self, events: list[MarketEvent]) -> list[MarketEvent]:
+        """Upcoming NBA games Bovada hasn't posted (or has pulled) get
+        BetOnline's line, marked as BetOnline, until Bovada has one. BetOnline
+        is read at most hourly and only while such a game exists."""
+        now = utc_now()
+        missing = {
+            event.id
+            for event in events
+            if event.sport == "nba"
+            and not has_line(event)
+            and parse_timestamp(event.commence_time) > now
+        }
+        if not missing or self.odds is None:
+            return events
+        if self._betonline is None or now - self._betonline[0] >= BETONLINE_REFRESH:
+            try:
+                fetched = await self.odds.fetch_betonline(now, now + timedelta(days=2))
+            except Exception as error:
+                log.warning("BetOnline fallback failed: %s", error)
+                return events
+            self._betonline = (now, fetched)
+        filled = []
+        for event in events:
+            if event.id in missing:
+                line = match_event(
+                    self._betonline[1],
+                    event_id="",
+                    away_team=event.away_team,
+                    home_team=event.home_team,
+                    commence_time=event.commence_time,
+                )
+                if line is not None:
+                    event = replace(with_lines(event, line), book="BetOnline")
+            filled.append(event)
+        return filled
 
     async def _bait_event(self, event_id: str) -> MarketEvent | None:
         return next(
@@ -1482,13 +1524,14 @@ class DecisionBot:
             await query.answer("That game has tipped off; bait closes at tip.", show_alert=True)
             return
         await query.answer()
-        team = event.away_team if side == "a" else event.home_team
-        # Record the number on the button you tapped; its price only if
-        # BetOnline still shows that number.
+        team = event.away_team if side[0] == "a" else event.home_team
+        book = "BetOnline" if side.endswith("b") else "Bovada"
+        # Record the number and book on the button you tapped; its price
+        # only if that book still shows that number.
         number = decode_line(line)
         pick_type = "winner" if number is None else "spread"
         current_type, current_line, price = side_quote(event, team)
-        if (current_type, current_line) != (pick_type, number):
+        if (current_type, current_line, book_of(event)) != (pick_type, number, book):
             price = None
         bait, created = self.baits.record(
             event,
@@ -1497,6 +1540,7 @@ class DecisionBot:
             pick_type=pick_type,
             line=number,
             price=price,
+            book=book,
         )
         try:
             if source == "bait":
@@ -1701,8 +1745,8 @@ class DecisionBot:
             return
         events = {
             event.id: event
-            for event in await self.candidate_events(
-                day_offsets=range(-1, 2), sports=("nba",)
+            for event in await self._with_betonline(
+                await self.candidate_events(day_offsets=range(-1, 2), sports=("nba",))
             )
         }
         now = utc_now()

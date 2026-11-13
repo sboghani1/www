@@ -112,10 +112,20 @@ def side_label(team: str, pick_type: str, line: float | None) -> str:
     return f"{short} pk"
 
 
+DEFAULT_BOOK = "Bovada"  # the forwarder's sheet
+
+
+def book_of(event: MarketEvent) -> str:
+    return event.book or DEFAULT_BOOK
+
+
 def describe_bait(bait: dict[str, Any]) -> str:
+    """'Lakers +5.5 (-110)'; a BetOnline fallback number says so."""
     text = side_label(bait["selection"], bait["pick_type"], bait["line"])
     if bait["price"] is not None:
         text += f" ({bait['price']:+d})"
+    if bait.get("book", DEFAULT_BOOK) != DEFAULT_BOOK:
+        text += f" @ {bait['book']}"
     return text
 
 
@@ -218,6 +228,15 @@ class BaitStore:
                 connection.execute(
                     "ALTER TABLE bait_watch ADD COLUMN picker_signature TEXT"
                 )
+            # The book whose number you took: Bovada (the sheet), or
+            # BetOnline before Bovada posted the game.
+            bait_columns = {
+                row["name"] for row in connection.execute("PRAGMA table_info(baits)")
+            }
+            if "book" not in bait_columns:
+                connection.execute(
+                    "ALTER TABLE baits ADD COLUMN book TEXT NOT NULL DEFAULT 'Bovada'"
+                )
             # Games baited before scheduled checks existed.
             now = utc_now()
             for row in connection.execute(
@@ -245,6 +264,7 @@ class BaitStore:
         pick_type: str,
         line: float | None,
         price: int | None,
+        book: str = DEFAULT_BOOK,
     ) -> tuple[dict[str, Any], bool]:
         """Log a take or pass; returns (row, created). Tapping the same side
         at the same number again returns the existing row."""
@@ -262,6 +282,7 @@ class BaitStore:
                 and previous["action"] == action
                 and previous["selection"] == selection
                 and previous["line"] == line
+                and previous["book"] == book
             ):
                 connection.commit()
                 return dict(previous), False
@@ -271,8 +292,9 @@ class BaitStore:
                 INSERT INTO baits (
                     id, sport, event_id, commence_time, away_team, home_team,
                     action, selection, pick_type, line, price, lines_json,
-                    ordinal, previous_id, created_at, next_result_check_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ordinal, previous_id, created_at, next_result_check_at,
+                    book
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     bait_id,
@@ -291,6 +313,7 @@ class BaitStore:
                     previous["id"] if previous else None,
                     timestamp(now),
                     timestamp(max(now, commence) + RESULT_DELAY),
+                    book,
                 ),
             )
             row = connection.execute(
@@ -612,9 +635,11 @@ def side_buttons(
     event: MarketEvent, action: str = "bait", label_prefix: str = ""
 ) -> list[InlineKeyboardButton]:
     """Away and home buttons carrying the number shown, so a tap records
-    the line you saw. Event ids may be truncated to Telegram's 64 bytes."""
+    the line you saw (a 'b' after the side marks a BetOnline number). Event
+    ids may be truncated to Telegram's 64 bytes."""
     buttons = []
-    for code, team in (("a", event.away_team), ("h", event.home_team)):
+    suffix = "b" if book_of(event) == "BetOnline" else ""
+    for code, team in (("a" + suffix, event.away_team), ("h" + suffix, event.home_team)):
         pick_type, line, _ = side_quote(event, team)
         buttons.append(
             InlineKeyboardButton(
@@ -629,7 +654,8 @@ def format_board(
     events: list[MarketEvent], baited: dict[str, dict[str, Any]], now, eastern
 ) -> str:
     lines = [
-        "🎣 NBA lines (Bovada). Tap the side that looks too easy to pass up:"
+        "🎣 NBA lines (Bovada; BetOnline where Bovada hasn't posted yet). "
+        "Tap the side that looks too easy to pass up:"
     ]
     today = now.astimezone(eastern).date()
     day = None
@@ -648,6 +674,8 @@ def format_board(
             total = event.markets.get("total:Over")
             if total is not None and total.point is not None:
                 sides += f", o/u {total.point:g}"
+            if book_of(event) != DEFAULT_BOOK:
+                sides += f" · {book_of(event)}"
         else:
             sides = "no line yet"
         line = (
@@ -698,6 +726,8 @@ def format_confirmation(bait: dict[str, Any], history: list[dict[str, Any]], eas
         head = f"🙅 Not tempted anymore: {describe_bait(bait)}"
     else:
         head = f"🎣 Taking the bait: {describe_bait(bait)}"
+        if bait.get("book", DEFAULT_BOOK) == DEFAULT_BOOK:
+            head += f" @ {DEFAULT_BOOK}"
         takes = [
             row
             for row in history
@@ -736,6 +766,8 @@ def format_latest(
     now_label = side_label(last["selection"], pick_type, line)
     if price is not None:
         now_label += f" ({price:+d})"
+    if book_of(event) != last.get("book", DEFAULT_BOOK) or book_of(event) != DEFAULT_BOOK:
+        now_label += f" @ {book_of(event)}"
     moved = (pick_type, line) != (last["pick_type"], last["line"]) or (
         pick_type == "winner"
         and None not in (price, last["price"])
@@ -766,7 +798,9 @@ def latest_keyboard(event: MarketEvent, last: dict[str, Any]) -> InlineKeyboardM
     rows = [side_buttons(event, "baitre", "🎣 ")]
     if last["action"] == "take":
         pick_type, line, _ = side_quote(event, last["selection"])
-        code = "a" if last["selection"] == event.away_team else "h"
+        code = ("a" if last["selection"] == event.away_team else "h") + (
+            "b" if book_of(event) == "BetOnline" else ""
+        )
         rows.append(
             [
                 InlineKeyboardButton(
@@ -861,6 +895,7 @@ def bait_stats(baits: list[dict[str, Any]]) -> dict[str, dict[str, Counter]]:
         groups["Favorite / underdog"][_spread_bucket(bait)][result] += 1
         side = "home" if bait["selection"] == bait["home_team"] else "away"
         groups["Home / away"][side][result] += 1
+        groups["Book you took it at"][bait.get("book", DEFAULT_BOOK)][result] += 1
         if bait["closing_captured_at"] and bait["closing_line"] is not None:
             close = _move(
                 {**bait, "line": bait["closing_line"]}, bait

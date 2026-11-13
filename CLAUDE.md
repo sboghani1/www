@@ -85,9 +85,10 @@ calls on the receptionist-agent subscription login, and grades them with ESPN.
 Input notes get a confirmation only. Reviews are stored silently. `/games`
 gives Mel's opinion on a selected game.
 Lines are read from telegram-channel-forwarder's `nfl_games` / `nba_games`
-Sheet tabs (Bovada since 2026-10-27). Mel's only Odds API use is one
-spreads-only BetOnline/Bovada/Hard Rock snapshot 60 minutes before each NBA
-tip (see its README); nothing else spends credits.
+Sheet tabs (Bovada since 2026-10-27). Mel's only Odds API uses are a
+BetOnline/Bovada/Hard Rock snapshot 60 minutes before each NBA tip and an
+at-most-hourly BetOnline fallback for bait-board games Bovada hasn't posted
+(see its README); nothing else spends credits.
 
 Run its tests before committing:
 

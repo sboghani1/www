@@ -107,7 +107,8 @@ the next sync.
    lean**. The second button makes it a lean, adds a clarification to its
    note so a reparse agrees, and re-queues its review.
 3. **Market tracking (no API credits).** Apart from the 1h-before-tip book
-   check (10), Mel never calls The Odds API. It reads the lines (Bovada
+   check (10) and the bait board's BetOnline fallback (8), Mel never calls
+   The Odds API. It reads the lines (Bovada
    since 2026-10-27; older text here calls them BetOnline) from the
    `nfl_games` / `nba_games` tabs of telegram-channel-forwarder's intake
    workbook (written by its
@@ -179,8 +180,16 @@ receptionist's Opus agent, not with API billing:
    easy to pass up, to learn which kinds of "easy" picks lose. `/bait` lists
    today's and tomorrow's NBA games (ET, in day sections) with the spread
    for both sides. A game Bovada hasn't priced yet (next-day lines post
-   late) or has pulled for news shows "no line yet" with no buttons, and
-   its Latest line check says it is off the board. NBA lines in the intake workbook come from
+   late) or has pulled for news gets BetOnline's line instead, marked
+   `· BetOnline`, until Bovada has one (Odds API, `spreads,h2h`: 2 credits
+   per read, read at most hourly and only while such a game exists). Each
+   bait row keeps the `book` its number came from; confirmations say
+   `@ Bovada` or `@ BetOnline`, a BetOnline number keeps `@ BetOnline`
+   everywhere it's shown, the Latest line check names the book when it
+   differs from the one you took, and `/baitstats` adds "Book you took it
+   at". Without the key, or when neither book has a line, the game shows
+   "no line yet" with no buttons and its Latest line check says it is off
+   the board. NBA lines in the intake workbook come from
    Bovada since 2026-10-27 (the forwarder's `NBA_LINES_SOURCE`), polled every
    5 minutes, so bait screens say Bovada. Tap the tempting side to log it at the
    number on the button. A game with no spread is a pick'em, graded on the
@@ -225,8 +234,8 @@ receptionist's Opus agent, not with API billing:
    take) graded by where each stood, and whether both were with you, both
    against you, or split.
 
-10. **BetOnline vs Bovada and Hard Rock (1h before tip).** Mel's only Odds
-    API use, testing whether BetOnline points at the winning side when it
+10. **BetOnline vs Bovada and Hard Rock (1h before tip).** With the bait
+    board's BetOnline fallback (8), Mel's only Odds API use, testing whether BetOnline points at the winning side when it
     disagrees with recreational books. 60 minutes before every NBA tip, one
     call (`bookmakers=betonlineag,bovada,hardrockbet`, spreads only: 1
     credit, and a call that returns no games is free) snapshots all three

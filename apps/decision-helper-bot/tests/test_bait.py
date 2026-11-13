@@ -132,7 +132,7 @@ def test_board_shows_nba_sides_and_a_tap_logs_the_bait(tmp_path: Path) -> None:
     assert board_buttons["🔄 Latest line: Celtics @ Lakers"] == "baitline:nba-a"
     assert "Lakers +5.5" not in board_buttons
     confirmation = chat.sent[-1]
-    assert confirmation.text.startswith("🎣 Taking the bait: Lakers +5.5 (-110)")
+    assert confirmation.text.startswith("🎣 Taking the bait: Lakers +5.5 (-110) @ Bovada")
     assert "reply to this message with a reason" in confirmation.text
 
     # A moneyline-only game is a pick'em.
@@ -229,7 +229,7 @@ def test_latest_line_offers_another_bite_when_the_number_moves(tmp_path: Path) -
     query = tap(bot, bot.bait_take, "baitre:a:-7.5:nba-a", chat)
     query.edit_message_reply_markup.assert_awaited_with(reply_markup=None)
     assert chat.sent[-1].text.startswith(
-        "🎣 Taking the bait: Celtics -7.5 (-110) (take #2, first was Celtics -5.5 (-110))"
+        "🎣 Taking the bait: Celtics -7.5 (-110) @ Bovada (take #2, first was Celtics -5.5 (-110))"
     )
 
     bot.lines.events = nba_slate(now, celtics_spread=-9)
