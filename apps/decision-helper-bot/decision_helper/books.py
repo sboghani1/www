@@ -210,9 +210,10 @@ class OddsClient:
         )
         return parse_odds(response.json())
 
-    async def fetch_betonline(self, start: datetime, end: datetime) -> list[MarketEvent]:
-        """BetOnline spreads and moneylines (2 credits when any game is
-        listed) for the bait board's games Bovada hasn't posted."""
+    async def fetch_betonline(self, start: datetime, end: datetime) -> list[Any]:
+        """The raw Odds API reply with BetOnline spreads and moneylines (2
+        credits when any game is listed; parse with ``parse_betonline``) for
+        the bait board's games Bovada hasn't posted."""
         response = await self.client.get(
             ODDS_URL,
             params={
@@ -231,7 +232,8 @@ class OddsClient:
             response.headers.get("x-requests-last"),
             response.headers.get("x-requests-remaining"),
         )
-        return parse_betonline(response.json())
+        payload = response.json()
+        return payload if isinstance(payload, list) else []
 
 
 def _odds_time(value: datetime) -> str:

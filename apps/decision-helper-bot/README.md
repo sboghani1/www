@@ -181,8 +181,11 @@ receptionist's Opus agent, not with API billing:
    today's and tomorrow's NBA games (ET, in day sections) with the spread
    for both sides. A game Bovada hasn't priced yet (next-day lines post
    late) or has pulled for news gets BetOnline's line instead, marked
-   `· BetOnline`, until Bovada has one (Odds API, `spreads,h2h`: 2 credits
-   per read, read at most hourly and only while such a game exists). Each
+   `· BetOnline`, until Bovada has one. BetOnline is read twice a day, at
+   midnight and 3 PM Pacific (Odds API, `spreads,h2h`: 2 credits per read),
+   saved to `betonline-fallback.json` in the state dir so a restart reuses
+   it, and read right away if the latest slot was missed. Taps and boards
+   never read it. Each
    bait row keeps the `book` its number came from; confirmations say
    `@ Bovada` or `@ BetOnline`, a BetOnline number keeps `@ BetOnline`
    everywhere it's shown, the Latest line check names the book when it

@@ -170,12 +170,22 @@ def test_betonline_fills_games_bovada_has_not_posted_until_bovada_does(tmp_path:
 
     async def fetch_betonline(start, end):
         odds.betonline_calls += 1
-        from decision_helper.books import parse_betonline
-        return parse_betonline(betonline_payload)
+        return betonline_payload
 
     odds.fetch_betonline = fetch_betonline
     bot.odds = odds
     chat = Chat()
+
+    # Nothing is read until a scheduled slot: the board has no BetOnline yet.
+    assert "no line yet" in show_board(bot, chat).text
+    assert odds.betonline_calls == 0
+    asyncio.run(bot.refresh_betonline())  # the latest slot was missed: read now
+    asyncio.run(bot.refresh_betonline())  # once per slot
+    assert odds.betonline_calls == 1
+    # A restart reuses the saved read instead of spending credits again.
+    bot._betonline = None
+    asyncio.run(bot.refresh_betonline())
+    assert odds.betonline_calls == 1
 
     board = show_board(bot, chat)
     assert "Boston Celtics @ Los Angeles Lakers: Celtics -7 / Lakers +7 · BetOnline" in board.text
@@ -184,7 +194,7 @@ def test_betonline_fills_games_bovada_has_not_posted_until_bovada_does(tmp_path:
     assert chat.sent[-1].text.startswith("🎣 Taking the bait: Celtics -7 (-105) @ BetOnline")
     bait = bot.baits.latest("nba-a")
     assert (bait["book"], bait["line"], bait["price"]) == ("BetOnline", -7, -105)
-    assert odds.betonline_calls == 1  # read at most hourly
+    assert odds.betonline_calls == 1  # taps and boards never read BetOnline
 
     # Bovada posts: its number replaces BetOnline's, and the move says so.
     bot.lines.events = nba_slate(now, celtics_spread=-7.5)
@@ -219,3 +229,16 @@ def test_without_a_key_unposted_games_stay_without_buttons(tmp_path: Path) -> No
     board = show_board(bot, Chat())
     assert "Boston Celtics @ Los Angeles Lakers: no line yet" in board.text
     assert buttons(board.reply_markup) == {}
+
+
+def test_betonline_is_read_at_midnight_and_3pm_pacific() -> None:
+    from zoneinfo import ZoneInfo
+
+    from decision_helper.bot import betonline_slot
+
+    pacific = ZoneInfo("America/Los_Angeles")
+    at = lambda *args: datetime(2026, 11, *args, tzinfo=pacific).astimezone(UTC)
+    assert betonline_slot(at(12, 16, 50)) == at(12, 15, 0)
+    assert betonline_slot(at(12, 14, 59)) == at(12, 0, 0)
+    assert betonline_slot(at(13, 0, 5)) == at(13, 0, 0)
+    assert betonline_slot(at(13, 0, 0)) == at(13, 0, 0)

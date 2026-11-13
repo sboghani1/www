@@ -6,7 +6,7 @@ import logging
 import re
 from collections.abc import Awaitable, Callable
 from dataclasses import replace
-from datetime import date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -47,6 +47,7 @@ from .bait import (
     side_quote,
 )
 from .books import (
+    parse_betonline,
     SCHEDULE_EVERY,
     BookStore,
     OddsClient,
@@ -67,6 +68,7 @@ from .models import (
     pick_edge,
     pick_expected_gap,
     team_matches,
+    timestamp,
     utc_now,
 )
 from .pickers import PickerFeed, format_views, signature
@@ -85,7 +87,9 @@ EASTERN = ZoneInfo("America/New_York")
 CANDIDATE_WINDOW = timedelta(days=8)
 STARTED_LOOKBACK_DAYS = 3
 HISTORIC_LINES_AFTER = timedelta(minutes=10)
-BETONLINE_REFRESH = timedelta(hours=1)  # bait board fallback reads
+PACIFIC = ZoneInfo("America/Los_Angeles")
+# The bait board's BetOnline fallback is read twice a day (Pacific).
+BETONLINE_TIMES = (time(0, 0), time(15, 0))
 LEARNING_HOUR = 9  # Eastern; a day's learnings run the next morning
 LEARNING_RETRY = timedelta(minutes=30)
 LEARNING_REVIEW_ATTEMPTS = 3  # a late day still waits on reviews until they fail this often
@@ -549,6 +553,17 @@ def with_lines(game: MarketEvent, line: MarketEvent | None) -> MarketEvent:
         market, _, selection = key.partition(":")
         markets[f"{market}:{names.get(selection, selection)}"] = quote
     return replace(game, markets=markets)
+
+
+def betonline_slot(now: datetime) -> datetime:
+    """The latest scheduled BetOnline read time at or before ``now``."""
+    local = now.astimezone(PACIFIC)
+    slots = [
+        datetime.combine(local.date() - timedelta(days=days), at, PACIFIC)
+        for days in (0, 1)
+        for at in BETONLINE_TIMES
+    ]
+    return max(slot for slot in slots if slot <= local).astimezone(UTC)
 
 
 class DecisionBot:
@@ -1436,10 +1451,39 @@ class DecisionBot:
             )
         )
 
+    @property
+    def _betonline_path(self) -> Path:
+        return self.config.state_dir / "betonline-fallback.json"
+
+    def _load_betonline(self) -> tuple[datetime, list[MarketEvent]] | None:
+        """The last scheduled read survives restarts."""
+        try:
+            saved = json.loads(self._betonline_path.read_text(encoding="utf-8"))
+            return parse_timestamp(saved["fetched_at"]), parse_betonline(saved["payload"])
+        except (OSError, KeyError, TypeError, ValueError):
+            return None
+
+    async def refresh_betonline(self) -> None:
+        """Read BetOnline at midnight and 3 PM Pacific (once per slot, or
+        right away if the latest slot was missed)."""
+        if self.odds is None:
+            return
+        now = utc_now()
+        if self._betonline is None:
+            self._betonline = self._load_betonline()
+        if self._betonline is not None and self._betonline[0] >= betonline_slot(now):
+            return
+        payload = await self.odds.fetch_betonline(now, now + timedelta(days=2))
+        self._betonline_path.write_text(
+            json.dumps({"fetched_at": timestamp(now), "payload": payload}),
+            encoding="utf-8",
+        )
+        self._betonline = (now, parse_betonline(payload))
+
     async def _with_betonline(self, events: list[MarketEvent]) -> list[MarketEvent]:
         """Upcoming NBA games Bovada hasn't posted (or has pulled) get
-        BetOnline's line, marked as BetOnline, until Bovada has one. BetOnline
-        is read at most hourly and only while such a game exists."""
+        BetOnline's line from the last scheduled read, marked as BetOnline,
+        until Bovada has one."""
         now = utc_now()
         missing = {
             event.id
@@ -1448,15 +1492,10 @@ class DecisionBot:
             and not has_line(event)
             and parse_timestamp(event.commence_time) > now
         }
-        if not missing or self.odds is None:
+        if self._betonline is None:
+            self._betonline = self._load_betonline()
+        if not missing or self._betonline is None:
             return events
-        if self._betonline is None or now - self._betonline[0] >= BETONLINE_REFRESH:
-            try:
-                fetched = await self.odds.fetch_betonline(now, now + timedelta(days=2))
-            except Exception as error:
-                log.warning("BetOnline fallback failed: %s", error)
-                return events
-            self._betonline = (now, fetched)
         filled = []
         for event in events:
             if event.id in missing:
@@ -1703,6 +1742,10 @@ class DecisionBot:
                 await self.check_books()
             except Exception:
                 log.exception("Book checks failed")
+            try:
+                await self.refresh_betonline()
+            except Exception:
+                log.exception("BetOnline fallback read failed")
 
     async def check_books(self) -> None:
         """BetOnline vs Bovada and Hard Rock an hour before every NBA tip
