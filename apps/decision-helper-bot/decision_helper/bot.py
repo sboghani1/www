@@ -1004,10 +1004,16 @@ class DecisionBot:
                 )
                 if line is not None:
                     matched.add(line.id)
-                events.append(with_lines(game, line))
+                # A sheet row means Bovada has posted the game; with no
+                # lines in it now, Bovada pulled it (off the board).
+                events.append(
+                    replace(with_lines(game, line), book="Bovada")
+                    if line is not None
+                    else game
+                )
             # Sheet games ESPN didn't return (an ESPN outage) stay pickable.
             events.extend(
-                line
+                replace(line, book="Bovada")
                 for line in sheet
                 if line.id not in matched
                 and now < parse_timestamp(line.commence_time) <= now + CANDIDATE_WINDOW
@@ -1481,15 +1487,18 @@ class DecisionBot:
         self._betonline = (now, parse_betonline(payload))
 
     async def _with_betonline(self, events: list[MarketEvent]) -> list[MarketEvent]:
-        """Upcoming NBA games Bovada hasn't posted (or has pulled) get
-        BetOnline's line from the last scheduled read, marked as BetOnline,
-        until Bovada has one."""
+        """Upcoming NBA games Bovada hasn't posted get BetOnline's line from
+        the last scheduled read, marked as BetOnline, until Bovada has one.
+        Games Bovada pulled stay off the board."""
         now = utc_now()
         missing = {
             event.id
             for event in events
             if event.sport == "nba"
             and not has_line(event)
+            # Only games Bovada hasn't posted; a pulled game stays off the
+            # board rather than showing BetOnline's older number.
+            and not event.book
             and parse_timestamp(event.commence_time) > now
         }
         if self._betonline is None:

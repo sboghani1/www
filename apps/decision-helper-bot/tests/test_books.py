@@ -154,8 +154,9 @@ def test_betonline_fills_games_bovada_has_not_posted_until_bovada_does(tmp_path:
     now = datetime.now(UTC)
     bot = bait_bot(tmp_path, now)
     unposted = MarketEvent(**{**nba_slate(now)[0].__dict__, "markets": {}})
-    bot.lines.events = [unposted, nba_slate(now)[1]]
-    bot.espn.started = list(bot.lines.events)
+    # Not posted by Bovada: ESPN lists it, the sheet has no row for it.
+    bot.lines.events = [nba_slate(now)[1]]
+    bot.espn.started = [unposted, nba_slate(now)[1]]
     betonline_payload = [{
         "id": "odds-1", "commence_time": timestamp(now + timedelta(hours=1, minutes=10)),
         "away_team": "Boston Celtics", "home_team": "Los Angeles Lakers",
@@ -224,8 +225,8 @@ def test_without_a_key_unposted_games_stay_without_buttons(tmp_path: Path) -> No
 
     now = datetime.now(UTC)
     bot = bait_bot(tmp_path, now)
-    bot.lines.events = [MarketEvent(**{**nba_slate(now)[0].__dict__, "markets": {}})]
-    bot.espn.started = list(bot.lines.events)
+    bot.lines.events = []
+    bot.espn.started = [MarketEvent(**{**nba_slate(now)[0].__dict__, "markets": {}})]
     board = show_board(bot, Chat())
     assert "Boston Celtics @ Los Angeles Lakers: no line yet" in board.text
     assert buttons(board.reply_markup) == {}
@@ -242,3 +243,38 @@ def test_betonline_is_read_at_midnight_and_3pm_pacific() -> None:
     assert betonline_slot(at(12, 14, 59)) == at(12, 0, 0)
     assert betonline_slot(at(13, 0, 5)) == at(13, 0, 0)
     assert betonline_slot(at(13, 0, 0)) == at(13, 0, 0)
+
+
+def test_a_game_bovada_pulled_stays_off_the_board_instead_of_using_betonline(tmp_path: Path) -> None:
+    from decision_helper.models import MarketEvent
+    from test_bait import buttons, nba_slate
+
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    bot._bot = SimpleNamespace(send_message=AsyncMock())
+    chat = Chat()
+    show_board(bot, chat)
+    tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)
+    # Bovada pulls the game; BetOnline's last scheduled read has a different
+    # number for it.
+    pulled = MarketEvent(**{**nba_slate(now)[0].__dict__, "markets": {}})
+    bot.lines.events = [pulled, nba_slate(now)[1]]
+    bot.espn.started = list(bot.lines.events)
+    from decision_helper.books import parse_betonline
+    bot._betonline = (now, parse_betonline([{
+        "id": "odds-1", "commence_time": timestamp(now + timedelta(hours=1, minutes=10)),
+        "away_team": "Boston Celtics", "home_team": "Los Angeles Lakers",
+        "bookmakers": [{"key": "betonlineag", "markets": [{"key": "spreads", "outcomes": [
+            {"name": "Boston Celtics", "point": -8, "price": -110},
+            {"name": "Los Angeles Lakers", "point": 8, "price": -110}]}]}],
+    }]))
+    board = show_board(bot, chat)
+    assert "Boston Celtics @ Los Angeles Lakers: off the board" in board.text
+    assert buttons(board.reply_markup)["🔄 Latest line: Celtics @ Lakers"] == "baitline:nba-a"
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE bait_watch SET next_check_at=?", (timestamp(now - timedelta(minutes=1)),))
+        connection.commit()
+    asyncio.run(bot.check_baited_lines())
+    bot._bot.send_message.assert_not_awaited()  # no alert on a stale number
+    tap(bot, bot.bait_latest, "baitline:nba-a", chat)
+    assert "⏸ Off the board right now" in chat.sent[-1].text

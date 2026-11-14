@@ -179,8 +179,8 @@ receptionist's Opus agent, not with API billing:
 8. **Bait tracker (`/bait`).** A separate log of NBA sides that look too
    easy to pass up, to learn which kinds of "easy" picks lose. `/bait` lists
    today's and tomorrow's NBA games (ET, in day sections) with the spread
-   for both sides. A game Bovada hasn't priced yet (next-day lines post
-   late) or has pulled for news gets BetOnline's line instead, marked
+   for both sides. A game Bovada hasn't posted yet (next-day lines post
+   late; no row in the sheet) gets BetOnline's line instead, marked
    `· BetOnline`, until Bovada has one. BetOnline is read twice a day, at
    midnight and 3 PM Pacific (Odds API, `spreads,h2h`: 2 credits per read),
    saved to `betonline-fallback.json` in the state dir so a restart reuses
@@ -190,9 +190,11 @@ receptionist's Opus agent, not with API billing:
    `@ Bovada` or `@ BetOnline`, a BetOnline number keeps `@ BetOnline`
    everywhere it's shown, the Latest line check names the book when it
    differs from the one you took, and `/baitstats` adds "Book you took it
-   at". Without the key, or when neither book has a line, the game shows
-   "no line yet" with no buttons and its Latest line check says it is off
-   the board. NBA lines in the intake workbook come from
+   at". A game Bovada posted and then pulled (a sheet row with no lines,
+   often injury news) shows "off the board" with no buttons and never takes
+   BetOnline's older number; its Latest line check says it is off the board
+   and scheduled checks stay quiet until Bovada re-posts. Without the key, an
+   unposted game shows "no line yet" with no buttons. NBA lines in the intake workbook come from
    Bovada since 2026-10-27 (the forwarder's `NBA_LINES_SOURCE`), polled every
    5 minutes, so bait screens say Bovada. Tap the tempting side to log it at the
    number on the button. A game with no spread is a pick'em, graded on the

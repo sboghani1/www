@@ -488,7 +488,8 @@ def test_board_shows_tomorrow_and_games_without_a_line_have_no_buttons(tmp_path:
     tomorrow_unpriced = MarketEvent(**{**today[0].__dict__, "id": "nba-t2", "commence_time": timestamp(noon + timedelta(days=1, hours=8)),
                                        "away_team": "Orlando Magic", "home_team": "Sacramento Kings", "markets": {}})
     events = today + [tomorrow_priced, tomorrow_unpriced]
-    bot = make_bot(tmp_path, events)
+    # Bovada hasn't posted the unpriced game: ESPN lists it, the sheet doesn't.
+    bot = make_bot(tmp_path, today + [tomorrow_priced])
     bot.baits.initialize()
     bot.espn.started = list(events)
     import decision_helper.bot as bot_module

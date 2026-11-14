@@ -677,7 +677,8 @@ def format_board(
             if book_of(event) != DEFAULT_BOOK:
                 sides += f" · {book_of(event)}"
         else:
-            sides = "no line yet"
+            # Posted then pulled (often injury news) vs not posted yet.
+            sides = "off the board" if event.book == DEFAULT_BOOK else "no line yet"
         line = (
             f"• {start.astimezone(eastern):%-I:%M %p} "
             f"{event.away_team} @ {event.home_team}: {sides}"
