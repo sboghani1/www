@@ -431,6 +431,38 @@ class BaitStore:
             if (row := self.latest(event_id)) is not None
         }
 
+    def delete_latest(self, bait_id: str) -> dict[str, Any] | None:
+        """Remove a mis-tapped bait if it is still the game's latest row;
+        returns it, or None when it's gone or a later row followed it. Checks
+        restart from the number before it."""
+        with self.store.connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT * FROM baits WHERE id=?", (bait_id,)
+            ).fetchone()
+            latest = row is not None and connection.execute(
+                "SELECT MAX(ordinal) FROM baits WHERE event_id=?",
+                (row["event_id"],),
+            ).fetchone()[0] == row["ordinal"]
+            if not latest:
+                connection.commit()
+                return None
+            connection.execute("DELETE FROM bait_messages WHERE bait_id=?", (bait_id,))
+            connection.execute("DELETE FROM baits WHERE id=?", (bait_id,))
+            if connection.execute(
+                "SELECT 1 FROM baits WHERE event_id=?", (row["event_id"],)
+            ).fetchone():
+                connection.execute(
+                    "UPDATE bait_watch SET alert_line=NULL WHERE event_id=?",
+                    (row["event_id"],),
+                )
+            else:
+                connection.execute(
+                    "DELETE FROM bait_watch WHERE event_id=?", (row["event_id"],)
+                )
+            connection.commit()
+        return dict(row)
+
     def link_message(self, telegram_message_id: int, bait_id: str) -> None:
         with self.store.connect() as connection:
             connection.execute(
@@ -715,6 +747,13 @@ def confirmation_keyboard(bait: dict[str, Any]) -> InlineKeyboardMarkup:
                 "🔄 Latest line",
                 callback_data=f"baitline:{bait['event_id']}"[:64],
             ),
+        ]
+    )
+    rows.append(
+        [
+            InlineKeyboardButton(
+                "↩️ Undo & re-pick", callback_data=f"baitundo:{bait['id']}"
+            )
         ]
     )
     return InlineKeyboardMarkup(rows)

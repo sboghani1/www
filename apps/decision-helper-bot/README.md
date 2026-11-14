@@ -200,7 +200,10 @@ receptionist's Opus agent, not with API billing:
    number on the button. A game with no spread is a pick'em, graded on the
    moneyline. The confirmation has optional reason tags (star/big name,
    number too cheap, hot team, opponent is bad, home/road spot, injury news,
-   bounce-back, rest/schedule) and **✍️ Add a reason**. A text or voice reply
+   bounce-back, rest/schedule), **✍️ Add a reason**, and **↩️ Undo &
+   re-pick**: for a mis-tap, it deletes that bait (only the game's latest,
+   before tip; checks restart from the number before it) and offers the
+   game's sides again at the current number. A text or voice reply
    to the confirmation or the reason prompt is saved as the reason (voice is
    transcribed, and the audio is deleted). It never becomes a parsed note.
    A baited game's board button becomes **🔄 Latest line**: Mel shows

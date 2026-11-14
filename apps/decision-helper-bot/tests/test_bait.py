@@ -520,3 +520,39 @@ def test_latest_line_when_the_game_is_off_the_board(tmp_path: Path) -> None:
     tap(bot, bot.bait_latest, "baitline:nba-a", chat)
     assert "⏸ Off the board right now" in chat.sent[-1].text
     assert buttons(chat.sent[-1].reply_markup) == {"🔄 Check again": "baitline:nba-a"}
+
+
+def test_undo_and_repick_removes_only_the_latest_bait_and_offers_the_sides_again(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    chat = Chat()
+    show_board(bot, chat)
+    tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)
+    first = chat.sent[-1]
+    bot.lines.events = nba_slate(now, celtics_spread=-7.5)
+    tap(bot, bot.bait_take, "baitre:a:-7.5:nba-a", chat)  # meant the Lakers
+    mistake = chat.sent[-1]
+    assert buttons(mistake.reply_markup)["↩️ Undo & re-pick"].startswith("baitundo:")
+
+    # An earlier bait can't be undone once a later one follows it.
+    query = tap(bot, bot.bait_undo, buttons(first.reply_markup)["↩️ Undo & re-pick"], chat)
+    assert "Only your latest bait" in query.answer.await_args.args[0]
+
+    query = tap(bot, bot.bait_undo, buttons(mistake.reply_markup)["↩️ Undo & re-pick"], chat)
+    assert query.edit_message_text.await_args.args[0].startswith("↩️ Removed: Celtics -7.5 (-110)")
+    assert [row["line"] for row in bot.baits.game_history("nba-a")] == [-5.5]
+    again = chat.sent[-1]
+    assert "you took Celtics -5.5 (-110)" in again.text and "now Celtics -7.5 (-110)" in again.text
+    assert buttons(again.reply_markup)["🎣 Lakers +7.5"] == "baitre:h:7.5:nba-a"
+    tap(bot, bot.bait_take, "baitre:h:7.5:nba-a", chat)
+    assert [(row["selection"], row["line"], row["ordinal"]) for row in bot.baits.game_history("nba-a")] == [
+        ("Boston Celtics", -5.5, 1), ("Los Angeles Lakers", 7.5, 2)]
+
+    # Undoing a game's only bait offers its sides fresh and drops its checks.
+    tap(bot, bot.bait_take, "bait:a:ml:nba-b", chat)
+    only = chat.sent[-1]
+    tap(bot, bot.bait_undo, buttons(only.reply_markup)["↩️ Undo & re-pick"], chat)
+    assert bot.baits.game_history("nba-b") == [] and bot.baits.watch("nba-b") is None
+    assert buttons(chat.sent[-1].reply_markup) == {"Jazz pk": "baitre:a:ml:nba-b", "Nuggets pk": "baitre:h:ml:nba-b"}
+    query = tap(bot, bot.bait_undo, buttons(only.reply_markup)["↩️ Undo & re-pick"], chat)
+    assert query.answer.await_args.args[0] == "Already removed."

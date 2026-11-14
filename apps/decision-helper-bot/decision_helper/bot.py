@@ -44,6 +44,7 @@ from .bait import (
     format_confirmation,
     format_latest,
     latest_keyboard,
+    side_buttons,
     side_quote,
 )
 from .books import (
@@ -1678,6 +1679,58 @@ class DecisionBot:
         )
         self.baits.link_message(prompt.message_id, bait_id)
 
+    async def bait_undo(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        """Delete a mis-tapped bait (only the game's latest, before tip) and
+        offer the game's sides again at the current number."""
+        del context
+        query = update.callback_query
+        _, bait_id = str(query.data).split(":", 1)
+        bait = self.baits.get(bait_id)
+        if bait is None:
+            await query.answer("Already removed.", show_alert=True)
+            return
+        if parse_timestamp(bait["commence_time"]) <= utc_now():
+            await query.answer("That game has tipped off; bait can't be undone.", show_alert=True)
+            return
+        removed = self.baits.delete_latest(bait_id)
+        if removed is None:
+            await query.answer(
+                "Only your latest bait on this game can be undone.", show_alert=True
+            )
+            return
+        await query.answer()
+        await query.edit_message_text(
+            f"↩️ Removed: {describe_bait(removed)} · "
+            f"{removed['away_team']} @ {removed['home_team']}. Pick again below."
+        )
+        try:
+            event = await self._bait_event(removed["event_id"])
+        except Exception as error:
+            log.exception("Bait lines failed")
+            await query.message.reply_text(f"⚠️ Couldn't load NBA lines: {error}"[:500])
+            return
+        if event is None:
+            await query.message.reply_text("That game is no longer on the board.")
+            return
+        history = self.baits.game_history(event.id)
+        if history:
+            text, _ = format_latest(event, history, EASTERN)
+            await query.message.reply_text(
+                text, reply_markup=latest_keyboard(event, history[-1])
+            )
+        elif has_line(event):
+            await query.message.reply_text(
+                f"🎣 {event.away_team} @ {event.home_team}: pick the tempting side.",
+                reply_markup=InlineKeyboardMarkup([side_buttons(event, "baitre")]),
+            )
+        else:
+            await query.message.reply_text(
+                f"⏸ {event.away_team} @ {event.home_team} is off the board right now; "
+                "use /bait once it's back."
+            )
+
     def _replied_bait(self, message: Any) -> dict[str, Any] | None:
         reply_to = getattr(message, "reply_to_message", None)
         if reply_to is None:
@@ -1983,6 +2036,7 @@ class DecisionBot:
             (r"^baitline:", self.bait_latest),
             (r"^baittag:", self.bait_tag),
             (r"^baitwhy:", self.bait_why),
+            (r"^baitundo:", self.bait_undo),
         ):
             application.add_handler(
                 CallbackQueryHandler(self.authorized(handler), pattern=pattern)
