@@ -1,0 +1,50 @@
+#!/bin/bash
+# Install the NBA live-odds capture: copy a tested release to
+# /opt/nba-live-odds, install the service + daily timer, enable the timer.
+# --start-now also starts today's run (it waits for the first tip itself).
+set -euo pipefail
+umask 022
+
+if [[ "$EUID" -ne 0 ]]; then
+    echo "install-nba-live-odds must run as root." >&2
+    exit 1
+fi
+
+start_now=0
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        --start-now) start_now=1 ;;
+        *) echo "Usage: $0 [--start-now]" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+app_dir="$(cd "$script_dir/.." && pwd)"
+install_root="/opt/nba-live-odds"
+release="$install_root/releases/$(date -u +%Y%m%dT%H%M%SZ)-$$"
+
+id receptionist-agent >/dev/null
+install -d -m 0755 -o root -g root "$install_root" "$install_root/releases"
+install -d -m 0755 "$release"
+install -m 0644 "$app_dir/track_live.py" "$release/track_live.py"
+cp -r "$app_dir/tests" "$release/tests"
+(
+    cd "$release"
+    PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -m unittest discover -s tests -q
+)
+chown -R root:root "$release"
+chmod -R go-w "$release"
+ln -sfn "$release" "$install_root/current.new"
+mv -Tf "$install_root/current.new" "$install_root/current"
+
+install -m 0644 "$script_dir/nba-live-odds.service" /etc/systemd/system/nba-live-odds.service
+install -m 0644 "$script_dir/nba-live-odds.timer" /etc/systemd/system/nba-live-odds.timer
+systemctl daemon-reload
+systemctl enable --now nba-live-odds.timer
+if [[ "$start_now" == "1" ]] && ! systemctl is-active --quiet nba-live-odds.service; then
+    systemctl start --no-block nba-live-odds.service
+fi
+systemctl list-timers nba-live-odds.timer --no-pager
+systemctl status nba-live-odds.service --no-pager | head -5 || true
+echo "installed $release"

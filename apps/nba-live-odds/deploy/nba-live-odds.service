@@ -1,0 +1,30 @@
+[Unit]
+Description=Capture Bovada live NBA lines at end of Q1 and halftime
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=receptionist-agent
+Group=receptionist-agent
+StateDirectory=nba-live-odds
+StateDirectoryMode=0755
+WorkingDirectory=/opt/nba-live-odds/current
+Environment=PYTHONDONTWRITEBYTECODE=1
+# Run for today's ET date; the script sleeps until 10 min before the first
+# tip and exits once every game is past halftime (or at once on a no-game day).
+ExecStart=/usr/bin/python3 /opt/nba-live-odds/current/track_live.py --league nba --data-dir /var/lib/nba-live-odds
+TimeoutStartSec=17h
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictSUIDSGID=true
+MemoryMax=192M
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,11 @@
+[Unit]
+Description=Start the NBA live-odds capture each morning (ET)
+
+[Timer]
+OnCalendar=*-*-* 10:00:00 America/New_York
+Persistent=true
+AccuracySec=1min
+Unit=nba-live-odds.service
+
+[Install]
+WantedBy=timers.target
