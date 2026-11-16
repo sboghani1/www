@@ -556,3 +556,72 @@ def test_undo_and_repick_removes_only_the_latest_bait_and_offers_the_sides_again
     assert buttons(chat.sent[-1].reply_markup) == {"Jazz pk": "baitre:a:ml:nba-b", "Nuggets pk": "baitre:h:ml:nba-b"}
     query = tap(bot, bot.bait_undo, buttons(only.reply_markup)["↩️ Undo & re-pick"], chat)
     assert query.answer.await_args.args[0] == "Already removed."
+
+
+def test_quiet_hours_hold_line_alerts_for_one_morning_catchup(tmp_path: Path, monkeypatch) -> None:
+    from zoneinfo import ZoneInfo
+
+    import decision_helper.bot as bot_module
+
+    pacific = ZoneInfo("America/Los_Angeles")
+    morning = (datetime.now(pacific) + timedelta(days=1)).replace(hour=9, minute=5, second=0, microsecond=0)
+    night = morning - timedelta(hours=8)  # 1:05 AM
+    base = morning + timedelta(hours=6)  # tip 4:05 PM
+    clock = {"now": night.astimezone(UTC)}
+    monkeypatch.setattr(bot_module, "utc_now", lambda: clock["now"])
+    bot = make_bot(tmp_path, nba_slate(base))
+    bot.baits.initialize()
+    bot.espn.started = nba_slate(base)
+    bot.quiet_hours = True
+    bot._bot = SimpleNamespace(send_message=AsyncMock())
+    chat = Chat()
+    show_board(bot, chat)
+    tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)
+    bot.lines.events = nba_slate(base, celtics_spread=-7)
+    bot.espn.started = list(bot.lines.events)
+    bot.lines.snapshots = [
+        ((night - timedelta(hours=3)).astimezone(UTC), nba_slate(base)[0]),
+        ((night + timedelta(hours=1)).astimezone(UTC), nba_slate(base, celtics_spread=-6)[0]),
+        ((night + timedelta(hours=5)).astimezone(UTC), nba_slate(base, celtics_spread=-7)[0]),
+    ]
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE bait_watch SET next_check_at='2000-01-01T00:00:00Z'")
+        connection.commit()
+
+    # At 1 AM nothing is sent and the baseline stays the tap.
+    asyncio.run(bot.check_baited_lines())
+    asyncio.run(bot.send_morning_catchup())
+    bot._bot.send_message.assert_not_awaited()
+    assert bot.baits.watch("nba-a")["alert_line"] is None
+
+    clock["now"] = morning.astimezone(UTC)
+    asyncio.run(bot.send_morning_catchup())
+    asyncio.run(bot.send_morning_catchup())  # once a day
+    assert bot._bot.send_message.await_count == 1
+    _, text = bot._bot.send_message.await_args.args
+    assert text.startswith("☀️ Overnight on your bait (11 PM–9 AM PT):")
+    assert "📈 Boston Celtics @ Los Angeles Lakers: you took Celtics -5.5 (-110)" in text
+    assert "overnight -5.5 → -6 → -7" in text and "now Celtics -7 (-110)" in text
+    assert "Jazz" not in text  # the unbaited game isn't mentioned
+    assert buttons(bot._bot.send_message.await_args.kwargs["reply_markup"]) == {
+        "🎣 Celtics -7": "baitre:a:-7:nba-a",
+        "🎣 Lakers +7": "baitre:h:7:nba-a",
+        "🙅 Pass on Celtics -7": "baitpass:a:-7:nba-a",
+    }
+    assert bot.baits.watch("nba-a")["alert_line"] == -7
+
+
+def test_tapping_one_game_in_a_multi_game_message_keeps_the_others() -> None:
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
+    from decision_helper.bot import without_game
+
+    markup = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🎣 Celtics -7", callback_data="baitre:a:-7:nba-a"),
+         InlineKeyboardButton("🎣 Lakers +7", callback_data="baitre:h:7:nba-a")],
+        [InlineKeyboardButton("🙅 Pass on Celtics -7", callback_data="baitpass:a:-7:nba-a")],
+        [InlineKeyboardButton("🎣 Jazz +3", callback_data="baitre:a:3:nba-b")],
+    ])
+    remaining = without_game(markup, "nba-a")
+    assert [[b.text for b in row] for row in remaining.inline_keyboard] == [["🎣 Jazz +3"]]
+    assert without_game(remaining, "nba-b") is None

@@ -31,7 +31,11 @@ from telegram.ext import (
 
 from .bait import (
     book_of,
+    encode_line,
+    format_path,
     has_line,
+    line_path,
+    side_label,
     BaitStore,
     check_label,
     scheduled_move,
@@ -91,6 +95,10 @@ HISTORIC_LINES_AFTER = timedelta(minutes=10)
 PACIFIC = ZoneInfo("America/Los_Angeles")
 # The bait board's BetOnline fallback is read twice a day (Pacific).
 BETONLINE_TIMES = (time(0, 0), time(15, 0))
+# Bait messages wait out the night (Pacific); what changed is sent together
+# when quiet hours end.
+QUIET_START = time(23, 0)
+QUIET_END = time(9, 0)
 LEARNING_HOUR = 9  # Eastern; a day's learnings run the next morning
 LEARNING_RETRY = timedelta(minutes=30)
 LEARNING_REVIEW_ATTEMPTS = 3  # a late day still waits on reviews until they fail this often
@@ -556,6 +564,26 @@ def with_lines(game: MarketEvent, line: MarketEvent | None) -> MarketEvent:
     return replace(game, markets=markets)
 
 
+def in_quiet_hours(now: datetime) -> bool:
+    local = now.astimezone(PACIFIC).time()
+    return local >= QUIET_START or local < QUIET_END
+
+
+def without_game(markup: Any, event_id: str) -> InlineKeyboardMarkup | None:
+    """``markup`` minus the rows for one game, so tapping a game in the
+    morning catch-up leaves the other games' buttons."""
+    rows = [
+        row
+        for row in getattr(markup, "inline_keyboard", None) or []
+        if not any(
+            str(button.callback_data).startswith(("bait:", "baitre:", "baitpass:"))
+            and event_id.startswith(str(button.callback_data).split(":", 3)[-1])
+            for button in row
+        )
+    ]
+    return InlineKeyboardMarkup(rows) if rows else None
+
+
 def betonline_slot(now: datetime) -> datetime:
     """The latest scheduled BetOnline read time at or before ``now``."""
     local = now.astimezone(PACIFIC)
@@ -596,6 +624,7 @@ class DecisionBot:
         self.books = BookStore(store)
         self._books_scheduled_at: datetime | None = None
         self._betonline: tuple[datetime, list[MarketEvent]] | None = None
+        self.quiet_hours = True  # tests turn this off to ignore the clock
 
     def authorized(self, handler: Handler) -> Handler:
         async def wrapped(
@@ -1458,6 +1487,9 @@ class DecisionBot:
             )
         )
 
+    def _quiet(self, now: datetime) -> bool:
+        return self.quiet_hours and in_quiet_hours(now)
+
     @property
     def _betonline_path(self) -> Path:
         return self.config.state_dir / "betonline-fallback.json"
@@ -1596,7 +1628,11 @@ class DecisionBot:
                 text, keyboard = self._board(await self.bait_events())
                 await query.edit_message_text(text, reply_markup=keyboard)
             else:
-                await query.edit_message_reply_markup(reply_markup=None)
+                await query.edit_message_reply_markup(
+                    reply_markup=without_game(
+                        getattr(query.message, "reply_markup", None), event.id
+                    )
+                )
         except BadRequest as error:  # unchanged message
             log.info("Bait message not edited: %s", error)
         if not created:
@@ -1793,6 +1829,10 @@ class DecisionBot:
             return
         async with self._bait_checks:
             try:
+                await self.send_morning_catchup()
+            except Exception:
+                log.exception("Bait morning catch-up failed")
+            try:
                 await self.check_baited_lines()
             except Exception:
                 log.exception("Bait line checks failed")
@@ -1833,7 +1873,7 @@ class DecisionBot:
                 continue
             row = self.books.capture(row, game)
             history = self.baits.game_history(row["event_id"])
-            if row["side"] is None or not history:
+            if row["side"] is None or not history or self._quiet(now):
                 continue
             takes = [item for item in history if item["action"] == "take"]
             await self._bot.send_message(
@@ -1842,11 +1882,114 @@ class DecisionBot:
             )
             self.books.mark_alerted(row["event_id"])
 
+    async def send_morning_catchup(self) -> None:
+        """Once quiet hours end: one message with each baited game whose
+        line moved a full point since your last tap (with its overnight path
+        and both sides to tap) and Trapp & Cowboy picks that arrived."""
+        now = utc_now()
+        if self._quiet(now):
+            return
+        local = now.astimezone(PACIFIC)
+        marker = self.config.state_dir / "bait-morning.json"
+        try:
+            done = json.loads(marker.read_text(encoding="utf-8")).get("day")
+        except (OSError, ValueError):
+            done = None
+        day = local.date().isoformat()
+        if done == day:
+            return
+        morning = datetime.combine(local.date(), QUIET_END, PACIFIC)
+        watches = self.baits.upcoming_watches()
+        # A restart late in the day doesn't send a stale catch-up.
+        if watches and now - morning < timedelta(hours=3):
+            night = datetime.combine(
+                local.date() - timedelta(days=1), QUIET_START, PACIFIC
+            )
+            await self._send_catchup(watches, night)
+        marker.write_text(json.dumps({"day": day}), encoding="utf-8")
+
+    async def _send_catchup(self, watches: list[dict[str, Any]], night: datetime) -> None:
+        events = {
+            event.id: event
+            for event in await self._with_betonline(
+                await self.candidate_events(day_offsets=range(0, 2), sports=("nba",))
+            )
+        }
+        try:
+            snapshots = await self.lines.history("nba", night - timedelta(days=1))
+        except Exception as error:
+            log.warning("Line history failed: %s", error)
+            snapshots = []
+        sections: list[str] = []
+        rows: list[list[InlineKeyboardButton]] = []
+        for watch in watches:
+            history = self.baits.game_history(watch["event_id"])
+            if not history:
+                continue
+            last = history[-1]
+            event = events.get(watch["event_id"])
+            game = f"{last['away_team']} @ {last['home_team']}"
+            verb = "took" if last["action"] == "take" else "passed on"
+            lines: list[str] = []
+            moved = scheduled_move(event, last, watch) if event is not None else None
+            if moved is not None:
+                pick_type, line, price = side_quote(event, last["selection"])
+                now_label = describe_bait(
+                    {**last, "pick_type": pick_type, "line": line, "price": price,
+                     "book": book_of(event)}
+                )
+                path = line_path(snapshots, event, last["selection"], night)
+                lines.append(f"📈 {game}: you {verb} {describe_bait(last)}")
+                if len(path) > 1:
+                    lines.append(f"   overnight {format_path(path)}")
+                lines.append(f"   now {now_label}")
+                rows.append(side_buttons(event, "baitre", "🎣 "))
+                if last["action"] == "take":
+                    code = ("a" if last["selection"] == event.away_team else "h") + (
+                        "b" if book_of(event) == "BetOnline" else ""
+                    )
+                    rows.append(
+                        [
+                            InlineKeyboardButton(
+                                f"🙅 Pass on {side_label(last['selection'], pick_type, line)}",
+                                callback_data=(
+                                    f"baitpass:{code}:{encode_line(line)}:{event.id}"
+                                )[:64],
+                            )
+                        ]
+                    )
+                self.baits.checked(watch["event_id"], alert_line=moved)
+            views = self.pickers.views(
+                last["event_id"], last["commence_time"], last["selection"], EASTERN
+            )
+            current = signature(views)
+            if current != watch["picker_signature"]:
+                nothing_yet = all(view.relation == "not_in" for view in views)
+                if watch["picker_signature"] is not None or not nothing_yet:
+                    if not lines:
+                        lines.append(f"{game}: you {verb} {describe_bait(last)}")
+                    lines.append(format_views(views))
+                self.baits.set_picker_signature(watch["event_id"], current)
+            if lines:
+                sections.append("\n".join(lines))
+        if not sections:
+            return
+        await self._bot.send_message(
+            self.config.allowed_user_id,
+            "☀️ Overnight on your bait (11 PM–9 AM PT):\n\n" + "\n\n".join(sections),
+            reply_markup=InlineKeyboardMarkup(rows) if rows else None,
+        )
+
     async def check_baited_lines(self) -> None:
         """Scheduled checks of baited games: alert with both sides at the
         new number when the line moved a full point since you last saw it."""
         due = self.baits.due_checks()
         if not due:
+            return
+        if self._quiet(utc_now()):
+            # Held for the morning catch-up; the baseline stays your last tap.
+            for watch in due:
+                self.baits.checked(watch["event_id"])
             return
         events = {
             event.id: event
@@ -1893,7 +2036,10 @@ class DecisionBot:
 
     async def check_picker_updates(self) -> None:
         """Before tip, tell you once when Trapp's or Cowboy's picks on a
-        baited game arrive or change after you last saw them."""
+        baited game arrive or change after you last saw them (held for the
+        morning catch-up during quiet hours)."""
+        if self._quiet(utc_now()):
+            return
         for watch in self.baits.upcoming_watches():
             history = self.baits.game_history(watch["event_id"])
             if not history:

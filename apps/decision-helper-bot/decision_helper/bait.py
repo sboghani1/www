@@ -26,6 +26,7 @@ from .models import (
     FinalGame,
     MarketEvent,
     grade_pick,
+    team_matches,
     parse_timestamp,
     timestamp,
     utc_now,
@@ -633,6 +634,45 @@ def scheduled_move(
     if current is None or seen is None or abs(current - seen) < ALERT_MOVE:
         return None
     return current
+
+
+def line_path(
+    snapshots: list[tuple[datetime, MarketEvent]],
+    event: MarketEvent,
+    selection: str,
+    since: datetime,
+) -> list[float]:
+    """The selection's spread at ``since`` and each change after it, from
+    the forwarder's line snapshots (oldest first)."""
+    points: list[float] = []
+    for captured, snapshot in snapshots:
+        if not (
+            team_matches(snapshot.away_team, event.away_team)
+            and team_matches(snapshot.home_team, event.home_team)
+            and abs(
+                parse_timestamp(snapshot.commence_time)
+                - parse_timestamp(event.commence_time)
+            )
+            <= timedelta(hours=3)
+        ):
+            continue
+        team = (
+            snapshot.away_team
+            if team_matches(snapshot.away_team, selection)
+            else snapshot.home_team
+        )
+        quote = snapshot.markets.get(f"spread:{team}")
+        if quote is None or quote.point is None:
+            continue
+        if captured <= since:
+            points = [quote.point]  # the line when the window opened
+        elif not points or points[-1] != quote.point:
+            points.append(quote.point)
+    return points
+
+
+def format_path(points: list[float]) -> str:
+    return " → ".join("pk" if point == 0 else f"{point:+g}" for point in points)
 
 
 # --- Telegram presentation -------------------------------------------------

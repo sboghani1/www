@@ -215,7 +215,17 @@ receptionist's Opus agent, not with API billing:
    2h, 1h, and 15 minutes before tip. When the side's spread has moved at
    least a full point from the last number you saw (your last tap, or the
    last alert), Mel sends the same Latest line prompt unasked. Smaller moves
-   and juice changes stay quiet, and a new tap resets the baseline. After tip Mel saves the closing
+   and juice changes stay quiet, and a new tap resets the baseline.
+   **Quiet hours, 11 PM–9 AM Pacific:** no bait messages at all (line
+   alerts, 👥 Picks updates, ⚖️ book divergences); checks keep running
+   without moving the baseline. At 9 AM one ☀️ catch-up lists each baited
+   game whose side moved a full point since your last number, with its
+   overnight path from the forwarder's line snapshots (`overnight -5.5 → -6
+   → -7`), the current number and that game's 🎣/🙅 buttons, plus Trapp &
+   Cowboy picks that arrived overnight. It is sent once a day (marker
+   `bait-morning.json` in the state dir) and skipped when Mel restarts more
+   than 3 hours after 9 AM. Tapping one game's button removes only that
+   game's buttons from a message. After tip Mel saves the closing
    number for the side, and ESPN grades it. `/baitstats` shows records for
    first looks vs. re-takes (better number, chased a worse number, switched
    sides), favorite/underdog by spread size, home/away, whether the market

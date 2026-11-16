@@ -82,6 +82,13 @@ class FakeLines:
     async def fetch_opening(self, sport):
         return [event for event in self.events if event.sport == sport]
 
+    async def history(self, sport, since):
+        return [
+            (captured, event)
+            for captured, event in getattr(self, "snapshots", [])
+            if event.sport == sport and captured >= since
+        ]
+
     async def close(self):
         pass
 
@@ -120,7 +127,7 @@ def make_bot(tmp_path: Path, events, finals=()) -> DecisionBot:
     store = DecisionStore(config.database_path)
     store.initialize()
     config.audio_dir.mkdir(parents=True)
-    return DecisionBot(
+    bot = DecisionBot(
         config,
         store,
         transcriber=FakeTranscriber(),
@@ -128,6 +135,8 @@ def make_bot(tmp_path: Path, events, finals=()) -> DecisionBot:
         lines=FakeLines(events),
         espn=FakeEspn(list(finals)),
     )
+    bot.quiet_hours = False  # real-clock quiet hours are tested on their own
+    return bot
 
 
 def voice_update(message_id: int = 7):

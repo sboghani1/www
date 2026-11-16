@@ -154,6 +154,30 @@ def parse_snapshots(rows: Rows, sport: str, as_of: datetime) -> list[MarketEvent
     )
 
 
+def parse_history(
+    rows: Rows, sport: str, since: datetime
+) -> list[tuple[datetime, MarketEvent]]:
+    """Every snapshot captured at or after ``since``, oldest first (the
+    forwarder appends one only when a game's line changes)."""
+    if not rows:
+        return []
+    header = rows[0]
+    if "captured_at" not in header:
+        raise ValueError("snapshot tab is missing captured_at")
+    captured_column = header.index("captured_at")
+    history = []
+    for row in rows[1:]:
+        try:
+            captured = parse_timestamp(row[captured_column])
+        except (ValueError, IndexError):
+            continue
+        if captured < since:
+            continue
+        for event in parse_rows([header, row], sport, prefixes=SNAPSHOT_PREFIXES):
+            history.append((captured, event))
+    return sorted(history, key=lambda item: item[0])
+
+
 def _gspread_loader(credentials_b64: str, sheet_id: str) -> Callable[[str], Rows]:
     def load(tab: str) -> Rows:
         import gspread
@@ -207,6 +231,14 @@ class SheetLines:
         if as_of is None:
             return parse_rows(await self._rows(SHEET_TABS[sport]), sport)
         return parse_snapshots(await self._rows(SNAPSHOT_TABS[sport]), sport, as_of)
+
+    async def history(
+        self, sport: str, since: datetime
+    ) -> list[tuple[datetime, MarketEvent]]:
+        """Line snapshots since ``since`` (for overnight line paths)."""
+        if sport not in SNAPSHOT_TABS:
+            raise ValueError("sport must be nfl or nba")
+        return parse_history(await self._rows(SNAPSHOT_TABS[sport]), sport, since)
 
     async def fetch_opening(self, sport: str) -> list[MarketEvent]:
         """BetOnline's first recorded line for each game."""
