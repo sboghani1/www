@@ -159,10 +159,10 @@ def test_tags_and_text_or_voice_replies_become_reasons_not_notes(tmp_path: Path)
     tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)
     confirmation = chat.sent[-1]
 
-    query = tap(bot, bot.bait_tag, buttons(confirmation.reply_markup)["⭐ Star / big name"], chat)
+    query = tap(bot, bot.bait_tag, buttons(confirmation.reply_markup)["⭐ Better stars"], chat)
     edited = query.edit_message_text.await_args
-    assert "Tags: ⭐ Star / big name" in edited.args[0]
-    assert "✅ ⭐ Star / big name" in buttons(edited.kwargs["reply_markup"])
+    assert "Tags: ⭐ Better stars" in edited.args[0]
+    assert "✅ ⭐ Better stars" in buttons(edited.kwargs["reply_markup"])
 
     message = text_reply(bot, "Tatum looked unstoppable last night", confirmation.message_id)
     assert "Reason saved for Celtics -5.5" in message.reply_text.await_args.args[0]
@@ -286,7 +286,7 @@ def test_bait_closes_at_tip_then_is_graded_and_summarized(tmp_path: Path) -> Non
     assert "• favorite 3.5-6.5: 1-0 (100%)" in report
     assert "• pick'em: 1-0 (100%)" in report
     assert "• market moved toward your side: 1-1 (50%)" in report
-    assert "• ⭐ Star / big name: 1-0 (100%)" in report
+    assert "• ⭐ Better stars: 1-0 (100%)" in report
     assert "❌" in report and "[re-take]" in report
     assert "|" not in report  # Telegram-friendly bullets, no tables
 
@@ -625,3 +625,30 @@ def test_tapping_one_game_in_a_multi_game_message_keeps_the_others() -> None:
     remaining = without_game(markup, "nba-a")
     assert [[b.text for b in row] for row in remaining.inline_keyboard] == [["🎣 Jazz +3"]]
     assert without_game(remaining, "nba-b") is None
+
+
+def test_new_tags_with_old_ones_mapped_or_kept_by_their_old_names(tmp_path: Path) -> None:
+    from decision_helper.bait import BAIT_TAGS
+
+    assert [label for _, label in BAIT_TAGS] == [
+        "⭐ Better stars", "📏 Spread too big", "🤏 Spread too little", "🔥 Hot team",
+        "🧊 Cold opponent", "👎 Bad opponent", "🏠 Strong at home", "🏚 Weak at home",
+        "✈️ Strong on road", "🧳 Weak on road", "🩼 Opp. injury news", "💤 Rest advantage",
+        "📅 Opp. sched. loss", "🔁 Bounce-back",
+    ]
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    chat = Chat()
+    show_board(bot, chat)
+    tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)
+    bait_id = bot.baits.latest("nba-a")["id"]
+    with bot.store.connect() as connection:
+        connection.execute("UPDATE baits SET tags_json=? WHERE id=?", (json.dumps(["cold", "spot"]), bait_id))
+        connection.commit()
+    bot.baits.initialize()  # "Opponent is bad" (cold) becomes Bad opponent
+    assert json.loads(bot.baits.get(bait_id)["tags_json"]) == ["bad_opp", "spot"]
+    # An old message's button still works and means the same tag.
+    query = tap(bot, bot.bait_tag, f"baittag:cold:{bait_id}", chat)
+    assert json.loads(bot.baits.get(bait_id)["tags_json"]) == ["spot"]
+    assert "Tags: 🏠 Home/road spot (old)" in query.edit_message_text.await_args.args[0]
+    assert "🏠 Home/road spot (old)" not in buttons(query.edit_message_text.await_args.kwargs["reply_markup"])

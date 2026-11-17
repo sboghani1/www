@@ -198,9 +198,13 @@ receptionist's Opus agent, not with API billing:
    Bovada since 2026-10-27 (the forwarder's `NBA_LINES_SOURCE`), polled every
    5 minutes, so bait screens say Bovada. Tap the tempting side to log it at the
    number on the button. A game with no spread is a pick'em, graded on the
-   moneyline. The confirmation has optional reason tags (star/big name,
-   number too cheap, hot team, opponent is bad, home/road spot, injury news,
-   bounce-back, rest/schedule), **✍️ Add a reason**, and **↩️ Undo &
+   moneyline. The confirmation has optional reason tags (better stars, spread too big,
+   spread too little, hot team, cold opponent, bad opponent, strong/weak at
+   home, strong/weak on road, opponent injury news, rest advantage,
+   scheduled loss for opponent, bounce-back; since 2026-11-17. Older "Star /
+   big name" counts as better stars and "Opponent is bad" as bad opponent;
+   "Home/road spot", "Injury news" and "Rest/schedule" stay on their baits as
+   "(old)" tags because they don't say whose spot, injury or schedule), **✍️ Add a reason**, and **↩️ Undo &
    re-pick**: for a mis-tap, it deletes that bait (only the game's latest,
    before tip; checks restart from the number before it) and offers the
    game's sides again at the current number. A text or voice reply

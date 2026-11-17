@@ -37,16 +37,32 @@ from .store import DecisionStore
 
 # Quick reasons, stored by key so labels can be reworded later.
 BAIT_TAGS = (
-    ("star", "⭐ Star / big name"),
-    ("cheap", "🤑 Number too cheap"),
+    ("star", "⭐ Better stars"),  # better star players
+    ("big", "📏 Spread too big"),
+    ("small", "🤏 Spread too little"),
     ("hot", "🔥 Hot team"),
-    ("cold", "🧊 Opponent is bad"),
-    ("spot", "🏠 Home/road spot"),
-    ("injury", "🩼 Injury news"),
+    ("cold_opp", "🧊 Cold opponent"),
+    ("bad_opp", "👎 Bad opponent"),
+    ("home_good", "🏠 Strong at home"),  # good home performance expected
+    ("home_bad", "🏚 Weak at home"),  # bad home performance expected
+    ("road_good", "✈️ Strong on road"),  # good road performance expected
+    ("road_bad", "🧳 Weak on road"),  # bad road performance expected
+    ("opp_injury", "🩼 Opp. injury news"),  # opponent injury news
+    ("rest_edge", "💤 Rest advantage"),
+    ("opp_sched", "📅 Opp. sched. loss"),  # scheduled loss for opponent
     ("bounce", "🔁 Bounce-back"),
-    ("rest", "💤 Rest/schedule"),
 )
-TAG_LABELS = dict(BAIT_TAGS)
+# Tags from before 2026-11-17 whose meaning doesn't map onto one of the
+# above stay on their baits and in stats under their old names.
+LEGACY_TAGS = {
+    "cheap": "🤑 Number too cheap (old)",
+    "spot": "🏠 Home/road spot (old)",
+    "injury": "🩼 Injury news (old)",
+    "rest": "💤 Rest/schedule (old)",
+}
+# Old keys that meant the same as a current tag.
+TAG_ALIASES = {"cold": "bad_opp"}  # was labeled "Opponent is bad"
+TAG_LABELS = {**LEGACY_TAGS, **dict(BAIT_TAGS)}
 RESULT_DELAY = timedelta(minutes=150)  # an NBA game lasts about 2.5 hours
 CLOSE_DELAY = timedelta(minutes=15)  # the forwarder's last pre-tip poll is in by then
 # Scheduled line checks on a baited game: 15 minutes and 1-4 hours before
@@ -237,6 +253,12 @@ class BaitStore:
             if "book" not in bait_columns:
                 connection.execute(
                     "ALTER TABLE baits ADD COLUMN book TEXT NOT NULL DEFAULT 'Bovada'"
+                )
+            for old, new in TAG_ALIASES.items():
+                connection.execute(
+                    "UPDATE baits SET tags_json=replace(tags_json, ?, ?) "
+                    "WHERE tags_json LIKE ?",
+                    (json.dumps(old), json.dumps(new), f"%{json.dumps(old)}%"),
                 )
             # Games baited before scheduled checks existed.
             now = utc_now()
@@ -503,6 +525,7 @@ class BaitStore:
         return bait
 
     def toggle_tag(self, bait_id: str, tag: str) -> dict[str, Any]:
+        tag = TAG_ALIASES.get(tag, tag)  # buttons on older messages
         if tag not in TAG_LABELS:
             raise ValueError("Unknown bait tag")
         with self.store.connect() as connection:
