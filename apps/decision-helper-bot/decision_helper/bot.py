@@ -19,7 +19,7 @@ from telegram import (
     Update,
 )
 from telegram.constants import ChatType
-from telegram.error import BadRequest
+from telegram.error import BadRequest, TelegramError
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -1487,6 +1487,18 @@ class DecisionBot:
             )
         )
 
+    async def _notify(self, text: str, reply_markup: Any = None) -> None:
+        """Send an unprompted bait message at most once. Callers record it
+        as sent first: Telegram can deliver a message and still time out
+        the reply (2026-11-17: one alert arrived six times), so a failed
+        send is logged, never retried."""
+        try:
+            await self._bot.send_message(
+                self.config.allowed_user_id, text, reply_markup=reply_markup
+            )
+        except TelegramError as error:
+            log.warning("Bait message may not have been delivered: %s", error)
+
     def _quiet(self, now: datetime) -> bool:
         return self.quiet_hours and in_quiet_hours(now)
 
@@ -1876,11 +1888,8 @@ class DecisionBot:
             if row["side"] is None or not history or self._quiet(now):
                 continue
             takes = [item for item in history if item["action"] == "take"]
-            await self._bot.send_message(
-                self.config.allowed_user_id,
-                format_divergence(row, takes[-1] if takes else None),
-            )
             self.books.mark_alerted(row["event_id"])
+            await self._notify(format_divergence(row, takes[-1] if takes else None))
 
     async def send_morning_catchup(self) -> None:
         """Once quiet hours end: one message with each baited game whose
@@ -1901,12 +1910,14 @@ class DecisionBot:
         morning = datetime.combine(local.date(), QUIET_END, PACIFIC)
         watches = self.baits.upcoming_watches()
         # A restart late in the day doesn't send a stale catch-up.
+        # Marked first: a send that times out after Telegram delivered it
+        # must not be repeated on the next tick.
+        marker.write_text(json.dumps({"day": day}), encoding="utf-8")
         if watches and now - morning < timedelta(hours=3):
             night = datetime.combine(
                 local.date() - timedelta(days=1), QUIET_START, PACIFIC
             )
             await self._send_catchup(watches, night)
-        marker.write_text(json.dumps({"day": day}), encoding="utf-8")
 
     async def _send_catchup(self, watches: list[dict[str, Any]], night: datetime) -> None:
         events = {
@@ -1974,10 +1985,9 @@ class DecisionBot:
                 sections.append("\n".join(lines))
         if not sections:
             return
-        await self._bot.send_message(
-            self.config.allowed_user_id,
+        await self._notify(
             "☀️ Overnight on your bait (11 PM–9 AM PT):\n\n" + "\n\n".join(sections),
-            reply_markup=InlineKeyboardMarkup(rows) if rows else None,
+            InlineKeyboardMarkup(rows) if rows else None,
         )
 
     async def check_baited_lines(self) -> None:
@@ -2014,13 +2024,12 @@ class DecisionBot:
                 self.baits.checked(watch["event_id"])
                 continue
             text, _ = format_latest(event, history, EASTERN)
-            await self._bot.send_message(
-                self.config.allowed_user_id,
+            self.baits.checked(watch["event_id"], alert_line=moved)
+            await self._notify(
                 f"⏰ {check_label(event.commence_time, now)}: your bait's line "
                 f"moved.\n{text}",
-                reply_markup=latest_keyboard(event, last),
+                latest_keyboard(event, last),
             )
-            self.baits.checked(watch["event_id"], alert_line=moved)
 
     def _bait_text(
         self, bait: dict[str, Any], text: str, *, remember: bool = False
@@ -2052,16 +2061,16 @@ class DecisionBot:
             if current == watch["picker_signature"]:
                 continue
             nothing_yet = all(view.relation == "not_in" for view in views)
-            if watch["picker_signature"] is not None or not nothing_yet:
+            previous = watch["picker_signature"]
+            self.baits.set_picker_signature(watch["event_id"], current)
+            if previous is not None or not nothing_yet:
                 start = parse_timestamp(last["commence_time"]).astimezone(EASTERN)
                 verb = "took" if last["action"] == "take" else "passed on"
-                await self._bot.send_message(
-                    self.config.allowed_user_id,
+                await self._notify(
                     f"👥 Picks update: {last['away_team']} @ {last['home_team']} "
                     f"({start:%-I:%M %p} ET). You {verb} {describe_bait(last)}.\n"
-                    + format_views(views),
+                    + format_views(views)
                 )
-            self.baits.set_picker_signature(watch["event_id"], current)
 
     async def sync_book_results(self) -> None:
         """Grade BetOnline's side on each diverged game (and record every
@@ -2131,6 +2140,12 @@ class DecisionBot:
             Application.builder()
             .token(self.config.bot_token)
             .concurrent_updates(True)
+            # Telegram's API sometimes answers slowly; the 5 s defaults
+            # turned delivered messages into timeouts.
+            .connect_timeout(15)
+            .read_timeout(30)
+            .write_timeout(30)
+            .pool_timeout(15)
             .post_init(self.post_init)
             .post_shutdown(self.post_shutdown)
             .build()

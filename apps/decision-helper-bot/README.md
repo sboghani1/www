@@ -229,7 +229,11 @@ receptionist's Opus agent, not with API billing:
    Cowboy picks that arrived overnight. It is sent once a day (marker
    `bait-morning.json` in the state dir) and skipped when Mel restarts more
    than 3 hours after 9 AM. Tapping one game's button removes only that
-   game's buttons from a message. After tip Mel saves the closing
+   game's buttons from a message. Unprompted bait messages (line alerts,
+   the catch-up, 👥 picker updates, ⚖️ divergences) are recorded as sent
+   before sending and never retried: Telegram can deliver a message and
+   still time out the reply, which once repeated one alert six times. Mel's
+   Telegram timeouts are 30 s instead of the library's 5 s. After tip Mel saves the closing
    number for the side, and ESPN grades it. `/baitstats` shows records for
    first looks vs. re-takes (better number, chased a worse number, switched
    sides), favorite/underdog by spread size, home/away, whether the market

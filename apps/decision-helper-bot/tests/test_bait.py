@@ -652,3 +652,24 @@ def test_new_tags_with_old_ones_mapped_or_kept_by_their_old_names(tmp_path: Path
     assert json.loads(bot.baits.get(bait_id)["tags_json"]) == ["spot"]
     assert "Tags: 🏠 Home/road spot (old)" in query.edit_message_text.await_args.args[0]
     assert "🏠 Home/road spot (old)" not in buttons(query.edit_message_text.await_args.kwargs["reply_markup"])
+
+
+def test_an_alert_that_times_out_after_delivery_is_not_resent(tmp_path: Path) -> None:
+    from telegram.error import TimedOut
+
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    # Telegram delivered it but the reply timed out (2026-11-17: six copies).
+    bot._bot = SimpleNamespace(send_message=AsyncMock(side_effect=TimedOut()))
+    chat = Chat()
+    show_board(bot, chat)
+    tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)
+    bot.lines.events = nba_slate(now, celtics_spread=-7)
+    bot.espn.started = list(bot.lines.events)
+    for _ in range(3):
+        with bot.store.connect() as connection:
+            connection.execute("UPDATE bait_watch SET next_check_at=?", (timestamp(now - timedelta(minutes=1)),))
+            connection.commit()
+        asyncio.run(bot.check_baited_lines())
+    assert bot._bot.send_message.await_count == 1
+    assert bot.baits.watch("nba-a")["alert_line"] == -7
