@@ -182,7 +182,8 @@ receptionist's Opus agent, not with API billing:
    for both sides. A game Bovada hasn't posted yet (next-day lines post
    late; no row in the sheet) gets BetOnline's line instead, marked
    `· BetOnline`, until Bovada has one. BetOnline is read twice a day, at
-   midnight and 3 PM Pacific (Odds API, `spreads,h2h`: 2 credits per read),
+   midnight, 3 PM and 8 PM Pacific (Odds API, `spreads,h2h`: 2 credits per
+   read; BetOnline posts next-day lines between 3 PM and midnight),
    saved to `betonline-fallback.json` in the state dir so a restart reuses
    it, and read right away if the latest slot was missed. Taps and boards
    never read it. Each

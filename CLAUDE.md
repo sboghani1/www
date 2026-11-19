@@ -87,8 +87,8 @@ gives Mel's opinion on a selected game.
 Lines are read from telegram-channel-forwarder's `nfl_games` / `nba_games`
 Sheet tabs (Bovada since 2026-10-27). Mel's only Odds API uses are a
 BetOnline/Bovada/Hard Rock snapshot 60 minutes before each NBA tip and a
-BetOnline fallback for bait-board games Bovada hasn't posted (read at midnight
-and 3 PM Pacific)
+BetOnline fallback for bait-board games Bovada hasn't posted (read at midnight,
+3 PM and 8 PM Pacific)
 (see its README); nothing else spends credits.
 
 Run its tests before committing:

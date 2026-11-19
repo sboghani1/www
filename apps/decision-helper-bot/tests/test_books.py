@@ -240,6 +240,7 @@ def test_betonline_is_read_at_midnight_and_3pm_pacific() -> None:
     pacific = ZoneInfo("America/Los_Angeles")
     at = lambda *args: datetime(2026, 11, *args, tzinfo=pacific).astimezone(UTC)
     assert betonline_slot(at(12, 16, 50)) == at(12, 15, 0)
+    assert betonline_slot(at(12, 21, 59)) == at(12, 20, 0)  # evening next-day lines
     assert betonline_slot(at(12, 14, 59)) == at(12, 0, 0)
     assert betonline_slot(at(13, 0, 5)) == at(13, 0, 0)
     assert betonline_slot(at(13, 0, 0)) == at(13, 0, 0)

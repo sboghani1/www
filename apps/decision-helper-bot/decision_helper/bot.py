@@ -94,7 +94,7 @@ STARTED_LOOKBACK_DAYS = 3
 HISTORIC_LINES_AFTER = timedelta(minutes=10)
 PACIFIC = ZoneInfo("America/Los_Angeles")
 # The bait board's BetOnline fallback is read twice a day (Pacific).
-BETONLINE_TIMES = (time(0, 0), time(15, 0))
+BETONLINE_TIMES = (time(0, 0), time(15, 0), time(20, 0))
 # Bait messages wait out the night (Pacific); what changed is sent together
 # when quiet hours end.
 QUIET_START = time(23, 0)
@@ -1515,7 +1515,7 @@ class DecisionBot:
             return None
 
     async def refresh_betonline(self) -> None:
-        """Read BetOnline at midnight and 3 PM Pacific (once per slot, or
+        """Read BetOnline at midnight, 3 PM and 8 PM Pacific (once per slot, or
         right away if the latest slot was missed)."""
         if self.odds is None:
             return
