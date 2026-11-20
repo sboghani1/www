@@ -1,25 +1,25 @@
-# Mel — decision helper bot
+# Bell — decision helper bot
 
-Private Telegram bot `@decision_helpers_bot` (display name **Mel**). Send it
-voice notes about your NFL and NBA picks. For each voice note Mel asks, with
+Private Telegram bot `@decision_helpers_bot` (display name **Bell**). Send it
+voice notes about your NFL and NBA picks. For each voice note Bell asks, with
 buttons, whether to **Parse** it or **Trash** the audio. Parsed notes produce
 bets (only what you say you actually bet) and leans (every other view, however
 confident). Leans are graded, reviewed, and learned from exactly like bets;
 reviews and daily learnings also judge whether each bet's view was strong
 enough to bet. Each game has one
 decision per market family (side = moneyline/spread, and total). Sides you
-moved off are kept as that decision's path, so flips can be analyzed. Mel only
+moved off are kept as that decision's path, so flips can be analyzed. Bell only
 confirms what it recorded; it doesn't send analysis on input notes. It follows
 the BetOnline line until kickoff or tip-off, grades results from ESPN, and
 reviews each decision quietly after the game. `/games` lists today's and
-tomorrow's games, and tapping one gets Mel's opinion. Picks for games that already started in the last three days can be
+tomorrow's games, and tapping one gets Bell's opinion. Picks for games that already started in the last three days can be
 logged late; they are marked `[logged after start]`, use the line you state
 (or BetOnline's closing line, marked `[BetOnline close]`), and are graded on
 the next sync.
 
 ## How it works
 
-1. **Audio → text on the VPS.** Claude cannot take audio input, so Mel uses
+1. **Audio → text on the VPS.** Claude cannot take audio input, so Bell uses
    local [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
    (`small.en`, CPU int8). It's free and audio never leaves the server. Voice notes,
    audio uploads (m4a/mp3/ogg), and audio documents are accepted, up to 20 MB.
@@ -31,7 +31,7 @@ the next sync.
 2. **Text → picks with Claude.** The transcript and the candidate games (ESPN
    scoreboards from three days back through the next eight days, with
    BetOnline lines attached) are sent to Claude Code (`claude -p`, default
-   `claude-opus-5-5`, medium effort). Claude returns strict JSON. Mel rejects
+   `claude-opus-5-5`, medium effort). Claude returns strict JSON. Bell rejects
    any game or team that is not in the candidate list. Each game and family
    gets one `final` row, the position you ended on. Abandoned sides are
    stored with `role='superseded'`, and so are views replaced by a later
@@ -102,12 +102,12 @@ the next sync.
    start, and keep closing-line value. Line: the line you say; otherwise your
    latest lean's line and price on that side; otherwise BetOnline's
    (closing) line. A spoken price overrides. That day's learning is
-   regenerated. Mel then asks about each recorded bet on that day's games
+   regenerated. Bell then asks about each recorded bet on that day's games
    that the summary did not mention: **✅ Still a bet** or **↩️ It was a
    lean**. The second button makes it a lean, adds a clarification to its
    note so a reparse agrees, and re-queues its review.
 3. **Market tracking (no API credits).** Apart from the 1h-before-tip book
-   check (10) and the bait board's BetOnline fallback (8), Mel never calls
+   check (10) and the bait board's BetOnline fallback (8), Bell never calls
    The Odds API. It reads the lines (Bovada
    since 2026-10-27; older text here calls them BetOnline) from the
    `nfl_games` / `nba_games` tabs of telegram-channel-forwarder's intake
@@ -139,7 +139,7 @@ the next sync.
 
 ## Claude subscription auth
 
-Mel calls Claude through the same Claude subscription OAuth login as the
+Bell calls Claude through the same Claude subscription OAuth login as the
 receptionist's Opus agent, not with API billing:
 
 - The service runs as `receptionist-agent` with
@@ -150,19 +150,19 @@ receptionist's Opus agent, not with API billing:
   otherwise prefer them over the subscription.
 - Calls are text-only: `--tools ""`, `--strict-mcp-config`,
   `--no-session-persistence`, and no permission bypass.
-- If the login expires, Mel replies that Claude needs re-authentication. Run
+- If the login expires, Bell replies that Claude needs re-authentication. Run
   `/reauth` on the watchdog bot, the same as for the receptionist. Failed reviews
   retry automatically later.
 
 6. **Opinions (`/games`).** Lists all of today's and tomorrow's (ET) NFL and
    NBA games with the BetOnline spread and total. Tapping a game sends Claude
    the current and opening lines, everything you said about the game, your
-   record, flip history, bias flags, and recent review lessons. Mel replies
+   record, flip history, bias flags, and recent review lessons. Bell replies
    with a critique of your view and its own call (play with the worst line
    worth taking, or pass), a confidence, and what would change it. Claude
    has no news or injury feed. It also sees the last three days of learnings
    (summary, what didn't work, rules to try).
-7. **Daily learnings (silent).** At 9:00 ET each morning Mel studies the
+7. **Daily learnings (silent).** At 9:00 ET each morning Bell studies the
    previous ET day: every game you talked about (picks, leans, passes, and
    context notes), the full transcripts, the BetOnline line and spread you
    got, your own number, the closing line, the final score with each side's
@@ -211,15 +211,15 @@ receptionist's Opus agent, not with API billing:
    game's sides again at the current number. A text or voice reply
    to the confirmation or the reason prompt is saved as the reason (voice is
    transcribed, and the audio is deleted). It never becomes a parsed note.
-   A baited game's board button becomes **🔄 Latest line**: Mel shows
+   A baited game's board button becomes **🔄 Latest line**: Bell shows
    whether the number moved since your last tap and offers both sides again
    at the current number ("taking the bait" again is a new row with its own
    line) or **🙅 Not tempted anymore**, which is graded as the side you
-   dropped. Bait closes at tip. Mel also checks each baited game's line on a
+   dropped. Bait closes at tip. Bell also checks each baited game's line on a
    schedule: every 3 hours until 4 hours before tip (…10h, 7h), then 4h, 3h,
    2h, 1h, and 15 minutes before tip. When the side's spread has moved at
    least a full point from the last number you saw (your last tap, or the
-   last alert), Mel sends the same Latest line prompt unasked. Smaller moves
+   last alert), Bell sends the same Latest line prompt unasked. Smaller moves
    and juice changes stay quiet, and a new tap resets the baseline.
    **Quiet hours, 11 PM–9 AM Pacific:** no bait messages at all (line
    alerts, 👥 Picks updates, ⚖️ book divergences); checks keep running
@@ -228,13 +228,13 @@ receptionist's Opus agent, not with API billing:
    overnight path from the forwarder's line snapshots (`overnight -5.5 → -6
    → -7`), the current number and that game's 🎣/🙅 buttons, plus Trapp &
    Cowboy picks that arrived overnight. It is sent once a day (marker
-   `bait-morning.json` in the state dir) and skipped when Mel restarts more
+   `bait-morning.json` in the state dir) and skipped when Bell restarts more
    than 3 hours after 9 AM. Tapping one game's button removes only that
    game's buttons from a message. Unprompted bait messages (line alerts,
    the catch-up, 👥 picker updates, ⚖️ divergences) are recorded as sent
    before sending and never retried: Telegram can deliver a message and
-   still time out the reply, which once repeated one alert six times. Mel's
-   Telegram timeouts are 30 s instead of the library's 5 s. After tip Mel saves the closing
+   still time out the reply, which once repeated one alert six times. Bell's
+   Telegram timeouts are 30 s instead of the library's 5 s. After tip Bell saves the closing
    number for the side, and ESPN grades it. `/baitstats` shows records for
    first looks vs. re-takes (better number, chased a worse number, switched
    sides), favorite/underdog by spread size, home/away, whether the market
@@ -256,13 +256,13 @@ receptionist's Opus agent, not with API billing:
    message ends with where each one stands on that game (🤝 same side,
    ⚔️ opposite side, ➖ no side pick with their total if any, ⏳ that day's show
    isn't parsed yet). When their picks on a baited game arrive or change
-   before tip, Mel sends one 👥 Picks update. `/baitstats` adds "vs Trapp &
+   before tip, Bell sends one 👥 Picks update. `/baitstats` adds "vs Trapp &
    Cowboy": your final position per game (its last bait row, when it's a
    take) graded by where each stood, and whether both were with you, both
    against you, or split.
 
 10. **BetOnline vs Bovada and Hard Rock (1h before tip).** With the bait
-    board's BetOnline fallback (8), Mel's only Odds API use, testing whether BetOnline points at the winning side when it
+    board's BetOnline fallback (8), Bell's only Odds API use, testing whether BetOnline points at the winning side when it
     disagrees with recreational books. 60 minutes before every NBA tip, one
     call (`bookmakers=betonlineag,bovada,hardrockbet`, spreads only: 1
     credit, and a call that returns no games is free) snapshots all three
@@ -274,7 +274,7 @@ receptionist's Opus agent, not with API billing:
     it doesn't count, and neither does a game where the two books disagree
     about which way BetOnline leans. BetOnline's side is the one it prices
     more expensively. Every game is recorded and graded at the softer number
-    (the one you could bet) and at BetOnline's. Mel only messages (⚖️) when a
+    (the one you could bet) and at BetOnline's. Bell only messages (⚖️) when a
     baited game diverges. `/baitstats` adds the record of BetOnline's side and
     of your bait with or against it. The key is the forwarder guesser's
     `ODDS_API_KEY`, which the installer copies into
@@ -282,7 +282,7 @@ receptionist's Opus agent, not with API billing:
 
 ## Bot commands
 
-- `/games` - today's and tomorrow's games; tap one for Mel's opinion
+- `/games` - today's and tomorrow's games; tap one for Bell's opinion
 - `/recent` - the 10 newest picks and leans with status
 - `/stats` - all decisions (bets and leans), then bets only: record, Brier
   calibration, process score, CLV, and top bias flags
@@ -302,7 +302,7 @@ receptionist's Opus agent, not with API billing:
 
 ## Setup
 
-1. In BotFather, create `@decision_helpers_bot`, then `/setname` → `Mel`.
+1. In BotFather, create `@decision_helpers_bot`, then `/setname` → `Bell`.
 2. Install or update (from the receptionist host):
 
    ```bash

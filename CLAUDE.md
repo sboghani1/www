@@ -76,16 +76,16 @@ systemd-run --unit=telegram-clipboard-install-$(date +%s) --collect --wait --pip
 
 Use `clipboard-send` only after the user approves the exact outbound content.
 
-## Mel decision helper
+## Bell decision helper
 
-The private `@decision_helpers_bot` ("Mel") application lives in
+The private `@decision_helpers_bot` ("Bell") application lives in
 `apps/decision-helper-bot`. It transcribes NFL/NBA pick voice notes locally
 with faster-whisper, extracts and reviews picks through text-only Claude Code
 calls on the receptionist-agent subscription login, and grades them with ESPN.
 Input notes get a confirmation only. Reviews are stored silently. `/games`
-gives Mel's opinion on a selected game.
+gives Bell's opinion on a selected game.
 Lines are read from telegram-channel-forwarder's `nfl_games` / `nba_games`
-Sheet tabs (Bovada since 2026-10-27). Mel's only Odds API uses are a
+Sheet tabs (Bovada since 2026-10-27). Bell's only Odds API uses are a
 BetOnline/Bovada/Hard Rock snapshot 60 minutes before each NBA tip and a
 BetOnline fallback for bait-board games Bovada hasn't posted (read at midnight,
 3 PM and 8 PM Pacific)

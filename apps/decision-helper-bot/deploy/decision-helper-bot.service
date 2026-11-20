@@ -1,5 +1,5 @@
 [Unit]
-Description=Mel decision helper Telegram bot (@decision_helpers_bot)
+Description=Bell decision helper Telegram bot (@decision_helpers_bot)
 After=network-online.target
 Wants=network-online.target
 

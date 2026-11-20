@@ -1,5 +1,5 @@
 #!/bin/bash
-# Write Mel's env file (prompts for the @decision_helpers_bot token on first run).
+# Write Bell's env file (prompts for the @decision_helpers_bot token on first run).
 set -euo pipefail
 umask 077
 
@@ -9,7 +9,7 @@ if [[ "$EUID" -ne 0 ]]; then
 fi
 
 gateway_env="/home/receptionist2/.config/receptionist2/gateway.env"
-# Lines come from telegram-channel-forwarder's intake workbook (Bovada); Mel
+# Lines come from telegram-channel-forwarder's intake workbook (Bovada); Bell
 # reads them with the forwarder's Google service account. Its only Odds API
 # use is the 1h-before-tip book check, with the guesser's key.
 forwarder_env="/home/forwarder/app/.env"
@@ -71,4 +71,4 @@ systemctl enable decision-helper-bot.service
 systemctl restart decision-helper-bot.service
 sleep 5
 systemctl is-active --quiet decision-helper-bot.service
-echo "@decision_helpers_bot (Mel) configured and active."
+echo "@decision_helpers_bot (Bell) configured and active."

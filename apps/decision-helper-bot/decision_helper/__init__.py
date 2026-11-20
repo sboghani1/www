@@ -1,1 +1,1 @@
-"""Mel, the private Telegram decision helper."""
+"""Bell, the private Telegram decision helper."""

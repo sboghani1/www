@@ -111,7 +111,7 @@ class Config:
 
     @property
     def picker_picks_path(self) -> Path:
-        """Written by the nba-channel-intake timer; Mel only reads it."""
+        """Written by the nba-channel-intake timer; Bell only reads it."""
         return self.state_dir / "picker-picks.json"
 
     @property

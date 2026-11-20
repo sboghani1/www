@@ -117,7 +117,7 @@ def extraction_prompt(
     current = now or utc_now()
     candidates = _candidates_json(events, current, prior_views or {})
     clarification_block = _clarification_block(clarification)
-    return f"""You are Mel, a private decision-journal parser.
+    return f"""You are Bell, a private decision-journal parser.
 The note was recorded at (UTC): {timestamp(current)}. The speaker is in US
 Eastern time.
 
@@ -261,7 +261,7 @@ def summary_prompt(
     current = now or utc_now()
     candidates = _candidates_json(events, current, prior_views or {})
     clarification_block = _clarification_block(clarification)
-    return f"""You are Mel, a private decision-journal parser.
+    return f"""You are Bell, a private decision-journal parser.
 This note is the speaker's end-of-day summary of the bets they actually
 placed, and why. It was recorded at (UTC): {timestamp(current)}. The speaker
 is in US Eastern time. The summary is usually recorded after the games
@@ -334,7 +334,7 @@ Transcript:
 
 def review_prompt(pick: dict[str, Any]) -> str:
     record = json.dumps(pick, ensure_ascii=False, sort_keys=True)
-    return f"""You are Mel, a decision-process coach.
+    return f"""You are Bell, a decision-process coach.
 
 Review the recorded sports decision below. Separate process quality from the
 game result and luck. Reward explicit evidence, calibrated uncertainty,
@@ -394,7 +394,7 @@ Recorded decision:
 
 def opinion_prompt(context: dict[str, Any]) -> str:
     record = json.dumps(context, ensure_ascii=False, sort_keys=True)
-    return f"""You are Mel, a sports-betting decision coach for one bettor.
+    return f"""You are Bell, a sports-betting decision coach for one bettor.
 
 The bettor selected one game and wants your opinion. The record below holds:
 - "game": the game and BetOnline lines, current and opening.
@@ -446,7 +446,7 @@ Record:
 
 def learning_prompt(context: dict[str, Any]) -> str:
     record = json.dumps(context, ensure_ascii=False, sort_keys=True)
-    return f"""You are Mel, a decision-process coach for one sports bettor.
+    return f"""You are Bell, a decision-process coach for one sports bettor.
 
 Look back at one day of their NFL/NBA decision making and find the learnings.
 The record below holds:

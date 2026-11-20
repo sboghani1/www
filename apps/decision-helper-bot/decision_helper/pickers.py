@@ -3,8 +3,8 @@
 The ``nba-channel-intake`` timer (nfl-audio-parser) parses the Doc's Sports
 daily NBA show into the forwarder's opinion store and exports Craig Trapp's
 and Indian Cowboy's latest pregame full-game sides and totals, plus the dates
-each picker's shows cover, to ``picker-picks.json`` in Mel's state directory.
-Mel only reads that file. For a baited game each picker is on the same side,
+each picker's shows cover, to ``picker-picks.json`` in Bell's state directory.
+Bell only reads that file. For a baited game each picker is on the same side,
 the opposite side, has no side pick (the show covered the date but not this
 side), or isn't in yet (no parsed show for that date).
 """
@@ -29,7 +29,7 @@ SAME, OPPOSITE, NO_PICK, NOT_IN = "same", "opposite", "no_pick", "not_in"
 
 
 def espn_id(event_id: str) -> str:
-    """Mel's ``espn-401909955`` is the opinion store's ``401909955``."""
+    """Bell's ``espn-401909955`` is the opinion store's ``401909955``."""
     return event_id.removeprefix("espn-")
 
 

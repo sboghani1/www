@@ -5,9 +5,9 @@ recreational book's at similar juice, BetOnline's side (the one it prices
 more expensively) wins more often. Every NBA game gets one three-book
 snapshot from The Odds API an hour before tip (spreads only: one credit per
 call, and a call that returns no games is free). Every snapshot is graded;
-Mel only messages about divergences on games you baited.
+Bell only messages about divergences on games you baited.
 
-This is the one place Mel spends Odds API credits. Everything else reads the
+This is the one place Bell spends Odds API credits. Everything else reads the
 forwarder's Bovada sheet.
 """
 

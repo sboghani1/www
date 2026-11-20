@@ -54,7 +54,7 @@ def bait_bot(tmp_path: Path, now: datetime):
 
 
 class Chat:
-    """Mel's outgoing messages, each with an id replies can point to."""
+    """Bell's outgoing messages, each with an id replies can point to."""
 
     def __init__(self) -> None:
         self.sent: list[SimpleNamespace] = []

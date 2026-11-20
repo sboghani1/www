@@ -12,7 +12,7 @@ forwarder's opinion store. Members-only videos are skipped.
 Like the rest of this package it never stores video URLs, identifiers, or
 titles: run state is keyed by the irreversible source reference hash.
 ``export`` writes the configured pickers' latest pregame picks and covered
-dates to a JSON file for Mel's bait tracker.
+dates to a JSON file for Bell's bait tracker.
 """
 
 from __future__ import annotations

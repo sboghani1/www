@@ -169,7 +169,7 @@ def decode_line(value: str) -> float | None:
 
 
 class BaitStore:
-    """Bait rows in Mel's decisions database."""
+    """Bait rows in Bell's decisions database."""
 
     def __init__(self, store: DecisionStore) -> None:
         self.store = store
@@ -228,7 +228,7 @@ class BaitStore:
                     alerted_at TEXT
                 );
 
-                -- Mel's messages a reason can be replied to.
+                -- Bell's messages a reason can be replied to.
                 CREATE TABLE IF NOT EXISTS bait_messages (
                     telegram_message_id INTEGER PRIMARY KEY,
                     bait_id TEXT NOT NULL REFERENCES baits(id)

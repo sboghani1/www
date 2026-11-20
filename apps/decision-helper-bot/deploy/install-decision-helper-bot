@@ -1,5 +1,5 @@
 #!/bin/bash
-# Install or update Mel (@decision_helpers_bot). Run as root, normally through
+# Install or update Bell (@decision_helpers_bot). Run as root, normally through
 # a transient unit:
 #   systemd-run --unit=decision-helper-install-$(date +%s) --collect --wait --pipe \
 #     /bin/bash /home/receptionist/repos/www/apps/decision-helper-bot/deploy/install-decision-helper-bot
@@ -64,7 +64,7 @@ if status.get("loggedIn") is not True:
     sys.exit("Claude is not logged in for receptionist-agent. Use /reauth on the watchdog bot.")
 method = str(status.get("authMethod", "")).lower()
 if "api" in method and "key" in method:
-    sys.exit(f"Claude is using {method}; Mel requires the Claude subscription login.")
+    sys.exit(f"Claude is using {method}; Bell requires the Claude subscription login.")
 print(f"Claude subscription login OK ({status.get('authMethod', 'unknown')}).")
 PY
 then
@@ -119,7 +119,7 @@ from decision_helper.claude import ClaudeClient
 async def main() -> None:
     client = ClaudeClient(sys.argv[1], sys.argv[3], "low", 180, Path(sys.argv[2]))
     payload = await client._run(
-        "You are the installer health check for Mel, a private Telegram bot that "
+        "You are the installer health check for Bell, a private Telegram bot that "
         "uses Claude to parse sports-pick voice notes. The installer only needs "
         "to confirm this Claude account responds. Reply with the JSON object "
         '{"ok": true} and no other text.'
@@ -165,7 +165,7 @@ PY
 chown receptionist-agent:receptionist-agent "$parser_env"
 chmod 0600 "$parser_env"
 
-# The 1h-before-tip BetOnline/Bovada/Hard Rock check is Mel's only Odds API
+# The 1h-before-tip BetOnline/Bovada/Hard Rock check is Bell's only Odds API
 # use; it shares the forwarder guesser's key. Copy it without printing it.
 if [[ -s "$env_file" ]]; then
     "$python_binary" - /home/forwarder/app/.env.guesser "$env_file" <<'PY'
@@ -209,7 +209,7 @@ for unit in nba-channel-intake.service nba-channel-intake.timer; do
 done
 systemctl daemon-reload
 systemctl enable --now nba-channel-intake.timer
-# Write the picker export now so Mel has it before the first timer run.
+# Write the picker export now so Bell has it before the first timer run.
 as_agent /bin/bash -c 'set -a; . /home/receptionist-agent/.config/nfl-audio-parser/env; set +a
     exec /opt/decision-helper-bot/current/.venv/bin/nba-channel-intake export' ||
     echo "NBA picker export didn't run now (intake busy?); the timer writes it." >&2
@@ -229,7 +229,7 @@ fi
 current_release="$(readlink -f "$install_root/current")"
 find "$releases" -mindepth 1 -maxdepth 1 -type d -mtime +30 \
     ! -path "$current_release" -exec rm -rf -- {} +
-echo "Installed Mel at $current_release."
+echo "Installed Bell at $current_release."
 if [[ ! -s "$env_file" ]]; then
     echo "Run /usr/local/sbin/configure-decision-helper-bot to set the token."
 fi

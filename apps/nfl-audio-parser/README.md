@@ -237,8 +237,8 @@ but Spotify downloading/transcription is intentionally not implemented yet.
 ## Daily NBA channel intake
 
 `nba-channel-intake` (`nfl_audio_parser/nba_channel.py`) ingests daily NBA
-picks shows into the opinion store. It is installed into Mel's environment
-and scheduled by Mel's installer as `nba-channel-intake.timer` (see
+picks shows into the opinion store. It is installed into Bell's environment
+and scheduled by Bell's installer as `nba-channel-intake.timer` (see
 `apps/decision-helper-bot`), running as `receptionist-agent`. Its only
 channel today is Doc's Sports with Craig Trapp and Indian Cowboy (`CHANNELS`).
 

@@ -73,12 +73,12 @@ image paths for the agent to open with Read. Images sent together as an album
 become a single run. Maintenance removes images after 14 days.
 
 Voice notes, audio files, and audio documents (up to 20 MB and an hour) work
-in the private chat and in every topic, as with Mel. The gateway saves them
+in the private chat and in every topic, as with Bell. The gateway saves them
 under `RECEPTIONIST2_STATE_DIR/voice` and transcribes them locally with
 faster-whisper (`RECEPTIONIST2_WHISPER_MODEL`, default `small.en`, CPU int8;
 the model is cached in `RECEPTIONIST2_STATE_DIR/whisper-models`) in a
 short-lived subprocess, one note at a time, so the model is not kept in
-memory. Like Mel, it first asks **📝 Transcribe** or **🗑 Trash**; nothing is
+memory. Like Bell, it first asks **📝 Transcribe** or **🗑 Trash**; nothing is
 transcribed until you choose. The transcript then arrives as a new message
 (so Telegram notifies you) in a tap-to-copy block with **▶️ Run** and
 **🗑 Trash**: Run queues it as that chat's next prompt; to edit it, tap to

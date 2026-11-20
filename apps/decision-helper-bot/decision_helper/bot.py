@@ -117,7 +117,7 @@ AUDIO_SUFFIXES = {
     "audio/x-wav": ".wav",
 }
 HELP_TEXT = (
-    "I'm Mel. Send a voice note (or text) with your NFL/NBA thoughts — "
+    "I'm Bell. Send a voice note (or text) with your NFL/NBA thoughts — "
     "winners, spreads, and totals. For each voice note I ask whether to "
     "parse it or trash it. I just confirm what I recorded. Send as many notes "
     "per game as you like: your latest side is your decision, earlier ones "
@@ -417,7 +417,7 @@ def format_opinion(event: MarketEvent, opinion: Any) -> str:
         "",
         f"🔍 Your view: {opinion.critique}",
         "",
-        f"💡 Mel's call{confidence}: {opinion.recommendation}",
+        f"💡 Bell's call{confidence}: {opinion.recommendation}",
     ]
     if opinion.watch_for:
         lines.append(f"👀 Watch for: {opinion.watch_for}")
@@ -471,7 +471,7 @@ def format_stats(
     flips: dict[str, Any] | None = None,
 ) -> str:
     lines = [
-        "📊 Mel decision report",
+        "📊 Bell decision report",
         *_stats_section("All decisions (bets and leans)", stats),
     ]
     if bets is not None and bets["total"]:
@@ -670,7 +670,7 @@ class DecisionBot:
                 BotCommand("void", "Remove a mis-parsed open pick"),
                 BotCommand("bait", "Today's NBA lines; mark the tempting side"),
                 BotCommand("baitstats", "Which kinds of bait win and lose"),
-                BotCommand("help", "How Mel works"),
+                BotCommand("help", "How Bell works"),
             ]
         )
         assert application.job_queue is not None

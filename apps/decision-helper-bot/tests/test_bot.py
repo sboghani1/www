@@ -965,7 +965,7 @@ def test_games_lists_today_and_tomorrow_and_gives_opinion(tmp_path: Path) -> Non
     assert "side_changes" in context["track_record"]
     opinion = thinking.edit_text.await_args.args[0]
     assert "🔍 Your view: You never priced it." in opinion
-    assert "💡 Mel's call (55%): Bills +2.5 or better." in opinion
+    assert "💡 Bell's call (55%): Bills +2.5 or better." in opinion
 
 
 def test_remove_button_deletes_note_even_after_grading(tmp_path: Path) -> None:

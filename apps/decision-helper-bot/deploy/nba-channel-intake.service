@@ -1,5 +1,5 @@
 [Unit]
-Description=Parse Craig Trapp & Indian Cowboy NBA picks shows for Mel's bait tracker
+Description=Parse Craig Trapp & Indian Cowboy NBA picks shows for Bell's bait tracker
 After=network-online.target
 Wants=network-online.target
 
