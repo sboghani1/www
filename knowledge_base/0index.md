@@ -47,5 +47,20 @@ Format: `file` — what it covers. *Connections:* related topics.
   reproduce a unit's sandbox. *Connections:* receptionist2.md,
   vps-operations.md.
 - `vps-operations.md` — The production VPS: service accounts, checkouts,
-  safe deploys, pushing to GitHub, editing env files. *Connections:*
-  receptionist2.md, systemd-sandboxing.md, claude-code-auth.md.
+  safe deploys, pushing to GitHub, editing env files, rendering images with
+  headless Chrome. *Connections:* receptionist2.md, systemd-sandboxing.md,
+  claude-code-auth.md, sports-data-sources.md.
+- `sports-data-sources.md` — NFL schedules, scores, lines and starters: ESPN
+  scoreboard and `pickcenter` (open/close/live), box-score starting QBs, the
+  forwarder's `nfl_line_snapshots` tab and its cadence, book differences.
+  *Connections:* youtube-pick-extraction.md, capper-backtesting.md,
+  vps-operations.md.
+- `youtube-pick-extraction.md` — Turning a YouTube picks show into graded
+  picks: listing, proxied download, AssemblyAI speaker labels, subagent
+  extraction with verbatim quotes, cross-checks, grading gotchas.
+  *Connections:* sports-data-sources.md, capper-backtesting.md,
+  vps-operations.md.
+- `capper-backtesting.md` — Testing a handicapper's patterns honestly:
+  closing-line grading, walk-forward, season halves, shuffle tests,
+  second-book replication, multiple testing. *Connections:*
+  sports-data-sources.md, youtube-pick-extraction.md.

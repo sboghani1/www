@@ -66,6 +66,11 @@ so they never overwrite a delivered answer.
   arrives as a new message (edits do not notify) in a tap-to-copy block with
   Run/Trash. Bots cannot prefill the user's message box with long text, so
   editing means copy, paste, edit, send.
+- **Outbound images and files**: a run's reply is text only. Charts and
+  documents reach the user through `clipboard-send` (a photo, or
+  `--document`), only after the user approves the exact content. (No reply
+  attachment path exists in `apps/receptionist2/README.md`; checked
+  2026-11-23.)
 
 ## Tombstones
 

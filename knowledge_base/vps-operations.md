@@ -1,6 +1,6 @@
 # Production VPS operations
 
-Verified: 2026-11-09.
+Verified: 2026-11-23.
 
 One Ubuntu VPS (clock America/New_York) runs the Telegram bots and the
 pluribus forwarder. Connection details are kept outside this public repo.
@@ -37,6 +37,25 @@ and `/usr/local/libexec/receptionist-deploy-executor` are installed by
 `install-receptionist2` on every run. Change them in the repository; edits
 made in place are overwritten. (Before 2026-11-09 they were refreshed only
 with `--workspace`, which let them silently go stale.)
+
+## Rendering images (charts, cards)
+
+No Python plotting or imaging libraries (matplotlib, PIL) are installed in
+the agent environments; render HTML with headless Chrome instead. As
+`receptionist-agent` it needs a writable `HOME`, its own profile directory
+and `--disable-dev-shm-usage`, otherwise it fails with "Failed to create
+headless user data directory container" or crashes with SIGTRAP (observed
+2026-11-14):
+
+```bash
+HOME=/tmp/render google-chrome --headless=new --no-sandbox --disable-gpu \
+  --disable-dev-shm-usage --user-data-dir=/tmp/render/chrome \
+  --hide-scrollbars --force-device-scale-factor=2 --window-size=540,1400 \
+  --screenshot=/path/out.png file:///path/page.html
+```
+
+The window height is the image height: size it to the content and check the
+PNG for cut-offs. Fonts available include Lato, DejaVu and Noto Color Emoji.
 
 ## Legacy receptionist
 
