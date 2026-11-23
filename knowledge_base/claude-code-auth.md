@@ -1,7 +1,7 @@
 # Claude Code authentication for headless services
 
-Verified: 2026-11-09 (Claude Code 2.1.302 on the VPS; Receptionist2 `/reauth`
-outage and fix).
+Verified: 2026-11-23 (Claude Code 2.1.302 on the VPS; Receptionist2 `/reauth`
+outage and fix; Bell installer and NBA intake).
 
 ## Two credential kinds
 
@@ -16,6 +16,17 @@ outage and fix).
   by the agent runner and by `decision-helper-bot.service`
   (`EnvironmentFile=`); services read it only at start, so restart them after
   renewing.
+
+## Everything that calls Claude must load `auth.env`
+
+Once the interactive login has expired, only `CLAUDE_CODE_OAUTH_TOKEN` from
+`auth.env` works. Units get it through `EnvironmentFile=`, but installers and
+hand-run commands do not: Bell's installer check (`claude auth status`)
+reported "not logged in" while the service worked, and a hand-run
+`nba-channel-intake` failed with "OAuth session expired". Source the file in
+the target account's shell (`set -a; . ~/.claude/auth.env; set +a`) so the
+token travels in the environment, never argv; Bell's installer does this in
+its `as_agent` wrapper.
 
 ## `setup-token` quirks
 

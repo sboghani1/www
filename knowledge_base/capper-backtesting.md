@@ -12,6 +12,9 @@ most patterns that looked strong did not survive these checks.
   days early and sometimes quote an off-market number, which inflates the
   record.
 - Separate picks from leans, and sides from totals and props.
+- Count repeated picks on one game once per game as well as per pick:
+  re-takes share the game's result, so per-pick records overstate the
+  sample (see `bell-bait-tracker.md`).
 
 ## Test like a forecaster
 

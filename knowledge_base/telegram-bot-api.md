@@ -1,7 +1,7 @@
 # Telegram Bot API behaviour that surprises
 
-Verified: 2026-11-09 (python-telegram-bot 22.8; Receptionist2 and its
-watchdog in production).
+Verified: 2026-11-23 (python-telegram-bot 22.8; Receptionist2, its
+watchdog and Bell in production).
 
 ## Updates
 
@@ -17,6 +17,30 @@ watchdog in production).
   topic it created) arrive with the bot as `effective_user`.
 - To read updates while a bot is stopped, call `getUpdates`; acknowledge them
   with `offset=<last update_id + 1>` so the bot does not replay them.
+
+## Sending
+
+- **A send can be delivered and still raise `TimedOut`** (PTB defaults to
+  5-second timeouts; Telegram also answered `Bad Gateway` that day). A job
+  that resent on error posted one alert six times. For unprompted messages,
+  record them as sent first and never retry; raise timeouts with
+  `Application.builder().connect_timeout(15).read_timeout(30).write_timeout(30)`.
+- Re-editing a message with identical text and markup raises `BadRequest`
+  "message is not modified"; catch it.
+- `setMyName` changes a bot's display name (rate-limited, call once); the
+  username only changes in BotFather.
+
+## Removing a bot's own messages
+
+- Bots cannot read chat history. Message ids in a private chat increase by
+  one per message from either side.
+- To confirm a message is an exact copy before deleting it, call
+  `edit_message_reply_markup` with the identical keyboard: Telegram answers
+  "message is not modified" only for a match, and changes nothing. Then
+  `deleteMessage`. Stop at the first id that does not match, since a
+  successful edit would overwrite another message's buttons.
+- Several items in one message can each have keyboard rows; on a tap, edit
+  the markup to drop only that item's rows.
 
 ## Forum supergroups (topics)
 
@@ -51,3 +75,5 @@ The Telegram macOS app exposes almost no accessibility tree and draws menus
 outside capturable windows, and it does not accept synthesized background
 typing. Do Telegram setup through the Bot API, or ask the user to do the
 in-app steps.
+
+*Connections:* receptionist2.md, bell-bait-tracker.md.

@@ -65,6 +65,25 @@ Built for Doc's Sports NFL shows; the same steps fit any talk-format show.
   `source_end_seconds` with the duration in the channel listing. A
   truncated download once dropped seven of a show's eleven picks; the
   intake now rejects audio under 95% of the listed length.
+- **Diagnose a short pick list before guessing:** compare transcript length
+  with the video first. A missing-picks show was blamed on speaker mapping
+  until the stored range turned out to be the last 177 of 502 seconds. On
+  the full audio, AssemblyAI's speaker labels settled an attribution that
+  guessing from the transcript's flow got wrong.
+- **Reprocess one show:** back up `nba-channel-state.json` and remove the
+  show's entry (find it by `slate_date`), then run
+  `nba-channel-intake run --since D --until D --dry-run` (then without
+  `--dry-run`) with both `~/.claude/auth.env` and
+  `~/.config/nfl-audio-parser/env` sourced. Without `auth.env` the Claude
+  step fails with "OAuth session expired". Then run
+  `nba-channel-intake export`.
+- **Store revisions:** a new revision supersedes an old one only with the
+  same content, prediction window and source range. Retire a stale range
+  by ingesting an empty revision (same URL, publish time, window and range;
+  `events` and `observations` empty) with
+  `nfl-audio-parser-store opinions-ingest --source-url <url> --input -` run
+  as `forwarder`, piping the JSON on stdin: `forwarder` cannot read files in
+  the agent's private temp directories.
 - The export keeps **one side per game per picker**: when a host gave an
   official spread plus a moneyline "sprinkle", the export kept the
   moneyline lean and dropped the spread.
@@ -85,4 +104,5 @@ Built for Doc's Sports NFL shows; the same steps fit any talk-format show.
 
 *Connections:* sports-data-sources.md (scores and lines for grading),
 capper-backtesting.md (what to do with the graded picks), vps-operations.md,
-picker_craig.md, picker_indiancowboy.md, nba-picker-tracking.md.
+picker_craig.md, picker_indiancowboy.md, nba-picker-tracking.md,
+bell-bait-tracker.md (shows the export next to the user's bait).

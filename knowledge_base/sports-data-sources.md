@@ -63,10 +63,42 @@ more on the same game (one had a home team -1 while the other had it +1.5).
 - The book changed from BetOnline to Bovada on 2026-10-27, so movement
   across that date mixes books.
 - Read it as the `forwarder` account with that account's own `.env` (its
-  `get_gspread_client`). The workspace service account in the agent
-  environment gets HTTP 403 on that Sheet (observed 2026-11-14).
+  `get_gspread_client`), or from the agent account with the workspace
+  `GOOGLE_CREDENTIALS` (base64 JSON) and `NFL_INTAKE_SHEET_ID` in the
+  `google-sheet-check` venv: on 2026-11-23 that read `nfl_line_snapshots`,
+  `nba_line_snapshots` and `nba_games`. An HTTP 403 was seen on 2026-11-14,
+  cause unknown; fall back to the `forwarder` account if it recurs.
 - `telegram-channel-forwarder/data/nfl_lines_history.csv` and
   `nfl_open_close.json` cover past seasons only, not the current one.
+
+## Forwarder NBA tabs
+
+- `nba_games`: one row per game with packed `latest_*` and `opening_*`
+  cells (`spread,price,moneyline|h1…|q1…` per side, `total,over,under`).
+  `nba_line_snapshots` gets a row only when a game's line changes, so the
+  last row before a time is the line at that time.
+- The NBA fetcher runs every 5 minutes (`nba-lines-fetcher.timer`,
+  `*:03/5` UTC) from Bovada since 2026-10-27 (`NBA_LINES_SOURCE`).
+- A game Bovada never posted has **no row**. A game Bovada posted then pulled
+  keeps its row with `nodata` cells and drops out of the fetcher's game list
+  until re-posted. Pulls lined up within minutes of ESPN injury updates and
+  came back with moves of up to 4 points, so a pulled line means news.
+- Bovada posted next-day NBA lines around 8–10:30 PM Pacific; BetOnline's
+  appeared between 3 PM and midnight, sometimes before Bovada's (observed
+  2026-11-12 to 11-18).
+
+## The Odds API (BetOnline, Hard Rock)
+
+- Paid; the forwarder's line fetchers no longer use it. A working key is in
+  the forwarder's guesser env; another env file there holds a dead key (HTTP
+  401). Never print keys.
+- `GET /v4/sports` is free and its response headers report
+  `x-requests-remaining`.
+- `/v4/sports/basketball_nba/odds?bookmakers=betonlineag,bovada,hardrockbet&markets=spreads`
+  costs 1 credit per market for up to 10 books in one call; a call that
+  returns no events costs 0. Use `commenceTimeFrom/To` to limit the window.
+- Its `commence_time` for NBA games is about 10 minutes after ESPN's tip
+  time, so match games by teams and a time window, not exact time.
 
 ## Book differences
 
@@ -76,4 +108,5 @@ hold against one book's close and not another's are probably noise; see
 `capper-backtesting.md`.
 
 *Connections:* youtube-pick-extraction.md, capper-backtesting.md,
-vps-operations.md (the `forwarder` account), nba-picker-tracking.md.
+vps-operations.md (the `forwarder` account), nba-picker-tracking.md,
+bell-bait-tracker.md (uses the NBA tabs and the Odds API).

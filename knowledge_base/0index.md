@@ -37,11 +37,14 @@ Format: `file` — what it covers. *Connections:* related topics.
   restrictions), vps-operations.md (where it runs).
 - `claude-code-auth.md` — Claude Code subscription auth for headless
   services: `claude setup-token`, refresh-token hard expiry, `auth.env`,
-  verifying which account a token belongs to. *Connections:* receptionist2.md
-  (`/reauth`), vps-operations.md.
+  verifying which account a token belongs to, loading `auth.env` in
+  installers and hand-run commands. *Connections:* receptionist2.md
+  (`/reauth`), vps-operations.md, bell-bait-tracker.md.
 - `telegram-bot-api.md` — Telegram Bot API behaviour that surprises:
-  remembered `allowed_updates`, forum topics, pins, edits, menus, desktop
-  client automation limits. *Connections:* receptionist2.md.
+  remembered `allowed_updates`, sends that time out after delivery, finding
+  and deleting a bot's own messages, forum topics, pins, edits, menus,
+  desktop client automation limits. *Connections:* receptionist2.md,
+  bell-bait-tracker.md.
 - `systemd-sandboxing.md` — How systemd hardening options break ordinary
   code (`RestrictSUIDSGID`, `ProtectHome`, `ProtectSystem`) and how to
   reproduce a unit's sandbox. *Connections:* receptionist2.md,
@@ -52,10 +55,11 @@ Format: `file` — what it covers. *Connections:* related topics.
   claude-code-auth.md, sports-data-sources.md.
 - `sports-data-sources.md` — NFL and NBA schedules, scores, lines and
   starters: ESPN scoreboard, `pickcenter` (open/close/live), injuries and
-  box scores, Bovada's public feed, the forwarder's `nfl_line_snapshots` tab
-  and its cadence, book differences. *Connections:*
-  youtube-pick-extraction.md, capper-backtesting.md, vps-operations.md,
-  nba-picker-tracking.md.
+  box scores, Bovada's public feed, the forwarder's NFL and NBA line tabs
+  and their cadence, pulled vs unposted games, the Odds API (BetOnline,
+  Hard Rock), book differences. *Connections:* youtube-pick-extraction.md,
+  capper-backtesting.md, vps-operations.md, nba-picker-tracking.md,
+  bell-bait-tracker.md.
 - `youtube-pick-extraction.md` — Turning a YouTube picks show into graded
   picks: listing, proxied download, AssemblyAI speaker labels, subagent
   extraction with verbatim quotes, cross-checks, the automated NBA intake
@@ -77,6 +81,12 @@ Format: `file` — what it covers. *Connections:* related topics.
   why it is only a forward test and why it fails on NBA picks.
   *Connections:* picker_craig.md, youtube-pick-extraction.md,
   capper-backtesting.md, nba-picker-tracking.md.
+- `bell-bait-tracker.md` — Bell's NBA bait tracker underneath: tables in
+  `decisions.db`, when it messages (line checks, quiet hours, catch-up,
+  picker updates, three-book check), Bovada vs BetOnline vs pulled games,
+  operating it, and counting re-takes. *Connections:* nba-picker-tracking.md,
+  sports-data-sources.md, youtube-pick-extraction.md, telegram-bot-api.md,
+  claude-code-auth.md, capper-backtesting.md.
 - `nba-picker-tracking.md` — Day-to-day NBA tracking of the Doc's Sports
   hosts: where their parsed picks live, the `~/craig-ic-nba` grading and
   trend scripts, scoring a day's picks against current lines, and comparing

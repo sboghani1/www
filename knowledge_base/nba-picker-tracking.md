@@ -47,13 +47,16 @@ Copy the export to `~/craig-ic-nba/picks.json` first. Run with `python3 -I`.
 
 ## Comparing with the user's bait
 
-- Bell's bait positions are in `baits` in
-  `/var/lib/decision-helper-bot/decisions.db` (read with `?mode=ro`). A
-  game can have several rows; the highest `ordinal` is the current position
-  and can switch sides during the day.
+- How Bell stores bait (rows per tap, current position, book, passes) is in
+  `bell-bait-tracker.md`.
 - `decision_helper.pickers.picker_stats(baits, PickerFeed(path), tz)` (run
   with Bell's installed venv) gives the user's record with each host on the
   same side, the opposite side, or no side.
+- "Has the line moved since my bait?": take each game's highest-`ordinal`
+  row, compare its `line` with the game's `latest_*` cell in `nba_games`,
+  and read the path from `nba_line_snapshots` (rows only on change). Match
+  games by team nicknames and tip time: the tabs keep past games, so a name
+  match alone can pick an earlier meeting of the same teams.
 
 ## Answering well
 
@@ -65,4 +68,5 @@ Copy the export to `~/craig-ic-nba/picks.json` first. Run with `python3 -I`.
   a line move of two points or more.
 
 *Connections:* picker_craig.md, picker_indiancowboy.md,
-youtube-pick-extraction.md, sports-data-sources.md, capper-backtesting.md.
+youtube-pick-extraction.md, sports-data-sources.md, capper-backtesting.md,
+bell-bait-tracker.md.
