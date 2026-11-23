@@ -1,9 +1,9 @@
-# Sports data sources (NFL lines, results, starters)
+# Sports data sources (NFL and NBA lines, results, starters)
 
 Verified: 2026-11-23.
 
-Where NFL schedules, scores, betting lines and line history come from, and
-what surprises when using them. Book names matter: two books can disagree
+Where NFL and NBA schedules, scores, betting lines and line history come
+from, and what surprises when using them. Book names matter: two books can disagree
 about the same game, so any line-movement claim must name its book.
 
 ## ESPN public API (no key)
@@ -26,6 +26,30 @@ about the same game, so any line-movement claim must name its book.
   `boxscore.players[].statistics[]` with `name == "passing"`; the athlete
   with the most attempts (from `completions/passingAttempts`) is the
   starter. Useful for finding QB changes week to week.
+
+## ESPN NBA
+
+- Same API shape under `.../sports/basketball/nba/`: `scoreboard?dates=YYYYMMDD`
+  and `summary?event=<id>`.
+- Before tip-off the scoreboard's `odds[0].spread` is home-relative
+  (matched `odds[0].details` on all ten games checked on 2026-11-23, unlike
+  the NFL scoreboard). Once a game starts the scoreboard drops `odds`; read
+  the close from the summary's `pickcenter[0]` (provider "Draft Kings",
+  `spread` home-relative, `overUnder`).
+- The summary's `injuries[]` lists each player's status with a timestamp,
+  which usually explains a large same-day line move.
+- Box-score athletes carry `didNotPlay`, which settles picks conditional on
+  a player playing.
+
+## Bovada public feed
+
+Current pregame lines without a key:
+`https://www.bovada.lv/services/sports/event/v2/events/A/description/<sport>/<league>?marketFilterId=def&preMatchOnly=true&lang=en`
+(for example `basketball/nba`, `football/nfl`). Use
+`displayGroups[].markets[]` with `period.description == "Game"`; outcomes
+carry `price.handicap` and `price.american`. Request with a browser
+user-agent and compression. Bovada and DraftKings often differ by a point or
+more on the same game (one had a home team -1 while the other had it +1.5).
 
 ## Forwarder line snapshots (current season)
 
@@ -52,4 +76,4 @@ hold against one book's close and not another's are probably noise; see
 `capper-backtesting.md`.
 
 *Connections:* youtube-pick-extraction.md, capper-backtesting.md,
-vps-operations.md (the `forwarder` account).
+vps-operations.md (the `forwarder` account), nba-picker-tracking.md.

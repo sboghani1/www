@@ -50,25 +50,36 @@ Format: `file` — what it covers. *Connections:* related topics.
   safe deploys, pushing to GitHub, editing env files, rendering images with
   headless Chrome. *Connections:* receptionist2.md, systemd-sandboxing.md,
   claude-code-auth.md, sports-data-sources.md.
-- `sports-data-sources.md` — NFL schedules, scores, lines and starters: ESPN
-  scoreboard and `pickcenter` (open/close/live), box-score starting QBs, the
-  forwarder's `nfl_line_snapshots` tab and its cadence, book differences.
-  *Connections:* youtube-pick-extraction.md, capper-backtesting.md,
-  vps-operations.md.
+- `sports-data-sources.md` — NFL and NBA schedules, scores, lines and
+  starters: ESPN scoreboard, `pickcenter` (open/close/live), injuries and
+  box scores, Bovada's public feed, the forwarder's `nfl_line_snapshots` tab
+  and its cadence, book differences. *Connections:*
+  youtube-pick-extraction.md, capper-backtesting.md, vps-operations.md,
+  nba-picker-tracking.md.
 - `youtube-pick-extraction.md` — Turning a YouTube picks show into graded
   picks: listing, proxied download, AssemblyAI speaker labels, subagent
-  extraction with verbatim quotes, cross-checks, grading gotchas.
+  extraction with verbatim quotes, cross-checks, the automated NBA intake
+  and its export quirks, conditional picks, grading gotchas.
   *Connections:* sports-data-sources.md, capper-backtesting.md,
-  vps-operations.md.
+  vps-operations.md, nba-picker-tracking.md.
 - `capper-backtesting.md` — Testing a handicapper's patterns honestly:
   closing-line grading, walk-forward, season halves, shuffle tests,
-  second-book replication, multiple testing. *Connections:*
-  sports-data-sources.md, youtube-pick-extraction.md.
+  second-book replication, multiple testing, lessons from re-running it on
+  NBA picks. *Connections:* sports-data-sources.md,
+  youtube-pick-extraction.md, nba-picker-tracking.md.
 - `picker_craig.md` — Craig Trapp (Doc's Sports): shows he picks on, what we
-  tracked per pick and how, his graded record by show, window and situation,
-  and what held up (fade his 4 PM Sunday picks). *Connections:*
-  picker_indiancowboy.md, youtube-pick-extraction.md, capper-backtesting.md.
+  tracked per pick and how, his graded NFL and NBA records by show, window,
+  day and situation, and what held up (fade his 4 PM NFL Sunday picks; NBA
+  Sundays strong). *Connections:* picker_indiancowboy.md,
+  youtube-pick-extraction.md, capper-backtesting.md, nba-picker-tracking.md.
 - `picker_indiancowboy.md` — Indian Cowboy (Doc's Sports): joint vs solo
-  sources, his graded record, the DraftKings line-movement test and why it is
-  only a forward test. *Connections:* picker_craig.md,
-  youtube-pick-extraction.md, capper-backtesting.md.
+  sources, his graded NFL and NBA records, the DraftKings line-movement test,
+  why it is only a forward test and why it fails on NBA picks.
+  *Connections:* picker_craig.md, youtube-pick-extraction.md,
+  capper-backtesting.md, nba-picker-tracking.md.
+- `nba-picker-tracking.md` — Day-to-day NBA tracking of the Doc's Sports
+  hosts: where their parsed picks live, the `~/craig-ic-nba` grading and
+  trend scripts, scoring a day's picks against current lines, and comparing
+  them with Bell's bait. *Connections:* picker_craig.md,
+  picker_indiancowboy.md, youtube-pick-extraction.md,
+  sports-data-sources.md, capper-backtesting.md.

@@ -1,7 +1,7 @@
 # Picker: Craig Trapp (Doc's Sports)
 
 Verified: 2026-11-23 (2026 NFL weeks 1–11, Monday night of week 11 not
-graded).
+graded; 2026-27 NBA Oct 20 – Nov 22).
 
 ## Who he is
 
@@ -60,5 +60,31 @@ picks, grading and backtest scripts, a per-week live-bet ledger).
 - All records are in-sample from roughly 60 splits tested; only the 4 PM
   fade and the overall Sunday fade have much statistical weight.
 
+## NBA
+
+- **Source:** the daily free show "<Day> NBA Picks … Craig Trapp & Indian
+  Cowboy", posted roughly midnight–2 AM ET on game day and parsed
+  automatically (`nba-picker-tracking.md`). Some days it is Craig-only
+  ("… Craig Trapp NBA Picks"). He gives a side or total on most games, says
+  "small play" or "lean" for weaker ones, occasionally picks a first half,
+  and sometimes makes a pick conditional on a player playing.
+- **Record at the DraftKings close** (graded with the `~/craig-ic-nba`
+  scripts): sides 55-62, totals 18-17.
+- **Held in both season halves** (Oct 20 – Nov 4 vs Nov 5 on):
+  - Sundays **20-7** (p ≈ 0.02); every other day 53-72. Only five Sundays,
+    one of them 7-1.
+  - Medium favourites (4.5–9.5 at the close) 11-17; road favourites 16-21;
+    favourites whose line moved toward him after the show 10-18.
+- **Did not hold:** "line moved against him" (a better number for the
+  bettor) was 18-8 but almost all of it came in the second half; small
+  dogs, unders and home dogs flipped between halves.
+- **Teams:** backed Memphis 7-2. Per-team samples are 1–9 picks.
+- **NBA vs NFL Sundays:** his NBA Sundays are his best day while his NFL
+  Sunday show is his worst; NFL Sunday night (8-4 at the close) is the
+  exception.
+- **In practice** daily tail/fade calls built from these splits went badly
+  (the best-supported pick lost on consecutive days; one day's three calls
+  went 0-3), consistent with most splits being noise.
+
 *Connections:* picker_indiancowboy.md, youtube-pick-extraction.md,
-capper-backtesting.md, sports-data-sources.md.
+capper-backtesting.md, sports-data-sources.md, nba-picker-tracking.md.

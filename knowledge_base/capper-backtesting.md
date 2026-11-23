@@ -47,5 +47,21 @@ most patterns that looked strong did not survive these checks.
 - Line moves are concentrated late (most in the final 24 hours), and closes
   can move in the last minutes, so qualify any line-based rule at kickoff.
 
+## Lessons from repeating it on NBA picks
+
+- **Bucket by the closing number.** Sizing spreads by the number said on
+  air and by the close gave opposite answers for the same host (small
+  favourites 6-9 vs 13-9), because dogs on air often close as favourites.
+- **Re-test before carrying an edge over.** The NFL line-movement edge
+  swung from losing to winning between halves on the same host's NBA picks
+  (10-14, then 16-5), so it is not established there.
+- **Recompute surprising splits independently.** A "picks against team X"
+  filter that matched every pick in X's games produced plausible but wrong
+  numbers until checked against a second calculation.
+- **Ranking a day's picks by how many splits agree is stacking.** Used
+  live for several days, the "best-supported" picks lost about as often as
+  they won.
+
 *Connections:* sports-data-sources.md, youtube-pick-extraction.md,
-picker_craig.md, picker_indiancowboy.md (worked examples).
+picker_craig.md, picker_indiancowboy.md (worked examples),
+nba-picker-tracking.md.

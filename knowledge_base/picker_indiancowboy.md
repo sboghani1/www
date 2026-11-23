@@ -1,7 +1,7 @@
 # Picker: Indian Cowboy (Doc's Sports)
 
 Verified: 2026-11-23 (2026 NFL weeks 1–11, Monday night of week 11 not
-graded).
+graded; 2026-27 NBA Oct 20 – Nov 22).
 
 ## Who he is
 
@@ -57,5 +57,25 @@ ran a forward "live-bet" test on picks where it moved his way.
   record (8-18) did not replicate on a second book either.
 - All records are in-sample from many splits; treat them as leans.
 
+## NBA
+
+- **Sources:** the joint daily show with Craig, plus solo free videos
+  ("<Day> NBA Picks and Predictions, Indian Cowboy Picks …"). The NBA intake
+  stores the solo videos as a separate program ("Doc's Sports Indian Cowboy
+  NBA Picks", from Oct 21), but the exported picks and the records below
+  **combine both**, unlike his NFL records. Some days he appears on neither
+  free video; members-only "YouTube Premium" videos cannot be fetched.
+- **Record at the DraftKings close:** sides 24-31, totals 28-25.
+- **Road favourites:** 6-3 at the close (6-1 at his own number). Five of the
+  six wins were by 16 or more, so line moves rarely mattered. Held in both
+  halves but only nine picks.
+- **Home sides** 7-19 (p ≈ 0.03), but 3-15 in the first half and 4-4 since,
+  so it may be fading. **Overs flipped:** 4-9, then 11-4.
+- **The NFL "line moved his way" edge is unproven on NBA picks:** graded at
+  the close those picks are 26-19, but 10-14 in the first half and 16-5
+  since, so it has not held in both halves and has not been checked on a
+  second book. NBA shows are recorded the night before, and large moves are
+  usually injury news.
+
 *Connections:* picker_craig.md, youtube-pick-extraction.md,
-capper-backtesting.md, sports-data-sources.md.
+capper-backtesting.md, sports-data-sources.md, nba-picker-tracking.md.

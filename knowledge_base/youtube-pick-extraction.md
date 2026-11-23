@@ -44,6 +44,37 @@ Built for Doc's Sports NFL shows; the same steps fit any talk-format show.
 - Keep joint shows and a host's solo videos as separate sources; do not mix
   them into one track record.
 
+## Automated NBA intake (Doc's Sports daily show)
+
+- `nba-channel-intake` (`apps/nfl-audio-parser/nfl_audio_parser/nba_channel.py`,
+  run by a timer as the agent account) downloads each new free show,
+  transcribes it, extracts picks with a Claude call and ingests them into
+  the forwarder opinion store (`/home/forwarder/data/nfl_audio_parser.sqlite3`,
+  view `current_opinion_observations`). It then exports the latest pregame
+  full-game sides and totals per picker to
+  `/var/lib/decision-helper-bot/picker-picks.json`, which Bell (the decision
+  helper bot, formerly called Mel) reads. Per-video status is in
+  `nba-channel-state.json` beside it.
+- The store keeps only 1–2 evidence quotes per pick, and the AssemblyAI
+  transcript is deleted after ingest. For fuller quotes, re-download through
+  the proxy and transcribe locally with faster-whisper (`small.en`, models in
+  `/var/lib/decision-helper-bot/models`): decode to 16 kHz mono wav with
+  ffmpeg and pass the samples as an array, because the installed PyAV
+  rejects the `metadata_errors` argument when given a file path.
+- **Check a show was fully parsed** by comparing the revision's
+  `source_end_seconds` with the duration in the channel listing. A
+  truncated download once dropped seven of a show's eleven picks; the
+  intake now rejects audio under 95% of the listed length.
+- The export keeps **one side per game per picker**: when a host gave an
+  official spread plus a moneyline "sprinkle", the export kept the
+  moneyline lean and dropped the spread.
+- First-half picks are stored with `period = 1h` and are not exported.
+- Conditional picks carry `condition_text` (a player playing, or how a
+  game the night before ends). Resolve them before grading: player
+  participation from the box score (`didNotPlay`), prior results from the
+  scoreboard. Unresolved conditions should void the pick, not count it.
+- Transcripts render "IC" (Indian Cowboy) as "I see".
+
 ## Grading gotchas
 
 - Key graded picks by video, picker, selection, market **and line**. Without
@@ -54,4 +85,4 @@ Built for Doc's Sports NFL shows; the same steps fit any talk-format show.
 
 *Connections:* sports-data-sources.md (scores and lines for grading),
 capper-backtesting.md (what to do with the graded picks), vps-operations.md,
-picker_craig.md, picker_indiancowboy.md.
+picker_craig.md, picker_indiancowboy.md, nba-picker-tracking.md.
