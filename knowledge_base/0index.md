@@ -64,3 +64,11 @@ Format: `file` — what it covers. *Connections:* related topics.
   closing-line grading, walk-forward, season halves, shuffle tests,
   second-book replication, multiple testing. *Connections:*
   sports-data-sources.md, youtube-pick-extraction.md.
+- `picker_craig.md` — Craig Trapp (Doc's Sports): shows he picks on, what we
+  tracked per pick and how, his graded record by show, window and situation,
+  and what held up (fade his 4 PM Sunday picks). *Connections:*
+  picker_indiancowboy.md, youtube-pick-extraction.md, capper-backtesting.md.
+- `picker_indiancowboy.md` — Indian Cowboy (Doc's Sports): joint vs solo
+  sources, his graded record, the DraftKings line-movement test and why it is
+  only a forward test. *Connections:* picker_craig.md,
+  youtube-pick-extraction.md, capper-backtesting.md.

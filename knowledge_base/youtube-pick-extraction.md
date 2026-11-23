@@ -53,4 +53,5 @@ Built for Doc's Sports NFL shows; the same steps fit any talk-format show.
 - Props need player box scores; grade them separately from sides and totals.
 
 *Connections:* sports-data-sources.md (scores and lines for grading),
-capper-backtesting.md (what to do with the graded picks), vps-operations.md.
+capper-backtesting.md (what to do with the graded picks), vps-operations.md,
+picker_craig.md, picker_indiancowboy.md.

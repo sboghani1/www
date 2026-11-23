@@ -47,4 +47,5 @@ most patterns that looked strong did not survive these checks.
 - Line moves are concentrated late (most in the final 24 hours), and closes
   can move in the last minutes, so qualify any line-based rule at kickoff.
 
-*Connections:* sports-data-sources.md, youtube-pick-extraction.md.
+*Connections:* sports-data-sources.md, youtube-pick-extraction.md,
+picker_craig.md, picker_indiancowboy.md (worked examples).
