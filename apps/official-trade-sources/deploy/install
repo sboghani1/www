@@ -1,0 +1,25 @@
+#!/bin/sh
+# Run as root from a trusted immutable checkout. Does not activate the timer.
+set -eu
+src=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+base=/opt/official-trade-sources
+state=/var/lib/official-trade-sources
+test "$(id -u)" = 0
+test -f "$state/congress-house-filings.sqlite"
+test -x /usr/local/bin/python3.12
+if ! getent passwd official-trade-sources >/dev/null; then
+    useradd --system --user-group --no-create-home --home-dir "$state" --shell /usr/sbin/nologin official-trade-sources
+fi
+install -d -m 0755 "$base"
+install -d -m 0700 -o official-trade-sources -g official-trade-sources "$state"
+chown -R --no-dereference official-trade-sources:official-trade-sources "$state"
+if ! test -x "$base/venv/bin/python"; then
+    uv venv --python /usr/local/bin/python3.12 "$base/venv"
+fi
+uv pip install --python "$base/venv/bin/python" --only-binary=:all: -r "$src/requirements-watchlist.txt"
+ln -sfn "$src" "$base/.current-next"
+mv -Tf "$base/.current-next" "$base/current"
+for unit in official-trade-sources.service official-trade-sources.timer; do
+    install -m 0644 "$src/deploy/$unit" "/etc/systemd/system/$unit"
+done
+systemctl daemon-reload

@@ -1,0 +1,27 @@
+[Unit]
+Description=Record congressional disclosure changes in private SQLite
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=official-trade-sources
+Group=official-trade-sources
+WorkingDirectory=/opt/official-trade-sources/current
+StateDirectory=official-trade-sources
+StateDirectoryMode=0700
+UMask=0077
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/official-trade-sources/venv/bin/python daily.py --state /var/lib/official-trade-sources
+TimeoutStartSec=40min
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=

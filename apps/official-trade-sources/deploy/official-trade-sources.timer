@@ -1,0 +1,11 @@
+[Unit]
+Description=Check congressional disclosures one hour after the regular US market open
+
+[Timer]
+OnCalendar=*-*-* 10:30:00 America/New_York
+Persistent=true
+AccuracySec=1s
+Unit=official-trade-sources.service
+
+[Install]
+WantedBy=timers.target
