@@ -673,3 +673,67 @@ def test_an_alert_that_times_out_after_delivery_is_not_resent(tmp_path: Path) ->
         asyncio.run(bot.check_baited_lines())
     assert bot._bot.send_message.await_count == 1
     assert bot.baits.watch("nba-a")["alert_line"] == -7
+
+
+def test_new_games_are_announced_once_after_the_slate_settles(tmp_path: Path, monkeypatch) -> None:
+    import decision_helper.bot as bot_module
+
+    now = datetime.now(UTC)
+    clock = {"now": now}
+    monkeypatch.setattr(bot_module, "utc_now", lambda: clock["now"])
+    bot = bait_bot(tmp_path, now)
+    bot._bot = SimpleNamespace(send_message=AsyncMock())
+
+    def run(minutes_later):
+        clock["now"] = now + timedelta(minutes=minutes_later)
+        asyncio.run(bot.announce_new_bait())
+
+    # First run: games already on the board are recorded, not announced.
+    run(0)
+    bot._bot.send_message.assert_not_awaited()
+
+    # A new game gets a line; Bell waits for the slate to settle.
+    new_game = MarketEvent(**{**nba_slate(now)[0].__dict__, "id": "nba-c", "away_team": "Miami Heat",
+                              "home_team": "Utah Jazz",
+                              "markets": {"spread:Miami Heat": MarketQuote(-4, -110, 1),
+                                          "spread:Utah Jazz": MarketQuote(4, -110, 1)}})
+    bot.lines.events = bot.lines.events + [new_game]
+    bot.espn.started = list(bot.lines.events)
+    run(5)
+    run(10)
+    bot._bot.send_message.assert_not_awaited()
+    run(25)
+    assert bot._bot.send_message.await_count == 1
+    text, = bot._bot.send_message.await_args.args[1:]
+    assert text.startswith("🆕 New NBA bait to consider (1 game). Tap a side that looks too easy:")
+    assert "Miami Heat @ Utah Jazz: Heat -4 / Jazz +4" in text and "Celtics" not in text
+    assert buttons(bot._bot.send_message.await_args.kwargs["reply_markup"]) == {
+        "Heat -4": "baitre:a:-4:nba-c", "Jazz +4": "baitre:h:4:nba-c"}
+    run(40)
+    assert bot._bot.send_message.await_count == 1  # each game once
+
+
+def test_new_games_skip_baited_games_and_wait_out_quiet_hours(tmp_path: Path, monkeypatch) -> None:
+    import decision_helper.bot as bot_module
+
+    now = datetime.now(UTC)
+    clock = {"now": now}
+    monkeypatch.setattr(bot_module, "utc_now", lambda: clock["now"])
+    bot = bait_bot(tmp_path, now)
+    bot._bot = SimpleNamespace(send_message=AsyncMock())
+    with bot.store.connect() as connection:  # not the first run
+        connection.execute("INSERT INTO bait_new_games VALUES ('old', '2000-01-01T00:00Z', 'Bovada', '2000-01-01T00:00Z', '2000-01-01T00:00Z')")
+        connection.commit()
+    chat = Chat()
+    show_board(bot, chat)
+    tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)  # baited before any announcement
+    bot.quiet_hours = True
+    monkeypatch.setattr(bot_module, "in_quiet_hours", lambda when: when < now + timedelta(minutes=30))
+    asyncio.run(bot.announce_new_bait())
+    clock["now"] = now + timedelta(minutes=20)
+    asyncio.run(bot.announce_new_bait())
+    bot._bot.send_message.assert_not_awaited()  # held overnight
+    clock["now"] = now + timedelta(minutes=31)
+    asyncio.run(bot.announce_new_bait())
+    text = bot._bot.send_message.await_args.args[1]
+    assert "Utah Jazz @ Denver Nuggets" in text and "Celtics" not in text

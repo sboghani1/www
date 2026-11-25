@@ -221,6 +221,14 @@ receptionist's Opus agent, not with API billing:
    least a full point from the last number you saw (your last tap, or the
    last alert), Bell sends the same Latest line prompt unasked. Smaller moves
    and juice changes stay quiet, and a new tap resets the baseline.
+   **New bait:** when an NBA game on today's or tomorrow's slate gets its
+   first line (Bovada, or BetOnline before Bovada posts), Bell announces it
+   once (🆕, table `bait_new_games`). Games are batched: the message goes out
+   when no new game has appeared for 15 minutes, or an hour after the first,
+   and lists the new games' lines with both sides to tap (tapping one removes
+   only that game's buttons). Baited, started and pulled games are skipped;
+   games found during quiet hours go out at 9 AM. The first run after an
+   install records the games already posted without announcing them.
    **Quiet hours, 11 PM–9 AM Pacific:** no bait messages at all (line
    alerts, 👥 Picks updates, ⚖️ book divergences); checks keep running
    without moving the baseline. At 9 AM one ☀️ catch-up lists each baited

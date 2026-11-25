@@ -32,6 +32,7 @@ from telegram.ext import (
 from .bait import (
     book_of,
     encode_line,
+    format_new_bait,
     format_path,
     has_line,
     line_path,
@@ -99,6 +100,11 @@ BETONLINE_TIMES = (time(0, 0), time(15, 0), time(20, 0))
 # when quiet hours end.
 QUIET_START = time(23, 0)
 QUIET_END = time(9, 0)
+# New games are announced together once the book stops adding them for a
+# while (a slate posts over minutes), or after an hour at most.
+NEW_BAIT_SETTLE = timedelta(minutes=15)
+NEW_BAIT_MAX_WAIT = timedelta(hours=1)
+NEW_BAIT_EVERY = timedelta(minutes=5)
 LEARNING_HOUR = 9  # Eastern; a day's learnings run the next morning
 LEARNING_RETRY = timedelta(minutes=30)
 LEARNING_REVIEW_ATTEMPTS = 3  # a late day still waits on reviews until they fail this often
@@ -623,6 +629,7 @@ class DecisionBot:
         self.odds = odds
         self.books = BookStore(store)
         self._books_scheduled_at: datetime | None = None
+        self._new_bait_at: datetime | None = None
         self._betonline: tuple[datetime, list[MarketEvent]] | None = None
         self.quiet_hours = True  # tests turn this off to ignore the clock
 
@@ -1860,6 +1867,52 @@ class DecisionBot:
                 await self.refresh_betonline()
             except Exception:
                 log.exception("BetOnline fallback read failed")
+            try:
+                await self.announce_new_bait()
+            except Exception:
+                log.exception("New bait announcement failed")
+
+    async def announce_new_bait(self) -> None:
+        """One message listing NBA games that just got their first line
+        (Bovada, or BetOnline before Bovada posts), with both sides to tap.
+        Each game is announced once; baited, started and pulled games are
+        skipped; quiet hours hold them until 9 AM."""
+        now = utc_now()
+        if self._new_bait_at is not None and now - self._new_bait_at < NEW_BAIT_EVERY:
+            return
+        self._new_bait_at = now
+        events = await self.bait_events()
+        baited = self.baits.baited_events(event.id for event in events)
+        available = {
+            event.id: event
+            for event in events
+            if has_line(event)
+            and parse_timestamp(event.commence_time) > now
+            and event.id not in baited
+        }
+        first_run = not self.baits.has_seen_games()
+        self.baits.note_new_games(list(available.values()), now, announced=first_run)
+        if first_run or self._quiet(now):
+            return
+        ready = [
+            row for row in self.baits.pending_new_games() if row["event_id"] in available
+        ]
+        if not ready:
+            return
+        newest = max(parse_timestamp(row["first_seen_at"]) for row in ready)
+        oldest = min(parse_timestamp(row["first_seen_at"]) for row in ready)
+        if now - newest < NEW_BAIT_SETTLE and now - oldest < NEW_BAIT_MAX_WAIT:
+            return
+        games = sorted(
+            (available[row["event_id"]] for row in ready),
+            key=lambda event: event.commence_time,
+        )
+        # Recorded first: a send that times out after delivery isn't repeated.
+        self.baits.mark_announced((row["event_id"] for row in ready), now)
+        await self._notify(
+            format_new_bait(games, now, EASTERN),
+            InlineKeyboardMarkup([side_buttons(event, "baitre") for event in games]),
+        )
 
     async def check_books(self) -> None:
         """BetOnline vs Bovada and Hard Rock an hour before every NBA tip

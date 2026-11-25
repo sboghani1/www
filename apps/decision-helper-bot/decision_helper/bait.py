@@ -228,6 +228,16 @@ class BaitStore:
                     alerted_at TEXT
                 );
 
+                -- Games announced as new bait (each once): first seen with a
+                -- line, and when the announcement went out.
+                CREATE TABLE IF NOT EXISTS bait_new_games (
+                    event_id TEXT PRIMARY KEY,
+                    commence_time TEXT NOT NULL,
+                    book TEXT NOT NULL,
+                    first_seen_at TEXT NOT NULL,
+                    announced_at TEXT
+                );
+
                 -- Bell's messages a reason can be replied to.
                 CREATE TABLE IF NOT EXISTS bait_messages (
                     telegram_message_id INTEGER PRIMARY KEY,
@@ -485,6 +495,46 @@ class BaitStore:
                 )
             connection.commit()
         return dict(row)
+
+    def note_new_games(
+        self, events: list[MarketEvent], now: datetime, *, announced: bool = False
+    ) -> None:
+        """Remember games the first time they have a line; ``announced``
+        records them as already sent (the first run, so a deploy doesn't
+        list a whole posted slate)."""
+        now = timestamp(now)
+        with self.store.connect() as connection:
+            for event in events:
+                connection.execute(
+                    "INSERT OR IGNORE INTO bait_new_games (event_id, commence_time, "
+                    "book, first_seen_at, announced_at) VALUES (?, ?, ?, ?, ?)",
+                    (event.id, event.commence_time, book_of(event), now,
+                     now if announced else None),
+                )
+            connection.commit()
+
+    def has_seen_games(self) -> bool:
+        with self.store.connect() as connection:
+            return connection.execute(
+                "SELECT 1 FROM bait_new_games LIMIT 1"
+            ).fetchone() is not None
+
+    def pending_new_games(self) -> list[dict[str, Any]]:
+        with self.store.connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM bait_new_games WHERE announced_at IS NULL "
+                "ORDER BY first_seen_at"
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def mark_announced(self, event_ids: Iterable[str], now: datetime) -> None:
+        now = timestamp(now)
+        with self.store.connect() as connection:
+            connection.executemany(
+                "UPDATE bait_new_games SET announced_at=? WHERE event_id=?",
+                [(now, event_id) for event_id in event_ids],
+            )
+            connection.commit()
 
     def link_message(self, telegram_message_id: int, bait_id: str) -> None:
         with self.store.connect() as connection:
@@ -788,6 +838,17 @@ def format_board(
                 else f" · 🙅 passed on {describe_bait(bait)}"
             )
         lines.append(line)
+    return "\n".join(lines)
+
+
+def format_new_bait(events: list[MarketEvent], now, eastern) -> str:
+    """The announcement of games that just got lines: the board's lines
+    for those games only."""
+    lines = format_board(events, {}, now, eastern).split("\n")
+    lines[0] = (
+        f"🆕 New NBA bait to consider ({len(events)} game"
+        f"{'s' if len(events) != 1 else ''}). Tap a side that looks too easy:"
+    )
     return "\n".join(lines)
 
 
