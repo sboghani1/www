@@ -1892,7 +1892,10 @@ class DecisionBot:
         }
         first_run = not self.baits.has_seen_games()
         self.baits.note_new_games(list(available.values()), now, announced=first_run)
-        if first_run or self._quiet(now):
+        if first_run:
+            self.baits.mark_seeded(now)
+            return
+        if self._quiet(now):
             return
         ready = [
             row for row in self.baits.pending_new_games() if row["event_id"] in available

@@ -737,3 +737,22 @@ def test_new_games_skip_baited_games_and_wait_out_quiet_hours(tmp_path: Path, mo
     asyncio.run(bot.announce_new_bait())
     text = bot._bot.send_message.await_args.args[1]
     assert "Utah Jazz @ Denver Nuggets" in text and "Celtics" not in text
+
+
+def test_a_first_run_with_no_open_games_still_announces_the_next_slate(tmp_path: Path, monkeypatch) -> None:
+    import decision_helper.bot as bot_module
+
+    now = datetime.now(UTC)
+    clock = {"now": now}
+    monkeypatch.setattr(bot_module, "utc_now", lambda: clock["now"])
+    bot = bait_bot(tmp_path, now)
+    bot._bot = SimpleNamespace(send_message=AsyncMock())
+    slate = bot.lines.events
+    bot.lines.events, bot.espn.started = [], []  # nothing open (all baited or no games)
+    asyncio.run(bot.announce_new_bait())
+    bot.lines.events, bot.espn.started = slate, list(slate)
+    clock["now"] = now + timedelta(minutes=10)
+    asyncio.run(bot.announce_new_bait())
+    clock["now"] = now + timedelta(minutes=30)
+    asyncio.run(bot.announce_new_bait())
+    assert "Boston Celtics @ Los Angeles Lakers" in bot._bot.send_message.await_args.args[1]

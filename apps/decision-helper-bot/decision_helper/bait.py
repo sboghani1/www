@@ -63,6 +63,7 @@ LEGACY_TAGS = {
 # Old keys that meant the same as a current tag.
 TAG_ALIASES = {"cold": "bad_opp"}  # was labeled "Opponent is bad"
 TAG_LABELS = {**LEGACY_TAGS, **dict(BAIT_TAGS)}
+SEEDED = "__seeded__"  # bait_new_games marker row for the first run
 RESULT_DELAY = timedelta(minutes=150)  # an NBA game lasts about 2.5 hours
 CLOSE_DELAY = timedelta(minutes=15)  # the forwarder's last pre-tip poll is in by then
 # Scheduled line checks on a baited game: 15 minutes and 1-4 hours before
@@ -511,6 +512,17 @@ class BaitStore:
                     (event.id, event.commence_time, book_of(event), now,
                      now if announced else None),
                 )
+            connection.commit()
+
+    def mark_seeded(self, now: datetime) -> None:
+        """Record that the first run happened, even with no games on the
+        board, so the next slate is announced rather than seeded."""
+        stamp = timestamp(now)
+        with self.store.connect() as connection:
+            connection.execute(
+                "INSERT OR IGNORE INTO bait_new_games VALUES (?, ?, '', ?, ?)",
+                (SEEDED, stamp, stamp, stamp),
+            )
             connection.commit()
 
     def has_seen_games(self) -> bool:
