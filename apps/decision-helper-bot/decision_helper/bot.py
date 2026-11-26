@@ -33,6 +33,7 @@ from .bait import (
     book_of,
     encode_line,
     format_new_bait,
+    new_bait_keyboard,
     format_path,
     has_line,
     line_path,
@@ -1913,9 +1914,59 @@ class DecisionBot:
         # Recorded first: a send that times out after delivery isn't repeated.
         self.baits.mark_announced((row["event_id"] for row in ready), now)
         await self._notify(
-            format_new_bait(games, now, EASTERN),
-            InlineKeyboardMarkup([side_buttons(event, "baitre") for event in games]),
+            format_new_bait(games, set(), now, EASTERN),
+            new_bait_keyboard(games, set()),
         )
+
+    async def bait_show(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        """👀 on a new-bait message: show that game's line and sides; the
+        other games stay as they were."""
+        del context
+        query = update.callback_query
+        _, event_id = str(query.data).split(":", 1)
+        now = utc_now()
+        try:
+            events = await self.bait_events()
+        except Exception as error:
+            log.exception("Bait lines failed")
+            await query.answer(f"Couldn't load NBA lines: {error}"[:200], show_alert=True)
+            return
+        by_id = {event.id: event for event in events}
+        target = next((event for event in events if event.id.startswith(event_id)), None)
+        if target is None or parse_timestamp(target.commence_time) <= now:
+            await query.answer("That game has tipped off or is gone.", show_alert=True)
+            return
+        if not has_line(target):
+            await query.answer("Off the board right now; try again in a few minutes.", show_alert=True)
+            return
+        await query.answer()
+        self.baits.mark_revealed(target.id, now)
+        # The message's games, in order, from its buttons.
+        shown: list[MarketEvent] = []
+        revealed = {target.id}
+        for row in getattr(query.message.reply_markup, "inline_keyboard", None) or []:
+            data = str(row[0].callback_data)
+            prefix, _, rest = data.partition(":")
+            game_id = rest.rsplit(":", 1)[-1] if prefix == "baitre" else rest
+            event = next(
+                (item for key, item in by_id.items() if key.startswith(game_id)), None
+            )
+            if event is None or event in shown:
+                continue
+            shown.append(event)
+            if prefix == "baitre":
+                revealed.add(event.id)
+        if target not in shown:
+            shown.append(target)
+        try:
+            await query.edit_message_text(
+                format_new_bait(shown, revealed, now, EASTERN),
+                reply_markup=new_bait_keyboard(shown, revealed),
+            )
+        except BadRequest as error:
+            log.info("New bait message not edited: %s", error)
 
     async def check_books(self) -> None:
         """BetOnline vs Bovada and Hard Rock an hour before every NBA tip
@@ -2254,6 +2305,7 @@ class DecisionBot:
             (r"^baittag:", self.bait_tag),
             (r"^baitwhy:", self.bait_why),
             (r"^baitundo:", self.bait_undo),
+            (r"^baitshow:", self.bait_show),
         ):
             application.add_handler(
                 CallbackQueryHandler(self.authorized(handler), pattern=pattern)

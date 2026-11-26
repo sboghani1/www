@@ -225,8 +225,10 @@ receptionist's Opus agent, not with API billing:
    first line (Bovada, or BetOnline before Bovada posts), Bell announces it
    once (🆕, table `bait_new_games`). Games are batched: the message goes out
    when no new game has appeared for 15 minutes, or an hour after the first,
-   and lists the new games' lines with both sides to tap (tapping one removes
-   only that game's buttons). Baited, started and pulled games are skipped;
+   and lists the new games with their lines hidden (🙈) and a 👀 button per
+   game: tapping it shows that game's line in place and turns the button into
+   its two sides (the reveal time is kept in `revealed_at`); the other games
+   stay hidden. Tapping a side removes only that game's buttons. Baited, started and pulled games are skipped;
    games found during quiet hours go out at 9 AM. The first run after an
    install records the games already posted without announcing them.
    **Quiet hours, 11 PM–9 AM Pacific:** no bait messages at all (line

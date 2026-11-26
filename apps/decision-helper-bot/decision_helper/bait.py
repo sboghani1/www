@@ -236,7 +236,8 @@ class BaitStore:
                     commence_time TEXT NOT NULL,
                     book TEXT NOT NULL,
                     first_seen_at TEXT NOT NULL,
-                    announced_at TEXT
+                    announced_at TEXT,
+                    revealed_at TEXT
                 );
 
                 -- Bell's messages a reason can be replied to.
@@ -246,6 +247,14 @@ class BaitStore:
                 );
                 """
             )
+            new_columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(bait_new_games)")
+            }
+            if "revealed_at" not in new_columns:
+                connection.execute(
+                    "ALTER TABLE bait_new_games ADD COLUMN revealed_at TEXT"
+                )
             # The picker summary last shown for the game, so a follow-up is
             # sent only when the tracked pickers' picks change.
             columns = {
@@ -520,8 +529,19 @@ class BaitStore:
         stamp = timestamp(now)
         with self.store.connect() as connection:
             connection.execute(
-                "INSERT OR IGNORE INTO bait_new_games VALUES (?, ?, '', ?, ?)",
+                "INSERT OR IGNORE INTO bait_new_games (event_id, commence_time, "
+                "book, first_seen_at, announced_at) VALUES (?, ?, '', ?, ?)",
                 (SEEDED, stamp, stamp, stamp),
+            )
+            connection.commit()
+
+    def mark_revealed(self, event_id: str, now: datetime) -> None:
+        """When the user first looked at an announced game's line."""
+        with self.store.connect() as connection:
+            connection.execute(
+                "UPDATE bait_new_games SET revealed_at=COALESCE(revealed_at, ?) "
+                "WHERE event_id=?",
+                (timestamp(now), event_id),
             )
             connection.commit()
 
@@ -853,15 +873,46 @@ def format_board(
     return "\n".join(lines)
 
 
-def format_new_bait(events: list[MarketEvent], now, eastern) -> str:
-    """The announcement of games that just got lines: the board's lines
-    for those games only."""
+def format_new_bait(
+    events: list[MarketEvent], revealed: set[str], now, eastern
+) -> str:
+    """The announcement of games that just got lines. Lines stay hidden
+    until 👀 is tapped, so each game gets a look before its number."""
     lines = format_board(events, {}, now, eastern).split("\n")
     lines[0] = (
         f"🆕 New NBA bait to consider ({len(events)} game"
-        f"{'s' if len(events) != 1 else ''}). Tap a side that looks too easy:"
+        f"{'s' if len(events) != 1 else ''}). Think about each game, then tap "
+        "👀 to see its line:"
     )
+    for event in events:
+        if event.id in revealed:
+            continue
+        matchup = f"{event.away_team} @ {event.home_team}: "
+        for index, line in enumerate(lines):
+            if matchup in line:
+                lines[index] = line.split(matchup)[0] + matchup + "🙈 line hidden"
     return "\n".join(lines)
+
+
+def new_bait_keyboard(
+    events: list[MarketEvent], revealed: set[str]
+) -> InlineKeyboardMarkup:
+    """A 👀 button per hidden game; a revealed game gets its two sides."""
+    rows = []
+    for event in events:
+        if event.id in revealed:
+            rows.append(side_buttons(event, "baitre"))
+        else:
+            rows.append(
+                [
+                    InlineKeyboardButton(
+                        f"👀 {event.away_team.split()[-1]} @ "
+                        f"{event.home_team.split()[-1]}",
+                        callback_data=f"baitshow:{event.id}"[:64],
+                    )
+                ]
+            )
+    return InlineKeyboardMarkup(rows)
 
 
 def confirmation_keyboard(bait: dict[str, Any]) -> InlineKeyboardMarkup:

@@ -705,12 +705,22 @@ def test_new_games_are_announced_once_after_the_slate_settles(tmp_path: Path, mo
     run(25)
     assert bot._bot.send_message.await_count == 1
     text, = bot._bot.send_message.await_args.args[1:]
-    assert text.startswith("🆕 New NBA bait to consider (1 game). Tap a side that looks too easy:")
-    assert "Miami Heat @ Utah Jazz: Heat -4 / Jazz +4" in text and "Celtics" not in text
-    assert buttons(bot._bot.send_message.await_args.kwargs["reply_markup"]) == {
-        "Heat -4": "baitre:a:-4:nba-c", "Jazz +4": "baitre:h:4:nba-c"}
+    assert text.startswith("🆕 New NBA bait to consider (1 game). Think about each game, then tap 👀")
+    assert "Miami Heat @ Utah Jazz: 🙈 line hidden" in text and "-4" not in text and "Celtics" not in text
+    markup = bot._bot.send_message.await_args.kwargs["reply_markup"]
+    assert buttons(markup) == {"👀 Heat @ Jazz": "baitshow:nba-c"}
     run(40)
     assert bot._bot.send_message.await_count == 1  # each game once
+
+    # 👀 shows that game's line and sides in place, and records the reveal.
+    query = SimpleNamespace(data="baitshow:nba-c", answer=AsyncMock(), edit_message_text=AsyncMock(),
+                            message=SimpleNamespace(reply_markup=markup))
+    asyncio.run(bot.bait_show(SimpleNamespace(callback_query=query), SimpleNamespace()))
+    edited = query.edit_message_text.await_args
+    assert "Miami Heat @ Utah Jazz: Heat -4 / Jazz +4" in edited.args[0]
+    assert buttons(edited.kwargs["reply_markup"]) == {"Heat -4": "baitre:a:-4:nba-c", "Jazz +4": "baitre:h:4:nba-c"}
+    with bot.store.connect() as connection:
+        assert connection.execute("SELECT revealed_at FROM bait_new_games WHERE event_id='nba-c'").fetchone()[0]
 
 
 def test_new_games_skip_baited_games_and_wait_out_quiet_hours(tmp_path: Path, monkeypatch) -> None:
@@ -722,7 +732,8 @@ def test_new_games_skip_baited_games_and_wait_out_quiet_hours(tmp_path: Path, mo
     bot = bait_bot(tmp_path, now)
     bot._bot = SimpleNamespace(send_message=AsyncMock())
     with bot.store.connect() as connection:  # not the first run
-        connection.execute("INSERT INTO bait_new_games VALUES ('old', '2000-01-01T00:00Z', 'Bovada', '2000-01-01T00:00Z', '2000-01-01T00:00Z')")
+        connection.execute("INSERT INTO bait_new_games (event_id, commence_time, book, first_seen_at, announced_at) "
+                           "VALUES ('old', '2000-01-01T00:00Z', 'Bovada', '2000-01-01T00:00Z', '2000-01-01T00:00Z')")
         connection.commit()
     chat = Chat()
     show_board(bot, chat)
@@ -756,3 +767,20 @@ def test_a_first_run_with_no_open_games_still_announces_the_next_slate(tmp_path:
     clock["now"] = now + timedelta(minutes=30)
     asyncio.run(bot.announce_new_bait())
     assert "Boston Celtics @ Los Angeles Lakers" in bot._bot.send_message.await_args.args[1]
+
+
+def test_revealing_one_game_keeps_the_others_hidden(tmp_path: Path) -> None:
+    from decision_helper.bait import format_new_bait, new_bait_keyboard
+
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    events = nba_slate(now)
+    markup = new_bait_keyboard(events, set())
+    query = SimpleNamespace(data="baitshow:nba-b", answer=AsyncMock(), edit_message_text=AsyncMock(),
+                            message=SimpleNamespace(reply_markup=markup))
+    asyncio.run(bot.bait_show(SimpleNamespace(callback_query=query), SimpleNamespace()))
+    text = query.edit_message_text.await_args.args[0]
+    assert "Boston Celtics @ Los Angeles Lakers: 🙈 line hidden" in text
+    assert "Utah Jazz @ Denver Nuggets: Jazz pk / Nuggets pk" in text
+    assert buttons(query.edit_message_text.await_args.kwargs["reply_markup"]) == {
+        "👀 Celtics @ Lakers": "baitshow:nba-a", "Jazz pk": "baitre:a:ml:nba-b", "Nuggets pk": "baitre:h:ml:nba-b"}
