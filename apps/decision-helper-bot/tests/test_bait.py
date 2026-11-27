@@ -90,6 +90,11 @@ def tap(bot, handler, data: str, chat: Chat):
     return query
 
 
+def reveal_all(bot, chat: Chat) -> None:
+    """Tap 👀 Reveal all on the board (lines start hidden)."""
+    tap(bot, bot.bait_board_show, "baitshowb:*", chat)
+
+
 def show_board(bot, chat: Chat):
     asyncio.run(bot.bait_board(SimpleNamespace(message=chat), SimpleNamespace()))
     return chat.sent[-1]
@@ -113,6 +118,7 @@ def test_board_shows_nba_sides_and_a_tap_logs_the_bait(tmp_path: Path) -> None:
     bot = bait_bot(tmp_path, now)
     chat = Chat()
 
+    reveal_all(bot, chat)
     board = show_board(bot, chat)
     assert "Boston Celtics @ Los Angeles Lakers: Celtics -5.5 / Lakers +5.5, o/u 228.5" in board.text
     assert "Utah Jazz @ Denver Nuggets: Jazz pk / Nuggets pk" in board.text
@@ -497,6 +503,7 @@ def test_board_shows_tomorrow_and_games_without_a_line_have_no_buttons(tmp_path:
     bot_module.utc_now = lambda: noon
     try:
         chat = Chat()
+        reveal_all(bot, chat)
         board = show_board(bot, chat)
     finally:
         bot_module.utc_now = original
@@ -784,3 +791,40 @@ def test_revealing_one_game_keeps_the_others_hidden(tmp_path: Path) -> None:
     assert "Utah Jazz @ Denver Nuggets: Jazz pk / Nuggets pk" in text
     assert buttons(query.edit_message_text.await_args.kwargs["reply_markup"]) == {
         "👀 Celtics @ Lakers": "baitshow:nba-a", "Jazz pk": "baitre:a:ml:nba-b", "Nuggets pk": "baitre:h:ml:nba-b"}
+
+
+def test_bait_board_hides_unrevealed_lines_and_shares_reveals_with_announcements(tmp_path: Path) -> None:
+    from decision_helper.bait import new_bait_keyboard
+
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    chat = Chat()
+    board = show_board(bot, chat)
+    assert "Boston Celtics @ Los Angeles Lakers: 🙈 line hidden" in board.text and "-5.5" not in board.text
+    assert buttons(board.reply_markup) == {
+        "👀 Celtics @ Lakers": "baitshowb:nba-a", "👀 Jazz @ Nuggets": "baitshowb:nba-b",
+        "👀 Reveal all": "baitshowb:*"}
+
+    # Revealing on a 🆕 message reveals it on /bait too.
+    query = SimpleNamespace(data="baitshow:nba-a", answer=AsyncMock(), edit_message_text=AsyncMock(),
+                            message=SimpleNamespace(reply_markup=new_bait_keyboard(nba_slate(now), set())))
+    asyncio.run(bot.bait_show(SimpleNamespace(callback_query=query), SimpleNamespace()))
+    board = show_board(bot, chat)
+    assert "Celtics -5.5 / Lakers +5.5" in board.text and "Utah Jazz @ Denver Nuggets: 🙈 line hidden" in board.text
+    assert "👀 Reveal all" not in buttons(board.reply_markup)  # one hidden game left
+
+    # And revealing on /bait redraws the board with that game's sides.
+    query = tap(bot, bot.bait_board_show, "baitshowb:nba-b", chat)
+    redrawn = query.edit_message_text.await_args
+    assert "Utah Jazz @ Denver Nuggets: Jazz pk / Nuggets pk" in redrawn.args[0]
+    assert buttons(redrawn.kwargs["reply_markup"])["Jazz pk"] == "bait:a:ml:nba-b"
+    assert bot.baits.revealed_ids(["nba-a", "nba-b"]) == {"nba-a", "nba-b"}
+
+
+def test_a_baited_game_never_shows_as_hidden(tmp_path: Path) -> None:
+    now = datetime.now(UTC)
+    bot = bait_bot(tmp_path, now)
+    chat = Chat()
+    tap(bot, bot.bait_take, "bait:a:-5.5:nba-a", chat)
+    board = show_board(bot, chat)
+    assert "· 🎣 Celtics -5.5 (-110)" in board.text and "Celtics -5.5 / Lakers +5.5" in board.text

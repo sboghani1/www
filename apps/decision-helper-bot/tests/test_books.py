@@ -188,6 +188,8 @@ def test_betonline_fills_games_bovada_has_not_posted_until_bovada_does(tmp_path:
     asyncio.run(bot.refresh_betonline())
     assert odds.betonline_calls == 1
 
+    from test_bait import reveal_all
+    reveal_all(bot, chat)
     board = show_board(bot, chat)
     assert "Boston Celtics @ Los Angeles Lakers: Celtics -7 / Lakers +7 · BetOnline" in board.text
     assert buttons(board.reply_markup)["Celtics -7"] == "bait:ab:-7:nba-a"

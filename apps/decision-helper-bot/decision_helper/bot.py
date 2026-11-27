@@ -1585,11 +1585,46 @@ class DecisionBot:
 
     def _board(self, events: list[MarketEvent]) -> tuple[str, InlineKeyboardMarkup]:
         baited = self.baits.baited_events(event.id for event in events)
+        revealed = self.baits.revealed_ids(event.id for event in events)
         now = utc_now()
         return (
-            format_board(events, baited, now, EASTERN),
-            board_keyboard(events, baited, now),
+            format_board(events, baited, now, EASTERN, revealed),
+            board_keyboard(events, baited, now, revealed),
         )
+
+    async def bait_board_show(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
+        """👀 on /bait: reveal one game's line (or all, ``*``) for every
+        view and redraw the board."""
+        del context
+        query = update.callback_query
+        _, event_id = str(query.data).split(":", 1)
+        try:
+            events = await self.bait_events()
+        except Exception as error:
+            log.exception("Bait lines failed")
+            await query.answer(f"Couldn't load NBA lines: {error}"[:200], show_alert=True)
+            return
+        now = utc_now()
+        targets = [
+            event
+            for event in events
+            if has_line(event)
+            and parse_timestamp(event.commence_time) > now
+            and (event_id == "*" or event.id.startswith(event_id))
+        ]
+        if not targets:
+            await query.answer("That game has tipped off or is off the board.", show_alert=True)
+            return
+        await query.answer()
+        for event in targets:
+            self.baits.mark_revealed(event, now)
+        text, keyboard = self._board(events)
+        try:
+            await query.edit_message_text(text, reply_markup=keyboard)
+        except BadRequest as error:
+            log.info("Bait board not edited: %s", error)
 
     async def bait_board(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -1913,9 +1948,10 @@ class DecisionBot:
         )
         # Recorded first: a send that times out after delivery isn't repeated.
         self.baits.mark_announced((row["event_id"] for row in ready), now)
+        revealed = self.baits.revealed_ids(event.id for event in games)
         await self._notify(
-            format_new_bait(games, set(), now, EASTERN),
-            new_bait_keyboard(games, set()),
+            format_new_bait(games, revealed, now, EASTERN),
+            new_bait_keyboard(games, revealed),
         )
 
     async def bait_show(
@@ -1942,7 +1978,7 @@ class DecisionBot:
             await query.answer("Off the board right now; try again in a few minutes.", show_alert=True)
             return
         await query.answer()
-        self.baits.mark_revealed(target.id, now)
+        self.baits.mark_revealed(target, now)
         # The message's games, in order, from its buttons.
         shown: list[MarketEvent] = []
         revealed = {target.id}
@@ -2306,6 +2342,7 @@ class DecisionBot:
             (r"^baitwhy:", self.bait_why),
             (r"^baitundo:", self.bait_undo),
             (r"^baitshow:", self.bait_show),
+            (r"^baitshowb:", self.bait_board_show),
         ):
             application.add_handler(
                 CallbackQueryHandler(self.authorized(handler), pattern=pattern)

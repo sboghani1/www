@@ -228,7 +228,11 @@ receptionist's Opus agent, not with API billing:
    and lists the new games with their lines hidden (🙈) and a 👀 button per
    game: tapping it shows that game's line in place and turns the button into
    its two sides (the reveal time is kept in `revealed_at`); the other games
-   stay hidden. Tapping a side removes only that game's buttons. Baited, started and pulled games are skipped;
+   stay hidden. Tapping a side removes only that game's buttons. Reveals are
+   one shared state: `/bait` also shows "🙈 line hidden" with a 👀 button
+   (and 👀 Reveal all) for every open game not yet revealed or baited, and a
+   reveal in either place shows the line in both. Games announced before
+   lines were hidden count as revealed. Baited, started and pulled games are skipped;
    games found during quiet hours go out at 9 AM. The first run after an
    install records the games already posted without announcing them.
    **Quiet hours, 11 PM–9 AM Pacific:** no bait messages at all (line

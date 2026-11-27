@@ -255,6 +255,14 @@ class BaitStore:
                 connection.execute(
                     "ALTER TABLE bait_new_games ADD COLUMN revealed_at TEXT"
                 )
+            # Announcements before lines were hidden (2026-11-26 17:43 UTC)
+            # showed the numbers, so those games count as revealed.
+            connection.execute(
+                "UPDATE bait_new_games SET revealed_at=announced_at "
+                "WHERE revealed_at IS NULL AND announced_at IS NOT NULL "
+                "AND announced_at < '2026-11-26T17:43Z' AND event_id != ?",
+                (SEEDED,),
+            )
             # The picker summary last shown for the game, so a follow-up is
             # sent only when the tracked pickers' picks change.
             columns = {
@@ -535,15 +543,34 @@ class BaitStore:
             )
             connection.commit()
 
-    def mark_revealed(self, event_id: str, now: datetime) -> None:
-        """When the user first looked at an announced game's line."""
+    def mark_revealed(self, event: MarketEvent, now: datetime) -> None:
+        """When the user first looked at a game's line, from a 🆕 message
+        or /bait (one shared state)."""
+        stamp = timestamp(now)
         with self.store.connect() as connection:
             connection.execute(
-                "UPDATE bait_new_games SET revealed_at=COALESCE(revealed_at, ?) "
-                "WHERE event_id=?",
-                (timestamp(now), event_id),
+                """
+                INSERT INTO bait_new_games (event_id, commence_time, book,
+                    first_seen_at, revealed_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(event_id) DO UPDATE SET
+                    revealed_at=COALESCE(bait_new_games.revealed_at, excluded.revealed_at)
+                """,
+                (event.id, event.commence_time, book_of(event), stamp, stamp),
             )
             connection.commit()
+
+    def revealed_ids(self, event_ids: Iterable[str]) -> set[str]:
+        ids = list(event_ids)
+        if not ids:
+            return set()
+        with self.store.connect() as connection:
+            rows = connection.execute(
+                "SELECT event_id FROM bait_new_games WHERE revealed_at IS NOT NULL "
+                f"AND event_id IN ({','.join('?' * len(ids))})",
+                ids,
+            ).fetchall()
+        return {row["event_id"] for row in rows}
 
     def has_seen_games(self) -> bool:
         with self.store.connect() as connection:
@@ -783,12 +810,31 @@ def format_path(points: list[float]) -> str:
 # --- Telegram presentation -------------------------------------------------
 
 
+def is_hidden(
+    event: MarketEvent, baited: dict[str, Any], revealed: set[str] | None, now
+) -> bool:
+    """An open game's line stays hidden until the user reveals it (a 🆕
+    message or /bait) or baits it. ``revealed=None`` shows everything."""
+    return (
+        revealed is not None
+        and has_line(event)
+        and parse_timestamp(event.commence_time) > now
+        and event.id not in baited
+        and event.id not in revealed
+    )
+
+
 def board_keyboard(
-    events: list[MarketEvent], baited: dict[str, dict[str, Any]], now
+    events: list[MarketEvent],
+    baited: dict[str, dict[str, Any]],
+    now,
+    revealed: set[str] | None = None,
 ) -> InlineKeyboardMarkup:
     """Two side buttons per open game; a baited game gets its latest-line
-    check instead, which offers both sides again at the current number."""
+    check instead, which offers both sides again at the current number; a
+    hidden game gets 👀."""
     rows = []
+    hidden = 0
     for event in events:
         if parse_timestamp(event.commence_time) <= now:
             continue
@@ -803,8 +849,22 @@ def board_keyboard(
                 ]
             )
             continue
+        if is_hidden(event, baited, revealed, now):
+            hidden += 1
+            rows.append(
+                [
+                    InlineKeyboardButton(
+                        f"👀 {event.away_team.split()[-1]} @ "
+                        f"{event.home_team.split()[-1]}",
+                        callback_data=f"baitshowb:{event.id}"[:64],
+                    )
+                ]
+            )
+            continue
         if has_line(event):
             rows.append(side_buttons(event))
+    if hidden > 1:
+        rows.append([InlineKeyboardButton("👀 Reveal all", callback_data="baitshowb:*")])
     return InlineKeyboardMarkup(rows)
 
 
@@ -828,7 +888,11 @@ def side_buttons(
 
 
 def format_board(
-    events: list[MarketEvent], baited: dict[str, dict[str, Any]], now, eastern
+    events: list[MarketEvent],
+    baited: dict[str, dict[str, Any]],
+    now,
+    eastern,
+    revealed: set[str] | None = None,
 ) -> str:
     lines = [
         "🎣 NBA lines (Bovada; BetOnline where Bovada hasn't posted yet). "
@@ -856,6 +920,8 @@ def format_board(
         else:
             # Posted then pulled (often injury news) vs not posted yet.
             sides = "off the board" if event.book == DEFAULT_BOOK else "no line yet"
+        if is_hidden(event, baited, revealed, now):
+            sides = "🙈 line hidden"
         line = (
             f"• {start.astimezone(eastern):%-I:%M %p} "
             f"{event.away_team} @ {event.home_team}: {sides}"
